@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 // Layouts
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-
+import GovtBrandCarousel from '../components/GovtBrandCarousel';
 // Pages
 import Home from '../views/pages/Home';
 import About from '../views/pages/About';
@@ -37,6 +37,7 @@ const MainLayout = ({ children }) => (
     <main className="flex-grow-1" id="main-content">
       {children}
     </main>
+    <GovtBrandCarousel />
     <Footer />
   </div>
 );

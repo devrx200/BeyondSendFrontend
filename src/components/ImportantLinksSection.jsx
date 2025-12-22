@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, CardBody } from 'reactstrap';
-import { Link } from 'react-router-dom';
-import { 
-  FaVoteYea, FaUserGraduate, FaMoneyBillWave, FaBookReader, 
-  FaExclamationCircle, FaInfoCircle, FaExternalLinkAlt 
-} from 'react-icons/fa';
-import { useLanguage } from '../contexts/LanguageContext';
-import DataService from '../services/DataService';
+import { useState, useEffect } from "react";
+import { Container, Row, Col, Card, CardBody } from "reactstrap";
+import { Link } from "react-router-dom";
+import {
+  FaVoteYea,
+  FaUserGraduate,
+  FaMoneyBillWave,
+  FaBookReader,
+  FaExclamationCircle,
+  FaInfoCircle,
+  FaExternalLinkAlt
+} from "react-icons/fa";
+import { useLanguage } from "../contexts/LanguageContext";
+import DataService from "../services/DataService";
 
 const ImportantLinksSection = () => {
   const { isHindi } = useLanguage();
@@ -21,66 +26,95 @@ const ImportantLinksSection = () => {
       const data = await DataService.getImportantLinks();
       setLinks(data);
     } catch (error) {
-      console.error('Error loading important links:', error);
+      console.error("Error loading important links:", error);
     }
   };
 
   const getIcon = (iconName) => {
     const icons = {
-      FaVoteYea: <FaVoteYea />,
-      FaUserGraduate: <FaUserGraduate />,
-      FaMoneyBillWave: <FaMoneyBillWave />,
-      FaBookReader: <FaBookReader />,
-      FaExclamationCircle: <FaExclamationCircle />,
-      FaInfoCircle: <FaInfoCircle />
+      FaVoteYea: FaVoteYea,
+      FaUserGraduate: FaUserGraduate,
+      FaMoneyBillWave: FaMoneyBillWave,
+      FaBookReader: FaBookReader,
+      FaExclamationCircle: FaExclamationCircle,
+      FaInfoCircle: FaInfoCircle
     };
-    return icons[iconName] || <FaInfoCircle />;
+    const Icon = icons[iconName] || FaInfoCircle;
+    return <Icon size={34} />;
   };
 
   return (
-    <section className="important-links-section py-5 bg-light">
+    <section className="py-5 bg-light border-top">
       <Container>
-        <div className="text-center mb-4">
-          <h2 className="section-title">
-            {isHindi ? 'महत्वपूर्ण लिंक' : 'Important Links'}
+        {/* SECTION HEADER */}
+        <div className="text-center mb-5">
+          <h2 className="fw-bold">
+            {isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}
           </h2>
-          <div className="title-underline mx-auto"></div>
+          <p className="text-muted mb-0">
+            {isHindi
+              ? "त्वरित पहुँच के लिए आवश्यक सरकारी सेवाएँ"
+              : "Quick access to essential government services"}
+          </p>
         </div>
 
+        {/* LINKS GRID */}
         <Row className="g-4">
-          {links.map((link) => (
-            <Col lg={4} md={6} key={link.id}>
-              {link.external ? (
-                <a 
-                  href={link.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-decoration-none"
-                >
-                  <Card className="link-card h-100 border-0 shadow-sm hover-lift">
-                    <CardBody className="text-center p-4">
-                      <div className="link-card-icon text-primary mb-3">
-                        {getIcon(link.icon)}
-                      </div>
-                      <h5 className="mb-0">{isHindi ? link.titleHi : link.title}</h5>
-                      <FaExternalLinkAlt className="mt-2 text-muted" size={14} />
-                    </CardBody>
-                  </Card>
-                </a>
-              ) : (
-                <Link to={link.link} className="text-decoration-none">
-                  <Card className="link-card h-100 border-0 shadow-sm hover-lift">
-                    <CardBody className="text-center p-4">
-                      <div className="link-card-icon text-primary mb-3">
-                        {getIcon(link.icon)}
-                      </div>
-                      <h5 className="mb-0">{isHindi ? link.titleHi : link.title}</h5>
-                    </CardBody>
-                  </Card>
-                </Link>
-              )}
-            </Col>
-          ))}
+          {links.map((link) => {
+            const CardContent = (
+              <Card
+                className="h-100 border-0 shadow-sm"
+                style={{
+                  transition: "all 0.25s ease",
+                  cursor: "pointer"
+                }}
+              >
+                <CardBody className="text-center p-4">
+                  <div
+                    className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                    style={{
+                      width: 70,
+                      height: 70,
+                      background: "rgba(13,110,253,0.1)",
+                      color: "var(--bs-primary)"
+                    }}
+                  >
+                    {getIcon(link.icon)}
+                  </div>
+
+                  <h5 className="fw-semibold mb-1">
+                    {isHindi ? link.titleHi : link.title}
+                  </h5>
+
+                  {link.external && (
+                    <small className="text-muted d-block mt-1">
+                      <FaExternalLinkAlt size={12} className="me-1" />
+                      External Link
+                    </small>
+                  )}
+                </CardBody>
+              </Card>
+            );
+
+            return (
+              <Col xl={3} lg={4} md={6} sm={12} key={link.id}>
+                {link.external ? (
+                  <a
+                    href={link.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-decoration-none"
+                  >
+                    {CardContent}
+                  </a>
+                ) : (
+                  <Link to={link.link} className="text-decoration-none">
+                    {CardContent}
+                  </Link>
+                )}
+              </Col>
+            );
+          })}
         </Row>
       </Container>
     </section>
@@ -88,4 +122,3 @@ const ImportantLinksSection = () => {
 };
 
 export default ImportantLinksSection;
-
