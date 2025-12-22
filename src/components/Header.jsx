@@ -96,7 +96,7 @@ const Header = () => {
           <div className="d-flex justify-content-between align-items-center flex-wrap">
             <div className="d-flex align-items-center gap-3">
               <img
-                src="/public/logo.png"
+                src="/public/Chhattisgarh.svg"
                 alt={isHindi ? 'छत्तीसगढ़ लोगो' : 'CG Logo'}
                 height="70"
               />
@@ -107,7 +107,7 @@ const Header = () => {
             </div>
             <div className="d-flex align-items-center gap-2">
               <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/150px-Emblem_of_India.svg.png" 
+                src="/public/Emblem_of_India.svg" 
                 alt="India Emblem" 
                 height="70"
               />

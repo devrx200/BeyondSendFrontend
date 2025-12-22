@@ -1,165 +1,142 @@
-import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, CardBody, CardTitle, Badge, Button } from 'reactstrap';
-import { Link } from 'react-router-dom';
-import { 
-  FaNewspaper, FaArrowRight, FaCalendar, FaExternalLinkAlt,
-  FaUniversity, FaSchool, FaBuilding, FaUserGraduate,
-  FaVoteYea, FaMoneyBillWave, FaBookReader, FaExclamationCircle, FaInfoCircle
-} from 'react-icons/fa';
-import { useLanguage } from '../contexts/LanguageContext';
-import DataService from '../services/DataService';
+import { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Badge,
+} from "reactstrap";
+import { Link } from "react-router-dom";
+import {
+  FaNewspaper,
+  FaArrowRight,
+  FaCalendar,
+} from "react-icons/fa";
+import { useLanguage } from "../contexts/LanguageContext";
+import DataService from "../services/DataService";
 
 const AfterCarousel = () => {
   const { isHindi } = useLanguage();
+
   const [latestNews, setLatestNews] = useState([]);
-  const [importantLinks, setImportantLinks] = useState([]);
   const [ministerMessage, setMinisterMessage] = useState(null);
   const [quickUpdates, setQuickUpdates] = useState([]);
   const [stats, setStats] = useState([]);
 
+  /* ---------- STATIC STATS DATA ---------- */
+  const statsData = [
+    {
+      value: 15,
+      labelEn: "Universities",
+      labelHi: "विश्वविद्यालय",
+      icon: "bi-bank",
+      bg: "bg-primary",
+    },
+    {
+      value: 135,
+      labelEn: "Government Colleges",
+      labelHi: "सरकारी महाविद्यालय",
+      icon: "bi-building",
+      bg: "bg-danger",
+    },
+    {
+      value: 296,
+      labelEn: "Private Colleges",
+      labelHi: "निजी महाविद्यालय",
+      icon: "bi-buildings",
+      bg: "bg-info",
+    },
+    {
+      value: 325000,
+      labelEn: "Total Students",
+      labelHi: "कुल छात्र",
+      icon: "bi-mortarboard",
+      bg: "bg-success",
+    },
+  ];
+
+  /* ---------- LOAD DATA ---------- */
   useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const [news, message, updates] = await Promise.all([
+          DataService.getLatestNews(),
+          DataService.getMinisterMessage(),
+          DataService.getQuickUpdates(),
+        ]);
+
+        setLatestNews(news || []);
+        setMinisterMessage(message);
+        setQuickUpdates(updates || []);
+        setStats(statsData);
+      } catch (err) {
+        console.error("AfterCarousel Error:", err);
+      }
+    };
+
     loadContent();
   }, []);
 
-  const loadContent = async () => {
-    try {
-      const [news, links, message, updates, statistics] = await Promise.all([
-        DataService.getLatestNews(),
-        DataService.getImportantLinks(),
-        DataService.getMinisterMessage(),
-        DataService.getQuickUpdates(),
-        DataService.getDepartmentStats()
-      ]);
-      setLatestNews(news);
-      setImportantLinks(links);
-      setMinisterMessage(message);
-      setQuickUpdates(updates);
-      setStats(statistics);
-    } catch (error) {
-      console.error('Error loading after-carousel content:', error);
-    }
-  };
-
-  const getIcon = (iconName) => {
-    const icons = {
-      FaVoteYea: <FaVoteYea />,
-      FaUserGraduate: <FaUserGraduate />,
-      FaMoneyBillWave: <FaMoneyBillWave />,
-      FaBookReader: <FaBookReader />,
-      FaExclamationCircle: <FaExclamationCircle />,
-      FaInfoCircle: <FaInfoCircle />,
-      FaUniversity: <FaUniversity />,
-      FaSchool: <FaSchool />,
-      FaBuilding: <FaBuilding />
-    };
-    return icons[iconName] || <FaInfoCircle />;
-  };
-
   return (
     <div className="after-carousel-section">
-      {/* Statistics Section */}
+
+      {/* ---------- STATS ---------- */}
       <section className="stats-section py-5 bg-light">
         <Container>
           <Row className="g-4">
-            {/* Universities Card */}
-            <Col lg={3} md={6}>
-              <Card className="stat-card-modern border-0 shadow-sm h-100">
-                <CardBody className="p-4">
-                  <div className="stat-icon-wrapper mb-3" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
-                    <FaUniversity size={24} className="text-white" />
-                  </div>
-                  <h2 className="stat-number mb-2">15</h2>
-                  <p className="stat-label text-muted mb-0">
-                    {isHindi ? 'विश्वविद्यालय' : 'Universities'}
-                  </p>
-                </CardBody>
-              </Card>
-            </Col>
+            {stats.map((item, i) => (
+              <Col lg="3" md="6" key={i}>
+                <Card className="border-0 shadow-sm h-100 text-center rounded-4">
+                  <CardBody>
+                    <div
+                      className={`d-inline-flex align-items-center justify-content-center rounded-4 ${item.bg} mb-3`}
+                      style={{ width: 64, height: 64 }}
+                    >
+                      <i className={`bi ${item.icon} fs-3 text-white`} />
+                    </div>
 
-            {/* Government Colleges Card */}
-            <Col lg={3} md={6}>
-              <Card className="stat-card-modern border-0 shadow-sm h-100">
-                <CardBody className="p-4">
-                  <div className="stat-icon-wrapper mb-3" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}>
-                    <FaSchool size={24} className="text-white" />
-                  </div>
-                  <h2 className="stat-number mb-2">135</h2>
-                  <p className="stat-label text-muted mb-0">
-                    {isHindi ? 'सरकारी महाविद्यालय' : 'Government Colleges'}
-                  </p>
-                </CardBody>
-              </Card>
-            </Col>
-
-            {/* Private Colleges Card */}
-            <Col lg={3} md={6}>
-              <Card className="stat-card-modern border-0 shadow-sm h-100">
-                <CardBody className="p-4">
-                  <div className="stat-icon-wrapper mb-3" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}>
-                    <FaBuilding size={24} className="text-white" />
-                  </div>
-                  <h2 className="stat-number mb-2">296</h2>
-                  <p className="stat-label text-muted mb-0">
-                    {isHindi ? 'निजी महाविद्यालय' : 'Private Colleges'}
-                  </p>
-                </CardBody>
-              </Card>
-            </Col>
-
-            {/* Total Students Card */}
-            <Col lg={3} md={6}>
-              <Card className="stat-card-modern border-0 shadow-sm h-100">
-                <CardBody className="p-4">
-                  <div className="stat-icon-wrapper mb-3" style={{background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'}}>
-                    <FaUserGraduate size={24} className="text-white" />
-                  </div>
-                  <h2 className="stat-number mb-2">3,25,000</h2>
-                  <p className="stat-label text-muted mb-0">
-                    {isHindi ? 'कुल छात्र' : 'Total Students'}
-                  </p>
-                </CardBody>
-              </Card>
-            </Col>
+                    <h2 className="fw-bold">{item.value}</h2>
+                    <p className="text-muted mb-0">
+                      {isHindi ? item.labelHi : item.labelEn}
+                    </p>
+                  </CardBody>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </Container>
       </section>
 
-      {/* Main Content Section */}
-      <section className="main-content-section py-5">
+      {/* ---------- MAIN CONTENT ---------- */}
+      <section className="py-5">
         <Container>
           <Row className="g-4">
+
             {/* Latest News */}
             <Col lg={4} md={6}>
-              <Card className="h-100 border-0 shadow-sm hover-lift">
+              <Card className="h-100 shadow-sm">
                 <CardBody>
-                  <div className="d-flex align-items-center mb-3">
-                    <FaNewspaper size={30} className="text-primary me-2" />
-                    <CardTitle tag="h4" className="mb-0">
-                      {isHindi ? 'ताजा खबर' : 'Latest News'}
-                    </CardTitle>
-                  </div>
-                  <div className="news-list">
-                    {latestNews.slice(0, 5).map((news) => (
-                      <div key={news.id} className="news-item mb-3 pb-3 border-bottom">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <Link to={news.link} className="news-title text-decoration-none">
-                            <h6 className="mb-1">{isHindi ? news.titleHi : news.title}</h6>
-                          </Link>
-                          {news.isNew && (
-                            <Badge color="danger" pill className="ms-2">
-                              {isHindi ? 'नया' : 'NEW'}
-                            </Badge>
-                          )}
-                        </div>
-                        <small className="text-muted">
-                          <FaCalendar className="me-1" />
-                          {new Date(news.date).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
-                        </small>
-                      </div>
-                    ))}
-                  </div>
+                  <CardTitle tag="h4">
+                    <FaNewspaper className="me-2 text-primary" />
+                    {isHindi ? "ताजा खबर" : "Latest News"}
+                  </CardTitle>
+
+                  {(latestNews || []).slice(0, 5).map(news => (
+                    <div key={news.id} className="border-bottom mb-2 pb-2">
+                      <Link to={news.link} className="text-decoration-none">
+                        <h6>{isHindi ? news.titleHi : news.title}</h6>
+                      </Link>
+                      <small className="text-muted">
+                        <FaCalendar className="me-1" />
+                        {new Date(news.date).toLocaleDateString("en-IN")}
+                      </small>
+                    </div>
+                  ))}
+
                   <Link to="/notice-board/news" className="btn btn-outline-primary btn-sm w-100 mt-2">
-                    {isHindi ? 'और देखें' : 'View All'} <FaArrowRight className="ms-1" />
+                    {isHindi ? "और देखें" : "View All"} <FaArrowRight />
                   </Link>
                 </CardBody>
               </Card>
@@ -167,29 +144,37 @@ const AfterCarousel = () => {
 
             {/* Minister Message */}
             <Col lg={4} md={6}>
-              <Card className="h-100 border-0 shadow-sm hover-lift minister-card">
-                <CardBody className="text-center">
-                  <CardTitle tag="h4" className="mb-3 text-primary">
-                    {isHindi ? 'मंत्री जी का संदेश' : "Minister's Message"}
+              <Card className="h-100 shadow-sm text-center">
+                <CardBody>
+                  <CardTitle tag="h4">
+                    {isHindi ? "मंत्री जी का संदेश" : "Minister's Message"}
                   </CardTitle>
+
                   {ministerMessage && (
                     <>
-                      <div className="minister-image-wrapper mb-3">
-                        <img
-                          src={ministerMessage.image}
-                          alt={isHindi ? ministerMessage.nameHi : ministerMessage.name}
-                          className="minister-image rounded shadow"
-                          onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/200x250?text=Minister';
-                          }}
-                        />
-                      </div>
-                      <h5 className="mb-1 fw-bold">{isHindi ? ministerMessage.nameHi : ministerMessage.name}</h5>
-                      <p className="text-muted small mb-3">
-                        {isHindi ? ministerMessage.designationHi : ministerMessage.designation}
+                      <img
+                        src={ministerMessage.image}
+                        alt="Minister"
+                        className="img-fluid rounded mb-3"
+                        onError={(e) =>
+                          (e.target.src =
+                            "https://via.placeholder.com/200x250")
+                        }
+                      />
+                      <h5>
+                        {isHindi
+                          ? ministerMessage.nameHi
+                          : ministerMessage.name}
+                      </h5>
+                      <p className="small text-muted">
+                        {isHindi
+                          ? ministerMessage.designationHi
+                          : ministerMessage.designation}
                       </p>
-                      <p className="minister-message text-start small">
-                        "{isHindi ? ministerMessage.messageHi : ministerMessage.message}"
+                      <p className="small">
+                        “{isHindi
+                          ? ministerMessage.messageHi
+                          : ministerMessage.message}”
                       </p>
                     </>
                   )}
@@ -197,32 +182,33 @@ const AfterCarousel = () => {
               </Card>
             </Col>
 
-            {/* Quick Updates */}
-            <Col lg={4} md={12}>
-              <Card className="h-100 border-0 shadow-sm hover-lift">
+            {/* Notice Board */}
+            <Col lg={4}>
+              <Card className="h-100 shadow-sm">
                 <CardBody>
-                  <CardTitle tag="h4" className="mb-3 text-primary">
-                    {isHindi ? 'सूचना पट्ट' : 'Notice Board'}
+                  <CardTitle tag="h4">
+                    {isHindi ? "सूचना पट्टिका" : "Notice Board"}
                   </CardTitle>
-                  <div className="updates-list">
-                    {quickUpdates.map((update) => (
-                      <div key={update.id} className="update-item mb-3 p-2 bg-light rounded">
-                        <Link to={update.link} className="text-decoration-none">
-                          <h6 className="mb-1 text-dark">{isHindi ? update.titleHi : update.title}</h6>
-                          <small className="text-muted">
-                            <FaCalendar className="me-1" />
-                            {new Date(update.date).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
-                          </small>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                  <Link to="/notice-board" className="btn btn-outline-primary btn-sm w-100 mt-2">
-                    {isHindi ? 'सभी सूचनाएं देखें' : 'View All Notices'} <FaArrowRight className="ms-1" />
+
+                  {(quickUpdates || []).map(update => (
+                    <Link
+                      key={update.id}
+                      to={update.link}
+                      className="d-block mb-2 text-decoration-none"
+                    >
+                      <h6 className="mb-0">
+                        {isHindi ? update.titleHi : update.title}
+                      </h6>
+                    </Link>
+                  ))}
+
+                  <Link to="/notice-board" className="btn btn-outline-primary btn-sm w-100">
+                    {isHindi ? "सभी सूचनाएं" : "View All Notices"} <FaArrowRight />
                   </Link>
                 </CardBody>
               </Card>
             </Col>
+
           </Row>
         </Container>
       </section>
@@ -231,4 +217,3 @@ const AfterCarousel = () => {
 };
 
 export default AfterCarousel;
-
