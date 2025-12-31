@@ -28,7 +28,9 @@ import {
 
 import { useLanguage } from "../../contexts/LanguageContext";
 import HeroSlider from "../../components/HeroSlider";
+import NoticeTicker from "../../components/NoticeTicker";
 import AfterCarousel from "../../components/AfterCarousel";
+import AboutSection from "../../components/AboutSection";
 import ImportantLinksSection from "../../components/ImportantLinksSection";
 
 const Home = () => {
@@ -149,7 +151,9 @@ const Home = () => {
   return (
     <div>
       <HeroSlider />
+      <NoticeTicker />
       <AfterCarousel />
+      <AboutSection/>
 
       {/* QUICK LINKS */}
       <section className="py-5 bg-light">

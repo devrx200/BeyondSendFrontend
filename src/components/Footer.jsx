@@ -148,25 +148,30 @@ const Footer = () => {
       </Container>
 
       {/* Bottom Bar */}
-      <div className="footer-bottom py-2 bg-dark">
+      <div className="footer-bottom py-2 bg-black">
         <Container>
           <Row className="align-items-center">
-            <Col md={12} className="text-center mb-3">
+            <Col md={12} className="text-center ">
               <small>
                 {t('copyright')} - {t('officialWebsite')}
               </small>
             </Col>
-            <Col md={12} className="text-center mb-3">
+            <Col md={12} className="text-center ">
               <small className="text-light">
                 {t('contentNote')}
               </small>
             </Col>
-            <Col md={12} className="text-center mb-3">
+            <Col md={12} className="text-center">
               <small>
                 {t('contactWebmaster')} - {isHindi ? 'आनंद चरपे (सहायक कंप्यूटर प्रोग्रामर)' : 'Anand Charpe (Assistant Computer Programmer)'}
                 <br />
                 {isHindi ? 'ई-मेल आईडी' : 'Email'}: wim.higheredu-cg@gov.in
               </small>
+              <br/>
+              {/* <hr className='m-0 p-0'/> */}
+              <strong>Managed By National Informatics Centre</strong>
+              <br/>
+              <img src="/public/nic-logo.jpg" height="50"  className='mb-2' alt="National Informatics Centre" />
             </Col>
             <hr/>
             <Col md={6} className="text-center text-md-start mb-2 mb-md-0">

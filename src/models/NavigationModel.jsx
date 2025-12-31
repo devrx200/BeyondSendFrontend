@@ -1,15 +1,7 @@
 // Navigation Menu Model with Bilingual Support
 // This matches the government website structure: https://highereducation.cg.gov.in/
 export const navigationMenus = [
-  {
-    id: 1,
-    title: 'Home',
-    titleHi: 'मुख्य पृष्ठ',
-    path: '/',
-    isExternal: false,
-    openInNewTab: false,
-    submenu: []
-  },
+
   {
     id: 2,
     title: 'About Us',

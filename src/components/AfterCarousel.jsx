@@ -10,7 +10,6 @@ import { useLanguage } from "../contexts/LanguageContext";
 const AfterCarousel = () => {
   const { isHindi } = useLanguage();
 
-  /* ---------- STATIC STATS DATA ---------- */
   const statsData = [
     {
       value: 15,
@@ -43,25 +42,23 @@ const AfterCarousel = () => {
   ];
 
   return (
-    <div className="after-carousel-section">
-      <section className="stats-section py-5 bg-light">
+    
+    <div className="after-carousel-section mt-2">
+      <section className="stats-section py-3 bg-light">
         <Container>
           <Row className="g-4">
             {statsData.map((item, i) => (
               <Col lg="3" md="6" key={i}>
                 <Card className="border-0 shadow-sm h-100 text-center rounded-4">
                   <CardBody>
-                    <div
-                      className={`d-inline-flex align-items-center justify-content-center rounded-4 ${item.bg} mb-3`}
-                      style={{ width: 64, height: 64 }}
-                    >
-                      <i className={`bi ${item.icon} fs-3 text-white`} />
+                    <div className={`rounded-4 d-flex aligen-item-center `}>
+                      <i className={`bi ${item.icon} fs-3 text-white ${item.bg} p-2 rounded`} />
+                      <h2 className="fw-bold ms-3 mt-0">{item.value}</h2>
                     </div>
-
-                    <h2 className="fw-bold">{item.value}</h2>
-                    <p className="text-muted mb-0">
+                    <hr className="mt-1 p-0" />
+                    <strong className="text-muted mb-0 mt-0">
                       {isHindi ? item.labelHi : item.labelEn}
-                    </p>
+                    </strong>
                   </CardBody>
                 </Card>
               </Col>

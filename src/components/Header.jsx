@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Navbar,
-  NavbarBrand,
   NavbarToggler,
   Collapse,
   Nav,
@@ -13,206 +13,207 @@ import {
   DropdownMenu,
   DropdownItem,
   Container,
-  Input,
-  Button,
-  ButtonGroup
-} from 'reactstrap';
-import { FaSearch, FaPhone, FaEnvelope, FaTextHeight, FaLanguage } from 'react-icons/fa';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useAccessibility } from '../contexts/AccessibilityContext';
-import { translations } from '../data/translations';
-import DataService from '../services/DataService';
+  Button
+} from "reactstrap";
+import {
+  FaPhone,
+  FaEnvelope,
+  FaLanguage
+} from "react-icons/fa";
+import { FaHouse } from "react-icons/fa6";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useAccessibility } from "../contexts/AccessibilityContext";
+import { translations } from "../data/translations";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const { language, toggleLanguage, isHindi } = useLanguage();
   const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibility();
 
-  useEffect(() => {
-    loadMenuItems();
-  }, []);
+  const t = (key) => translations[language][key] || key;
 
-  const loadMenuItems = async () => {
+  const fetchMenus = async () => {
     try {
-      const data = await DataService.getNavigationMenus();
-      setMenuItems(data);
-    } catch (error) {
-      console.error('Error loading menu items:', error);
+      setLoading(true);
+      const res = await axios.get(`${API_URL}/menu-list`);
+      setMenuItems(res.data.data || []);
+    } catch (err) {
+      console.error("Menu fetch error", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const toggle = () => setIsOpen(!isOpen);
+  useEffect(() => {
+    fetchMenus();
+  }, []);
 
-
-  const t = (key) => translations[language][key] || key;
+  if (loading) return null;
 
   return (
     <>
       {/* Skip to Main Content */}
-      <a href="#main-content" className="skip-link">{t('skipToMain')}</a>
+      <a href="#main-content" className="skip-link">
+        {t("skipToMain")}
+      </a>
 
       {/* Top Bar */}
-      <div className="top-bar py-2">
+      <div className="top-bar border-bottom">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
             <div className="d-flex gap-3 small">
-              <span><FaPhone className="me-1" /> +91-771-2221234</span>
-              <span><FaEnvelope className="me-1" /> wim.higheredu-cg@gov.in</span>
+              <span>
+                <FaPhone className="me-1" /> +91-771-2221234
+              </span>
+              <span>
+                <FaEnvelope className="me-1" /> wim.higheredu-cg@gov.in
+              </span>
             </div>
+
             <div className="d-flex gap-3 align-items-center">
-              {/* Font Size Controls */}
               <div className="font-controls d-flex gap-1">
-                <Button size="sm" color="link" onClick={decreaseFontSize} title={t('decreaseFont')} className="font-btn">
-                  A
-                </Button>
-                <Button size="sm" color="link" onClick={resetFontSize} title={t('normalFont')} className="font-btn">
-                  A
-                </Button>
-                <Button size="sm" color="link" onClick={increaseFontSize} title={t('increaseFont')} className="font-btn">
-                  A+
-                </Button>
+                <Button size="sm" color="link" onClick={decreaseFontSize}>A</Button>
+                <Button size="sm" color="link" onClick={resetFontSize}>A</Button>
+                <Button size="sm" color="link" onClick={increaseFontSize}>A+</Button>
               </div>
-              <span className="text-white">|</span>
-              {/* Language Switcher */}
-              <Button size="sm" color="link" onClick={toggleLanguage} className="lang-btn" title={t('language')}>
+
+              <span>|</span>
+
+              <Button size="sm" color="link" onClick={toggleLanguage}>
                 <FaLanguage className="me-1" />
-                {isHindi ? 'English' : 'हिंदी'}
+                {isHindi ? "English" : "हिंदी"}
               </Button>
-              <span className="text-white">|</span>
-              <Link to="/accessibility" className="top-link">{t('accessibility')}</Link>
-              <span className="text-white">|</span>
-              <Link to="/sitemap" className="top-link">{t('sitemap')}</Link>
+
+              <span>|</span>
+              <Link to="/accessibility">{t("accessibility")}</Link>
+              <span>|</span>
+              <Link to="/sitemap">{t("sitemap")}</Link>
             </div>
           </div>
         </Container>
       </div>
 
       {/* Logo Bar */}
-      <div className="logo-bar py-3 border-bottom">
+      <div className="logo-bar py-1 border-bottom bg-light">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
             <div className="d-flex align-items-center gap-3">
               <img
                 src="/public/Chhattisgarh.svg"
-                alt={isHindi ? 'छत्तीसगढ़ लोगो' : 'CG Logo'}
+                alt="CG Logo"
                 height="70"
               />
               <div>
-                <h4 className="mb-0 fw-bold">{t('deptName')}</h4>
-                <p className="mb-0">{t('stateName')}</p>
+                <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
+                <p className="mb-0">{t("stateName")}</p>
               </div>
             </div>
-            <div className="d-flex align-items-center gap-2">
-              <img 
-                src="/public/Emblem_of_India.svg" 
-                alt="India Emblem" 
-                height="70"
-              />
-            </div>
+
+            <img
+              src="/public/Emblem_of_India.svg"
+              alt="India Emblem"
+              height="70"
+            />
           </div>
         </Container>
       </div>
 
       {/* Main Navigation */}
-      <Navbar color="white" expand="lg" className="shadow-sm main-navbar border-top border-dark border-2 ">
+      <Navbar expand="lg" className="shadow-sm border-top border-dark">
         <Container>
-          <NavbarToggler onClick={toggle} />
+          <NavbarToggler onClick={() => setIsOpen(!isOpen)} />
+
           <Collapse isOpen={isOpen} navbar>
             <Nav className="me-auto" navbar>
-              {menuItems.map((item) => {
-                // Handle external links without submenu
-                if (item.isExternal && (!item.submenu || item.submenu.length === 0)) {
-                  return (
-                    <NavItem key={item.id}>
-                      <NavLink
-                        href={item.path}
-                        target={item.openInNewTab ? '_blank' : '_self'}
-                        rel={item.openInNewTab ? 'noopener noreferrer' : ''}
-                        className="fw-semibold"
-                      >
-                        {isHindi ? item.titleHi : item.title}
-                        {item.openInNewTab && <span className="ms-1">↗</span>}
-                      </NavLink>
-                    </NavItem>
-                  );
-                }
+              <NavItem>
+                <NavLink tag={Link} to="/" className="fw-semibold">
+                  <FaHouse className="me-1" />
+                  {t("home")}
+                </NavLink>
+              </NavItem>
 
-                // Handle menu items with submenu
-                if (item.submenu && item.submenu.length > 0) {
+              {menuItems.map((menu) => {
+                if (menu.submenu?.length) {
                   return (
-                    <UncontrolledDropdown nav inNavbar key={item.id} className="nav-dropdown-hover">
+                    <UncontrolledDropdown nav inNavbar key={menu._id}>
                       <DropdownToggle nav caret className="fw-semibold">
-                        {isHindi ? item.titleHi : item.title}
+                        {isHindi ? menu.titleHi : menu.titleEng}
                       </DropdownToggle>
-                      <DropdownMenu>
-                        {item.submenu.map((subItem) => {
-                          // Handle nested submenu
-                          if (subItem.submenu && subItem.submenu.length > 0) {
-                            return (
-                              <UncontrolledDropdown key={subItem.id} direction="end" className="nested-dropdown-hover">
-                                <DropdownToggle tag="div" className="dropdown-item dropdown-toggle-nested" style={{ cursor: 'pointer' }}>
-                                  {isHindi ? subItem.titleHi : subItem.title}
-                                  <span className="float-end">›</span>
-                                </DropdownToggle>
-                                <DropdownMenu className="nested-dropdown">
-                                  {subItem.submenu.map((nestedItem) => {
-                                    if (nestedItem.isExternal) {
-                                      return (
-                                        <DropdownItem
-                                          key={nestedItem.id}
-                                          href={nestedItem.path}
-                                          target={nestedItem.openInNewTab ? '_blank' : '_self'}
-                                          rel={nestedItem.openInNewTab ? 'noopener noreferrer' : ''}
-                                        >
-                                          {isHindi ? nestedItem.titleHi : nestedItem.title}
-                                          {nestedItem.openInNewTab && <span className="ms-1">↗</span>}
-                                        </DropdownItem>
-                                      );
-                                    }
-                                    return (
-                                      <DropdownItem key={nestedItem.id} tag={Link} to={nestedItem.path}>
-                                        {isHindi ? nestedItem.titleHi : nestedItem.title}
-                                      </DropdownItem>
-                                    );
-                                  })}
-                                </DropdownMenu>
-                              </UncontrolledDropdown>
-                            );
-                          }
 
-                          // Handle regular submenu item
-                          if (subItem.isExternal) {
-                            return (
-                              <DropdownItem
-                                key={subItem.id}
-                                href={subItem.path}
-                                target={subItem.openInNewTab ? '_blank' : '_self'}
-                                rel={subItem.openInNewTab ? 'noopener noreferrer' : ''}
+                      <DropdownMenu>
+                        {menu.submenu.map((sub) =>
+                          sub.submenu?.length ? (
+                            <UncontrolledDropdown key={sub._id} direction="end">
+                              <DropdownToggle
+                                tag="div"
+                                className="dropdown-item"
+                                style={{ cursor: "pointer" }}
                               >
-                                {isHindi ? subItem.titleHi : subItem.title}
-                                {subItem.openInNewTab && <span className="ms-1">↗</span>}
-                              </DropdownItem>
-                            );
-                          }
-                          return (
-                            <DropdownItem key={subItem.id} tag={Link} to={subItem.path}>
-                              {isHindi ? subItem.titleHi : subItem.title}
+                                {isHindi ? sub.titleHi : sub.titleEng}
+                                <span className="float-end">›</span>
+                              </DropdownToggle>
+
+                              <DropdownMenu>
+                                {sub.submenu.map((child) =>
+                                  child.isExternal ? (
+                                    <DropdownItem
+                                      key={child._id}
+                                      href={child.path}
+                                      target={child.openInNewTab ? "_blank" : "_self"}
+                                    >
+                                      {isHindi ? child.titleHi : child.titleEng}
+                                    </DropdownItem>
+                                  ) : (
+                                    <DropdownItem
+                                      key={child._id}
+                                      tag={Link}
+                                      to={child.path}
+                                    >
+                                      {isHindi ? child.titleHi : child.titleEng}
+                                    </DropdownItem>
+                                  )
+                                )}
+                              </DropdownMenu>
+                            </UncontrolledDropdown>
+                          ) : sub.isExternal ? (
+                            <DropdownItem
+                              key={sub._id}
+                              href={sub.path}
+                              target={sub.openInNewTab ? "_blank" : "_self"}
+                            >
+                              {isHindi ? sub.titleHi : sub.titleEng}
                             </DropdownItem>
-                          );
-                        })}
+                          ) : (
+                            <DropdownItem key={sub._id} tag={Link} to={sub.path}>
+                              {isHindi ? sub.titleHi : sub.titleEng}
+                            </DropdownItem>
+                          )
+                        )}
                       </DropdownMenu>
                     </UncontrolledDropdown>
                   );
                 }
 
-                // Handle regular menu items without submenu
-                return (
-                  <NavItem key={item.id}>
-                    <NavLink tag={Link} to={item.path} className="fw-semibold">
-                      {isHindi ? item.titleHi : item.title}
+                return menu.isExternal ? (
+                  <NavItem key={menu._id}>
+                    <NavLink
+                      href={menu.path}
+                      target={menu.openInNewTab ? "_blank" : "_self"}
+                      className="fw-semibold"
+                    >
+                      {isHindi ? menu.titleHi : menu.titleEng}
+                    </NavLink>
+                  </NavItem>
+                ) : (
+                  <NavItem key={menu._id}>
+                    <NavLink tag={Link} to={menu.path} className="fw-semibold">
+                      {isHindi ? menu.titleHi : menu.titleEng}
                     </NavLink>
                   </NavItem>
                 );
@@ -226,4 +227,3 @@ const Header = () => {
 };
 
 export default Header;
-

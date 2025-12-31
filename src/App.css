@@ -1992,3 +1992,18 @@ main {
   color: var(--primary-dark);
   border-left: 4px solid var(--info);
 }
+
+/* Notice Ticker */
+.ticker-track {
+  width: max-content;
+  animation: ticker-scroll 22s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
