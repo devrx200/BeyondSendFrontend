@@ -15,11 +15,7 @@ import {
   Container,
   Button
 } from "reactstrap";
-import {
-  FaPhone,
-  FaEnvelope,
-  FaLanguage
-} from "react-icons/fa";
+import {  FaPhone, FaEnvelope,  FaLanguage, FaUniversalAccess, FaSitemap } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -67,34 +63,73 @@ const Header = () => {
       <div className="top-bar border-bottom">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
-            <div className="d-flex gap-3 small">
-              <span>
-                <FaPhone className="me-1" /> +91-771-2221234
+            {/* LEFT INFO */}
+            <div className="d-flex align-items-center gap-4 small text-dark">
+              <span className="d-flex align-items-center text-white fw-bold">
+                <FaPhone className="me-1 text-white" />
+                +91-771-2221234
               </span>
-              <span>
-                <FaEnvelope className="me-1" /> wim.higheredu-cg@gov.in
+              <span className="d-flex align-items-center text-white fw-bold">
+                <FaEnvelope className="me-1 text-white" />
+                wim.higheredu-cg@gov.in
               </span>
             </div>
 
-            <div className="d-flex gap-3 align-items-center">
-              <div className="font-controls d-flex gap-1">
-                <Button size="sm" color="link" onClick={decreaseFontSize}>A</Button>
-                <Button size="sm" color="link" onClick={resetFontSize}>A</Button>
-                <Button size="sm" color="link" onClick={increaseFontSize}>A+</Button>
+            {/* RIGHT CONTROLS */}
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+
+              {/* FONT SIZE CONTROLS */}
+              <div className="font-controls d-flex align-items-center gap-1">
+                <Button size="sm" className="px-2 fw-bold" color="light" onClick={decreaseFontSize} title="Decrease Font Size">
+                  A-
+                </Button>
+                <Button size="sm" className="px-2 fw-bold" color="light" onClick={resetFontSize} title="Reset Font Size">
+                  A
+                </Button>
+                <Button size="sm" className="px-2 fw-bold" color="light" onClick={increaseFontSize} title="Increase Font Size">
+                  A+
+                </Button>
               </div>
 
-              <span>|</span>
+              <span className="divider">|</span>
 
-              <Button size="sm" color="link" onClick={toggleLanguage}>
-                <FaLanguage className="me-1" />
-                {isHindi ? "English" : "हिंदी"}
+              {/* LANGUAGE SWITCH */}
+              <Button
+                size="sm"
+                color="light"
+                onClick={toggleLanguage}
+                className="d-flex align-items-center gap-1 px-2"
+                title="Change language"
+              >
+                <FaLanguage />
+                <span>{isHindi ? "English" : "हिंदी"}</span>
               </Button>
 
-              <span>|</span>
-              <Link to="/accessibility">{t("accessibility")}</Link>
-              <span>|</span>
-              <Link to="/sitemap">{t("sitemap")}</Link>
+              <span className="divider">|</span>
+
+              {/* ACCESSIBILITY */}
+              <Link
+                to="/accessibility"
+                className="top-link d-flex align-items-center gap-1 fw-bold"
+              >
+                <FaUniversalAccess />
+                <span>{t("accessibility")}</span>
+              </Link>
+
+              <span className="divider">|</span>
+
+              {/* SITEMAP */}
+              <Link
+                to="/sitemap"
+                className="top-link d-flex align-items-center gap-1 fw-bold"
+              >
+                <FaSitemap />
+                <span>{t("sitemap")}</span>
+              </Link>
+
             </div>
+
+
           </div>
         </Container>
       </div>
@@ -133,7 +168,7 @@ const Header = () => {
             <Nav className="me-auto" navbar>
               <NavItem>
                 <NavLink tag={Link} to="/" className="fw-semibold">
-                  <FaHouse className="me-1" />
+                  <FaHouse className="me-1 fs-5 mb-2 " />
                   {t("home")}
                 </NavLink>
               </NavItem>
