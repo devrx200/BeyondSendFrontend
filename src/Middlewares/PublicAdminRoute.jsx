@@ -21,7 +21,7 @@ const PublicAdminRoute = ({ redirectTo = "/admin/dashboard" }) => {
     const validateToken = async () => {
       try {
         const res = await axios.post(
-          `${API_URL}/check-auth-token`,
+          `${API_URL}/api/check-auth-token`,
           { token }
         );
 
