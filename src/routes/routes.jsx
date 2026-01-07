@@ -33,8 +33,9 @@ import GalleryManagement from "../views/Admin/GalleryManagement";
 import ImageMaster from "../views/Admin/ImageMaster"; 
 
 /* AUTH MIDDLEWARE */
-import AuthMiddleware from "../../Middlewares/AuthMiddleware";
-import PublicAdminRoute from "../../Middlewares/PublicAdminRoute";
+import AuthMiddleware from "../Middlewares/AuthMiddleware";
+import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
+
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
   <div className="app-wrapper d-flex flex-column min-vh-100">
