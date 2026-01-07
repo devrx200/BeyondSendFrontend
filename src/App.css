@@ -996,6 +996,7 @@ main {
   padding: 2rem;
   transition: all 0.3s ease;
   background: #f8f9fa;
+    overflow: auto; 
 }
 
 .admin-sidebar.collapsed ~ .admin-main-content {
@@ -1314,6 +1315,50 @@ main {
 /* ========================================
    RESPONSIVE DESIGN
    ======================================== */
+/* ===============================
+   FORCE SCROLLABLE ADMIN SIDEBAR
+   =============================== */
+
+/* Body must NOT block vertical scroll */
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Admin wrapper full height */
+.admin-wrapper {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Layout height calculation */
+.admin-layout {
+  height: calc(100vh - 60px); /* navbar height */
+  overflow: hidden;
+}
+
+/* Sidebar fixed height + scroll */
+.admin-sidebar {
+  position: fixed !important;
+  top: 60px !important;
+  left: 0;
+  height: calc(100vh - 60px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Sidebar nav must stretch */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Main content scroll separately */
+.admin-main-content {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
 
 @media (max-width: 768px) {
   .stat-count {
