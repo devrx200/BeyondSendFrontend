@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   ListGroup,
@@ -17,15 +17,7 @@ import {
   FaBars as FaMenu
 } from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
-
-/* ===== ADMIN PROFILE ===== */
-const adminProfile = {
-  name: "Department Admin",
-  designation: "System Administrator",
-  role: "HE-Admin",
-  avatar:
-    "https://ui-avatars.com/api/?name=HE+Admin&background=6610f2&color=fff"
-};
+import { jwtDecode } from "jwt-decode";
 
 /* ===== ADMIN MENU ===== */
 const adminMenu = [
@@ -87,8 +79,52 @@ const adminMenu = [
 ];
 
 const AdminSidebar = ({ collapsed }) => {
-  const [openMenu, setOpenMenu] = useState(null);
   const { isHindi } = useLanguage();
+
+  const [openMenu, setOpenMenu] = useState(null);
+  const [decoded, setDecoded] = useState(null);
+  const [expiresIn, setExpiresIn] = useState(null);
+
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("authToken");
+    if (!token) return;
+
+    try {
+      const payload = jwtDecode(token);
+      setDecoded(payload);
+      console.log(payload);
+    } catch {
+      setDecoded(null);
+    }
+  }, []);
+
+
+  useEffect(() => {
+    if (!decoded?.exp) return;
+
+    const timer = setInterval(() => {
+      const remaining = decoded.exp * 1000 - Date.now();
+
+      if (remaining <= 0) {
+        clearInterval(timer);
+        setExpiresIn(null);
+        return;
+      }
+
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+
+      setExpiresIn(
+        `${h.toString().padStart(2, "0")}:${m
+          .toString()
+          .padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [decoded]);
 
   return (
     <div
@@ -97,40 +133,51 @@ const AdminSidebar = ({ collapsed }) => {
         width: collapsed ? "80px" : "260px",
         height: "100vh",
         background: "linear-gradient(180deg, #6d91fd, #1cc88a)",
-        overflow: "hidden" 
+        overflow: "hidden"
       }}
     >
-      {/* ===== PROFILE (FIXED) ===== */}
-      <div className="text-center p-3 border-bottom border-light flex-shrink-0">
+
+      <div className="text-center p-3 border-bottom border-light">
         <img
-          src={adminProfile.avatar}
+          src={
+            decoded?.profileImage ||
+            "https://ui-avatars.com/api/?name=Admin&background=6610f2&color=fff"
+          }
           alt="Admin"
           className="rounded mb-2 border border-2 border-white"
           width="45"
           height="45"
         />
 
-        {!collapsed && (
+        {!collapsed && decoded && (
           <>
-            <h6 className="mb-0 fw-bold">{adminProfile.name}</h6>
+            <h6 className="mb-0 fw-bold">{decoded.name }</h6>
             <small className="d-block opacity-75">
-              {adminProfile.designation}
+              {decoded.userDesignations}
             </small>
+
             <Badge color="dark" className="mt-1">
-              {adminProfile.role}
+              {decoded.role}
             </Badge>
+
+            {expiresIn && (
+              <div className="mt-2 text-warning fw-bold">
+                Session Expires In {""}
+            
+                {expiresIn}
+              </div>
+            )}
           </>
         )}
       </div>
 
-      {/* ===== MENU SCROLL AREA ONLY ===== */}
-      <div
-        className="flex-grow-1"
-        style={{
-          overflowY: "auto",   // ✅ SCROLL ONLY MENU
-          overflowX: "hidden"
-        }}
-      >
+      <div className="text-center p-3 border-bottom border-light">
+        <small className="d-block opacity-75">
+          Department of Higher Education, Government of Chhattisgarh
+        </small>
+      </div>
+
+      <div className="flex-grow-1" style={{ overflowY: "auto" }}>
         <ListGroup flush className="mt-2">
           {adminMenu.map((item) => {
             const Icon = item.icon;
@@ -156,11 +203,8 @@ const AdminSidebar = ({ collapsed }) => {
                   onClick={() =>
                     setOpenMenu(openMenu === item.id ? null : item.id)
                   }
-                  className="border-0 text-white d-flex justify-content-between align-items-center"
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    cursor: "pointer"
-                  }}
+                  className="border-0 text-white d-flex justify-content-between"
+                  style={{ background: "rgba(255,255,255,0.1)" }}
                 >
                   <span className="d-flex align-items-center gap-2">
                     <Icon />
@@ -168,7 +212,11 @@ const AdminSidebar = ({ collapsed }) => {
                   </span>
 
                   {!collapsed &&
-                    (openMenu === item.id ? <FaChevronDown /> : <FaChevronRight />)}
+                    (openMenu === item.id ? (
+                      <FaChevronDown />
+                    ) : (
+                      <FaChevronRight />
+                    ))}
                 </ListGroupItem>
 
                 <Collapse isOpen={!collapsed && openMenu === item.id}>
