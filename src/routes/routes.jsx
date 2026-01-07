@@ -30,6 +30,7 @@ import NewsManagement from "../views/Admin/NewsManagement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
+import ImageMaster from "../views/Admin/ImageMaster"; 
 
 /* AUTH MIDDLEWARE */
 import AuthMiddleware from "../../Middlewares/AuthMiddleware";
@@ -76,7 +77,7 @@ const AppRoutes = () => {
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
-
+          <Route path="image-master" element={<ImageMaster />} />
           <Route path="menu" element={<AuthMiddleware allowedRoles={["ADMIN"]} />}>
             <Route index element={<MenuManagement />} />
           </Route>
