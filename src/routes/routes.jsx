@@ -23,6 +23,7 @@ import Gallery from '../views/pages/Gallery';
 import GenericPage from '../views/pages/GenericPage';
 import AdminLogin from '../views/Admin/AdminLogin';
 import AdminDashboard from '../views/Admin/AdminDashboard';
+import ImageMaster from '../views/Admin/ImageMaster';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -104,7 +105,6 @@ const AppRoutes = () => {
       <Route path="/notice-board/orders/:type" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/notice-board/minutes" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/notice-board/advertisements" element={<MainLayout><NoticeBoard /></MainLayout>} />
-
       {/* Placeholder Routes */}
       <Route path="/schemes" element={<MainLayout><GenericPage title="Schemes" titleHi="योजनाएं" content={<p>Scholarship and welfare schemes...</p>} contentHi={<p>छात्रवृत्ति और कल्याण योजनाएं...</p>} /></MainLayout>} />
       <Route path="/help" element={<MainLayout><Accessibility /></MainLayout>} />
@@ -113,7 +113,7 @@ const AppRoutes = () => {
 
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLayout><AdminLogin /></AdminLayout>} />
-      <Route path="/admin/dashboard"  element={ <ProtectedRoute> <AdminLayout><AdminDashboard /></AdminLayout> </ProtectedRoute>}/>
+      <Route path="/admin/:tab"  element={ <ProtectedRoute> <AdminLayout><AdminDashboard /></AdminLayout> </ProtectedRoute>}/>
 
       {/* 404 */}
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />

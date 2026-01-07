@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState , useEffect} from 'react';
 import { Card, CardBody, Button, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -17,6 +16,8 @@ import TendersManagement from './TendersManagement';
 import RecruitmentManagement from './RecruitmentManagement';
 import GalleryManagement from './GalleryManagement';
 import PagesManagement from './PagesManagement';
+import { useNavigate, useLocation } from "react-router-dom";
+import ImageMaster from './ImageMaster';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -33,6 +34,9 @@ const AdminDashboard = () => {
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
+// const navigate = useNavigate();
+
+const location = useLocation();
 
   const menuItems = [
     { id: 'dashboard', icon: FaTachometerAlt, label: { en: 'Dashboard', hi: 'डैशबोर्ड' } },
@@ -50,12 +54,21 @@ const AdminDashboard = () => {
     { id: 'schemes', icon: FaFileAlt, label: { en: 'Schemes', hi: 'योजनाएं' } },
     { id: 'downloads', icon: FaFileAlt, label: { en: 'Downloads', hi: 'डाउनलोड' } },
     { id: 'menu', icon: FaMenu, label: { en: 'Menu Management', hi: 'मेनू प्रबंधन' } },
+     { id: 'image', icon: FaMenu, label: { en: 'Image Master', hi: 'इमेज मास्टर' } },
   ];
+useEffect(() => {
+  const currentPath = location.pathname.replace("/admin/", "");
+  if (currentPath) {
+    setActiveTab(currentPath);
+  } else {
+    setActiveTab("dashboard");
+  }
+}, [location.pathname]);
 
   return (
-    <div className="admin-wrapper">
+    <div className="admin-wrapper"  >
       {/* Top Navbar */}
-      <nav className="admin-navbar">
+      <nav className="admin-navbar" >
         <div className="admin-navbar-content">
           <div className="admin-navbar-left">
             <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
@@ -96,7 +109,10 @@ const AdminDashboard = () => {
               <NavItem key={item.id}>
                 <NavLink
                   active={activeTab === item.id}
-                  onClick={() => setActiveTab(item.id)}
+                 onClick={() => {
+  setActiveTab(item.id);
+  navigate(`/admin/${item.id}`);
+}}
                   className={`sidebar-link ${activeTab === item.id ? 'active' : ''}`}
                 >
                   <item.icon className="sidebar-icon" />
@@ -304,6 +320,11 @@ const AdminDashboard = () => {
               {/* Menu Management */}
               <TabPane tabId="menu">
                 <MenuManagement />
+              </TabPane>
+
+                {/* Image Master */}
+              <TabPane tabId="image">
+                <ImageMaster />
               </TabPane>
             </TabContent>
         </main>
