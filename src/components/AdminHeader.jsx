@@ -19,6 +19,7 @@ const AdminHeader = ({ toggleSidebar }) => {
   const { toggleLanguage, isHindi } = useLanguage();
   const [dateTime, setDateTime] = useState(new Date());
 
+  /* ---------- LIVE CLOCK ---------- */
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -27,12 +28,13 @@ const AdminHeader = ({ toggleSidebar }) => {
     return () => clearInterval(timer);
   }, []);
 
+  /* ---------- LOGOUT ---------- */
   const logout = async () => {
     const token = sessionStorage.getItem("authToken");
 
     const result = await Swal.fire({
       title: "Confirm Logout",
-      text: "Are you sure you want to logout from this session ?",
+      text: "Are you sure you want to logout from this session?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, Logout",
@@ -63,37 +65,52 @@ const AdminHeader = ({ toggleSidebar }) => {
     }
   };
 
-  const formattedDate = dateTime.toLocaleDateString("en-GB");
-  const formattedTime = dateTime.toLocaleTimeString("en-GB");
-  const dayName = dateTime.toLocaleDateString("en-US", { weekday: "long" });
+  /* ---------- INDIA TIME FORMAT ---------- */
+  const formattedDate = dateTime.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata"
+  });
+
+  const formattedTime = dateTime.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+
+  const dayName = dateTime.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long"
+  });
 
   return (
     <Navbar
       color="primary"
       dark
-      className="  px-3 d-flex justify-content-between align-items-center "
-
+      className="px-3 d-flex justify-content-between align-items-center"
     >
+      {/* LEFT */}
       <div className="d-flex align-items-center gap-2">
         <Button color="primary" onClick={toggleSidebar}>
           <FaBars />
         </Button>
 
-        <strong className="fw-bold text-dark d-flex align-items-center gap-1">
+        <strong className="fw-bold text-white d-flex align-items-center gap-1">
           <FaDashcube />
           H!.. 
         </strong>
       </div>
 
-      <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1  ">
+      {/* RIGHT */}
+      <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1">
         <div className="d-none d-md-flex align-items-center text-white fw-bold">
-          <FaClock className="me-2" />
+          <FaClock className="me-2 text-warning" />
           {dayName}, {formattedDate} | {formattedTime}
         </div>
 
         <Button
           size="sm"
-          color={isHindi ? "warning " : "primary"}
+          color={isHindi ? "warning" : "primary"}
           onClick={toggleLanguage}
         >
           <FaLanguage className="me-1" />
