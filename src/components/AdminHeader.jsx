@@ -32,7 +32,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     const result = await Swal.fire({
       title: "Confirm Logout",
-      text: "Are you sure you want to logout from this session?",
+      text: "Are you sure you want to logout from this session ?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, Logout",
@@ -44,10 +44,10 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     try {
       if (token) {
-        await axios.post(`${API_URL}/logout-user`, { token });
+        await axios.post(`${API_URL}/api/logout-user`, { token });
       }
     } catch (error) {
-      // even if API fails, logout locally
+      console.error("Logout error:", error);
     } finally {
       sessionStorage.clear();
 
@@ -71,7 +71,8 @@ const AdminHeader = ({ toggleSidebar }) => {
     <Navbar
       color="primary"
       dark
-      className="px-3 d-flex justify-content-between align-items-center"
+      className="  px-3 d-flex justify-content-between align-items-center "
+
     >
       <div className="d-flex align-items-center gap-2">
         <Button color="primary" onClick={toggleSidebar}>
@@ -84,15 +85,15 @@ const AdminHeader = ({ toggleSidebar }) => {
         </strong>
       </div>
 
-      <div className="d-flex align-items-center gap-2">
-        <div className="d-none d-md-flex align-items-center text-warning fw-bold">
+      <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1  ">
+        <div className="d-none d-md-flex align-items-center text-white fw-bold">
           <FaClock className="me-2" />
           {dayName}, {formattedDate} | {formattedTime}
         </div>
 
         <Button
           size="sm"
-          color={isHindi ? "warning" : "primary"}
+          color={isHindi ? "warning " : "primary"}
           onClick={toggleLanguage}
         >
           <FaLanguage className="me-1" />
