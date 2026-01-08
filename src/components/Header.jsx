@@ -47,7 +47,7 @@ const Header = () => {
   const fetchMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}api/menu-list`);
+      const res = await axios.get(`${API_URL}/api/menu-list`);
       setMenuItems(res.data.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);

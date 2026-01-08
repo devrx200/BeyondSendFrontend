@@ -10,62 +10,80 @@ import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const ManageCategories = () => {
+const ManageBrands = () => {
+  const token = sessionStorage.getItem("authToken");
 
-  /* ---------- CREATE ---------- */
-  const [categoryNameEn, setCategoryNameEn] = useState("");
-  const [categoryNameHi, setCategoryNameHi] = useState("");
+  const authHeaders = {
+    headers: { Authorization: `Bearer ${token}` }
+  };
+
+  const multipartHeaders = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
+    }
+  };
+
+  const [name, setName] = useState("");
+  const [position, setPosition] = useState("");
+  const [image, setImage] = useState(null);
   const [btnLoading, setBtnLoading] = useState(false);
 
-  /* ---------- LIST ---------- */
-  const [categories, setCategories] = useState([]);
+
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /* ---------- EDIT ---------- */
   const [editModal, setEditModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [editEn, setEditEn] = useState("");
-  const [editHi, setEditHi] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editPosition, setEditPosition] = useState("");
   const [editStatus, setEditStatus] = useState(true);
+  const [editImage, setEditImage] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  /* ---------- FETCH ---------- */
-  const fetchCategories = async () => {
+  const fetchBrands = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-categories`);
-      setCategories(res.data.data);
-    } catch {
-      Swal.fire("Error", "Failed to fetch categories", "error");
+      const res = await axios.get(`${API_URL}/api/get-brands`, authHeaders);
+      setBrands(res.data.data);
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Load failed", "error");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCategories();
+    fetchBrands();
   }, []);
 
-  /* ---------- CREATE ---------- */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!categoryNameEn || !categoryNameHi) {
-      Swal.fire("Required", "Both English & Hindi names are required", "warning");
+    if (!name || position === "" || !image) {
+      Swal.fire("Required", "All fields are required", "warning");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("position", position);
+    formData.append("image", image);
+
     try {
       setBtnLoading(true);
-      const res = await axios.post(`${API_URL}/api/create-category`, {
-        categoryNameEn,
-        categoryNameHi
-      });
+      const res = await axios.post(
+        `${API_URL}/api/create-brand`,
+        formData,
+        multipartHeaders
+      );
 
       Swal.fire("Success", res.data.message, "success");
-      setCategoryNameEn("");
-      setCategoryNameHi("");
-      fetchCategories();
+      setName("");
+      setPosition("");
+      setImage(null);
+      fetchBrands();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Create failed", "error");
     } finally {
@@ -73,36 +91,34 @@ const ManageCategories = () => {
     }
   };
 
-  /* ---------- OPEN EDIT ---------- */
-  const openEditModal = (cat) => {
-    setEditId(cat._id);
-    setEditEn(cat.categoryNameEn);
-    setEditHi(cat.categoryNameHi);
-    setEditStatus(cat.isActive);
+  const openEditModal = (b) => {
+    setEditId(b._id);
+    setEditName(b.name);
+    setEditPosition(b.position);
+    setEditStatus(b.isActive);
+    setEditImage(null);
     setEditModal(true);
   };
 
-  /* ---------- UPDATE ---------- */
+
   const handleUpdate = async () => {
-    if (!editEn || !editHi) {
-      Swal.fire("Required", "Both fields are required", "warning");
-      return;
-    }
+    const formData = new FormData();
+    formData.append("name", editName);
+    formData.append("position", editPosition);
+    formData.append("isActive", editStatus);
+    if (editImage) formData.append("image", editImage);
 
     try {
       setUpdateLoading(true);
       const res = await axios.put(
-        `${API_URL}/api/update-category/${editId}`,
-        {
-          categoryNameEn: editEn,
-          categoryNameHi: editHi,
-          isActive: editStatus
-        }
+        `${API_URL}/api/update-brand/${editId}`,
+        formData,
+        multipartHeaders
       );
 
       Swal.fire("Success", res.data.message, "success");
       setEditModal(false);
-      fetchCategories();
+      fetchBrands();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Update failed", "error");
     } finally {
@@ -110,11 +126,10 @@ const ManageCategories = () => {
     }
   };
 
-  /* ---------- DELETE ---------- */
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
       title: "Are you sure?",
-      text: "This will permanently delete the category.",
+      text: "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete",
@@ -124,47 +139,52 @@ const ManageCategories = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/delete-category/${id}`);
+      const res = await axios.delete(
+        `${API_URL}/api/delete-brand/${id}`,
+        authHeaders
+      );
       Swal.fire("Deleted", res.data.message, "success");
-      fetchCategories();
+      fetchBrands();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Delete failed", "error");
     }
   };
 
-  /* ---------- UI ---------- */
+
   return (
     <div className="container-fluid py-4">
       <Row>
-        {/* ADD CATEGORY */}
         <Col md={4}>
           <Card>
             <CardHeader className="bg-primary text-white">
-              <FaPlus /> Add Category
+              <FaPlus /> Add Brand
             </CardHeader>
             <CardBody>
               <Form onSubmit={handleSubmit}>
                 <FormGroup>
-                  <Label>Category Name (English)</Label>
-                  <Input value={categoryNameEn} onChange={e => setCategoryNameEn(e.target.value)} />
+                  <Label>Name</Label>
+                  <Input value={name} onChange={e => setName(e.target.value)} />
                 </FormGroup>
                 <FormGroup>
-                  <Label>Category Name (Hindi)</Label>
-                  <Input value={categoryNameHi} onChange={e => setCategoryNameHi(e.target.value)} />
+                  <Label>Position</Label>
+                  <Input type="number" value={position} onChange={e => setPosition(e.target.value)} />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Image</Label>
+                  <Input type="file" onChange={e => setImage(e.target.files[0])} />
                 </FormGroup>
                 <Button block color="primary" disabled={btnLoading}>
-                  {btnLoading ? <Spinner size="sm" /> : "Create Category"}
+                  {btnLoading ? <Spinner size="sm" /> : "Create"}
                 </Button>
               </Form>
             </CardBody>
           </Card>
         </Col>
 
-        {/* CATEGORY LIST */}
         <Col md={8}>
           <Card>
             <CardHeader className="bg-dark text-white">
-              <FaList /> Category List
+              <FaList /> Brand List
             </CardHeader>
             <CardBody>
               {loading ? <Spinner /> : (
@@ -172,39 +192,35 @@ const ManageCategories = () => {
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>English</th>
-                      <th>Hindi</th>
+                      <th>Image</th>
+                      <th>Name</th>
+                      <th>Position</th>
                       <th>Status</th>
-                      <th>Created</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.length ? categories.map((cat, i) => (
-                      <tr key={cat._id}>
+                    {brands.map((b, i) => (
+                      <tr key={b._id}>
                         <td>{i + 1}</td>
-                        <td>{cat.categoryNameEn}</td>
-                        <td>{cat.categoryNameHi}</td>
+                        <td><img src={`${API_URL}${b.image}`} height="40" /></td>
+                        <td>{b.name}</td>
+                        <td>{b.position}</td>
                         <td>
-                          <Badge color={cat.isActive ? "success" : "danger"}>
-                            {cat.isActive ? "Active" : "Inactive"}
+                          <Badge color={b.isActive ? "success" : "danger"}>
+                            {b.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </td>
-                        <td>{new Date(cat.createdAt).toLocaleDateString()}</td>
                         <td>
-                          <Button size="sm" color="warning" onClick={() => openEditModal(cat)}>
+                          <Button size="sm" color="warning" onClick={() => openEditModal(b)}>
                             <FaEdit />
                           </Button>{" "}
-                          <Button size="sm" color="danger" onClick={() => handleDelete(cat._id)}>
+                          <Button size="sm" color="danger" onClick={() => handleDelete(b._id)}>
                             <FaTrash />
                           </Button>
                         </td>
                       </tr>
-                    )) : (
-                      <tr>
-                        <td colSpan="6" className="text-center">No Categories Found</td>
-                      </tr>
-                    )}
+                    ))}
                   </tbody>
                 </Table>
               )}
@@ -213,17 +229,16 @@ const ManageCategories = () => {
         </Col>
       </Row>
 
-      {/* EDIT MODAL */}
       <Modal isOpen={editModal} toggle={() => setEditModal(false)}>
-        <ModalHeader toggle={() => setEditModal(false)}>Edit Category</ModalHeader>
+        <ModalHeader toggle={() => setEditModal(false)}>Edit Brand</ModalHeader>
         <ModalBody>
           <FormGroup>
-            <Label>Category Name (English)</Label>
-            <Input value={editEn} onChange={e => setEditEn(e.target.value)} />
+            <Label>Name</Label>
+            <Input value={editName} onChange={e => setEditName(e.target.value)} />
           </FormGroup>
           <FormGroup>
-            <Label>Category Name (Hindi)</Label>
-            <Input value={editHi} onChange={e => setEditHi(e.target.value)} />
+            <Label>Position</Label>
+            <Input type="number" value={editPosition} onChange={e => setEditPosition(e.target.value)} />
           </FormGroup>
           <FormGroup>
             <Label>Status</Label>
@@ -236,9 +251,12 @@ const ManageCategories = () => {
               <option value="false">Inactive</option>
             </Input>
           </FormGroup>
+          <FormGroup>
+            <Label>Image (Optional)</Label>
+            <Input type="file" onChange={e => setEditImage(e.target.files[0])} />
+          </FormGroup>
         </ModalBody>
         <ModalFooter>
-          <Button color="secondary" onClick={() => setEditModal(false)}>Cancel</Button>
           <Button color="primary" onClick={handleUpdate} disabled={updateLoading}>
             {updateLoading ? <Spinner size="sm" /> : "Update"}
           </Button>
@@ -248,4 +266,4 @@ const ManageCategories = () => {
   );
 };
 
-export default ManageCategories;
+export default ManageBrands;

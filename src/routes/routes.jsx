@@ -37,6 +37,7 @@ import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
 import ImageMaster from "../views/Admin/ImageMaster";
 import ManageCategories from "../views/Admin/ManageCategories";
+import ManageBrands from "../views/Admin/ManageBrands";
 
 
 /* MIDDLEWARE */
@@ -64,11 +65,11 @@ const AppRoutes = () => {
 
   const fetchPages = async () => {
     try {
-      const res = await axios.get(`${API_URL}api/menu-list`);
+      const res = await axios.get(`${API_URL}/api/menu-list`);
       const menuItems = res.data.data || [];
       setPages(extractPagesFromMenu(menuItems));
     } catch (err) {
-      console.error("Page fetch error", err);
+      console.error("Page Fetch Error", err);
     }
   };
 
@@ -138,6 +139,7 @@ const AppRoutes = () => {
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
           <Route path="categories" element={<ManageCategories/>} />
+          <Route path="brands" element={<ManageBrands/>} />
         </Route>
       </Route>
 

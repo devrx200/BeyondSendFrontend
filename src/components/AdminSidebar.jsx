@@ -40,6 +40,12 @@ const adminMenu = [
     label: { en: "Manage Categories", hi: "श्रेणियाँ प्रबंधन" }
   },
   {
+    id: "brands",
+    icon: FaFileAlt,
+    path: "/admin/brands",
+    label: { en: "Manage Brands", hi: "ब्रांड्स प्रबंधन" }
+  },
+  {
     id: "slider",
     icon: FaImages,
     path: "/admin/slider",
