@@ -19,7 +19,7 @@ import {
 import { useLanguage } from "../contexts/LanguageContext";
 import { jwtDecode } from "jwt-decode";
 
-/* ===== ADMIN MENU ===== */
+
 const adminMenu = [
   {
     id: "dashboard",
@@ -28,7 +28,7 @@ const adminMenu = [
     label: { en: "Dashboard", hi: "डैशबोर्ड" }
   },
   {
-    id: "menuManagement",
+    id: "menu",
     icon: FaMenu,
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
@@ -40,12 +40,12 @@ const adminMenu = [
     label: { en: "Home Slider", hi: "होम स्लाइडर" }
   },
   {
-    id: "newsManagement",
+    id: "news",
     icon: FaNewspaper,
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
     submenu: [
       {
-        id: "news",
+        id: "news-list",
         icon: FaNewspaper,
         path: "/admin/news",
         label: { en: "News", hi: "समाचार" }
@@ -80,7 +80,6 @@ const adminMenu = [
 
 const AdminSidebar = ({ collapsed }) => {
   const { isHindi } = useLanguage();
-
   const [openMenu, setOpenMenu] = useState(null);
   const [decoded, setDecoded] = useState(null);
   const [expiresIn, setExpiresIn] = useState(null);
@@ -89,11 +88,8 @@ const AdminSidebar = ({ collapsed }) => {
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
     if (!token) return;
-
     try {
-      const payload = jwtDecode(token);
-      setDecoded(payload);
-      console.log(payload);
+      setDecoded(jwtDecode(token));
     } catch {
       setDecoded(null);
     }
@@ -105,12 +101,7 @@ const AdminSidebar = ({ collapsed }) => {
 
     const timer = setInterval(() => {
       const remaining = decoded.exp * 1000 - Date.now();
-
-      if (remaining <= 0) {
-        clearInterval(timer);
-        setExpiresIn(null);
-        return;
-      }
+      if (remaining <= 0) return clearInterval(timer);
 
       const h = Math.floor(remaining / 3600000);
       const m = Math.floor((remaining % 3600000) / 60000);
@@ -126,14 +117,26 @@ const AdminSidebar = ({ collapsed }) => {
     return () => clearInterval(timer);
   }, [decoded]);
 
+
+  const hoverIn = (e) => {
+    e.currentTarget.style.background = "rgba(0, 0, 0, 0.55)";
+    e.currentTarget.style.color = "white";
+    e.currentTarget.style.cursor = "pointer";
+    e.currentTarget.style.transform = "scale(1.02)";
+    e.currentTarget.style.borderRadius = "5px";
+  };
+
+  const hoverOut = (e) => {
+    e.currentTarget.style.background = "transparent";
+  };
+
   return (
     <div
       className="d-flex flex-column text-white"
       style={{
         width: collapsed ? "80px" : "260px",
         height: "100vh",
-        background: "linear-gradient(180deg, #6d91fd, #1cc88a)",
-        overflow: "hidden"
+        background: "linear-gradient(180deg,#6d91fd,#1cc88a)"
       }}
     >
 
@@ -143,44 +146,32 @@ const AdminSidebar = ({ collapsed }) => {
             decoded?.profileImage ||
             "https://ui-avatars.com/api/?name=Admin&background=6610f2&color=fff"
           }
-          alt="Admin"
           className="rounded mb-2 border border-2 border-white"
           width="45"
           height="45"
+          alt="Admin"
         />
 
         {!collapsed && decoded && (
           <>
-            <h6 className="mb-0 fw-bold">{decoded.name }</h6>
-            <small className="d-block opacity-75">
-              {decoded.userDesignations}
-            </small>
-
-            <Badge color="dark" className="mt-1">
-              {decoded.role}
-            </Badge>
+            <h6 className="fw-bold mb-0">{decoded.name}</h6>
+            <small className="opacity-75">{decoded.userDesignations}</small>
+            <Badge color="dark" className="mt-1">{decoded.role}</Badge>
 
             {expiresIn && (
               <div className="mt-2 text-warning fw-bold">
-                Session Expires In {""}
-            
-                {expiresIn}
+                Session Expires In {expiresIn}
               </div>
             )}
           </>
         )}
       </div>
 
-      <div className="text-center p-3 border-bottom border-light">
-        <small className="d-block opacity-75">
-          Department of Higher Education, Government of Chhattisgarh
-        </small>
-      </div>
-
-      <div className="flex-grow-1" style={{ overflowY: "auto" }}>
+      <div className="flex-grow-1 overflow-auto">
         <ListGroup flush className="mt-2">
           {adminMenu.map((item) => {
             const Icon = item.icon;
+            const label = isHindi ? item.label.hi : item.label.en;
 
             if (!item.submenu) {
               return (
@@ -188,11 +179,14 @@ const AdminSidebar = ({ collapsed }) => {
                   key={item.id}
                   tag={NavLink}
                   to={item.path}
-                  className="border-0 text-white d-flex align-items-center"
-                  style={{ background: "transparent", gap: "12px" }}
+                  title={collapsed ? label : ""}
+                  onMouseEnter={hoverIn}
+                  onMouseLeave={hoverOut}
+                  className="border-0 fw-semibold text-white d-flex align-items-center gap-3"
+                  style={{ background: "transparent" }}
                 >
                   <Icon />
-                  {!collapsed && (isHindi ? item.label.hi : item.label.en)}
+                  {!collapsed && label}
                 </ListGroupItem>
               );
             }
@@ -200,41 +194,42 @@ const AdminSidebar = ({ collapsed }) => {
             return (
               <div key={item.id}>
                 <ListGroupItem
+                  title={collapsed ? label : ""}
                   onClick={() =>
                     setOpenMenu(openMenu === item.id ? null : item.id)
                   }
-                  className="border-0 text-white d-flex justify-content-between"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
+                  onMouseEnter={hoverIn}
+                  onMouseLeave={hoverOut}
+                  className="border-0 fw-bold text-white d-flex justify-content-between"
+                  style={{ background: "rgba(0, 0, 0, 0.2)" }}
                 >
                   <span className="d-flex align-items-center gap-2">
                     <Icon />
-                    {!collapsed && (isHindi ? item.label.hi : item.label.en)}
+                    {!collapsed && label}
                   </span>
 
                   {!collapsed &&
-                    (openMenu === item.id ? (
-                      <FaChevronDown />
-                    ) : (
-                      <FaChevronRight />
-                    ))}
+                    (openMenu === item.id ? <FaChevronDown /> : <FaChevronRight />)}
                 </ListGroupItem>
 
                 <Collapse isOpen={!collapsed && openMenu === item.id}>
                   {item.submenu.map((sub) => {
                     const SubIcon = sub.icon;
+                    const subLabel = isHindi ? sub.label.hi : sub.label.en;
+
                     return (
                       <ListGroupItem
                         key={sub.id}
                         tag={NavLink}
                         to={sub.path}
-                        className="border-0 text-white ps-5 d-flex align-items-center"
-                        style={{
-                          background: "rgba(0,0,0,0.15)",
-                          gap: "10px"
-                        }}
+                        title={collapsed ? subLabel : ""}
+                        onMouseEnter={hoverIn}
+                        onMouseLeave={hoverOut}
+                        className="border-0 fw-bold text-white d-flex align-items-center gap-2 ps-5"
+                        style={{ background: "rgba(0, 0, 0, 0.35)" }}
                       >
                         <SubIcon />
-                        {isHindi ? sub.label.hi : sub.label.en}
+                        {!collapsed && subLabel}
                       </ListGroupItem>
                     );
                   })}
@@ -244,6 +239,7 @@ const AdminSidebar = ({ collapsed }) => {
           })}
         </ListGroup>
       </div>
+
     </div>
   );
 };
