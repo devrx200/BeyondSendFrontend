@@ -63,13 +63,12 @@ const GalleryManagement = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Saving gallery item:', formData);
     toggleModal();
   };
 
   const handleDelete = (id) => {
     if (window.confirm(isHindi ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this?')) {
-      console.log('Deleting gallery item:', id);
+    
     }
   };
 

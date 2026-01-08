@@ -150,7 +150,7 @@ const MinisterMessageManagement = () => {
                   accept="image/*" 
                   onChange={handleImageChange} 
                 />
-                {imagePreview && (
+                {/* {imagePreview && (
                   <div className="mt-3">
                     <img 
                       src={imagePreview} 
@@ -162,7 +162,7 @@ const MinisterMessageManagement = () => {
                       }}
                     />
                   </div>
-                )}
+                )} */}
               </FormGroup>
             </Col>
           </Row>

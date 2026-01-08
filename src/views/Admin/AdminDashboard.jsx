@@ -17,6 +17,7 @@ import TendersManagement from './TendersManagement';
 import RecruitmentManagement from './RecruitmentManagement';
 import GalleryManagement from './GalleryManagement';
 import PagesManagement from './PagesManagement';
+import AboutAndHelp from './aboutAndHelp'
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -38,6 +39,7 @@ const AdminDashboard = () => {
     { id: 'dashboard', icon: FaTachometerAlt, label: { en: 'Dashboard', hi: 'डैशबोर्ड' } },
     { id: 'slider', icon: FaImages, label: { en: 'Home Slider', hi: 'होम स्लाइडर' } },
     { id: 'news', icon: FaNewspaper, label: { en: 'News Management', hi: 'समाचार प्रबंधन' } },
+    { id: 'aboutAndHelp', icon: FaNewspaper, label: { en: 'About and Help', hi: 'बारे में और अन्य' } },
     { id: 'minister', icon: FaUser, label: { en: 'Minister Message', hi: 'मंत्री संदेश' } },
     { id: 'announcements', icon: FaBullhorn, label: { en: 'Announcements', hi: 'घोषणाएं' } },
     { id: 'notifications', icon: FaBullhorn, label: { en: 'Notifications', hi: 'सूचनाएं' } },
@@ -185,6 +187,11 @@ const AdminDashboard = () => {
               <TabPane tabId="news">
                 <NewsManagement />
               </TabPane>
+
+               <TabPane tabId="aboutAndHelp">
+                <AboutAndHelp />
+              </TabPane>
+
 
               {/* Minister Message */}
               <TabPane tabId="minister">
