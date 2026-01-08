@@ -36,6 +36,8 @@ import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
 import ImageMaster from "../views/Admin/ImageMaster";
+import ManageCategories from "../views/Admin/ManageCategories";
+
 
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
@@ -135,6 +137,7 @@ const AppRoutes = () => {
           <Route path="image-master" element={<ImageMaster />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
+          <Route path="categories" element={<ManageCategories/>} />
         </Route>
       </Route>
 

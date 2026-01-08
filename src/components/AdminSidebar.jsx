@@ -34,6 +34,12 @@ const adminMenu = [
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
   {
+    id: "categories",
+    icon: FaFileAlt,
+    path: "/admin/categories",
+    label: { en: "Manage Categories", hi: "श्रेणियाँ प्रबंधन" }
+  },
+  {
     id: "slider",
     icon: FaImages,
     path: "/admin/slider",
@@ -157,6 +163,11 @@ const AdminSidebar = ({ collapsed }) => {
                 Session Expires In {expiresIn}
               </div>
             )}
+            <hr className="m-0 p-0" />
+            <div className="mt-2">
+              <small className="fw-bold">Department of Higher Education, Government of Chhattisgarh</small>
+            </div>
+     
           </>
         )}
       </div>
