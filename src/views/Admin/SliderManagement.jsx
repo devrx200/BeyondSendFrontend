@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect  } from 'react';
 import { Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input } from 'reactstrap';
 import { FaImages, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -21,40 +21,68 @@ const SliderManagement = () => {
     order: 1,
     active: true
   });
+const [slides, setSlides] = useState([]);
+const [loading, setLoading] = useState(false);
+  // const [slides] = useState([
+  //   {
+  //     id: 1,
+  //     smallTitleEn: 'Welcome to',
+  //     smallTitleHi: 'में आपका स्वागत है',
+  //     mainTitleEn: 'Higher Education Department',
+  //     mainTitleHi: 'उच्च शिक्षा विभाग',
+  //     descriptionEn: 'Building future leaders through quality education and innovation',
+  //     descriptionHi: 'गुणवत्तापूर्ण शिक्षा और नवाचार के माध्यम से भविष्य के नेताओं का निर्माण',
+  //     image: '/slider1.jpg',
+  //     link: '/about',
+  //     linkTextEn: 'Learn More',
+  //     linkTextHi: 'और जानें',
+  //     order: 1,
+  //     active: true
+  //   },
+  //   {
+  //     id: 2,
+  //     smallTitleEn: 'Empowering',
+  //     smallTitleHi: 'सशक्तिकरण',
+  //     mainTitleEn: 'Quality Education for All',
+  //     mainTitleHi: 'सभी के लिए गुणवत्तापूर्ण शिक्षा',
+  //     descriptionEn: 'Excellence in learning and research across universities and colleges',
+  //     descriptionHi: 'विश्वविद्यालयों और महाविद्यालयों में सीखने और अनुसंधान में उत्कृष्टता',
+  //     image: '/slider2.jpg',
+  //     link: '/universities',
+  //     linkTextEn: 'Explore Universities',
+  //     linkTextHi: 'विश्वविद्यालय देखें',
+  //     order: 2,
+  //     active: true
+  //   },
+  // ]);
 
-  const [slides] = useState([
-    {
-      id: 1,
-      smallTitleEn: 'Welcome to',
-      smallTitleHi: 'में आपका स्वागत है',
-      mainTitleEn: 'Higher Education Department',
-      mainTitleHi: 'उच्च शिक्षा विभाग',
-      descriptionEn: 'Building future leaders through quality education and innovation',
-      descriptionHi: 'गुणवत्तापूर्ण शिक्षा और नवाचार के माध्यम से भविष्य के नेताओं का निर्माण',
-      image: '/slider1.jpg',
-      link: '/about',
-      linkTextEn: 'Learn More',
-      linkTextHi: 'और जानें',
-      order: 1,
-      active: true
-    },
-    {
-      id: 2,
-      smallTitleEn: 'Empowering',
-      smallTitleHi: 'सशक्तिकरण',
-      mainTitleEn: 'Quality Education for All',
-      mainTitleHi: 'सभी के लिए गुणवत्तापूर्ण शिक्षा',
-      descriptionEn: 'Excellence in learning and research across universities and colleges',
-      descriptionHi: 'विश्वविद्यालयों और महाविद्यालयों में सीखने और अनुसंधान में उत्कृष्टता',
-      image: '/slider2.jpg',
-      link: '/universities',
-      linkTextEn: 'Explore Universities',
-      linkTextHi: 'विश्वविद्यालय देखें',
-      order: 2,
-      active: true
-    },
-  ]);
+const fetchSlides = async () => {
+  try {
+    setLoading(true);
+    const res = await axios.get(
+      "http://localhost:4000/api/get-hero-slides",
+      {
+        headers: { "web-url": window.location.href },
+      }
+    );
 
+    if (res.status === 200) {
+      setSlides(res.data.data || []);
+    }
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Failed to load hero slides",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchSlides();
+}, []);
   const toggleModal = () => {
     setModal(!modal);
     if (modal) {
@@ -82,33 +110,125 @@ const SliderManagement = () => {
 
   const handleEdit = (slide) => {
     setEditingSlide(slide);
+
     setFormData({
-      smallTitleEn: slide.smallTitleEn || '',
-      smallTitleHi: slide.smallTitleHi || '',
-      mainTitleEn: slide.mainTitleEn || '',
-      mainTitleHi: slide.mainTitleHi || '',
-      descriptionEn: slide.descriptionEn || '',
-      descriptionHi: slide.descriptionHi || '',
-      image: slide.image,
-      link: slide.link || '',
-      linkTextEn: slide.linkTextEn || '',
-      linkTextHi: slide.linkTextHi || '',
-      order: slide.order,
-      active: slide.active
+      smallTitleEn: slide.subtitleEng || "",
+      smallTitleHi: slide.subtitleHin || "",
+      mainTitleEn: slide.titleEng || "",
+      mainTitleHi: slide.titleHin || "",
+      descriptionEn: slide.descriptionEng || "",
+      descriptionHi: slide.descriptionHin || "",
+      link: slide.link || "",
+      linkTextEn: "",
+      linkTextHi: "",
+      order: slide.displayOrder || 1,
+      active: slide.isActive,
+      image: null, // new image optional
     });
-    toggleModal();
+
+    setModal(true);
   };
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     toggleModal();
-  };
+    
 
-  const handleDelete = (id) => {
-    if (window.confirm(isHindi ? 'क्या आप वाकई इसे हटाना चाहते हैं?' : 'Are you sure you want to delete this?')) {
+    try {
+      const payload = new FormData();
 
+      payload.append("titleEng", formData.mainTitleEn);
+      payload.append("titleHin", formData.mainTitleHi);
+      payload.append("subtitleEng", formData.smallTitleEn);
+      payload.append("subtitleHin", formData.smallTitleHi);
+      payload.append("descriptionEng", formData.descriptionEn);
+      payload.append("descriptionHin", formData.descriptionHi);
+      payload.append("link", formData.link);
+      payload.append("displayOrder", formData.order);
+      payload.append("isActive", formData.active);
+payload.append("image", formData.image);
+      // if (formData.image instanceof File) {
+      //   payload.append("image", formData.image);
+      // }
+
+      let response;
+
+      if (editingSlide) {
+        // 🔄 UPDATE
+        response = await axios.put(
+          `http://localhost:4000/api/update-hero-slide/${editingSlide._id}`,
+          payload,
+          { headers: { "web-url": window.location.href } }
+        );
+      } else {
+        // ➕ CREATE
+        response = await axios.post(
+          "http://localhost:4000/api/create-hero-slide",
+          payload,
+          { headers: { "web-url": window.location.href } }
+        );
+      }
+
+      if (response.status === 200 || response.status === 201) {
+        Swal.fire({
+          icon: "success",
+          title: response.data.message,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        toggleModal();
+        fetchSlides();
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          "Something went wrong",
+      });
     }
   };
+
+
+  const handleDelete = async (id) => {
+    const confirm = window.confirm(
+      isHindi
+        ? "क्या आप इस स्लाइड को हटाना चाहते हैं?"
+        : "Are you sure you want to deactivate this slide?"
+    );
+
+    if (!confirm) return;
+
+    try {
+      const res = await axios.delete(
+        `http://localhost:4000/api/delete-hero-slide/${id}`,
+        { headers: { "web-url": window.location.href } }
+      );
+
+      if (res.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: res.data.message,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        fetchSlides();
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Delete Failed",
+        text:
+          error?.response?.data?.message ||
+          "Unable to delete slide",
+      });
+    }
+  };
+
 
   return (
     <Card className="border-0 shadow-sm">
@@ -145,7 +265,7 @@ const SliderManagement = () => {
                 <td>{index + 1}</td>
                 <td>{isHindi ? slide.smallTitleHi : slide.smallTitleEn}</td>
                 <td>{isHindi ? slide.mainTitleHi : slide.mainTitleEn}</td>
-                <td className="text-truncate" style={{maxWidth: '200px'}}>
+                <td className="text-truncate" style={{ maxWidth: '200px' }}>
                   {isHindi ? slide.descriptionHi : slide.descriptionEn}
                 </td>
                 <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
@@ -156,12 +276,13 @@ const SliderManagement = () => {
                   </span>
                 </td>
                 <td>
-                  <Button color="info" size="sm" className="me-2" onClick={() => handleEdit(slide)}>
+                  <Button color="info" size="sm" onClick={() => handleEdit(slide)}>
                     <FaEdit />
                   </Button>
-                  <Button color="danger" size="sm" onClick={() => handleDelete(slide.id)}>
+                  <Button color="danger" size="sm" onClick={() => handleDelete(slide._id)}>
                     <FaTrash />
                   </Button>
+
                 </td>
               </tr>
             ))}
@@ -184,7 +305,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.smallTitleEn}
-                      onChange={(e) => setFormData({...formData, smallTitleEn: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, smallTitleEn: e.target.value })}
                       placeholder="e.g., Welcome to"
                       required
                     />
@@ -195,7 +316,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.mainTitleEn}
-                      onChange={(e) => setFormData({...formData, mainTitleEn: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, mainTitleEn: e.target.value })}
                       placeholder="e.g., Higher Education Department"
                       required
                     />
@@ -207,7 +328,7 @@ const SliderManagement = () => {
                       type="textarea"
                       rows="3"
                       value={formData.descriptionEn}
-                      onChange={(e) => setFormData({...formData, descriptionEn: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
                       placeholder="Brief description..."
                       required
                     />
@@ -218,7 +339,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.linkTextEn}
-                      onChange={(e) => setFormData({...formData, linkTextEn: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, linkTextEn: e.target.value })}
                       placeholder="e.g., Learn More"
                       required
                     />
@@ -233,7 +354,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.smallTitleHi}
-                      onChange={(e) => setFormData({...formData, smallTitleHi: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, smallTitleHi: e.target.value })}
                       placeholder="उदा., में आपका स्वागत है"
                       required
                     />
@@ -244,7 +365,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.mainTitleHi}
-                      onChange={(e) => setFormData({...formData, mainTitleHi: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, mainTitleHi: e.target.value })}
                       placeholder="उदा., उच्च शिक्षा विभाग"
                       required
                     />
@@ -256,7 +377,7 @@ const SliderManagement = () => {
                       type="textarea"
                       rows="3"
                       value={formData.descriptionHi}
-                      onChange={(e) => setFormData({...formData, descriptionHi: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, descriptionHi: e.target.value })}
                       placeholder="संक्षिप्त विवरण..."
                       required
                     />
@@ -267,7 +388,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.linkTextHi}
-                      onChange={(e) => setFormData({...formData, linkTextHi: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, linkTextHi: e.target.value })}
                       placeholder="उदा., और जानें"
                       required
                     />
@@ -284,7 +405,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.image}
-                      onChange={(e) => setFormData({...formData, image: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                       placeholder="/slider1.jpg"
                       required
                     />
@@ -297,7 +418,7 @@ const SliderManagement = () => {
                     <Input
                       type="text"
                       value={formData.link}
-                      onChange={(e) => setFormData({...formData, link: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                       placeholder="/about"
                       required
                     />
@@ -310,7 +431,7 @@ const SliderManagement = () => {
                     <Input
                       type="number"
                       value={formData.order}
-                      onChange={(e) => setFormData({...formData, order: parseInt(e.target.value)})}
+                      onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
                       min="1"
                     />
                   </FormGroup>
@@ -322,7 +443,7 @@ const SliderManagement = () => {
                       <Input
                         type="checkbox"
                         checked={formData.active}
-                        onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                       />
                       {' '}{isHindi ? 'सक्रिय' : 'Active'}
                     </Label>
