@@ -70,12 +70,6 @@ const adminMenu = [
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
   },
-  {
-    id: "downloads",
-    icon: FaFileAlt,
-    path: "/admin/downloads",
-    label: { en: "Downloads", hi: "डाउनलोड" }
-  }
 ];
 
 const AdminSidebar = ({ collapsed }) => {
