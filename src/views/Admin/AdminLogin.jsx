@@ -92,7 +92,7 @@ const AdminLogin = () => {
       setLoading(true);
 
       const res = await axios.post(
-        `${API_URL}/api/user-login`,
+        `${API_URL}api/user-login`,
         { identifier, password },
         { timeout: 10000 }
       );

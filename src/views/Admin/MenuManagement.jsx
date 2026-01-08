@@ -47,7 +47,7 @@ const MenuManagement = () => {
   const loadMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/menu-list`);
+      const res = await axios.get(`${API}api/menu-list`);
       setMenuItems(res.data.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);
@@ -66,7 +66,7 @@ const MenuManagement = () => {
     
 
     await axios.post(
-      `${API}/menu/reorder`,
+      `${API}api/menu/reorder`,
       {
         menus: updatedMenus, // <-- full ordered tree
       },
@@ -155,23 +155,23 @@ const MenuManagement = () => {
 
   /* ================= CREATE ================= */
   const createMenu = async () => {
-    await axios.post(`${API}/menu`, form);
+    await axios.post(`${API}api/menu`, form);
   };
 
   /* ================= UPDATE ================= */
   const updateMenu = async () => {
     if (editing.type === "MENU") {
-      await axios.put(`${API}/menu/${editing.menuId}`, form);
+      await axios.put(`${API}api/menu/${editing.menuId}`, form);
     }
     if (editing.type === "SUBMENU") {
       await axios.put(
-        `${API}/menu/${editing.menuId}/submenu/${editing.submenuId}`,
+        `${API}api/menu/${editing.menuId}/submenu/${editing.submenuId}`,
         form
       );
     }
     if (editing.type === "CHILD") {
       await axios.put(
-        `${API}/menu/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
+        `${API}api/menu/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
         form
       );
     }
@@ -182,16 +182,16 @@ const MenuManagement = () => {
     if (!window.confirm("Are you sure?")) return;
 
     if (type === "MENU") {
-      await axios.delete(`${API}/menu/${menuId}`);
+      await axios.delete(`${API}api/menu/${menuId}`);
     }
 
     if (type === "SUBMENU") {
-      await axios.delete(`${API}/menu/${menuId}/submenu/${submenuId}`);
+      await axios.delete(`${API}api/menu/${menuId}/submenu/${submenuId}`);
     }
 
     if (type === "CHILD") {
       await axios.delete(
-        `${API}/menu/${menuId}/submenu/${submenuId}/child/${childId}`
+        `${API}api/menu/${menuId}api/submenu/${submenuId}/child/${childId}`
       );
     }
 

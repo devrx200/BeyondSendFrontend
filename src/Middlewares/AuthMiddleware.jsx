@@ -20,7 +20,7 @@ const AuthMiddleware = ({ allowedRoles = [] }) => {
     const validateToken = async () => {
       try {
         const res = await axios.post(
-          `${API_URL}/api/check-auth-token`,
+          `${API_URL}api/check-auth-token`,
           {token}, 
         );
 

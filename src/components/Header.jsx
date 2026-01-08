@@ -24,7 +24,6 @@ import { useAccessibility } from "../contexts/AccessibilityContext";
 import { translations } from "../data/translations";
 import { handleMenuClick } from "../utilies/handleMenuClick";
 import DynamicPage from "../views/pages/DynamicPage";
-import { MainLayout } from "../routes/routes";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Header = () => {
@@ -48,7 +47,7 @@ const Header = () => {
   const fetchMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/menu-list`);
+      const res = await axios.get(`${API_URL}api/menu-list`);
       setMenuItems(res.data.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);

@@ -49,7 +49,7 @@ const AboutAndHelp = () => {
 
   const fetchPages = async () => {
   try {
-    const res = await axios.get(`${API}/menu-list`);
+    const res = await axios.get(`${API}api/menu-list`);
     const menuItems = res.data.data || [];
 
     const pages = extractPagesFromMenu(menuItems);
@@ -155,7 +155,7 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
       categoryId: form.categoryId || null,
     };
 
-    await axios.post(`${API}/about-and-help`, payload, {
+    await axios.post(`${API}api/about-and-help`, payload, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
