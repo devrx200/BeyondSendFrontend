@@ -95,7 +95,7 @@ const AdminHeader = ({ toggleSidebar }) => {
           <FaBars />
         </Button>
 
-        <strong className="fw-bold text-white d-flex align-items-center gap-1">
+        <strong className="fw-bold text-dark d-flex align-items-center gap-1">
           <FaDashcube />
           H!.. 
         </strong>

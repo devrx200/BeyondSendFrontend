@@ -124,28 +124,34 @@ const AdminDashboard = () => {
         </Col>
 
         {/* QUICK TOOLS */}
-        <Col lg={6} md={12} className="mb-4">
+        <Col lg={8} md={12} className="mb-4">
           <Card className="shadow-sm border-0 h-100">
             <CardBody>
               <h5 className="fw-bold mb-3">Quick Actions</h5>
 
               <Row className="g-3">
-                <Col md={4} sm={6} xs={12}>
+                <Col md={3} sm={6} xs={12}>
                   <Button color="primary" className="w-100 py-3 fw-semibold">
                     <FaPlus className="mb-1" />
                     <div>Add University</div>
                   </Button>
                 </Col>
 
-                <Col md={4} sm={6} xs={12}>
+                <Col md={3} sm={6} xs={12}>
                   <Button color="success" className="w-100 py-3 fw-semibold">
                     <FaPlus className="mb-1" />
                     <div>Add College</div>
                   </Button>
                 </Col>
 
-                <Col md={4} sm={12} xs={12}>
-                  <Button color="warning" className="w-100 py-3 fw-semibold text-white">
+                <Col md={3} sm={12} xs={12}>
+                  <Button color="info" className="w-100 py-3 fw-semibold text-white">
+                    <FaPlus className="mb-1" />
+                    <div>Publish News</div>
+                  </Button>
+                </Col>
+                <Col md={3} sm={12} xs={12}>
+                  <Button color="danger" className="w-100 py-3 fw-semibold text-white">
                     <FaPlus className="mb-1" />
                     <div>Publish News</div>
                   </Button>

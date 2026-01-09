@@ -33,6 +33,12 @@ const adminMenu = [
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
+   {
+        id: "universities",
+        icon: FaFileAlt,
+        path: "/admin/universities",
+        label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
+      },
   {
     id: "categories",
     icon: FaFileAlt,
@@ -73,8 +79,9 @@ const adminMenu = [
         icon: FaBullhorn,
         path: "/admin/notifications",
         label: { en: "Notifications", hi: "सूचनाएं" }
-      }
-    ]
+      },
+      ]
+      
   },
   {
     id: "gallery",

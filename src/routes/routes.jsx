@@ -38,7 +38,7 @@ import GalleryManagement from "../views/Admin/GalleryManagement";
 import ImageMaster from "../views/Admin/ImageMaster";
 import ManageCategories from "../views/Admin/ManageCategories";
 import ManageBrands from "../views/Admin/ManageBrands";
-
+import ManageUniversities from "../views/Admin/ManageUniversities";
 
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
@@ -140,6 +140,8 @@ const AppRoutes = () => {
           <Route path="slider" element={<SliderManagement />} />
           <Route path="categories" element={<ManageCategories/>} />
           <Route path="brands" element={<ManageBrands/>} />
+          <Route path="universities" element={<ManageUniversities/>} />
+
         </Route>
       </Route>
 
