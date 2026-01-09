@@ -19,6 +19,8 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const ImageMaster = () => {
+const API_URL = import.meta.env.VITE_API_URL;
+
   const [modal, setModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -53,11 +55,23 @@ const ImageMaster = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   setFormData({ ...formData, image: file });
+  //   setImagePreview(URL.createObjectURL(file));
+  // };
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    setFormData({ ...formData, image: file });
-    setImagePreview(URL.createObjectURL(file));
-  };
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  setFormData((prev) => ({
+    ...prev,
+    image: file,
+  }));
+
+  setImagePreview(URL.createObjectURL(file));
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,7 +88,7 @@ const ImageMaster = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:4000/api/create",
+        `${API_URL}api/create`,
         payload,
         {
           headers: {
@@ -115,7 +129,7 @@ const ImageMaster = () => {
       setLoading(true);
 
       const response = await axios.get(
-        "http://localhost:4000/api/get-images",
+        `${API_URL}api/get-images`,
         {
           headers: {
             "web-url": window.location.href,
@@ -159,7 +173,7 @@ const ImageMaster = () => {
 
     setImagePreview(
       item.image
-        ? `http://localhost:4000/${item.image.replace(/\\/g, "/")}`
+        ? `${API_URL}${item.image}`
         : null
     );
 
@@ -182,7 +196,7 @@ const ImageMaster = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:4000/api/update-image/${editingItem._id}`,
+        `${API_URL}api/update-image/${editingItem._id}`,
         payload,
         {
           headers: {
@@ -239,7 +253,7 @@ const ImageMaster = () => {
 
   try {
     const response = await axios.delete(
-      `http://localhost:4000/api/delete-image/${id}`,
+      `${API_URL}api/delete-image/${id}`,
       {
         headers: {
           "web-url": window.location.href,
@@ -316,7 +330,7 @@ const ImageMaster = () => {
 
                   <td>
                     <img
-                      src={`http://localhost:4000/${item.image.replace(/\\/g, "/")}`}
+                      src={`${API_URL}${item.image}`}
                       alt="img"
                       style={{
                         width: 60,
@@ -355,7 +369,7 @@ const ImageMaster = () => {
             {editingItem ? "Edit Image" : "Add Image"}
           </ModalHeader>
           <ModalBody>
-            <Form >
+            <Form onSubmit={editingItem ? handleUpdate : handleSubmit}>
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -412,7 +426,7 @@ const ImageMaster = () => {
 
               <FormGroup>
                 <Label>Upload Image</Label>
-                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                <Input type="file" name="image"  accept="image/*" onChange={handleImageChange} />
               </FormGroup>
 
               {imagePreview && (
@@ -434,6 +448,7 @@ const ImageMaster = () => {
             <Button
               color="primary"
               onClick={editingItem ? handleUpdate : handleSubmit}
+              type="submit"
             >
               {editingItem ? "Update" : "Save"}
             </Button>

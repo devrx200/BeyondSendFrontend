@@ -1,4 +1,5 @@
-// Home Page Data Model
+
+
 
 export const heroSlides = [
   {

@@ -8,7 +8,7 @@ import {
 } from "reactstrap";
 import {
   FaTachometerAlt,
-  FaImages,
+  FaImages,FaPlus,FaTrash,
   FaNewspaper,
   FaChevronDown,
   FaChevronRight,
@@ -69,6 +69,12 @@ const adminMenu = [
     icon: FaImages,
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
+  },
+   {
+    id: "image",
+    icon: FaImages,
+    path: "/admin/image-master",
+    label: { en: "Image Master", hi: "इमेज मास्टर" }
   },
 ];
 

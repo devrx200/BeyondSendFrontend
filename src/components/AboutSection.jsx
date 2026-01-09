@@ -12,6 +12,7 @@ import {
 } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
 const AboutSection = () => {
+    const API_URL = import.meta.env.VITE_API_URL;
     const [profiles, setProfiles] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ const { isHindi } = useLanguage();
             try {
                 setLoading(true);
                 const res = await axios.get(
-                    "http://localhost:4000/api/get-images"
+                    `${API_URL}api/get-images`
                 );
                 setProfiles(res.data || []);
             } catch (err) {
@@ -102,7 +103,7 @@ const { isHindi } = useLanguage();
                                     top
                                     src={
                                         currentProfile.image
-                                            ? `http://localhost:4000/${currentProfile.image.replace(/\\/g, "/")}`
+                                            ? `${API_URL}${currentProfile.image.replace(/\\/g, "/")}`
                                             : "/placeholder.png"
                                     }
                                     alt={currentProfile.imgNameEng || "Profile"}
