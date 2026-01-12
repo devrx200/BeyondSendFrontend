@@ -1,4 +1,4 @@
-import { Row, Col, Card, CardBody, Button } from "reactstrap";
+import { Row, Col, Card, CardBody, Button, Spinner } from "reactstrap";
 import {
   FaUniversity,
   FaSchool,
@@ -6,36 +6,13 @@ import {
   FaBell,
   FaCalendarAlt,
   FaPlus,
-  FaCog
+  FaBullhorn,
+  FaUserGraduate,
+  FaBook
 } from "react-icons/fa";
-
-/* ---------- STATS ---------- */
-const stats = [
-  {
-    title: "Universities",
-    icon: FaUniversity,
-    value: 15,
-    gradient: "linear-gradient(135deg, #667eea, #764ba2)"
-  },
-  {
-    title: "Colleges",
-    icon: FaSchool,
-    value: 325,
-    gradient: "linear-gradient(135deg, #11998e, #38ef7d)"
-  },
-  {
-    title: "News",
-    icon: FaNewspaper,
-    value: 48,
-    gradient: "linear-gradient(135deg, #f7971e, #ffd200)"
-  },
-  {
-    title: "Notifications",
-    icon: FaBell,
-    value: 12,
-    gradient: "linear-gradient(135deg, #ff416c, #ff4b2b)"
-  }
-];
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 /* ---------- CALENDAR HELPERS ---------- */
 const today = new Date();
@@ -45,40 +22,104 @@ const daysInMonth = new Date(currentYear, today.getMonth() + 1, 0).getDate();
 const startDay = new Date(currentYear, today.getMonth(), 1).getDay();
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
+  const [statsData, setStatsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  /* ---------- FETCH EDUCATION STATS ---------- */
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(
+          "/education-stats/list-for-admin"
+        );
+
+        if (res.data.success && res.data.data.length > 0) {
+          setStatsData(res.data.data[0]); // latest record
+        }
+      } catch (error) {
+        console.error("Failed to fetch education stats", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  /* ---------- STATS CONFIG ---------- */
+  const stats = [
+    {
+      title: "Total Universities",
+      icon: FaUniversity,
+      value: statsData?.totalUniversities ?? 0,
+      gradient: "linear-gradient(135deg, #667eea, #f74cd2ff)"
+    },
+    {
+      title: "Total Colleges",
+      icon: FaSchool,
+      value: statsData?.totalColleges ?? 0,
+      gradient: "linear-gradient(135deg, #11998e, #38ef7d)"
+    },
+    {
+      title: "Total Students",
+      icon: FaUserGraduate,
+      value: statsData?.totalStudents ?? 0,
+      gradient: "linear-gradient(135deg, #ff416c, #ff4b2b)"
+    },
+    {
+      title: "Total Courses",
+      icon: FaBook,
+      value: statsData?.totalCourses ?? 0,
+      gradient: "linear-gradient(135deg, #f7971e, #ffd200)"
+    }
+  ];
+
   return (
     <>
       <h4 className="mb-4 fw-bold">Dashboard Overview</h4>
 
       {/* ---------- STAT CARDS ---------- */}
       <Row>
-        {stats.map((item, i) => {
-          const Icon = item.icon;
-          return (
-            <Col xl={3} lg={4} md={6} sm={6} xs={12} key={i} className="mb-4">
-              <Card
-                className="shadow border-0 text-white h-100"
-                style={{
-                  background: item.gradient,
-                  transition: "transform 0.3s"
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-5px)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-              >
-                <CardBody className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <div className="text-uppercase small opacity-75">
-                      {item.title}
+        {loading ? (
+          <Col className="text-center py-5">
+            <Spinner color="primary" />
+          </Col>
+        ) : (
+          stats.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <Col xl={3} lg={4} md={6} sm={6} xs={12} key={i} className="mb-4">
+                <Card
+                  className="shadow border-0 text-white h-100"
+                  style={{
+                    background: item.gradient,
+                    transition: "transform 0.3s"
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "translateY(-5px)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "translateY(0)")
+                  }
+                >
+                  <CardBody className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div className="text-uppercase small opacity-75 fw-bold">
+                        {item.title}
+                      </div>
+                      <h2 className="fw-bold mb-0 text-white">{item.value}</h2>
                     </div>
-                    <h2 className="fw-bold mb-0 text-white">{item.value}</h2>
-                  </div>
-                  <div className="bg-white bg-opacity-25 rounded-circle p-3">
-                    <Icon size={26} />
-                  </div>
-                </CardBody>
-              </Card>
-            </Col>
-          );
-        })}
+                    <div className="bg-white bg-opacity-25 rounded-circle p-3">
+                      <Icon size={26} />
+                    </div>
+                  </CardBody>
+                </Card>
+              </Col>
+            );
+          })
+        )}
       </Row>
 
       {/* ---------- SECOND ROW ---------- */}
@@ -87,14 +128,15 @@ const AdminDashboard = () => {
         <Col lg={4} md={12} className="mb-4">
           <Card className="shadow-sm border-0 h-100">
             <CardBody>
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h5 className="fw-bold mb-0">
-                  <FaCalendarAlt className="me-2 text-primary" />
-                  {currentMonth} {currentYear}
-                </h5>
-              </div>
+              <h5 className="fw-bold mb-3">
+                <FaCalendarAlt className="me-2 text-primary" />
+                {currentMonth} {currentYear}
+              </h5>
 
-              <div className="d-grid" style={{ gridTemplateColumns: "repeat(7, 1fr)", gap: "6px" }}>
+              <div
+                className="d-grid"
+                style={{ gridTemplateColumns: "repeat(7, 1fr)", gap: "6px" }}
+              >
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                   <div key={d} className="text-center fw-semibold text-muted small">
                     {d}
@@ -102,7 +144,7 @@ const AdminDashboard = () => {
                 ))}
 
                 {[...Array(startDay)].map((_, i) => (
-                  <div key={`empty-${i}`} />
+                  <div key={i} />
                 ))}
 
                 {[...Array(daysInMonth)].map((_, i) => {
@@ -111,8 +153,11 @@ const AdminDashboard = () => {
                   return (
                     <div
                       key={day}
-                      className={`text-center py-2 rounded ${isToday ? "bg-primary text-white fw-bold" : "bg-light"
-                        }`}
+                      className={`text-center py-2 rounded ${
+                        isToday
+                          ? "bg-primary text-white fw-bold"
+                          : "bg-light"
+                      }`}
                     >
                       {day}
                     </div>
@@ -123,7 +168,7 @@ const AdminDashboard = () => {
           </Card>
         </Col>
 
-        {/* QUICK TOOLS */}
+        {/* QUICK ACTIONS */}
         <Col lg={8} md={12} className="mb-4">
           <Card className="shadow-sm border-0 h-100">
             <CardBody>
@@ -131,36 +176,52 @@ const AdminDashboard = () => {
 
               <Row className="g-3">
                 <Col md={3} sm={6} xs={12}>
-                  <Button color="primary" className="w-100 py-3 fw-semibold">
-                    <FaPlus className="mb-1" />
+                  <Button
+                    color="primary"
+                    onClick={() => navigate("/admin/universities")}
+                    className="w-100 py-3 fw-semibold"
+                  >
+                    <FaPlus />
                     <div>Add University</div>
                   </Button>
                 </Col>
 
                 <Col md={3} sm={6} xs={12}>
-                  <Button color="success" className="w-100 py-3 fw-semibold">
-                    <FaPlus className="mb-1" />
-                    <div>Add College</div>
+                  <Button
+                    color="success"
+                    onClick={() => navigate("/admin/menu")}
+                    className="w-100 py-3 fw-semibold"
+                  >
+                    <FaPlus />
+                    <div>Manu Management</div>
                   </Button>
                 </Col>
 
-                <Col md={3} sm={12} xs={12}>
-                  <Button color="info" className="w-100 py-3 fw-semibold text-white">
-                    <FaPlus className="mb-1" />
+                <Col md={3} sm={6} xs={12}>
+                  <Button
+                    color="info"
+                    onClick={() => navigate("/admin/news")}
+                    className="w-100 py-3 fw-semibold text-white"
+                  >
+                    <FaNewspaper />
                     <div>Publish News</div>
                   </Button>
                 </Col>
-                <Col md={3} sm={12} xs={12}>
-                  <Button color="danger" className="w-100 py-3 fw-semibold text-white">
-                    <FaPlus className="mb-1" />
-                    <div>Publish News</div>
+
+                <Col md={3} sm={6} xs={12}>
+                  <Button
+                    color="danger"
+                    onClick={() => navigate("/admin/new-updates")}
+                    className="w-100 py-3 fw-semibold text-white"
+                  >
+                    <FaBullhorn />
+                    <div>New Updates</div>
                   </Button>
                 </Col>
               </Row>
             </CardBody>
           </Card>
         </Col>
-
       </Row>
     </>
   );

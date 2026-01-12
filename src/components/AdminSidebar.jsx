@@ -33,6 +33,13 @@ const adminMenu = [
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
+  {
+    id: "education-stats",
+    icon: FaFileAlt,
+    path: "/admin/admin-education-stats",
+    label: { en: "Education Stats", hi: "शिक्षा सांख्यिकी" }
+
+  },
    {
         id: "universities",
         icon: FaFileAlt,
@@ -62,6 +69,12 @@ const adminMenu = [
     icon: FaNewspaper,
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
     submenu: [
+      {
+        id: "news-updates",
+        icon: FaNewspaper,
+        path: "/admin/new-updates",
+        label: { en: "New Updates", hi: "नवीन सूचना" }
+      },
       {
         id: "news-list",
         icon: FaNewspaper,

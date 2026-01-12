@@ -39,6 +39,8 @@ import ImageMaster from "../views/Admin/ImageMaster";
 import ManageCategories from "../views/Admin/ManageCategories";
 import ManageBrands from "../views/Admin/ManageBrands";
 import ManageUniversities from "../views/Admin/ManageUniversities";
+import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
+import AdminEducationStats from "../views/Admin/AdminEducationStats";
 
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
@@ -141,6 +143,8 @@ const AppRoutes = () => {
           <Route path="categories" element={<ManageCategories/>} />
           <Route path="brands" element={<ManageBrands/>} />
           <Route path="universities" element={<ManageUniversities/>} />
+          <Route path="new-updates" element={<NewUpdatesManagement/>} />
+          <Route path="admin-education-stats" element={<AdminEducationStats/>} />
 
         </Route>
       </Route>
