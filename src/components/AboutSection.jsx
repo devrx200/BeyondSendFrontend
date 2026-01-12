@@ -12,6 +12,7 @@ import {
 } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
 const AboutSection = () => {
+    const API_URL = import.meta.env.VITE_API_URL;
     const [profiles, setProfiles] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -21,7 +22,7 @@ const { isHindi } = useLanguage();
             try {
                 setLoading(true);
                 const res = await axios.get(
-                    "http://localhost:4000/api/get-images"
+                    `${API_URL}api/get-images`
                 );
                 setProfiles(res.data || []);
             } catch (err) {
@@ -54,21 +55,26 @@ const { isHindi } = useLanguage();
                     {/* LEFT CONTENT */}
                     <Col lg="8" md="12">
                         <h4 className="mb-4 text-secondary">{ isHindi ? "हमारे बारे में" :"About Us" }</h4>
-
-                       {(
+  {(isHindi
+      ? currentProfile.aboutContentHi
+      : currentProfile.aboutContentEn
+    )
+      ?.split("\n")              //  STRING → ARRAY
+      .filter(line => line.trim() !== "")
+      .map((text, i) => (
+        <div
+          key={i}
+          className={i < 3 ? "border-bottom pb-2 mb-3" : "pb-2"}
+        >
+          <p className="mb-0 text-secondary" style={{ textAlign: "justify" }}>
+            {text}
+          </p>
+        </div>
+      ))}
+                       {/* {(
   isHindi
-    ? [
-        "छत्तीसगढ़ राज्य में उच्च शिक्षा विभाग उत्कृष्टता को केन्द्र में रखकर, विश्वविद्यालयों एवं महाविद्यालयों का विस्तार करते हुये",
-        "उच्च शिक्षा की सुविधा अधिकाधिक युवाओं तक पहुँचाने के लिये दृढप्रतिज्ञ है। इस उद्देश्य की पूर्ति के लिये 9 शासकीय विश्वविद्यालय,",
-        "15 निजी विश्वविद्यालय, 335 शासकीय महाविद्यालय, 12 अनुदान प्राप्त अशासकीय महाविद्यालय तथा 256 अनुदान अप्राप्त अशासकीय",
-        "महाविद्यालयों के माध्यम से निरंतर प्रयासरत है।",
-      ]
-    : [
-        "The Department of Higher Education of the State of Chhattisgarh, with excellence at its core, is continuously expanding universities and colleges.",
-        "It is firmly committed to making higher education accessible to a larger number of youth.",
-        "To achieve this objective, it is consistently working through 9 government universities, 15 private universities,",
-        "335 government colleges, 12 aided non-government colleges, and 256 unaided non-government colleges.",
-      ]
+    ? [currentProfile.aboutContentHi]
+    :[currentProfile.aboutContentEn]
 ).map((text, i) => (
   <div
     key={i}
@@ -76,7 +82,7 @@ const { isHindi } = useLanguage();
   >
     <p className="mb-0 text-secondary">{text}</p>
   </div>
-))}
+))} */}
 
 
                         <Button
@@ -102,7 +108,7 @@ const { isHindi } = useLanguage();
                                     top
                                     src={
                                         currentProfile.image
-                                            ? `http://localhost:4000/${currentProfile.image.replace(/\\/g, "/")}`
+                                            ? `${API_URL}${currentProfile.image.replace(/\\/g, "/")}`
                                             : "/placeholder.png"
                                     }
                                     alt={currentProfile.imgNameEng || "Profile"}
