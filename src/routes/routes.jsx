@@ -35,7 +35,7 @@ import NewsManagement from "../views/Admin/NewsManagement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
-import ImageMaster from "../views/Admin/ImageMaster";
+import AboutSectionMangement from "../views/Admin/AboutSectionMangement";
 import ManageCategories from "../views/Admin/ManageCategories";
 import ManageBrands from "../views/Admin/ManageBrands";
 import ManageUniversities from "../views/Admin/ManageUniversities";
@@ -137,7 +137,7 @@ const AppRoutes = () => {
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
-          <Route path="image-master" element={<ImageMaster />} />
+          <Route path="image-master" element={<AboutSectionMangement />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
           <Route path="categories" element={<ManageCategories/>} />
