@@ -1,6 +1,4 @@
 
-
-
 export const heroSlides = [
   {
     id: 1,

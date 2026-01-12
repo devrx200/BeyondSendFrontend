@@ -70,12 +70,20 @@ const adminMenu = [
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
   },
-   {
-    id: "image",
-    icon: FaImages,
-    path: "/admin/image-master",
-    label: { en: "Image Master", hi: "इमेज मास्टर" }
-  },
+{
+  id: "about",
+  icon: FaImages,
+  label: { en: "About", hi: "परिचय" },
+  submenu: [
+    {
+      id: "about-content",
+      icon: FaPlus,
+      path: "/admin/image-master",
+      label: { en: "About Content", hi: "परिचय सामग्री" }
+    }
+  ]
+},
+
 ];
 
 const AdminSidebar = ({ collapsed }) => {

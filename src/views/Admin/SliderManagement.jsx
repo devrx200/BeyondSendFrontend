@@ -40,8 +40,6 @@ const SliderManagement = () => {
     setPreview(URL.createObjectURL(file));
   };
 
-
-
   const fetchSlides = async () => {
     try {
       setLoading(true);
@@ -174,7 +172,7 @@ const SliderManagement = () => {
           showConfirmButton: false,
         });
 
-        toggleModal();      // ✅ HERE ONLY
+        toggleModal();      // HERE ONLY
         fetchSlides();
       }
     } catch (error) {
@@ -283,11 +281,12 @@ const SliderManagement = () => {
                 {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
               </Button>
             </div>
+            <hr className="my-4" />
 
-            <Table responsive hover>
+            <Table responsive bordered hover>
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th>S.NO.</th>
                   <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
                   <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
                   <th>{isHindi ? 'विवरण' : 'Description'}</th>
@@ -308,28 +307,38 @@ const SliderManagement = () => {
                       <td className="text-truncate" style={{ maxWidth: '200px' }}>
                         {isHindi ? slide.descriptionHin : slide.descriptionEng}
                       </td>
-                      <td>{isHindi ? slide.linkTextEn : slide.linkTextHi}</td>
+                      <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
                       <td>{slide.displayOrder}</td>
                       <td>
                         <span className={`badge bg-${slide.isActive ? 'success' : 'secondary'}`}>
                           {slide.isActive ? (isHindi ? 'सक्रिय' : 'Active') : (isHindi ? 'निष्क्रिय' : 'Inactive')}
                         </span>
                       </td>
-                      <td>
-                        <Button color="info" size="sm" onClick={() => handleEdit(slide)}>
-                          <FaEdit />
-                        </Button>
-                        <Button color="danger" size="sm" onClick={() => handleDelete(slide._id)}>
-                          <FaTrash />
+                      <td className="text-nowrap">
+                        <Button
+                          color="info"
+                          size="sm"
+                          className="px-2 py-1 me-1"
+                          onClick={() => handleEdit(slide)}
+                        >
+                          <FaEdit size={12} />
                         </Button>
 
+                        <Button
+                          color="danger"
+                          size="sm"
+                          className="px-2 py-1"
+                          onClick={() => handleDelete(slide._id)}
+                        >
+                          <FaTrash size={12} />
+                        </Button>
                       </td>
+
                     </tr>
                   ))}
 
               </tbody>
             </Table>
-
 
             <Modal isOpen={modal} toggle={toggleModal} size="lg">
               <ModalHeader toggle={toggleModal}>
@@ -517,24 +526,26 @@ const SliderManagement = () => {
       }}
     /> */}
 
-                          <a
-                            href={getImageUrl(formData.image)}
-                            download
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-secondary mt-2"
-                          >
-                            ⬇
-                          </a>
+                          {editingSlide && formData.image && !formData.uploadefile && (
+                            <a
+                              href={getImageUrl(formData.image)}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm btn-secondary mt-2"
+                            >
+                              ⬇ Download Existing Image
+                            </a>
+                          )}
+
 
                         </div>
                       )}
                     </Col>
 
-
-                    {preview && (
+                    {/* {preview && (
                       <img src={preview} style={{ width: "100%", maxHeight: 150 }} />
-                    )}
+                    )} */}
 
                   </Row>
                 </Form>
@@ -552,21 +563,23 @@ const SliderManagement = () => {
           <CardBody>
             {inactiveSlides.length > 0 && (
               <>
-                <hr className="my-4" />
+
 
                 <h5 className="mb-3 text-danger">
                   {isHindi ? "निष्क्रिय स्लाइडर सूची" : "Inactive Slider List"}
                 </h5>
-
+                <hr className="my-4" />
                 <Table responsive bordered hover>
                   <thead className="table-light">
                     <tr>
-                      <th>#</th>
-                      <th>{isHindi ? "छोटा शीर्षक" : "Small Title"}</th>
-                      <th>{isHindi ? "मुख्य शीर्षक" : "Main Title"}</th>
-                      <th>{isHindi ? "क्रम" : "Order"}</th>
+                      <th>S.No.</th>
+                      <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
+                      <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
+                      <th>{isHindi ? 'विवरण' : 'Description'}</th>
+                      <th>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'}</th>
+                      <th>{isHindi ? 'क्रम' : 'Order'}</th>
                       <th>{isHindi ? 'स्थिति' : 'Status'}</th>
-                      <th>{isHindi ? "कार्य" : "Actions"}</th>
+                      <th>{isHindi ? 'कार्य' : 'Actions'}</th>
 
                     </tr>
                   </thead>
@@ -576,6 +589,10 @@ const SliderManagement = () => {
                         <td>{index + 1}</td>
                         <td>{isHindi ? slide.subtitleHin : slide.subtitleEng}</td>
                         <td>{isHindi ? slide.titleHin : slide.titleEng}</td>
+                        <td className="text-truncate" style={{ maxWidth: '200px' }}>
+                          {isHindi ? slide.descriptionHin : slide.descriptionEng}
+                        </td>
+                        <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
                         <td>{slide.displayOrder}</td>
                         <td>
                           <span className={`badge bg-${slide.isActive ? 'success' : 'secondary'}`}>

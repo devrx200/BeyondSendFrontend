@@ -17,10 +17,10 @@ import {
 import { FaPlus, FaEdit, FaTrash, FaImage } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
-
+import { useLanguage } from '../../contexts/LanguageContext';
 const ImageMaster = () => {
-const API_URL = import.meta.env.VITE_API_URL;
-
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { isHindi } = useLanguage();
   const [modal, setModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -31,6 +31,8 @@ const API_URL = import.meta.env.VITE_API_URL;
     designationEng: "",
     designationHin: "",
     image: null,
+    aboutContentEn:"",
+    aboutContentHi: "",
   });
 
 
@@ -47,6 +49,8 @@ const API_URL = import.meta.env.VITE_API_URL;
       designationEng: "",
       designationHin: "",
       image: null,
+      aboutContentEn:"",
+    aboutContentHi: "",
     });
     setImagePreview(null);
   };
@@ -61,16 +65,16 @@ const API_URL = import.meta.env.VITE_API_URL;
   //   setImagePreview(URL.createObjectURL(file));
   // };
   const handleImageChange = (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
 
-  setFormData((prev) => ({
-    ...prev,
-    image: file,
-  }));
+    setFormData((prev) => ({
+      ...prev,
+      image: file,
+    }));
 
-  setImagePreview(URL.createObjectURL(file));
-};
+    setImagePreview(URL.createObjectURL(file));
+  };
 
 
   const handleSubmit = async (e) => {
@@ -82,6 +86,8 @@ const API_URL = import.meta.env.VITE_API_URL;
       payload.append("imgNameHin", formData.imgNameHin);
       payload.append("designationEng", formData.designationEng);
       payload.append("designationHin", formData.designationHin);
+      payload.append("aboutContentEn", formData.aboutContentEn);
+      payload.append("aboutContentHi", formData.aboutContentHi);
 
       if (formData.image) {
         payload.append("image", formData.image);
@@ -100,17 +106,17 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
       if (response?.status === 200 || response?.status === 201) {
-      await Swal.fire({
-        icon: "success",
-        title: response.data?.msg || "Added Successfully",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+        await Swal.fire({
+          icon: "success",
+          title: response.data?.msg || "Added Successfully",
+          timer: 2000,
+          showConfirmButton: false,
+        });
 
-      resetForm();       //  clear form
-      setModal(false);   //  close modal
-      fetchImages();     // refresh table
-    }
+        resetForm();       //  clear form
+        setModal(false);   //  close modal
+        fetchImages();     // refresh table
+      }
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -168,6 +174,8 @@ const API_URL = import.meta.env.VITE_API_URL;
       imgNameHin: item.imgNameHin || "",
       designationEng: item.designationEng || "",
       designationHin: item.designationHin || "",
+      aboutContentEn: item.aboutContentEn || "",
+      aboutContentHi: item.aboutContentHi || "",
       image: null,
     });
 
@@ -190,7 +198,8 @@ const API_URL = import.meta.env.VITE_API_URL;
       payload.append("imgNameHin", formData.imgNameHin);
       payload.append("designationEng", formData.designationEng);
       payload.append("designationHin", formData.designationHin);
-
+      payload.append("aboutContentEn", formData.aboutContentEn);
+      payload.append("aboutContentHi", formData.aboutContentHi);
       if (formData.image) {
         payload.append("image", formData.image);
       }
@@ -239,53 +248,53 @@ const API_URL = import.meta.env.VITE_API_URL;
   };
 
 
- const handleDelete = async (id) => {
-  const confirm = await Swal.fire({
-    title: "Are you sure?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    confirmButtonText: "Yes, delete it!",
-  });
-
-  if (!confirm.isConfirmed) return;
-
-
-  try {
-    const response = await axios.delete(
-      `${API_URL}api/delete-image/${id}`,
-      {
-        headers: {
-          "web-url": window.location.href,
-          // Authorization: `Bearer ${token}` // if protected
-        },
-      }
-    );
-
-    if (response.status === 200) {
-      Swal.fire({
-        icon: "success",
-        title: response.data?.msg || "Image deleted successfully",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-
-      // Refresh table
-      fetchImages();
-    }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Delete Failed",
-      text:
-        error?.response?.data?.msg ||
-        error?.response?.data?.message ||
-        "Something went wrong while deleting image",
+  const handleDelete = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
     });
 
-    console.error("Delete error:", error);
-  }
-};
+    if (!confirm.isConfirmed) return;
+
+
+    try {
+      const response = await axios.delete(
+        `${API_URL}api/delete-image/${id}`,
+        {
+          headers: {
+            "web-url": window.location.href,
+            // Authorization: `Bearer ${token}` // if protected
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: response.data?.msg || "Image deleted successfully",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Refresh table
+        fetchImages();
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Delete Failed",
+        text:
+          error?.response?.data?.msg ||
+          error?.response?.data?.message ||
+          "Something went wrong while deleting image",
+      });
+
+      console.error("Delete error:", error);
+    }
+  };
 
 
   return (
@@ -295,7 +304,7 @@ const API_URL = import.meta.env.VITE_API_URL;
         <div className="d-flex justify-content-between mb-3">
           <h4>
             <FaImage className="me-2" />
-            Image Master
+            About Section for Home
           </h4>
           <Button color="primary" onClick={toggleModal}>
             <FaPlus className="me-2" />
@@ -307,13 +316,12 @@ const API_URL = import.meta.env.VITE_API_URL;
         <Table bordered responsive hover className="align-middle">
           <thead className="table-light">
             <tr>
-              <th>#</th>
-              <th>Image</th>
-              <th>Name (EN)</th>
-              <th>Name (HI)</th>
-              <th>Designation (EN)</th>
-              <th>Designation (HI)</th>
-              <th>Action</th>
+              <th>S.No.</th>
+              <th>{isHindi ? "छवि" : "Image"}</th>
+              <th>{isHindi ? "नाम " : "Name"}</th>
+              <th>{isHindi ? "पदनाम " : "Designation "}</th>
+              <th>{isHindi ? "परिचय सामग्री" : "About Content"}</th>
+              <th>{isHindi ? "कार्य" : "Action"}</th>
             </tr>
           </thead>
           <tbody>
@@ -327,7 +335,6 @@ const API_URL = import.meta.env.VITE_API_URL;
               imageList.map((item, index) => (
                 <tr key={item._id}>
                   <td>{index + 1}</td>
-
                   <td>
                     <img
                       src={`${API_URL}${item.image}`}
@@ -341,11 +348,9 @@ const API_URL = import.meta.env.VITE_API_URL;
                       }}
                     />
                   </td>
-
-                  <td>{item.imgNameEng}</td>
-                  <td>{item.imgNameHin}</td>
-                  <td>{item.designationEng}</td>
-                  <td>{item.designationHin}</td>
+                  <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
+                  <td>{isHindi ? item.designationHin : item.designationEng}</td>
+                  <td>{isHindi ? item.aboutContentHi : item.aboutContentEn}</td>
 
                   <td>
                     <Button color="info" size="sm" className="me-2" onClick={() => handleEdit(item)}>
@@ -361,8 +366,6 @@ const API_URL = import.meta.env.VITE_API_URL;
           </tbody>
 
         </Table>
-
-
         {/* Modal */}
         <Modal isOpen={modal} toggle={toggleModal} size="lg">
           <ModalHeader toggle={toggleModal}>
@@ -421,12 +424,39 @@ const API_URL = import.meta.env.VITE_API_URL;
                   </FormGroup></Col>
 
               </Row>
+              <Row>
+  <Col md={6}>
+    <FormGroup>
+      <Label>About Content (English)</Label>
+      <Input
+        type="textarea"
+        rows="5"
+        name="aboutContentEn"
+        value={formData.aboutContentEn}
+        onChange={handleChange}
+        required
+      />
+    </FormGroup>
+  </Col>
 
-
+  <Col md={6}>
+    <FormGroup>
+      <Label>About Content (Hindi)</Label>
+      <Input
+        type="textarea"
+        rows="5"
+        name="aboutContentHi"
+        value={formData.aboutContentHi}
+        onChange={handleChange}
+        required
+      />
+    </FormGroup>
+  </Col>
+</Row>
 
               <FormGroup>
                 <Label>Upload Image</Label>
-                <Input type="file" name="image"  accept="image/*" onChange={handleImageChange} />
+                <Input type="file" name="image" accept="image/*" onChange={handleImageChange} />
               </FormGroup>
 
               {imagePreview && (
