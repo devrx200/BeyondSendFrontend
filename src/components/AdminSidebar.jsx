@@ -6,16 +6,27 @@ import {
   Collapse,
   Badge
 } from "reactstrap";
+
 import {
   FaTachometerAlt,
-  FaImages,FaPlus,FaTrash,
+  FaImages,
+  FaPlus,
+  FaTrash,
   FaNewspaper,
   FaChevronDown,
   FaChevronRight,
   FaBullhorn,
-  FaFileAlt,
-  FaBars as FaMenu
+  FaBars,
+  FaChartBar,
+  FaUniversity,
+  FaListAlt,
+  FaTags,
+  FaBell,
+  FaPhotoVideo,
+  FaInfoCircle,
+  FaFileImage
 } from "react-icons/fa";
+
 import { useLanguage } from "../contexts/LanguageContext";
 import { jwtDecode } from "jwt-decode";
 
@@ -29,32 +40,31 @@ const adminMenu = [
   },
   {
     id: "menu",
-    icon: FaMenu,
+    icon: FaBars,
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
   {
     id: "education-stats",
-    icon: FaFileAlt,
+    icon: FaChartBar,
     path: "/admin/admin-education-stats",
     label: { en: "Education Stats", hi: "शिक्षा सांख्यिकी" }
-
   },
-   {
-        id: "universities",
-        icon: FaFileAlt,
-        path: "/admin/universities",
-        label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
-      },
+  {
+    id: "universities",
+    icon: FaUniversity,
+    path: "/admin/universities",
+    label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
+  },
   {
     id: "categories",
-    icon: FaFileAlt,
+    icon: FaListAlt,
     path: "/admin/categories",
     label: { en: "Manage Categories", hi: "श्रेणियाँ प्रबंधन" }
   },
   {
     id: "brands",
-    icon: FaFileAlt,
+    icon: FaTags,
     path: "/admin/brands",
     label: { en: "Manage Brands", hi: "ब्रांड्स प्रबंधन" }
   },
@@ -71,7 +81,7 @@ const adminMenu = [
     submenu: [
       {
         id: "news-updates",
-        icon: FaNewspaper,
+        icon: FaBullhorn,
         path: "/admin/new-updates",
         label: { en: "New Updates", hi: "नवीन सूचना" }
       },
@@ -89,33 +99,31 @@ const adminMenu = [
       },
       {
         id: "notifications",
-        icon: FaBullhorn,
+        icon: FaBell,
         path: "/admin/notifications",
         label: { en: "Notifications", hi: "सूचनाएं" }
-      },
-      ]
-      
+      }
+    ]
   },
   {
     id: "gallery",
-    icon: FaImages,
+    icon: FaPhotoVideo,
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
   },
-{
-  id: "about",
-  icon: FaImages,
-  label: { en: "About", hi: "परिचय" },
-  submenu: [
-    {
-      id: "about-content",
-      icon: FaPlus,
-      path: "/admin/image-master",
-      label: { en: "About Content", hi: "परिचय सामग्री" }
-    }
-  ]
-},
-
+  {
+    id: "about",
+    icon: FaInfoCircle,
+    label: { en: "About", hi: "परिचय" },
+    submenu: [
+      {
+        id: "about-content",
+        icon: FaFileImage,
+        path: "/admin/image-master",
+        label: { en: "About Content", hi: "परिचय सामग्री" }
+      }
+    ]
+  }
 ];
 
 const AdminSidebar = ({ collapsed }) => {
@@ -207,7 +215,7 @@ const AdminSidebar = ({ collapsed }) => {
             <div className="mt-2">
               <small className="fw-bold">Department of Higher Education, Government of Chhattisgarh</small>
             </div>
-     
+
           </>
         )}
       </div>
