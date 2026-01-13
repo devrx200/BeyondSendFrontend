@@ -44,7 +44,7 @@ const SliderManagement = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${API_URL}api/get-hero-slides`,
+        `${API_URL}/api/get-hero-slides`,
         {
           headers: { "web-url": window.location.href },
         }
@@ -152,13 +152,13 @@ const SliderManagement = () => {
 
       if (editingSlide) {
         response = await axios.put(
-          `${API_URL}api/update-hero-slide/${editingSlide._id}`,
+          `${API_URL}/api/update-hero-slide/${editingSlide._id}`,
           payload,
           { headers: { "web-url": window.location.href } }
         );
       } else {
         response = await axios.post(
-          `${API_URL}api/create-hero-slide`,
+          `${API_URL}/api/create-hero-slide`,
           payload,
           { headers: { "web-url": window.location.href } }
         );
@@ -198,7 +198,7 @@ const SliderManagement = () => {
 
     try {
       const res = await axios.delete(
-        `${API_URL}api/deactivate-hero-slide/${id}`,
+        `${API_URL}/api/deactivate-hero-slide/${id}`,
         { headers: { "web-url": window.location.href } }
       );
 
@@ -239,7 +239,7 @@ const SliderManagement = () => {
 
     try {
       const res = await axios.delete(
-        `${API_URL}api/permanent-delete-hero-slide/${id}`,
+        `${API_URL}/api/permanent-delete-hero-slide/${id}`,
         { headers: { "web-url": window.location.href } }
       );
 

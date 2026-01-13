@@ -22,7 +22,7 @@ const { isHindi } = useLanguage();
             try {
                 setLoading(true);
                 const res = await axios.get(
-                    `${API_URL}api/get-images`
+                    `${API_URL}/api/get-about-sections`
                 );
                 setProfiles(res.data || []);
             } catch (err) {
