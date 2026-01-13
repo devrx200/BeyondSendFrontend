@@ -12,7 +12,7 @@ const HomeHeroSlider = () => {
   const fetchHeroSlides = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}api/get-hero-slides`);
+      const res = await axios.get(`${API_URL}/api/get-hero-slides`);
       if (res.status === 200) {
         setSlides(res.data.data || []);
       }

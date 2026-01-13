@@ -25,7 +25,7 @@ const HeroSlider = () => {
 
   const loadSlides = async () => {
     try {
-      const res = await axios.get(`${API_URL}api/get-hero-slides`);
+      const res = await axios.get(`${API_URL}/api/get-hero-slides`);
       if (res.status === 200) {
         //  only active slides
         const activeSlides = (res.data.data || []).filter(
