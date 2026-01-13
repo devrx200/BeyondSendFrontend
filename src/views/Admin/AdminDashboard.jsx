@@ -3,7 +3,6 @@ import {
   FaUniversity,
   FaSchool,
   FaNewspaper,
-  FaBell,
   FaCalendarAlt,
   FaPlus,
   FaBullhorn,
@@ -13,6 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 /* ---------- CALENDAR HELPERS ---------- */
 const today = new Date();
@@ -25,6 +26,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const [statsData, setStatsData] = useState(null);
+  const [academicYear, setAcademicYear] = useState("");
   const [loading, setLoading] = useState(true);
 
   /* ---------- FETCH EDUCATION STATS ---------- */
@@ -32,11 +34,12 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const res = await axios.get(
-          "/education-stats/list-for-admin"
+          `${API_URL}/api/education-stats/current`
         );
 
-        if (res.data.success && res.data.data.length > 0) {
-          setStatsData(res.data.data[0]); // latest record
+        if (res.data?.success) {
+          setStatsData(res.data.data);        // ✅ object
+          setAcademicYear(res.data.academicYear);
         }
       } catch (error) {
         console.error("Failed to fetch education stats", error);
@@ -78,7 +81,14 @@ const AdminDashboard = () => {
 
   return (
     <>
-      <h4 className="mb-4 fw-bold">Dashboard Overview</h4>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="fw-bold mb-0">Dashboard Overview</h4>
+        {academicYear && (
+          <span className="badge bg-primary fs-6">
+            Academic Year: {academicYear}
+          </span>
+        )}
+      </div>
 
       {/* ---------- STAT CARDS ---------- */}
       <Row>
@@ -109,7 +119,9 @@ const AdminDashboard = () => {
                       <div className="text-uppercase small opacity-75 fw-bold">
                         {item.title}
                       </div>
-                      <h2 className="fw-bold mb-0 text-white">{item.value}</h2>
+                      <h2 className="fw-bold mb-0 text-white">
+                        {item.value}
+                      </h2>
                     </div>
                     <div className="bg-white bg-opacity-25 rounded-circle p-3">
                       <Icon size={26} />
@@ -175,7 +187,7 @@ const AdminDashboard = () => {
               <h5 className="fw-bold mb-3">Quick Actions</h5>
 
               <Row className="g-3">
-                <Col md={3} sm={6} xs={12}>
+                <Col md={3} sm={6}>
                   <Button
                     color="primary"
                     onClick={() => navigate("/admin/universities")}
@@ -186,29 +198,29 @@ const AdminDashboard = () => {
                   </Button>
                 </Col>
 
-                <Col md={3} sm={6} xs={12}>
+                <Col md={3} sm={6}>
                   <Button
                     color="success"
                     onClick={() => navigate("/admin/menu")}
                     className="w-100 py-3 fw-semibold"
                   >
                     <FaPlus />
-                    <div>Manu Management</div>
+                    <div>Menu Management</div>
                   </Button>
                 </Col>
 
-                <Col md={3} sm={6} xs={12}>
+                <Col md={3} sm={6}>
                   <Button
                     color="info"
-                    onClick={() => navigate("/admin/news")}
+                    onClick={() => navigate("/admin/gallery")}
                     className="w-100 py-3 fw-semibold text-white"
                   >
                     <FaNewspaper />
-                    <div>Publish News</div>
+                    <div>Add Gallery</div>
                   </Button>
                 </Col>
 
-                <Col md={3} sm={6} xs={12}>
+                <Col md={3} sm={6}>
                   <Button
                     color="danger"
                     onClick={() => navigate("/admin/new-updates")}
