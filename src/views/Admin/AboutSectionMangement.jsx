@@ -29,7 +29,7 @@ const AboutSectionMangement = () => {
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-
+  const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     imgNameEng: "",
     imgNameHin: "",
@@ -56,7 +56,6 @@ const AboutSectionMangement = () => {
     loadList();
   }, []);
 
-  /* ================= RESET ================= */
   const resetForm = () => {
     setEditingId(null);
     setForm({
@@ -76,22 +75,171 @@ const AboutSectionMangement = () => {
     if (modal) resetForm();
   };
 
-  /* ================= HANDLE INPUT ================= */
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const validateField = (name, value, isHindi) => {
+    const TEXTAREA_FIELDS = ["aboutContentEn", "aboutContentHi"];
+
+    const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
+    const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
+
+    const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
+    const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-\n\r]+$/;
+
+    if (!value || !value.trim()) {
+      return isHindi ? "यह फ़ील्ड आवश्यक है" : "This field is required";
+    }
+
+    const isTextarea = TEXTAREA_FIELDS.includes(name);
+
+    if (isHindi) {
+      const regex = isTextarea ? HINDI_WITH_NUMBERS : HINDI_TEXT_ONLY;
+      if (!regex.test(value)) {
+        return isTextarea
+          ? "कृपया केवल हिंदी अक्षर और अंक प्रयोग करें"
+          : "कृपया केवल हिंदी अक्षर प्रयोग करें";
+      }
+    } else {
+      const regex = isTextarea ? ENGLISH_WITH_NUMBERS : ENGLISH_TEXT_ONLY;
+      if (!regex.test(value)) {
+        return isTextarea
+          ? "Please enter English text and numbers only"
+          : "Please enter English text only";
+      }
+    }
+
+    return "";
   };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    newErrors.imgNameEng = validateField("imgNameEng", form.imgNameEng, false);
+    newErrors.imgNameHin = validateField("imgNameHin", form.imgNameHin, true);
+
+    newErrors.designationEng = validateField("designationEng", form.designationEng, false);
+    newErrors.designationHin = validateField("designationHin", form.designationHin, true);
+
+    newErrors.aboutContentEn = validateField("aboutContentEn", form.aboutContentEn, false);
+    newErrors.aboutContentHi = validateField("aboutContentHi", form.aboutContentHi, true);
+
+    if (!editingId && !form.image) {
+      newErrors.image = isHindi
+        ? "छवि आवश्यक है"
+        : "Image is required";
+    }
+
+    Object.keys(newErrors).forEach(
+      key => newErrors[key] === "" && delete newErrors[key]
+    );
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e, langType) => {
+    const { name, value } = e.target;
+
+    setForm(prev => ({ ...prev, [name]: value }));
+
+    const error = validateField(name, value, langType === "hi");
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: error,
+    }));
+  };
+
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
+  const MAX_FILE_SIZE = 520 * 1024;
+  const MAX_WIDTH = 1920;   // px
+  const MAX_HEIGHT = 1080;  // px
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setForm({ ...form, image: file });
-    setImagePreview(URL.createObjectURL(file));
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setErrors(prev => ({
+        ...prev,
+        image: "Only JPG, PNG or WEBP images are allowed",
+      }));
+      setImagePreview(null);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setErrors(prev => ({
+        ...prev,
+        image: "Image size must be less than 520 KB",
+      }));
+      setImagePreview(null);
+      return;
+    }
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
+        setErrors(prev => ({
+          ...prev,
+          image: `Image dimensions must be max ${MAX_WIDTH}×${MAX_HEIGHT}px`,
+        }));
+        setImagePreview(null);
+        URL.revokeObjectURL(objectUrl);
+        return;
+      }
+
+      setForm(prev => ({ ...prev, image: file }));
+      setErrors(prev => ({ ...prev, image: "" }));
+      setImagePreview(objectUrl);
+    };
+
+    img.onerror = () => {
+      setErrors(prev => ({
+        ...prev,
+        image: "Invalid image file",
+      }));
+      setImagePreview(null);
+    };
+
+    img.src = objectUrl;
   };
 
-  /* ================= CREATE / UPDATE ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      Swal.fire(
+        isHindi ? "त्रुटि" : "Validation Error",
+        isHindi
+          ? "कृपया सभी आवश्यक फ़ील्ड सही भरें"
+          : "Please fill all required fields correctly",
+        "error"
+      );
+      return;
+    }
+    const newErrors = { ...errors };
+    if (!editingId && !form.image) {
+      newErrors.image = isHindi
+        ? "छवि आवश्यक है"
+        : "Image is required";
+    }
 
+    if (form.image) {
+      if (!ALLOWED_TYPES.includes(form.image.type)) {
+        newErrors.image = "Only JPG, PNG or WEBP images are allowed";
+      } else if (form.image.size > MAX_FILE_SIZE) {
+        newErrors.image = "Image size must be 520 KB or less";
+      }
+    }
+
+    Object.keys(newErrors).forEach(
+      key => newErrors[key] === "" && delete newErrors[key]
+    );
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     try {
       const payload = new FormData();
       Object.entries(form).forEach(([key, value]) => {
@@ -175,7 +323,7 @@ const AboutSectionMangement = () => {
         </div>
 
         {/* TABLE */}
-        <Table responsive striped hover>
+        <Table responsive bordered striped hover>
           <thead>
             <tr>
               <th>#</th>
@@ -202,23 +350,38 @@ const AboutSectionMangement = () => {
                   </td>
                   <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
                   <td>{isHindi ? item.designationHin : item.designationEng}</td>
-                  <td>{isHindi ? item.aboutContentHi : item.aboutContentEn}</td>
+                  <td style={{ maxWidth: "300px" }}>
+                    {(isHindi ? item.aboutContentHi : item.aboutContentEn)
+                      ?.split("\n")
+                      .filter(line => line.trim() !== "")
+                      .map((line, index) => (
+                        <p key={index} className="mb-1">
+                          {line}
+                        </p>
+                      ))}
+                  </td>
+
                   <td>
                     <Button
-                      size="sm"
                       color="warning"
-                      className="me-2"
+                      size="sm"
+                      className="p-0 me-1"
+                      style={{ width: 32, height: 32 }}
                       onClick={() => handleEdit(item)}
                     >
-                      <FaEdit />
+                      <FaEdit size={10} />
                     </Button>
+
                     <Button
-                      size="sm"
                       color="danger"
+                      size="sm"
+                      className="p-0"
+                      style={{ width: 32, height: 32 }}
                       onClick={() => handleDelete(item._id)}
                     >
-                      <FaTrash />
+                      <FaTrash size={10} />
                     </Button>
+
                   </td>
                 </tr>
               ))
@@ -238,26 +401,38 @@ const AboutSectionMangement = () => {
                 <Col md={6}>
                   <FormGroup>
                     <Label>Name (English)</Label>
-                    <Input name="imgNameEng" value={form.imgNameEng} onChange={handleChange} />
+                    <Input name="imgNameEng" value={form.imgNameEng} invalid={!!errors.imgNameEng} onChange={(e) => handleChange(e, "en")} />
+                    {errors.imgNameEng && (
+                      <small className="text-danger">{errors.imgNameEng}</small>
+                    )}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Name (Hindi)</Label>
-                    <Input name="imgNameHin" value={form.imgNameHin} onChange={handleChange} />
+                    <Input name="imgNameHin" value={form.imgNameHin} invalid={!!errors.imgNameHin} onChange={(e) => handleChange(e, "hi")} />
+                    {errors.imgNameHin && (
+                      <small className="text-danger">{errors.imgNameHin}</small>
+                    )}
                   </FormGroup>
                 </Col>
 
                 <Col md={6}>
                   <FormGroup>
                     <Label>Designation (English)</Label>
-                    <Input name="designationEng" value={form.designationEng} onChange={handleChange} />
+                    <Input name="designationEng" value={form.designationEng} invalid={!!errors.designationEng} onChange={(e) => handleChange(e, "en")} />
+                    {errors.designationEng && (
+                      <small className="text-danger">{errors.designationEng}</small>
+                    )}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Designation (Hindi)</Label>
-                    <Input name="designationHin" value={form.designationHin} onChange={handleChange} />
+                    <Input name="designationHin" value={form.designationHin} invalid={!!errors.designationHin} onChange={(e) => handleChange(e, "hi")} />
+                    {errors.designationHin && (
+                      <small className="text-danger">{errors.designationHin}</small>
+                    )}
                   </FormGroup>
                 </Col>
 
@@ -269,8 +444,12 @@ const AboutSectionMangement = () => {
                       rows="4"
                       name="aboutContentEn"
                       value={form.aboutContentEn}
-                      onChange={handleChange}
+                      invalid={!!errors.aboutContentEn}
+                      onChange={(e) => handleChange(e, "en")}
                     />
+                    {errors.aboutContentEn && (
+                      <small className="text-danger">{errors.aboutContentEn}</small>
+                    )}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
@@ -281,15 +460,22 @@ const AboutSectionMangement = () => {
                       rows="4"
                       name="aboutContentHi"
                       value={form.aboutContentHi}
-                      onChange={handleChange}
+                      invalid={!!errors.aboutContentHi}
+                      onChange={(e) => handleChange(e, "hi")}
                     />
+                    {errors.aboutContentHi && (
+                      <small className="text-danger">{errors.aboutContentHi}</small>
+                    )}
                   </FormGroup>
                 </Col>
 
                 <Col md={12}>
                   <FormGroup>
                     <Label>Image</Label>
-                    <Input type="file" onChange={handleImageChange} />
+                    <Input type="file" onChange={handleImageChange} accept="image/jpeg,image/png,image/jpg" />
+                    {errors.image && (
+                      <small className="text-danger">{errors.image}</small>
+                    )}
                     {imagePreview && (
                       <img src={imagePreview} className="mt-2" width={120} />
                     )}
