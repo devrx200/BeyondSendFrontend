@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import {
   Card, CardBody, CardHeader, Button, Form,
   Input, Table, Spinner, Row, Col, Badge,
-  Modal, ModalHeader, ModalBody, ModalFooter, Label,FormGroup
+  Modal, ModalHeader, ModalBody, ModalFooter, Label, FormGroup
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -264,230 +264,292 @@ const ManageUniversities = () => {
   /* ================= UI ================= */
   return (
     <div className="shadow">
-{/* CREATE FORM */}
-<Row>
-{/* ADD UNIVERSITY */}
-<Col md={12}>
-  <Card className="shadow-sm mb-5">
+      {/* CREATE FORM */}
+      <Row>
+        {/* ADD UNIVERSITY */}
+        <Col md={12}>
+          <Card className="shadow-sm mb-5">
 
-    <CardHeader className="bg-primary text-white">
-      <FaPlus className="me-2" /> Add University
-    </CardHeader>
+            <CardHeader className="bg-primary text-white">
+              <FaPlus className="me-2" /> Add University
+            </CardHeader>
 
-    <CardBody>
-      
-      <Form onSubmit={handleSubmit}>
+            <CardBody>
 
-        {/* BASIC INFO */}
-        <FormGroup className="mb-3">
-          <Label>University Name (English)</Label>
-          <Input
-            value={form.universityNameEng}
-            onChange={e => setForm({ ...form, universityNameEng: e.target.value })}
-          />
-        </FormGroup>
+              <Form onSubmit={handleSubmit}>
 
-        <FormGroup className="mb-3">
-          <Label>University Name (Hindi)</Label>
-          <Input
-            value={form.universityNameHindi}
-            onChange={e => setForm({ ...form, universityNameHindi: e.target.value })}
-          />
-        </FormGroup>
+                {/* BASIC INFO */}
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>University Name (English)</Label>
+                      <Input
+                        value={form.universityNameEng}
+                        onChange={e => setForm({ ...form, universityNameEng: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>University Name (Hindi)</Label>
+                      <Input
+                        value={form.universityNameHindi}
+                        onChange={e => setForm({ ...form, universityNameHindi: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>University Code</Label>
+                      <Input
+                        value={form.universityCode}
+                        onChange={e => setForm({ ...form, universityCode: e.target.value })}
+                      />
+                    </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>University Code</Label>
-          <Input
-            value={form.universityCode}
-            onChange={e => setForm({ ...form, universityCode: e.target.value })}
-          />
-        </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Short Name</Label>
+                      <Input
+                        value={form.universityShortName}
+                        onChange={e => setForm({ ...form, universityShortName: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Registration Number</Label>
+                      <Input
+                        value={form.registrationNumber}
+                        onChange={e => setForm({ ...form, registrationNumber: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Establish Year</Label>
+                      <Input
+                        type="number"
+                        value={form.establishYear}
+                        onChange={e => setForm({ ...form, establishYear: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-        <FormGroup className="mb-3">
-          <Label>Short Name</Label>
-          <Input
-            value={form.universityShortName}
-            onChange={e => setForm({ ...form, universityShortName: e.target.value })}
-          />
-        </FormGroup>
+                {/* CONTACT INFO */}
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        value={form.universityEmail}
+                        onChange={e => setForm({ ...form, universityEmail: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Contact Person</Label>
+                      <Input
+                        value={form.contactPerson}
+                        onChange={e => setForm({ ...form, contactPerson: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Contact Number</Label>
+                      <Input
+                        value={form.contactNumber}
+                        maxLength="10"
+                        onChange={e => setForm({ ...form, contactNumber: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+                {/* CLASSIFICATION */}
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>University Type</Label>
+                      <Input
+                        type="select"
+                        value={form.universityType}
+                        onChange={e => setForm({ ...form, universityType: e.target.value })}
+                      >
+                        <option value="STATE">STATE</option>
+                        <option value="PRIVATE">PRIVATE</option>
+                        <option value="CENTRAL">CENTRAL</option>
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Status</Label>
+                      <Input
+                        type="select"
+                        value={form.universityStatus}
+                        onChange={e => setForm({ ...form, universityStatus: e.target.value })}
+                      >
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Division</Label>
+                      <Input
+                        type="select"
+                        value={form.division}
+                        onChange={e => {
+                          setForm({ ...form, division: e.target.value, district: "", vidhansabha: "" });
+                          loadDistricts(e.target.value);
+                        }}
+                      >
+                        <option value="">Select Division</option>
+                        {divisions.map(d => (
+                          <option key={d.divisionCode} value={d.divisionCode}>
+                            {d.name}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>Registration Number</Label>
-          <Input
-            value={form.registrationNumber}
-            onChange={e => setForm({ ...form, registrationNumber: e.target.value })}
-          />
-        </FormGroup>
+                  </Col>
+                </Row>
 
-        <FormGroup className="mb-3">
-          <Label>Establish Year</Label>
-          <Input
-            type="number"
-            value={form.establishYear}
-            onChange={e => setForm({ ...form, establishYear: e.target.value })}
-          />
-        </FormGroup>
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>District</Label>
+                      <Input
+                        type="select"
+                        value={form.district}
+                        disabled={!form.division}
+                        onChange={e => {
+                          setForm({ ...form, district: e.target.value, vidhansabha: "" });
+                          loadVidhansabha(e.target.value);
+                        }}
+                      >
+                        <option value="">Select District</option>
+                        {districts.map(d => (
+                          <option key={d.LGDCode} value={d.LGDCode}>
+                            {d.districtNameEng}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Vidhansabha</Label>
+                      <Input
+                        type="select"
+                        value={form.vidhansabha}
+                        disabled={!form.district}
+                        onChange={e => setForm({ ...form, vidhansabha: e.target.value })}
+                      >
+                        <option value="">Select Vidhansabha</option>
+                        {vidhansabhas.map(v => (
+                          <option key={v.ConstituencyNumber} value={v.ConstituencyNumber}>
+                            {v.ConstituencyName}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Website URL</Label>
+                      <Input
+                        type="url"
+                        value={form.universityWebsiteUrl}
+                        onChange={e => setForm({ ...form, universityWebsiteUrl: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
 
-        {/* CONTACT INFO */}
-        <FormGroup className="mb-3">
-          <Label>Email</Label>
-          <Input
-            type="email"
-            value={form.universityEmail}
-            onChange={e => setForm({ ...form, universityEmail: e.target.value })}
-          />
-        </FormGroup>
+                </Row>
 
-        <FormGroup className="mb-3">
-          <Label>Contact Person</Label>
-          <Input
-            value={form.contactPerson}
-            onChange={e => setForm({ ...form, contactPerson: e.target.value })}
-          />
-        </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>Contact Number</Label>
-          <Input
-            value={form.contactNumber}
-            maxLength="10"
-            onChange={e => setForm({ ...form, contactNumber: e.target.value })}
-          />
-        </FormGroup>
 
-        {/* CLASSIFICATION */}
-        <FormGroup className="mb-3">
-          <Label>University Type</Label>
-          <Input
-            type="select"
-            value={form.universityType}
-            onChange={e => setForm({ ...form, universityType: e.target.value })}
-          >
-            <option value="STATE">STATE</option>
-            <option value="PRIVATE">PRIVATE</option>
-            <option value="CENTRAL">CENTRAL</option>
-          </Input>
-        </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>Status</Label>
-          <Input
-            type="select"
-            value={form.universityStatus}
-            onChange={e => setForm({ ...form, universityStatus: e.target.value })}
-          >
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </Input>
-        </FormGroup>
+                {/* ADDITIONAL */}
+                <Row>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>University Logo</Label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => setLogo(e.target.files[0])}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-3">
+                      <Label>Address</Label>
+                      <Input
+                        type="textarea"
+                        rows="2"
+                        value={form.universityAddress}
+                        onChange={e => setForm({ ...form, universityAddress: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col xs="4">
+                    <FormGroup className="mb-4">
+                      <Label>Description</Label>
+                      <Input
+                        type="textarea"
+                        rows="3"
+                        value={form.universityDescription}
+                        onChange={e => setForm({ ...form, universityDescription: e.target.value })}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
 
-        <FormGroup className="mb-3">
-          <Label>Division</Label>
-          <Input
-            type="select"
-            value={form.division}
-            onChange={e => {
-              setForm({ ...form, division: e.target.value, district: "", vidhansabha: "" });
-              loadDistricts(e.target.value);
-            }}
-          >
-            <option value="">Select Division</option>
-            {divisions.map(d => (
-              <option key={d.divisionCode} value={d.divisionCode}>
-                {d.name}
-              </option>
-            ))}
-          </Input>
-        </FormGroup>
+                <Row className="justify-content-center mt-4">
+                  <Col className="text-center">
+                    <Button
+                      color="primary"
+                      block
+                      disabled={btnLoading}
+                      className="px-5 py-2 fw-semibold shadow-sm rounded-pill"
+                      style={{
+                        background: "linear-gradient(135deg, #0dcdfd, #06493b)",
+                        border: "none",
+                        minWidth: "160px",
+                      }}
+                    >
+                      {btnLoading ? (
+                        <>
+                          <Spinner size="sm" className="me-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Create"
+                      )}
+                    </Button>
+                  </Col>
+                </Row>
 
-        <FormGroup className="mb-3">
-          <Label>District</Label>
-          <Input
-            type="select"
-            value={form.district}
-            disabled={!form.division}
-            onChange={e => {
-              setForm({ ...form, district: e.target.value, vidhansabha: "" });
-              loadVidhansabha(e.target.value);
-            }}
-          >
-            <option value="">Select District</option>
-            {districts.map(d => (
-              <option key={d.LGDCode} value={d.LGDCode}>
-                {d.districtNameEng}
-              </option>
-            ))}
-          </Input>
-        </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>Vidhansabha</Label>
-          <Input
-            type="select"
-            value={form.vidhansabha}
-            disabled={!form.district}
-            onChange={e => setForm({ ...form, vidhansabha: e.target.value })}
-          >
-            <option value="">Select Vidhansabha</option>
-            {vidhansabhas.map(v => (
-              <option key={v.ConstituencyNumber} value={v.ConstituencyNumber}>
-                {v.ConstituencyName}
-              </option>
-            ))}
-          </Input>
-        </FormGroup>
+              </Form>
+            </CardBody>
+          </Card>
+        </Col>
 
-        {/* ADDITIONAL */}
-        <FormGroup className="mb-3">
-          <Label>Website URL</Label>
-          <Input
-            type="url"
-            value={form.universityWebsiteUrl}
-            onChange={e => setForm({ ...form, universityWebsiteUrl: e.target.value })}
-          />
-        </FormGroup>
+      </Row>
 
-        <FormGroup className="mb-3">
-          <Label>University Logo</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={e => setLogo(e.target.files[0])}
-          />
-        </FormGroup>
 
-        <FormGroup className="mb-3">
-          <Label>Address</Label>
-          <Input
-            type="textarea"
-            rows="2"
-            value={form.universityAddress}
-            onChange={e => setForm({ ...form, universityAddress: e.target.value })}
-          />
-        </FormGroup>
-
-        <FormGroup className="mb-4">
-          <Label>Description</Label>
-          <Input
-            type="textarea"
-            rows="3"
-            value={form.universityDescription}
-            onChange={e => setForm({ ...form, universityDescription: e.target.value })}
-          />
-        </FormGroup>
-
-        <Button block color="primary" disabled={btnLoading}>
-          {btnLoading ? <Spinner size="sm" /> : "Create University"}
-        </Button>
-
-      </Form>
-    </CardBody>
-  </Card>
-</Col>
-
-</Row>
-
-  
 
 
 
