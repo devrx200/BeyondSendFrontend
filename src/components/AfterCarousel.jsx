@@ -34,7 +34,7 @@ const AfterCarousel = () => {
     ? [
         {
           value: stats.totalUniversities,
-          labelEn: "Universities",
+          labelEn: "Total Universities",
           labelHi: "विश्वविद्यालय",
           icon: "bi-bank",
           bg: "bg-primary"
@@ -86,7 +86,7 @@ const AfterCarousel = () => {
                     <CardBody>
 
                       <div className="d-flex align-items-center justify-content-center gap-3">
-                        <div className={`p-3 rounded-circle ${item.bg}`}>
+                        <div className={`p-2 px-3 rounded ${item.bg}`}>
                           <i className={`bi ${item.icon} fs-3 text-white`} />
                         </div>
                         <h2 className="fw-bold mb-0">

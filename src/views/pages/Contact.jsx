@@ -1,254 +1,258 @@
-import { useState, useEffect } from 'react';
-import { Row, Col, Card, CardBody, Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaUser } from 'react-icons/fa';
-import DataService from '../../services/DataService';
-import PageLayout from '../../components/PageLayout';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useState, useEffect } from "react";
+import { Row, Col, Card, CardBody, Button } from "reactstrap";
+import {
+  FaMapMarkerAlt,
+  FaPhone,
+  FaEnvelope,
+  FaClock,
+  FaUserTie,
+} from "react-icons/fa";
+import PageLayout from "../../components/PageLayout";
+import { useLanguage } from "../../contexts/LanguageContext";
+import axios from "axios";
+import indrawatiBhavan from "/indrawati-bhavan.png";
+
 
 const Contact = () => {
   const { isHindi } = useLanguage();
-  const [departmentInfo, setDepartmentInfo] = useState(null);
-  const [officeHours, setOfficeHours] = useState(null);
-  const [keyOfficials, setKeyOfficials] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: ''
-  });
-  const [submitStatus, setSubmitStatus] = useState({ show: false, type: '', message: '' });
+  const API = import.meta.env.VITE_API_URL;
+
+  const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadContactData();
-  }, []);
-
-  const loadContactData = async () => {
+  /* ================= LOAD CONTACT ================= */
+  const loadContact = async () => {
     try {
-      const [deptInfo, hours, officials] = await Promise.all([
-        DataService.getDepartmentInfo(),
-        DataService.getOfficeHours(),
-        DataService.getKeyOfficials()
-      ]);
-      setDepartmentInfo(deptInfo);
-      setOfficeHours(hours);
-      setKeyOfficials(officials);
-    } catch (error) {
-      console.error('Error loading contact data:', error);
+      const res = await axios.get(`${API}/api/contact`);
+      setContact(res.data.data);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const result = await DataService.submitContactForm(formData);
-      setSubmitStatus({ show: true, type: 'success', message: result.message });
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-      setTimeout(() => setSubmitStatus({ show: false, type: '', message: '' }), 5000);
-    } catch (error) {
-      setSubmitStatus({ show: true, type: 'danger', message: error.message });
-    }
-  };
+  useEffect(() => {
+    loadContact();
+  }, []);
 
   if (loading) {
     return (
       <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <div className="spinner-border text-primary" />
       </div>
     );
   }
 
+  const address = contact?.address || {};
+  const officeHours = contact?.officeHours || {};
+  const officials = contact?.officials || [];
+
   return (
     <PageLayout
-      title={isHindi ? 'हमसे संपर्क करें' : 'Contact Us'}
-      titleHi="हमसे संपर्क करें"
-      showBreadcrumb={true}
+      title={isHindi ? "संपर्क विवरण" : "Contact Details"}
+      titleHi="संपर्क विवरण"
+      showBreadcrumb
     >
-      {/* Contact Information */}
-      <Row className="g-4 mb-5">
-            <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center">
-                <CardBody className="p-4">
-                  <div className="icon-circle bg-primary text-white mb-3">
-                    <FaMapMarkerAlt />
-                  </div>
-                  <h5>Address</h5>
-                  {departmentInfo && (
-                    <p className="text-muted">
-                      {departmentInfo.address}<br />
-                      {departmentInfo.city}, {departmentInfo.state}<br />
-                      {departmentInfo.pincode}
-                    </p>
-                  )}
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center">
-                <CardBody className="p-4">
-                  <div className="icon-circle bg-success text-white mb-3">
-                    <FaPhone />
-                  </div>
-                  <h5>Phone & Email</h5>
-                  {departmentInfo && (
-                    <>
-                      <p className="text-muted mb-1">{departmentInfo.phone}</p>
-                      <p className="text-muted">{departmentInfo.email}</p>
-                    </>
-                  )}
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={4}>
-              <Card className="h-100 border-0 shadow-sm text-center">
-                <CardBody className="p-4">
-                  <div className="icon-circle bg-warning text-white mb-3">
-                    <FaClock />
-                  </div>
-                  <h5>Office Hours</h5>
-                  {officeHours && (
-                    <>
-                      <p className="text-muted mb-1 small">{officeHours.weekdays}</p>
-                      <p className="text-muted mb-1 small">{officeHours.saturday}</p>
-                      <p className="text-muted small">{officeHours.sunday}</p>
-                    </>
-                  )}
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+      {/* ================= TOP INFO ================= */}
+      <Row className="g-4 mb-4">
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <CardBody>
+              <h6 className="fw-semibold mb-2">
+                <FaMapMarkerAlt className="me-2 text-primary" />
+                {isHindi ? "कार्यालय का पता" : "Office Address"}
+              </h6>
+              <p className="small text-muted mb-0">
+                {address.addressLine}<br />
+                {address.city}, {address.state}<br />
+                {address.pincode}
+              </p>
+            </CardBody>
+          </Card>
+        </Col>
 
-          <Row className="g-4">
-            {/* Contact Form */}
-            <Col lg={8}>
-              <Card className="border-0 shadow-sm">
-                <CardBody className="p-4">
-                  <h3 className="mb-4">Send us a Message</h3>
-                  {submitStatus.show && (
-                    <Alert color={submitStatus.type} toggle={() => setSubmitStatus({ show: false, type: '', message: '' })}>
-                      {submitStatus.message}
-                    </Alert>
-                  )}
-                  <Form onSubmit={handleSubmit}>
-                    <Row>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Label for="name">Full Name *</Label>
-                          <Input
-                            type="text"
-                            name="name"
-                            id="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter your name"
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Label for="email">Email Address *</Label>
-                          <Input
-                            type="email"
-                            name="email"
-                            id="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter your email"
-                          />
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Label for="phone">Phone Number</Label>
-                          <Input
-                            type="tel"
-                            name="phone"
-                            id="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="Enter your phone"
-                          />
-                        </FormGroup>
-                      </Col>
-                      <Col md={6}>
-                        <FormGroup>
-                          <Label for="subject">Subject *</Label>
-                          <Input
-                            type="text"
-                            name="subject"
-                            id="subject"
-                            value={formData.subject}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="Enter subject"
-                          />
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <FormGroup>
-                      <Label for="message">Message *</Label>
-                      <Input
-                        type="textarea"
-                        name="message"
-                        id="message"
-                        rows="5"
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Enter your message"
-                      />
-                    </FormGroup>
-                    <Button color="primary" size="lg" type="submit">
-                      Send Message
-                    </Button>
-                  </Form>
-                </CardBody>
-              </Card>
-            </Col>
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <CardBody>
+              <h6 className="fw-semibold mb-2">
+                <FaPhone className="me-2 text-success" />
+                {isHindi ? "संपर्क विवरण" : "Contact Details"}
+              </h6>
+              <p className="small mb-1 text-muted">{address.phone}</p>
+              <p className="small text-muted mb-0">{address.email}</p>
+            </CardBody>
+          </Card>
+        </Col>
 
-            {/* Key Officials */}
-            <Col lg={4}>
-              <Card className="border-0 shadow-sm">
-                <CardBody className="p-4">
-                  <h5 className="mb-4">Key Officials</h5>
-                  {keyOfficials.map((official) => (
-                    <div key={official.id} className="official-card mb-3 pb-3 border-bottom">
-                      <div className="d-flex align-items-start">
-                        <div className="official-icon me-3">
-                          <FaUser />
-                        </div>
-                        <div>
-                          <h6 className="mb-1">{official.name}</h6>
-                          <p className="small text-muted mb-1">{official.designation}</p>
-                          <p className="small mb-0">
-                            <FaPhone className="me-1" /> {official.phone}<br />
-                            <FaEnvelope className="me-1" /> {official.email}
-                          </p>
-                        </div>
-                      </div>
+        <Col md={4}>
+          <Card className="border-0 shadow-sm h-100">
+            <CardBody>
+              <h6 className="fw-semibold mb-2">
+                <FaClock className="me-2 text-warning" />
+                {isHindi ? "कार्य समय" : "Office Hours"}
+              </h6>
+
+              {officeHours.weekdays ? (
+                <>
+                  <p className="small mb-1 text-muted">{officeHours.weekdays}</p>
+                  <p className="small mb-1 text-muted">{officeHours.saturday}</p>
+                  <p className="small mb-0 text-muted">{officeHours.sunday}</p>
+                </>
+              ) : (
+                <p className="small text-muted mb-0">Not Available</p>
+              )}
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================= KEY OFFICIALS ================= */}
+      <Row>
+        <Col>
+          <Card className="border-0 shadow-sm">
+            <CardBody>
+              {/* SECTION TITLE */}
+              <h5 className="mb-2">
+                <FaUserTie className="me-2 text-primary" />
+                {isHindi ? "मुख्य अधिकारी" : "Key Officials"}
+              </h5>
+              <p className="text-muted small mb-3">
+                {isHindi
+                  ? "विभाग के प्रमुख अधिकारी"
+                  : "List of department key officials"}
+              </p>
+
+              {/* COLUMN HEADERS */}
+              <Row className="fw-semibold small text-muted border-bottom pb-2 mb-2">
+                <Col md={2} className="text-center">{isHindi ? "प्रोफाइल छवि" : "Profile Picture"}</Col>
+                <Col md={4}>{isHindi ? "नाम और पदनाम" : "Name & Designation"}</Col>
+                <Col md={3}>{isHindi ? "संपर्क विवरण" : "Contact Details"}</Col>
+                <Col md={3}>{isHindi ? "सोशल मीडिया लिंक" : "Social Media Links"}</Col>
+              </Row>
+
+              {/* OFFICIAL LIST */}
+              {officials.map((official) => (
+                <Row
+                  key={official._id}
+                  className="align-items-center py-3 border-bottom"
+                >
+                  {/* IMAGE */}
+                  <Col md={2} className="text-center">
+                    <img
+                      src={
+                        official.image
+                          ? `${API}${official.image}`
+                          : "/default-user.png"
+                      }
+                      alt={official.name}
+                      style={{
+                        width: 70,
+                        height: 70,
+                        objectFit: "cover",
+                        borderRadius: "50%",
+                        border: "1px solid #ddd"
+                      }}
+                    />
+                  </Col>
+
+                  {/* NAME + DESIGNATION */}
+                  <Col md={4}>
+                    <div className="fw-semibold">{official.name}</div>
+                    <div className="small text-muted">
+                      {official.designation}
                     </div>
-                  ))}
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
+                  </Col>
+
+                  {/* CONTACT */}
+                  <Col md={3} className="small">
+                    {official.phone && (
+                      <div>
+                        <FaPhone size={12} className="me-1" />
+                        {official.phone}
+                      </div>
+                    )}
+                    {official.email && (
+                      <div>
+                        <FaEnvelope size={12} className="me-1" />
+                        {official.email}
+                      </div>
+                    )}
+                  </Col>
+
+                  {/* SOCIAL */}
+                  <Col md={3}>
+                    <div className="d-flex gap-2">
+                      {official.facebook && (
+                        <a
+                          href={official.facebook}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-light border rounded d-flex align-items-center justify-content-center"
+                          style={{ width: 36, height: 36 }}
+                        >
+                          <i className="bi bi-facebook text-primary"></i>
+                        </a>
+                      )}
+
+                      {official.instagram && (
+                        <a
+                          href={official.instagram}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-light border rounded d-flex align-items-center justify-content-center"
+                          style={{ width: 36, height: 36 }}
+                        >
+                          <i className="bi bi-instagram text-danger"></i>
+                        </a>
+                      )}
+
+                      {official.linkedin && (
+                        <a
+                          href={official.linkedin}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-light border rounded d-flex align-items-center justify-content-center"
+                          style={{ width: 36, height: 36 }}
+                        >
+                          <i className="bi bi-linkedin text-info"></i>
+                        </a>
+                      )}
+
+                      {official.youtube && (
+                        <a
+                          href={official.youtube}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-light border rounded d-flex align-items-center justify-content-center"
+                          style={{ width: 36, height: 36 }}
+                        >
+                          <i className="bi bi-youtube text-danger"></i>
+                        </a>
+                      )}
+                    </div>
+                  </Col>
+
+
+                </Row>
+              ))}
+            </CardBody>
+
+          </Card>
+        </Col>
+      </Row>
+
+      {/* CONTACT IMAGE */}
+      <Row className="mt-4">
+        <Col>
+          <img
+            src={indrawatiBhavan? indrawatiBhavan : "/indrawati-bhavan.png"}
+            alt="Contact"
+            className="img-fluid rounded shadow-sm w-100 h-100"
+          />
+        </Col>
+      </Row>
+
     </PageLayout>
   );
 };
 
 export default Contact;
-

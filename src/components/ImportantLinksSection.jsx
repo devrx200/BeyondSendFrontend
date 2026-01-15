@@ -1,95 +1,113 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Container, Row, Col, Card, CardBody } from "reactstrap";
 import { Link } from "react-router-dom";
-import {
-  FaVoteYea,
-  FaUserGraduate,
-  FaMoneyBillWave,
-  FaBookReader,
-  FaExclamationCircle,
-  FaInfoCircle,
-  FaExternalLinkAlt
-} from "react-icons/fa";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { FaExternalLinkAlt, FaInfoCircle } from "react-icons/fa";
+import { ICONS } from "../utilies/icons";
 import { useLanguage } from "../contexts/LanguageContext";
-import DataService from "../services/DataService";
+
+const colorVariants = [
+  { bg: "rgba(13,110,253,0.12)", color: "#0d6efd" }, // blue
+  { bg: "rgba(25,135,84,0.12)", color: "#198754" }, // green
+  { bg: "rgba(220,53,69,0.12)", color: "#dc3545" }, // red
+  { bg: "rgba(255,193,7,0.18)", color: "#ffc107" }, // yellow
+  { bg: "rgba(111,66,193,0.12)", color: "#6f42c1" }, // purple
+  { bg: "rgba(13,202,240,0.15)", color: "#0dcaf0" } // cyan
+];
 
 const ImportantLinksSection = () => {
   const { isHindi } = useLanguage();
   const [links, setLinks] = useState([]);
+  const API = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     loadLinks();
   }, []);
 
+  /* ===== LOAD LINKS FROM API ===== */
   const loadLinks = async () => {
     try {
-      const data = await DataService.getImportantLinks();
-      setLinks(data);
+      const res = await axios.get(`${API}/api/important-links`);
+      if (res.data?.success) {
+        setLinks(res.data.data || []);
+      }
     } catch (error) {
       console.error("Error loading important links:", error);
     }
   };
 
-  const getIcon = (iconName) => {
-    const icons = {
-      FaVoteYea: FaVoteYea,
-      FaUserGraduate: FaUserGraduate,
-      FaMoneyBillWave: FaMoneyBillWave,
-      FaBookReader: FaBookReader,
-      FaExclamationCircle: FaExclamationCircle,
-      FaInfoCircle: FaInfoCircle
-    };
-    const Icon = icons[iconName] || FaInfoCircle;
-    return <Icon size={34} />;
+  /* ===== EXTERNAL LINK CONFIRMATION ===== */
+  const handleExternalClick = (url) => {
+    Swal.fire({
+      title: "External Link",
+      text: "You are being redirected to an external website. Do you want to continue?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Continue",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#0d6efd"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    });
+  };
+
+  /* ===== ICON RENDER ===== */
+  const renderIcon = (iconName, index) => {
+    const IconComponent = ICONS[iconName] || FaInfoCircle;
+    const variant = colorVariants[index % colorVariants.length];
+
+    return (
+      <div
+        className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+        style={{
+          width: 68,
+          height: 68,
+          background: variant.bg,
+          color: variant.color
+        }}
+      >
+        <IconComponent size={30} />
+      </div>
+    );
   };
 
   return (
-    <section className="py-5 bg-light border-top">
+    <section className="py-5  border-top">
       <Container>
-        {/* SECTION HEADER */}
+        {/* HEADER */}
         <div className="text-center mb-5">
-          <h2 className="fw-bold">
+          <h2 className="fw-bold mb-1">
             {isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}
           </h2>
           <p className="text-muted mb-0">
             {isHindi
-              ? "त्वरित पहुँच के लिए आवश्यक सरकारी सेवाएँ"
+              ? "आवश्यक सरकारी सेवाओं के लिए त्वरित पहुँच"
               : "Quick access to essential government services"}
           </p>
         </div>
 
         {/* LINKS GRID */}
         <Row className="g-4">
-          {links.map((link) => {
+          {links.map((link, index) => {
             const CardContent = (
               <Card
                 className="h-100 border-0 shadow-sm"
-                style={{
-                  transition: "all 0.25s ease",
-                  cursor: "pointer"
-                }}
+                style={{ cursor: "pointer" }}
               >
                 <CardBody className="text-center p-4">
-                  <div
-                    className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                    style={{
-                      width: 70,
-                      height: 70,
-                      background: "rgba(13,110,253,0.1)",
-                      color: "var(--bs-primary)"
-                    }}
-                  >
-                    {getIcon(link.icon)}
-                  </div>
+                  {renderIcon(link.icon, index)}
 
-                  <h5 className="fw-semibold mb-1">
-                    {isHindi ? link.titleHi : link.title}
-                  </h5>
+                  <h6 className="fw-semibold mb-1">
+                    {isHindi ? link.titleHin : link.titleEng}
+                  </h6>
 
-                  {link.external && (
+                  {link.isExternal && (
                     <small className="text-muted d-block mt-1">
-                      <FaExternalLinkAlt size={12} className="me-1" />
-                      External Link
+                      <FaExternalLinkAlt size={11} className="me-1" />
+                      External
                     </small>
                   )}
                 </CardBody>
@@ -97,18 +115,17 @@ const ImportantLinksSection = () => {
             );
 
             return (
-              <Col xl={3} lg={4} md={6} sm={12} key={link.id}>
-                {link.external ? (
-                  <a
-                    href={link.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+              <Col xl={2} lg={3} md={4} sm={6} key={link._id}>
+                {link.isExternal ? (
+                  <div
+                    role="button"
                     className="text-decoration-none"
+                    onClick={() => handleExternalClick(link.url)}
                   >
                     {CardContent}
-                  </a>
+                  </div>
                 ) : (
-                  <Link to={link.link} className="text-decoration-none">
+                  <Link to={link.url} className="text-decoration-none">
                     {CardContent}
                   </Link>
                 )}

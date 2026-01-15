@@ -1,182 +1,273 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, CardBody, CardImg, Modal, ModalBody, ModalHeader, Badge } from 'reactstrap';
-import { FaCamera, FaCalendar } from 'react-icons/fa';
-import PageLayout from '../../components/PageLayout';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useEffect, useState } from "react";
+import {
+  Container, Row, Col, Card, CardBody,
+  Modal, ModalHeader, ModalBody, Badge, Button
+} from "reactstrap";
+import {
+  FaCamera, FaCalendarAlt,
+  FaChevronLeft, FaChevronRight, FaExternalLinkAlt
+} from "react-icons/fa";
+import axios from "axios";
+import Swal from "sweetalert2";
+import PageLayout from "../../components/PageLayout";
+import { useLanguage } from "../../contexts/LanguageContext";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Gallery = () => {
   const { isHindi } = useLanguage();
+  const [galleryList, setGalleryList] = useState([]);
   const [modal, setModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [gallery, setGallery] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const breadcrumb = [
-    { label: isHindi ? 'मुख्य पृष्ठ' : 'Home', path: '/' },
-    { label: isHindi ? 'चित्र प्रदर्शनी' : 'Photo Gallery', active: true }
-  ];
-
-  const galleryImages = [
-    {
-      id: 1,
-      title: 'Convocation Ceremony 2024',
-      titleHi: 'दीक्षांत समारोह 2024',
-      image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800',
-      date: '2024-12-10',
-      category: 'Events'
-    },
-    {
-      id: 2,
-      title: 'Campus Infrastructure',
-      titleHi: 'परिसर बुनियादी ढांचा',
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?w=800',
-      date: '2024-11-25',
-      category: 'Campus'
-    },
-    {
-      id: 3,
-      title: 'Student Activities',
-      titleHi: 'छात्र गतिविधियां',
-      image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800',
-      date: '2024-11-20',
-      category: 'Activities'
-    },
-    {
-      id: 4,
-      title: 'Faculty Development Program',
-      titleHi: 'संकाय विकास कार्यक्रम',
-      image: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800',
-      date: '2024-11-15',
-      category: 'Programs'
-    },
-    {
-      id: 5,
-      title: 'Sports Day 2024',
-      titleHi: 'खेल दिवस 2024',
-      image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800',
-      date: '2024-11-10',
-      category: 'Events'
-    },
-    {
-      id: 6,
-      title: 'Library Facilities',
-      titleHi: 'पुस्तकालय सुविधाएं',
-      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800',
-      date: '2024-11-05',
-      category: 'Campus'
-    },
-    {
-      id: 7,
-      title: 'Cultural Festival',
-      titleHi: 'सांस्कृतिक उत्सव',
-      image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800',
-      date: '2024-10-30',
-      category: 'Events'
-    },
-    {
-      id: 8,
-      title: 'Science Exhibition',
-      titleHi: 'विज्ञान प्रदर्शनी',
-      image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800',
-      date: '2024-10-25',
-      category: 'Activities'
+  /* ---------- FETCH ALL GALLERIES ---------- */
+  const fetchGallery = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/get-gallery`);
+      setGalleryList(
+        data.data.sort((a, b) => a.displayOrder - b.displayOrder)
+      );
+    } catch (err) {
+      console.error(err);
     }
-  ];
-
-  const toggleModal = (image = null) => {
-    setSelectedImage(image);
-    setModal(!modal);
   };
 
+  /* ---------- FETCH GALLERY BY ID ---------- */
+  const openGallery = async (id) => {
+    try {
+      const { data } = await axios.get(
+        `${API_URL}/api/get-gallery-by-id/${id}`
+      );
+      setGallery(data.data);
+      setActiveIndex(0);
+      setModal(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ---------- SLIDER ---------- */
+  const nextImage = () => {
+    if (!gallery) return;
+    setActiveIndex((prev) =>
+      prev === gallery.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    if (!gallery) return;
+    setActiveIndex((prev) =>
+      prev === 0 ? gallery.images.length - 1 : prev - 1
+    );
+  };
+
+  /* ---------- EXTERNAL LINK ---------- */
+  const openLink = () => {
+    Swal.fire({
+      title: isHindi ? "बाहरी लिंक" : "External Link",
+      text: isHindi
+        ? "आप बाहरी वेबसाइट पर जा रहे हैं"
+        : "You are going to an external website",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Continue",
+    }).then((res) => {
+      if (res.isConfirmed) {
+        window.open(
+          gallery.link,
+          gallery.openInNewTab ? "_blank" : "_self"
+        );
+      }
+    });
+  };
+
+  useEffect(() => {
+    fetchGallery();
+  }, []);
+
   return (
-    <PageLayout 
-      title={isHindi ? 'चित्र प्रदर्शनी' : 'Photo Gallery'} 
+    <PageLayout
+      title={isHindi ? "चित्र प्रदर्शनी" : "Photo Gallery"}
       titleHi="चित्र प्रदर्शनी"
-      breadcrumb={breadcrumb}
     >
       <Container className="py-5">
-        <Row>
-          <Col lg={12}>
-            <Card className="border-0 shadow-sm mb-4">
-              <CardBody className="p-4">
-                <div className="d-flex align-items-center mb-4">
-                  <FaCamera size={40} className="text-primary me-3" />
-                  <div>
-                    <h2 className="mb-1">{isHindi ? 'चित्र प्रदर्शनी' : 'Photo Gallery'}</h2>
-                    <p className="text-muted mb-0">
-                      {isHindi ? 'विभाग की गतिविधियों और कार्यक्रमों की झलकियां' : 'Glimpses of departmental activities and programs'}
-                    </p>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
 
+        {/* ---------- HEADER ---------- */}
+        <Card className="border-0 shadow-sm mb-4">
+          <CardBody className="d-flex align-items-center">
+            <FaCamera size={36} className="text-primary me-3" />
+            <div>
+              <h3 className="mb-0">
+                {isHindi ? "चित्र प्रदर्शनी" : "Photo Gallery"}
+              </h3>
+              <small className="text-muted">
+                {isHindi
+                  ? "कार्यक्रमों और गतिविधियों की झलकियां"
+                  : "Glimpses of events & activities"}
+              </small>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* ---------- MAIN PAGE GALLERY LIST ---------- */}
         <Row className="g-4">
-          {galleryImages.map((item) => (
-            <Col lg={3} md={4} sm={6} key={item.id}>
-              <Card className="gallery-card border-0 shadow-sm h-100" style={{ cursor: 'pointer' }} onClick={() => toggleModal(item)}>
-                <CardImg
-                  top
-                  src={item.image}
-                  alt={isHindi ? item.titleHi : item.title}
-                  style={{ height: '200px', objectFit: 'cover' }}
-                />
+          {galleryList.map((item) => (
+            <Col lg={3} md={4} sm={6} key={item._id}>
+              <Card
+                className="border-0 shadow-sm gallery-card"
+                onClick={() => openGallery(item._id)}
+                style={{ cursor: "pointer" }}
+              >
+
+                {/* COLLAGE */}
+                <div className="gallery-collage">
+                  {(item.images?.slice(0, 4) || []).map((img, index) => (
+                    <img
+                      key={index}
+                      src={`${API_URL}${img}`}
+                      alt="gallery"
+                    />
+                  ))}
+
+                  {/* TOTAL IMAGE COUNT */}
+                  <span className="image-count-badge">
+                    {item.images?.length || 0} Photos
+                  </span>
+                </div>
+
                 <CardBody>
-                  <h6 className="mb-2">{isHindi ? item.titleHi : item.title}</h6>
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Badge color="primary" pill>{item.category}</Badge>
-                    <small className="text-muted">
-                      <FaCalendar className="me-1" />
-                      {new Date(item.date).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })}
-                    </small>
-                  </div>
+                  <h6 className="mb-1">
+                    {isHindi ? item.titleHin : item.titleEng}
+                  </h6>
+                  <small className="text-muted d-flex align-items-center">
+                    <FaCalendarAlt className="me-1" />
+                    {new Date(item.createdAt).toLocaleDateString("en-IN")}
+                  </small>
                 </CardBody>
               </Card>
             </Col>
           ))}
         </Row>
 
-        {/* Image Modal */}
-        <Modal isOpen={modal} toggle={() => toggleModal()} size="lg" centered>
-          <ModalHeader toggle={() => toggleModal()}>
-            {selectedImage && (isHindi ? selectedImage.titleHi : selectedImage.title)}
-          </ModalHeader>
-          <ModalBody>
-            {selectedImage && (
-              <>
-                <img
-                  src={selectedImage.image}
-                  alt={isHindi ? selectedImage.titleHi : selectedImage.title}
-                  className="img-fluid w-100"
-                />
-                <div className="mt-3 d-flex justify-content-between align-items-center">
-                  <Badge color="primary" pill>{selectedImage.category}</Badge>
-                  <small className="text-muted">
-                    <FaCalendar className="me-1" />
-                    {new Date(selectedImage.date).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </small>
+        {/* ---------- MODAL ---------- */}
+        <Modal isOpen={modal} size="xl" centered toggle={() => setModal(false)}>
+          {gallery && (
+            <>
+              <ModalHeader toggle={() => setModal(false)}>
+                {isHindi ? gallery.titleHin : gallery.titleEng}
+              </ModalHeader>
+
+              <ModalBody>
+                {/* IMAGE PREVIEW */}
+                <div className="position-relative text-center">
+                  <img
+                    src={`${API_URL}${gallery.images[activeIndex]}`}
+                    className="img-fluid rounded"
+                    style={{ maxHeight: "500px" }}
+                  />
+
+                  <Button
+                    color="dark"
+                    className="position-absolute top-50 start-0 translate-middle-y"
+                    onClick={prevImage}
+                  >
+                    <FaChevronLeft />
+                  </Button>
+
+                  <Button
+                    color="dark"
+                    className="position-absolute top-50 end-0 translate-middle-y"
+                    onClick={nextImage}
+                  >
+                    <FaChevronRight />
+                  </Button>
                 </div>
-              </>
-            )}
-          </ModalBody>
+
+                {/* THUMBNAILS */}
+                <Row className="mt-3 g-2">
+                  {gallery.images.map((img, index) => (
+                    <Col xs={3} md={2} key={index}>
+                      <img
+                        src={`${API_URL}${img}`}
+                        className={`img-fluid rounded ${
+                          activeIndex === index ? "border border-primary" : ""
+                        }`}
+                        style={{
+                          cursor: "pointer",
+                          height: 80,
+                          objectFit: "cover"
+                        }}
+                        onClick={() => setActiveIndex(index)}
+                      />
+                    </Col>
+                  ))}
+                </Row>
+
+                {/* DESCRIPTION */}
+                <div className="mt-4">
+                  <p>
+                    {isHindi
+                      ? gallery.shortDescHin
+                      : gallery.shortDescEng}
+                  </p>
+
+                  <Badge color="primary">
+                    {activeIndex + 1} / {gallery.images.length}
+                  </Badge>
+
+                  {gallery.link && gallery.isExternal && (
+                    <Button
+                      color="info"
+                      size="sm"
+                      className="ms-3"
+                      onClick={openLink}
+                    >
+                      <FaExternalLinkAlt className="me-1" />
+                      Visit Link
+                    </Button>
+                  )}
+                </div>
+              </ModalBody>
+            </>
+          )}
         </Modal>
       </Container>
 
+      {/* ---------- STYLES ---------- */}
       <style jsx>{`
         .gallery-card {
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          transition: all 0.3s ease;
         }
         .gallery-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+          transform: translateY(-6px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .gallery-collage {
+          position: relative;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(2, 100px);
+          gap: 2px;
+          overflow: hidden;
+        }
+
+        .gallery-collage img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .image-count-badge {
+          position: absolute;
+          bottom: 6px;
+          right: 6px;
+          background: rgba(0, 0, 0, 0.7);
+          color: #fff;
+          padding: 4px 8px;
+          font-size: 12px;
+          border-radius: 12px;
         }
       `}</style>
     </PageLayout>
@@ -184,4 +275,3 @@ const Gallery = () => {
 };
 
 export default Gallery;
-

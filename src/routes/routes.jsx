@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import bgImg from "../assets/page-bg.svg";
 
 /* LAYOUTS */
 import Header from "../components/Header";
@@ -41,7 +42,8 @@ import ManageBrands from "../views/Admin/ManageBrands";
 import ManageUniversities from "../views/Admin/ManageUniversities";
 import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
 import AdminEducationStats from "../views/Admin/AdminEducationStats";
-
+import ContactManagement from "../views/Admin/ContactManagement";
+import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
@@ -50,7 +52,16 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
-  <div className="app-wrapper d-flex flex-column min-vh-100">
+   <div
+    className="app-wrapper d-flex flex-column min-vh-100"
+    style={{
+      backgroundColor: "#f4f6f9",
+      backgroundImage: `url(${bgImg})`,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "top center",
+      backgroundSize: "cover"
+    }}
+  >
     <Header />
     <main className="flex-grow-1">{children}</main>
     <GovtBrandCarousel />
@@ -122,7 +133,7 @@ const AppRoutes = () => {
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/notice-board" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
-      <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
+      <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>
@@ -145,7 +156,8 @@ const AppRoutes = () => {
           <Route path="universities" element={<ManageUniversities/>} />
           <Route path="new-updates" element={<NewUpdatesManagement/>} />
           <Route path="admin-education-stats" element={<AdminEducationStats/>} />
-
+          <Route path="contact-management" element={<ContactManagement/>} />
+          <Route path="important-links" element={<ImportantLinksManagement/>} />
         </Route>
       </Route>
 
