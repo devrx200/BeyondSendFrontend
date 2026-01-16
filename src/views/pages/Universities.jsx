@@ -41,7 +41,7 @@ const Universities = () => {
   const fetchUniversities = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}api/get-universities`);
+      const res = await axios.get(`${API_URL}/api/get-universities`);
       setUniversities(res.data.data || []);
     } catch (err) {
       console.error("University fetch error", err);

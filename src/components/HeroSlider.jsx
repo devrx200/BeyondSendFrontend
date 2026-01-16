@@ -1,9 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Carousel, CarouselItem, CarouselControl, CarouselIndicators, CarouselCaption, Button } from 'reactstrap';
-import { Link } from 'react-router-dom';
-import DataService from '../services/DataService';
+import { useState, useEffect } from "react";
+import {
+  Carousel,
+  CarouselItem,
+  CarouselControl,
+  CarouselIndicators,
+  Button,
+} from "reactstrap";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import { useLanguage } from "../contexts/LanguageContext";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const HeroSlider = () => {
+  const { isHindi } = useLanguage();
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [slides, setSlides] = useState([]);
@@ -14,22 +25,35 @@ const HeroSlider = () => {
 
   const loadSlides = async () => {
     try {
-      const data = await DataService.getHeroSlides();
-      setSlides(data);
+      const res = await axios.get(`${API_URL}/api/get-hero-slides`);
+      if (res.status === 200) {
+        //  only active slides
+        const activeSlides = (res.data.data || []).filter(
+          (slide) => slide.isActive
+        );
+        setSlides(activeSlides);
+      }
     } catch (error) {
-      console.error('Error loading slides:', error);
+      console.error("Error loading slides:", error);
     }
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    return `${API_URL}${path.replace(/\\/g, "/")}`;
   };
 
   const next = () => {
     if (animating) return;
-    const nextIndex = activeIndex === slides.length - 1 ? 0 : activeIndex + 1;
+    const nextIndex =
+      activeIndex === slides.length - 1 ? 0 : activeIndex + 1;
     setActiveIndex(nextIndex);
   };
 
   const previous = () => {
     if (animating) return;
-    const nextIndex = activeIndex === 0 ? slides.length - 1 : activeIndex - 1;
+    const nextIndex =
+      activeIndex === 0 ? slides.length - 1 : activeIndex - 1;
     setActiveIndex(nextIndex);
   };
 
@@ -38,31 +62,52 @@ const HeroSlider = () => {
     setActiveIndex(newIndex);
   };
 
-  const carouselSlides = slides.map((slide) => {
-    return (
-      <CarouselItem
-        onExiting={() => setAnimating(true)}
-        onExited={() => setAnimating(false)}
-        key={slide.id}
-      >
-        <div className="hero-slide" style={{ backgroundImage: `url(${slide.image})` }}>
-          <div className="hero-overlay"></div>
-          <div className="hero-content">
-            <h5 className="hero-subtitle">{slide.subtitle}</h5>
-            <h1 className="hero-title">{slide.title}</h1>
-            <p className="hero-description">{slide.description}</p>
-            <Button color="warning" size="lg" tag={Link} to={slide.cta.link} className="mt-3">
-              {slide.cta.text}
-            </Button>
-          </div>
-        </div>
-      </CarouselItem>
-    );
-  });
+  if (slides.length === 0) return null;
 
-  if (slides.length === 0) {
-    return null;
-  }
+  const carouselSlides = slides.map((slide) => (
+    <CarouselItem
+      onExiting={() => setAnimating(true)}
+      onExited={() => setAnimating(false)}
+      key={slide._id}
+    >
+      <div
+        className="hero-slide"
+        style={{
+          backgroundImage: `url(${getImageUrl(slide.image)})`,
+        }}
+      >
+        <div className="hero-overlay"></div>
+
+        <div className="hero-content">
+          <h5 className="hero-subtitle">
+            {isHindi ? slide.subtitleHin : slide.subtitleEng}
+          </h5>
+
+          <h1 className="hero-title">
+            {isHindi ? slide.titleHin : slide.titleEng}
+          </h1>
+
+          <p className="hero-description">
+            {isHindi
+              ? slide.descriptionHin
+              : slide.descriptionEng}
+          </p>
+
+          {slide.link && (
+            <Button
+              color="warning"
+              size="lg"
+              tag={Link}
+              to={slide.link}
+              className="mt-3"
+            >
+              {isHindi ? "और जानें" : "Learn More"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </CarouselItem>
+  ));
 
   return (
     <Carousel
@@ -94,4 +139,3 @@ const HeroSlider = () => {
 };
 
 export default HeroSlider;
-

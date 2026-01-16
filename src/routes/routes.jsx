@@ -35,7 +35,12 @@ import NewsManagement from "../views/Admin/NewsManagement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
-import ImageMaster from "../views/Admin/ImageMaster";
+import AboutSectionMangement from "../views/Admin/AboutSectionMangement";
+import ManageCategories from "../views/Admin/ManageCategories";
+import ManageBrands from "../views/Admin/ManageBrands";
+import ManageUniversities from "../views/Admin/ManageUniversities";
+import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
+import AdminEducationStats from "../views/Admin/AdminEducationStats";
 
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
@@ -65,11 +70,11 @@ const AppRoutes = () => {
 
   const fetchPages = async () => {
     try {
-      const res = await axios.get(`${API_URL}api/menu-list`);
+      const res = await axios.get(`${API_URL}/api/menu-list`);
       const menuItems = res.data.data || [];
       setPages(extractPagesFromMenu(menuItems));
     } catch (err) {
-      console.error("Page fetch error", err);
+      console.error("Page Fetch Error", err);
     }
   };
 
@@ -135,12 +140,14 @@ const AppRoutes = () => {
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
-              <Route path="about-and-help" element={<AboutAndHelp />} />
-          <Route path="image-master" element={<ImageMaster />} />
+          <Route path="image-master" element={<AboutSectionMangement />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
-          <Route path="file-uploader" element={<FileUploader />} />
-          <Route path="file-manager" element={<FileManager />} />
+          <Route path="categories" element={<ManageCategories/>} />
+          <Route path="brands" element={<ManageBrands/>} />
+          <Route path="universities" element={<ManageUniversities/>} />
+          <Route path="new-updates" element={<NewUpdatesManagement/>} />
+          <Route path="admin-education-stats" element={<AdminEducationStats/>} />
 
         </Route>
       </Route>

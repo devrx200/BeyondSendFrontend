@@ -1,9 +1,11 @@
-import { useState, useEffect  } from 'react';
-import { Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input } from 'reactstrap';
+import { useState, useEffect } from 'react';
+import { Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, Row, Col, Container } from 'reactstrap';
 import { FaImages, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
-
+import axios from "axios";
+import Swal from "sweetalert2";
 const SliderManagement = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
   const { isHindi } = useLanguage();
   const [modal, setModal] = useState(false);
   const [editingSlide, setEditingSlide] = useState(null);
@@ -19,70 +21,52 @@ const SliderManagement = () => {
     linkTextEn: '',
     linkTextHi: '',
     order: 1,
-    active: true
+    active: true,
+    uploadefile: null,
   });
-const [slides, setSlides] = useState([]);
-const [loading, setLoading] = useState(false);
-  // const [slides] = useState([
-  //   {
-  //     id: 1,
-  //     smallTitleEn: 'Welcome to',
-  //     smallTitleHi: 'में आपका स्वागत है',
-  //     mainTitleEn: 'Higher Education Department',
-  //     mainTitleHi: 'उच्च शिक्षा विभाग',
-  //     descriptionEn: 'Building future leaders through quality education and innovation',
-  //     descriptionHi: 'गुणवत्तापूर्ण शिक्षा और नवाचार के माध्यम से भविष्य के नेताओं का निर्माण',
-  //     image: '/slider1.jpg',
-  //     link: '/about',
-  //     linkTextEn: 'Learn More',
-  //     linkTextHi: 'और जानें',
-  //     order: 1,
-  //     active: true
-  //   },
-  //   {
-  //     id: 2,
-  //     smallTitleEn: 'Empowering',
-  //     smallTitleHi: 'सशक्तिकरण',
-  //     mainTitleEn: 'Quality Education for All',
-  //     mainTitleHi: 'सभी के लिए गुणवत्तापूर्ण शिक्षा',
-  //     descriptionEn: 'Excellence in learning and research across universities and colleges',
-  //     descriptionHi: 'विश्वविद्यालयों और महाविद्यालयों में सीखने और अनुसंधान में उत्कृष्टता',
-  //     image: '/slider2.jpg',
-  //     link: '/universities',
-  //     linkTextEn: 'Explore Universities',
-  //     linkTextHi: 'विश्वविद्यालय देखें',
-  //     order: 2,
-  //     active: true
-  //   },
-  // ]);
+  const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-const fetchSlides = async () => {
-  try {
-    setLoading(true);
-    const res = await axios.get(
-      "http://localhost:4000/api/get-hero-slides",
-      {
-        headers: { "web-url": window.location.href },
+    setFormData((prev) => ({
+      ...prev,
+      uploadefile: file,        //  actual file (FormData ke liye)
+      image: file.name,         //  filename store (string)
+    }));
+
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const fetchSlides = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        `${API_URL}/api/get-hero-slides`,
+        {
+          headers: { "web-url": window.location.href },
+        }
+      );
+
+      if (res.status === 200) {
+        setSlides(res.data.data || []);
       }
-    );
-
-    if (res.status === 200) {
-      setSlides(res.data.data || []);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load hero slides",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Failed to load hero slides",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-useEffect(() => {
-  fetchSlides();
-}, []);
+  useEffect(() => {
+    fetchSlides();
+  }, []);
   const toggleModal = () => {
     setModal(!modal);
     if (modal) {
@@ -114,26 +98,36 @@ useEffect(() => {
     setFormData({
       smallTitleEn: slide.subtitleEng || "",
       smallTitleHi: slide.subtitleHin || "",
+
       mainTitleEn: slide.titleEng || "",
       mainTitleHi: slide.titleHin || "",
+
       descriptionEn: slide.descriptionEng || "",
       descriptionHi: slide.descriptionHin || "",
+
       link: slide.link || "",
-      linkTextEn: "",
-      linkTextHi: "",
+
+      linkTextEn: slide.linkTextEn,   // backend me nahi hai
+      linkTextHi: slide.linkTextHi,     // backend me nahi hai
+
       order: slide.displayOrder || 1,
-      active: slide.isActive,
-      image: null, // new image optional
+      active: slide.isActive ?? true,
+
+      image: slide.image || "",   // filename/path show ke liye
+      uploadefile: null           // edit me file optional
     });
 
     setModal(true);
   };
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "";
+    return `${API_URL}${imagePath.replace(/\\/g, "/")}`;
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    toggleModal();
-    
 
     try {
       const payload = new FormData();
@@ -144,27 +138,27 @@ useEffect(() => {
       payload.append("subtitleHin", formData.smallTitleHi);
       payload.append("descriptionEng", formData.descriptionEn);
       payload.append("descriptionHin", formData.descriptionHi);
-      payload.append("link", formData.link);
+      payload.append("linkTextEn", formData.linkTextEn);
+      payload.append("linkTextHi", formData.linkTextHi);
       payload.append("displayOrder", formData.order);
       payload.append("isActive", formData.active);
-payload.append("image", formData.image);
-      // if (formData.image instanceof File) {
-      //   payload.append("image", formData.image);
-      // }
+
+      // SEND FILE CORRECTLY
+      if (formData.uploadefile) {
+        payload.append("image", formData.uploadefile);
+      }
 
       let response;
 
       if (editingSlide) {
-        // 🔄 UPDATE
         response = await axios.put(
-          `http://localhost:4000/api/update-hero-slide/${editingSlide._id}`,
+          `${API_URL}/api/update-hero-slide/${editingSlide._id}`,
           payload,
           { headers: { "web-url": window.location.href } }
         );
       } else {
-        // ➕ CREATE
         response = await axios.post(
-          "http://localhost:4000/api/create-hero-slide",
+          `${API_URL}/api/create-hero-slide`,
           payload,
           { headers: { "web-url": window.location.href } }
         );
@@ -178,33 +172,33 @@ payload.append("image", formData.image);
           showConfirmButton: false,
         });
 
-        toggleModal();
+        toggleModal();      // HERE ONLY
         fetchSlides();
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text:
-          error?.response?.data?.message ||
-          "Something went wrong",
+        text: error?.response?.data?.message || "Something went wrong",
       });
     }
   };
 
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm(
-      isHindi
-        ? "क्या आप इस स्लाइड को हटाना चाहते हैं?"
-        : "Are you sure you want to deactivate this slide?"
-    );
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
 
-    if (!confirm) return;
+    if (!confirm.isConfirmed) return;
 
     try {
       const res = await axios.delete(
-        `http://localhost:4000/api/delete-hero-slide/${id}`,
+        `${API_URL}/api/deactivate-hero-slide/${id}`,
         { headers: { "web-url": window.location.href } }
       );
 
@@ -228,237 +222,403 @@ payload.append("image", formData.image);
       });
     }
   };
+  const activeSlides = slides.filter(slide => slide.isActive);
+  const inactiveSlides = slides.filter(slide => !slide.isActive);
 
+  const handlePermanentDelete = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Permanent Delete?",
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete permanently",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await axios.delete(
+        `${API_URL}/api/permanent-delete-hero-slide/${id}`,
+        { headers: { "web-url": window.location.href } }
+      );
+
+      if (res.status === 200) {
+        Swal.fire({
+          icon: "success",
+          title: res.data.message,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        fetchSlides();
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Delete Failed",
+        text:
+          error?.response?.data?.message ||
+          "Unable to permanently delete slide",
+      });
+    }
+  };
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardBody className="p-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h4 className="mb-1">{isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}</h4>
-            <p className="text-muted small mb-0">
-              {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
-            </p>
-          </div>
-          <Button color="primary" onClick={toggleModal}>
-            <FaPlus className="me-2" />
-            {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
-          </Button>
-        </div>
-
-        <Table responsive hover>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
-              <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
-              <th>{isHindi ? 'विवरण' : 'Description'}</th>
-              <th>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'}</th>
-              <th>{isHindi ? 'क्रम' : 'Order'}</th>
-              <th>{isHindi ? 'स्थिति' : 'Status'}</th>
-              <th>{isHindi ? 'कार्य' : 'Actions'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {slides.map((slide, index) => (
-              <tr key={slide.id}>
-                <td>{index + 1}</td>
-                <td>{isHindi ? slide.smallTitleHi : slide.smallTitleEn}</td>
-                <td>{isHindi ? slide.mainTitleHi : slide.mainTitleEn}</td>
-                <td className="text-truncate" style={{ maxWidth: '200px' }}>
-                  {isHindi ? slide.descriptionHi : slide.descriptionEn}
-                </td>
-                <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
-                <td>{slide.order}</td>
-                <td>
-                  <span className={`badge bg-${slide.active ? 'success' : 'secondary'}`}>
-                    {slide.active ? (isHindi ? 'सक्रिय' : 'Active') : (isHindi ? 'निष्क्रिय' : 'Inactive')}
-                  </span>
-                </td>
-                <td>
-                  <Button color="info" size="sm" onClick={() => handleEdit(slide)}>
-                    <FaEdit />
-                  </Button>
-                  <Button color="danger" size="sm" onClick={() => handleDelete(slide._id)}>
-                    <FaTrash />
-                  </Button>
-
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-
-        <Modal isOpen={modal} toggle={toggleModal} size="lg">
-          <ModalHeader toggle={toggleModal}>
-            <FaImages className="me-2" />
-            {editingSlide ? (isHindi ? 'स्लाइड संपादित करें' : 'Edit Slide') : (isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide')}
-          </ModalHeader>
-          <ModalBody>
-            <Form onSubmit={handleSubmit}>
-              <div className="row">
-                <div className="col-md-6">
-                  <h6 className="text-primary mb-3">{isHindi ? 'अंग्रेजी सामग्री' : 'English Content'}</h6>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.smallTitleEn}
-                      onChange={(e) => setFormData({ ...formData, smallTitleEn: e.target.value })}
-                      placeholder="e.g., Welcome to"
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.mainTitleEn}
-                      onChange={(e) => setFormData({ ...formData, mainTitleEn: e.target.value })}
-                      placeholder="e.g., Higher Education Department"
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'विवरण' : 'Description'} *</Label>
-                    <Input
-                      type="textarea"
-                      rows="3"
-                      value={formData.descriptionEn}
-                      onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
-                      placeholder="Brief description..."
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.linkTextEn}
-                      onChange={(e) => setFormData({ ...formData, linkTextEn: e.target.value })}
-                      placeholder="e.g., Learn More"
-                      required
-                    />
-                  </FormGroup>
-                </div>
-
-                <div className="col-md-6">
-                  <h6 className="text-primary mb-3">{isHindi ? 'हिंदी सामग्री' : 'Hindi Content'}</h6>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.smallTitleHi}
-                      onChange={(e) => setFormData({ ...formData, smallTitleHi: e.target.value })}
-                      placeholder="उदा., में आपका स्वागत है"
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.mainTitleHi}
-                      onChange={(e) => setFormData({ ...formData, mainTitleHi: e.target.value })}
-                      placeholder="उदा., उच्च शिक्षा विभाग"
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'विवरण' : 'Description'} *</Label>
-                    <Input
-                      type="textarea"
-                      rows="3"
-                      value={formData.descriptionHi}
-                      onChange={(e) => setFormData({ ...formData, descriptionHi: e.target.value })}
-                      placeholder="संक्षिप्त विवरण..."
-                      required
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <Label>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.linkTextHi}
-                      onChange={(e) => setFormData({ ...formData, linkTextHi: e.target.value })}
-                      placeholder="उदा., और जानें"
-                      required
-                    />
-                  </FormGroup>
-                </div>
+    <>
+      <Container>
+        <Card className="border-0 shadow-sm">
+          <CardBody className="p-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 className="mb-1">{isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}</h4>
+                <p className="text-muted small mb-0">
+                  {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
+                </p>
               </div>
+              <Button color="primary" onClick={toggleModal}>
+                <FaPlus className="me-2" />
+                {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
+              </Button>
+            </div>
+            <hr className="my-4" />
 
-              <hr className="my-4" />
+            <Table responsive bordered hover>
+              <thead>
+                <tr>
+                  <th>S.NO.</th>
+                  <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
+                  <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
+                  <th>{isHindi ? 'विवरण' : 'Description'}</th>
+                  <th>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'}</th>
+                  <th>{isHindi ? 'क्रम' : 'Order'}</th>
+                  <th>{isHindi ? 'स्थिति' : 'Status'}</th>
+                  <th>{isHindi ? 'कार्य' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {slides
+                  .filter(slide => slide.isActive)   // ONLY ACTIVE
+                  .map((slide, index) => (
+                    <tr key={slide.id}>
+                      <td>{index + 1}</td>
+                      <td>{isHindi ? slide.subtitleHin : slide.subtitleEng}</td>
+                      <td>{isHindi ? slide.titleHin : slide.titleEng}</td>
+                      <td className="text-truncate" style={{ maxWidth: '200px' }}>
+                        {isHindi ? slide.descriptionHin : slide.descriptionEng}
+                      </td>
+                      <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
+                      <td>{slide.displayOrder}</td>
+                      <td>
+                        <span className={`badge bg-${slide.isActive ? 'success' : 'secondary'}`}>
+                          {slide.isActive ? (isHindi ? 'सक्रिय' : 'Active') : (isHindi ? 'निष्क्रिय' : 'Inactive')}
+                        </span>
+                      </td>
+                      <td className="text-nowrap">
+                        <Button
+                          color="info"
+                          size="sm"
+                          className="px-2 py-1 me-1"
+                          onClick={() => handleEdit(slide)}
+                        >
+                          <FaEdit size={12} />
+                        </Button>
 
-              <div className="row">
-                <div className="col-md-4">
-                  <FormGroup>
-                    <Label>{isHindi ? 'छवि URL' : 'Image URL'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="/slider1.jpg"
-                      required
-                    />
-                  </FormGroup>
-                </div>
+                        <Button
+                          color="danger"
+                          size="sm"
+                          className="px-2 py-1"
+                          onClick={() => handleDelete(slide._id)}
+                        >
+                          <FaTrash size={12} />
+                        </Button>
+                      </td>
 
-                <div className="col-md-4">
-                  <FormGroup>
-                    <Label>{isHindi ? 'लिंक URL' : 'Link URL'} *</Label>
-                    <Input
-                      type="text"
-                      value={formData.link}
-                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                      placeholder="/about"
-                      required
-                    />
-                  </FormGroup>
-                </div>
+                    </tr>
+                  ))}
 
-                <div className="col-md-2">
-                  <FormGroup>
-                    <Label>{isHindi ? 'क्रम' : 'Order'}</Label>
-                    <Input
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                      min="1"
-                    />
-                  </FormGroup>
-                </div>
+              </tbody>
+            </Table>
 
-                <div className="col-md-2">
-                  <FormGroup check className="mt-4">
-                    <Label check>
-                      <Input
-                        type="checkbox"
-                        checked={formData.active}
-                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                      />
-                      {' '}{isHindi ? 'सक्रिय' : 'Active'}
-                    </Label>
-                  </FormGroup>
-                </div>
-              </div>
-            </Form>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="secondary" onClick={toggleModal}>{isHindi ? 'रद्द करें' : 'Cancel'}</Button>
-            <Button color="primary" onClick={handleSubmit}>{isHindi ? 'सहेजें' : 'Save'}</Button>
-          </ModalFooter>
-        </Modal>
-      </CardBody>
-    </Card>
+            <Modal isOpen={modal} toggle={toggleModal} size="lg">
+              <ModalHeader toggle={toggleModal}>
+                <FaImages className="me-2" />
+                {editingSlide ? (isHindi ? 'स्लाइड संपादित करें' : 'Edit Slide') : (isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide')}
+              </ModalHeader>
+              <ModalBody>
+                <Form>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <h6 className="text-primary mb-3">{isHindi ? 'अंग्रेजी सामग्री' : 'English Content'}</h6>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.smallTitleEn}
+                          onChange={(e) => setFormData({ ...formData, smallTitleEn: e.target.value })}
+                          placeholder="e.g., Welcome to"
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.mainTitleEn}
+                          onChange={(e) => setFormData({ ...formData, mainTitleEn: e.target.value })}
+                          placeholder="e.g., Higher Education Department"
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'विवरण' : 'Description'} *</Label>
+                        <Input
+                          type="textarea"
+                          rows="3"
+                          value={formData.descriptionEn}
+                          onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
+                          placeholder="Brief description..."
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.linkTextEn}
+                          onChange={(e) => setFormData({ ...formData, linkTextEn: e.target.value })}
+                          placeholder="e.g., Learn More"
+                          required
+                        />
+                      </FormGroup>
+                    </div>
+
+                    <div className="col-md-6">
+                      <h6 className="text-primary mb-3">{isHindi ? 'हिंदी सामग्री' : 'Hindi Content'}</h6>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.smallTitleHi}
+                          onChange={(e) => setFormData({ ...formData, smallTitleHi: e.target.value })}
+                          placeholder="उदा., में आपका स्वागत है"
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.mainTitleHi}
+                          onChange={(e) => setFormData({ ...formData, mainTitleHi: e.target.value })}
+                          placeholder="उदा., उच्च शिक्षा विभाग"
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'विवरण' : 'Description'} *</Label>
+                        <Input
+                          type="textarea"
+                          rows="3"
+                          value={formData.descriptionHi}
+                          onChange={(e) => setFormData({ ...formData, descriptionHi: e.target.value })}
+                          placeholder="संक्षिप्त विवरण..."
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <Label>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.linkTextHi}
+                          onChange={(e) => setFormData({ ...formData, linkTextHi: e.target.value })}
+                          placeholder="उदा., और जानें"
+                          required
+                        />
+                      </FormGroup>
+                    </div>
+                  </div>
+
+                  <hr className="my-4" />
+
+                  <div className="row">
+                    <div className="col-md-4">
+                      <FormGroup>
+                        <Label>{isHindi ? 'छवि URL' : 'Image URL'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.image}
+                          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                          placeholder="/slider1.jpg"
+                          required
+                        />
+                      </FormGroup>
+                    </div>
+
+                    <div className="col-md-4">
+                      <FormGroup>
+                        <Label>{isHindi ? 'लिंक URL' : 'Link URL'} *</Label>
+                        <Input
+                          type="text"
+                          value={formData.link}
+                          onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                          placeholder="/about"
+                          required
+                        />
+                      </FormGroup>
+                    </div>
+
+                    <div className="col-md-2">
+                      <FormGroup>
+                        <Label>{isHindi ? 'क्रम' : 'Order'}</Label>
+                        <Input
+                          type="number"
+                          value={formData.order}
+                          onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                          min="1"
+                        />
+                      </FormGroup>
+                    </div>
+
+                    <div className="col-md-2">
+                      <FormGroup check className="mt-4">
+                        <Label check>
+                          <Input
+                            type="checkbox"
+                            checked={formData.active}
+                            onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                          />
+                          {' '}{isHindi ? 'सक्रिय' : 'Active'}
+                        </Label>
+                      </FormGroup>
+                    </div>
+                  </div>
+                  <Row>
+                    <Col xs={6}>
+                      <FormGroup>
+                        <Label>Upload Image</Label>
+                        <Input type="file" name="uploadefile" accept="image/*" onChange={handleImageChange} />
+                        <p>{formData.image}</p>
+                      </FormGroup>
+                    </Col>
+                    <Col xs={6}>
+                      {editingSlide && formData.image && (
+                        <div className="mt-4">
+                          {/* <Label className="d-block">Existing Image</Label>
+
+    <img
+      src={getImageUrl(formData.image)}
+      alt="Hero Slide"
+      style={{
+        width: "100%",
+        maxHeight: "150px",
+        objectFit: "cover",
+        border: "1px solid #ddd",
+        borderRadius: "6px",
+      }}
+    /> */}
+
+                          {editingSlide && formData.image && !formData.uploadefile && (
+                            <a
+                              href={getImageUrl(formData.image)}
+                              download
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-sm btn-secondary mt-2"
+                            >
+                              ⬇ Download Existing Image
+                            </a>
+                          )}
+
+
+                        </div>
+                      )}
+                    </Col>
+
+                    {/* {preview && (
+                      <img src={preview} style={{ width: "100%", maxHeight: 150 }} />
+                    )} */}
+
+                  </Row>
+                </Form>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="secondary" onClick={toggleModal}>{isHindi ? 'रद्द करें' : 'Cancel'}</Button>
+                <Button color="primary" onClick={handleSubmit}>{isHindi ? 'सहेजें' : 'Save'}</Button>
+              </ModalFooter>
+            </Modal>
+
+          </CardBody>
+        </Card>
+        <br />
+        <Card>
+          <CardBody>
+            {inactiveSlides.length > 0 && (
+              <>
+
+
+                <h5 className="mb-3 text-danger">
+                  {isHindi ? "निष्क्रिय स्लाइडर सूची" : "Inactive Slider List"}
+                </h5>
+                <hr className="my-4" />
+                <Table responsive bordered hover>
+                  <thead className="table-light">
+                    <tr>
+                      <th>S.No.</th>
+                      <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
+                      <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
+                      <th>{isHindi ? 'विवरण' : 'Description'}</th>
+                      <th>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'}</th>
+                      <th>{isHindi ? 'क्रम' : 'Order'}</th>
+                      <th>{isHindi ? 'स्थिति' : 'Status'}</th>
+                      <th>{isHindi ? 'कार्य' : 'Actions'}</th>
+
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inactiveSlides.map((slide, index) => (
+                      <tr key={slide._id}>
+                        <td>{index + 1}</td>
+                        <td>{isHindi ? slide.subtitleHin : slide.subtitleEng}</td>
+                        <td>{isHindi ? slide.titleHin : slide.titleEng}</td>
+                        <td className="text-truncate" style={{ maxWidth: '200px' }}>
+                          {isHindi ? slide.descriptionHin : slide.descriptionEng}
+                        </td>
+                        <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
+                        <td>{slide.displayOrder}</td>
+                        <td>
+                          <span className={`badge bg-${slide.isActive ? 'success' : 'secondary'}`}>
+                            {slide.isActive ? (isHindi ? 'सक्रिय' : 'Active') : (isHindi ? 'निष्क्रिय' : 'Inactive')}
+                          </span>
+                        </td>
+                        <td>
+                          <Button
+                            color="danger"
+                            size="sm"
+                            onClick={() => handlePermanentDelete(slide._id)}
+                          >
+                            <FaTrash />{" "}
+                            {isHindi ? "हटाएँ" : "Delete"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </>
+            )}
+          </CardBody>
+        </Card>
+      </Container>
+    </>
   );
 };
 

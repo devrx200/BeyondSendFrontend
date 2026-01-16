@@ -6,16 +6,27 @@ import {
   Collapse,
   Badge
 } from "reactstrap";
+
 import {
   FaTachometerAlt,
   FaImages,
+  FaPlus,
+  FaTrash,
   FaNewspaper,
   FaChevronDown,
   FaChevronRight,
   FaBullhorn,
-  FaFileAlt,
-  FaBars as FaMenu
+  FaBars,
+  FaChartBar,
+  FaUniversity,
+  FaListAlt,
+  FaTags,
+  FaBell,
+  FaPhotoVideo,
+  FaInfoCircle,
+  FaFileImage
 } from "react-icons/fa";
+
 import { useLanguage } from "../contexts/LanguageContext";
 import { jwtDecode } from "jwt-decode";
 
@@ -29,9 +40,33 @@ const adminMenu = [
   },
   {
     id: "menu",
-    icon: FaMenu,
+    icon: FaBars,
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
+  },
+  {
+    id: "education-stats",
+    icon: FaChartBar,
+    path: "/admin/admin-education-stats",
+    label: { en: "Education Stats", hi: "शिक्षा सांख्यिकी" }
+  },
+  {
+    id: "universities",
+    icon: FaUniversity,
+    path: "/admin/universities",
+    label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
+  },
+  {
+    id: "categories",
+    icon: FaListAlt,
+    path: "/admin/categories",
+    label: { en: "Manage Categories", hi: "श्रेणियाँ प्रबंधन" }
+  },
+  {
+    id: "brands",
+    icon: FaTags,
+    path: "/admin/brands",
+    label: { en: "Manage Brands", hi: "ब्रांड्स प्रबंधन" }
   },
   {
     id: "slider",
@@ -51,6 +86,12 @@ const adminMenu = [
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
     submenu: [
       {
+        id: "news-updates",
+        icon: FaBullhorn,
+        path: "/admin/new-updates",
+        label: { en: "New Updates", hi: "नवीन सूचना" }
+      },
+      {
         id: "news-list",
         icon: FaNewspaper,
         path: "/admin/news",
@@ -64,7 +105,7 @@ const adminMenu = [
       },
       {
         id: "notifications",
-        icon: FaBullhorn,
+        icon: FaBell,
         path: "/admin/notifications",
         label: { en: "Notifications", hi: "सूचनाएं" }
       }
@@ -72,15 +113,22 @@ const adminMenu = [
   },
   {
     id: "gallery",
-    icon: FaImages,
+    icon: FaPhotoVideo,
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
   },
   {
-    id: "downloads",
-    icon: FaFileAlt,
-    path: "/admin/downloads",
-    label: { en: "Downloads", hi: "डाउनलोड" }
+    id: "about",
+    icon: FaInfoCircle,
+    label: { en: "About", hi: "परिचय" },
+    submenu: [
+      {
+        id: "about-content",
+        icon: FaFileImage,
+        path: "/admin/image-master",
+        label: { en: "About Content", hi: "परिचय सामग्री" }
+      }
+    ]
   }
 ];
 
@@ -169,6 +217,11 @@ const AdminSidebar = ({ collapsed }) => {
                 Session Expires In {expiresIn}
               </div>
             )}
+            <hr className="m-0 p-0" />
+            <div className="mt-2">
+              <small className="fw-bold">Department of Higher Education, Government of Chhattisgarh</small>
+            </div>
+
           </>
         )}
       </div>

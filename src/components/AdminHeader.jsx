@@ -19,6 +19,7 @@ const AdminHeader = ({ toggleSidebar }) => {
   const { toggleLanguage, isHindi } = useLanguage();
   const [dateTime, setDateTime] = useState(new Date());
 
+  /* ---------- LIVE CLOCK ---------- */
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -27,6 +28,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     return () => clearInterval(timer);
   }, []);
 
+  /* ---------- LOGOUT ---------- */
   const logout = async () => {
     const token = sessionStorage.getItem("authToken");
 
@@ -44,10 +46,10 @@ const AdminHeader = ({ toggleSidebar }) => {
 
     try {
       if (token) {
-        await axios.post(`${API_URL}/logout-user`, { token });
+        await axios.post(`${API_URL}/api/logout-user`, { token });
       }
     } catch (error) {
-      // even if API fails, logout locally
+      console.error("Logout error:", error);
     } finally {
       sessionStorage.clear();
 
@@ -63,9 +65,23 @@ const AdminHeader = ({ toggleSidebar }) => {
     }
   };
 
-  const formattedDate = dateTime.toLocaleDateString("en-GB");
-  const formattedTime = dateTime.toLocaleTimeString("en-GB");
-  const dayName = dateTime.toLocaleDateString("en-US", { weekday: "long" });
+  /* ---------- INDIA TIME FORMAT ---------- */
+  const formattedDate = dateTime.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata"
+  });
+
+  const formattedTime = dateTime.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+
+  const dayName = dateTime.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long"
+  });
 
   return (
     <Navbar
@@ -73,6 +89,7 @@ const AdminHeader = ({ toggleSidebar }) => {
       dark
       className="px-3 d-flex justify-content-between align-items-center"
     >
+      {/* LEFT */}
       <div className="d-flex align-items-center gap-2">
         <Button color="primary" onClick={toggleSidebar}>
           <FaBars />
@@ -84,9 +101,10 @@ const AdminHeader = ({ toggleSidebar }) => {
         </strong>
       </div>
 
-      <div className="d-flex align-items-center gap-2">
-        <div className="d-none d-md-flex align-items-center text-warning fw-bold">
-          <FaClock className="me-2" />
+      {/* RIGHT */}
+      <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1">
+        <div className="d-none d-md-flex align-items-center text-white fw-bold">
+          <FaClock className="me-2 text-warning" />
           {dayName}, {formattedDate} | {formattedTime}
         </div>
 

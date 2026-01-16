@@ -78,13 +78,35 @@ const AboutAndHelp = () => {
 
   // ==================== API CALLS ====================
   const fetchPages = async () => {
-    try {
-      const res = await axios.get(`${API}api/menu-list`);
-      setPages(extractPages(res.data.data || []));
-    } catch (error) {
-      console.error("Error fetching pages:", error);
+  try {
+    const res = await axios.get(`${API}/api/menu-list`);
+    const menuItems = res.data.data || [];
+
+    const pages = extractPagesFromMenu(menuItems);
+    setPages(pages);
+  } catch (err) {
+    console.error("Page fetch error", err);
+  }
+};
+
+const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
+  menus.forEach((item) => {
+    // Push EVERY menu/submenu as a page
+    pages.push({
+      _id: item._id,                // ✅ submenu _id preserved
+      titleEn: item.titleEng,
+      titleHi: item.titleHi,
+      path: item.path,
+      isExternal: item.isExternal,
+      parentId,                     // ✅ helpful for hierarchy
+      level: parentId ? "SUB" : "MAIN",
+    });
+
+    // Recurse if submenu exists
+    if (Array.isArray(item.submenu) && item.submenu.length > 0) {
+      extractPagesFromMenu(item.submenu, pages, item._id);
     }
-  };
+  });
 
   const extractPages = (menus, list = []) => {
     menus.forEach((m) => {
