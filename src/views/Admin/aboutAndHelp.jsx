@@ -1,5 +1,5 @@
 // AboutAndHelp.jsx - Professional CMS Main Page with List & Edit Features
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardBody,
@@ -1106,5 +1106,5 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
     </>
   );
 };
-
+};
 export default AboutAndHelp;
