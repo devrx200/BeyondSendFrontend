@@ -241,14 +241,14 @@ const MenuManagement = () => {
       <Fragment key={menu._id}>
         {/* MAIN MENU */}
         <tr className="bg-danger">
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"16px", width:"50px" }}>{index + 1}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"16px", width:"200px" }}>{menu.titleEng}</td>
-           <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"16px" , width:"300px"}}>{menu.titleHi}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"16px" ,width:"240px"}}>{menu.path}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"16px", width:"140px" }}>
+          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"14px", width:"30px" }}>{index + 1}</td>
+          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"14px", width:"200px" }}>{menu.titleEng}</td>
+           <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px" , width:"200px"}}>{menu.titleHi}</td>
+          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px" ,width:"240px"}}>{menu.path}</td>
+          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px", width:"140px" }}>
             <Badge color="primary">Menu</Badge>
           </td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"16px",width:"300px" }}>
+          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px",width:"300px" }}>
             <Button
               size="sm"
               color="warning"
@@ -298,9 +298,9 @@ const MenuManagement = () => {
         {menu.submenu?.map((sub, subIndex) => (
           <Fragment key={sub._id}>
             <tr>
-              <td style={{ paddingLeft:"50px", color:"green" , fontWeight:"500" , fontSize:"16px"}}>{subIndex + 1}</td>
-              <td style={{ paddingLeft:"50px", color:"green" , fontWeight:"500" , fontSize:"16px" }}>{sub.titleEng}</td>
-           <td style={{ color:"green" , fontWeight:"500" , fontSize:"16px" }}>{sub.titleHi}</td>
+              <td style={{ paddingLeft:"30px", color:"green" , fontWeight:"500" , fontSize:"14px"}}>{subIndex + 1}</td>
+              <td style={{ paddingLeft:"50px", color:"green" , fontWeight:"500" , fontSize:"14px" }}>{sub.titleEng}</td>
+           <td style={{ color:"green" , fontWeight:"500" , fontSize:"14px" }}>{sub.titleHi}</td>
 
               <td>{sub.path}</td>
               <td>
@@ -356,7 +356,7 @@ const MenuManagement = () => {
             {/* CHILD */}
             {sub.submenu?.map((child , index2) => (
               <tr key={child._id}>
-              <td style={{paddingLeft: 80,color:"green" , fontWeight:"500" , fontSize:"16px"}}>{index2 + 1}</td>
+              <td style={{paddingLeft: 80,color:"green" , fontWeight:"500" , fontSize:"14px"}}>{index2 + 1}</td>
 
                 <td style={{ paddingLeft: 80 , color:"blue" , fontWeight:"500"}}>{child.titleEng}</td>
                 <td >{child.titleHi}</td>

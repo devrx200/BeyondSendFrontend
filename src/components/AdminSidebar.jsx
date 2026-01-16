@@ -89,6 +89,12 @@ const adminMenu = [
     label: { en: "Home Slider", hi: "होम स्लाइडर" }
   },
   {
+    id: "About and Help",
+    icon: FaImages,
+    path: "/admin/about-and-help",
+    label: { en: "About and Help", hi: "बारे में एवं सहायता" }
+  },
+  {
     id: "news",
     icon: FaNewspaper,
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },

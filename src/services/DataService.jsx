@@ -156,11 +156,11 @@ class DataService {
     });
   }
 
-  getImportantLinks() {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(afterCarouselLinks), 100);
-    });
-  }
+  // getImportantLinks() {
+  //   return new Promise((resolve) => {
+  //     setTimeout(() => resolve(afterCarouselLinks), 100);
+  //   });
+  // }
 
   getMinisterMessage() {
     return new Promise((resolve) => {

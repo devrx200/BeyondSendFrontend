@@ -47,6 +47,9 @@ import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
+import AboutAndHelp from "../views/Admin/aboutAndHelp";
+import FileUploader from "../views/Admin/uploaderPage";
+import FileManager from "../views/Admin/fileManager";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
