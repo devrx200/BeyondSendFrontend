@@ -40,6 +40,12 @@ const adminMenu = [
     label: { en: "Home Slider", hi: "होम स्लाइडर" }
   },
   {
+    id: "About and Help",
+    icon: FaImages,
+    path: "/admin/about-and-help",
+    label: { en: "About and Help", hi: "बारे में एवं सहायता" }
+  },
+  {
     id: "news",
     icon: FaNewspaper,
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
@@ -70,6 +76,12 @@ const adminMenu = [
     path: "/admin/gallery",
     label: { en: "Photo Gallery", hi: "चित्र प्रदर्शनी" }
   },
+  {
+    id: "downloads",
+    icon: FaFileAlt,
+    path: "/admin/downloads",
+    label: { en: "Downloads", hi: "डाउनलोड" }
+  }
 ];
 
 const AdminSidebar = ({ collapsed }) => {

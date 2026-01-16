@@ -30,18 +30,18 @@ const NoticeTicker = () => {
     }
   ];
 
-  useEffect(() => {
-    const fetchNotices = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/notices`);
-        const notices = res.data?.filter(n => n.isActive);
-        setData(notices?.length ? notices : dummyData);
-      } catch {
-        setData(dummyData);
-      }
-    };
-    fetchNotices();
-  }, []);
+  // useEffect(() => {
+  //   const fetchNotices = async () => {
+  //     try {
+  //       const res = await axios.get(`${API_URL}/notices`);
+  //       const notices = res.data?.filter(n => n.isActive);
+  //       setData(notices?.length ? notices : dummyData);
+  //     } catch {
+  //       setData(dummyData);
+  //     }
+  //   };
+  //   fetchNotices();
+  // }, []);
 
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-IN", {

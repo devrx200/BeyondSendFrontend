@@ -40,6 +40,9 @@ import ImageMaster from "../views/Admin/ImageMaster";
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
+import AboutAndHelp from "../views/Admin/aboutAndHelp";
+import FileUploader from "../views/Admin/uploaderPage";
+import FileManager from "../views/Admin/fileManager";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -132,9 +135,13 @@ const AppRoutes = () => {
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
+              <Route path="about-and-help" element={<AboutAndHelp />} />
           <Route path="image-master" element={<ImageMaster />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
+          <Route path="file-uploader" element={<FileUploader />} />
+          <Route path="file-manager" element={<FileManager />} />
+
         </Route>
       </Route>
 
