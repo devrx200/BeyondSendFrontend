@@ -207,8 +207,8 @@ const Header = () => {
                                     key={child._id}
                                     onClick={() =>
                                       handleMenuClick({
-                                        menu: child, // ✅ key name MUST be "menu"
-                                        navigate, // ✅ key name MUST be "navigate"
+                                        menu: child, // key name MUST be "menu"
+                                        navigate, // key name MUST be "navigate"
                                       })
                                     }
                                   >
@@ -222,8 +222,8 @@ const Header = () => {
                               key={sub._id}
                               onClick={() =>
                                 handleMenuClick({
-                                  menu: sub, // ✅ key name MUST be "menu"
-                                  navigate, // ✅ key name MUST be "navigate"
+                                  menu: sub, // key name MUST be "menu"
+                                  navigate, // key name MUST be "navigate"
                                 })
                               }
                             >

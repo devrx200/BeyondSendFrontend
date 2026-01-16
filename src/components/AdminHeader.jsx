@@ -19,7 +19,7 @@ const AdminHeader = ({ toggleSidebar }) => {
   const { toggleLanguage, isHindi } = useLanguage();
   const [dateTime, setDateTime] = useState(new Date());
 
-  /* ---------- LIVE CLOCK ---------- */
+  /* -- LIVE CLOCK -- */
   useEffect(() => {
     const timer = setInterval(() => {
       setDateTime(new Date());
@@ -28,7 +28,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     return () => clearInterval(timer);
   }, []);
 
-  /* ---------- LOGOUT ---------- */
+  /* -- LOGOUT-- */
   const logout = async () => {
     const token = sessionStorage.getItem("authToken");
 
@@ -65,7 +65,7 @@ const AdminHeader = ({ toggleSidebar }) => {
     }
   };
 
-  /* ---------- INDIA TIME FORMAT ---------- */
+  /* -- INDIA TIME FORMAT -- */
   const formattedDate = dateTime.toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata"
   });

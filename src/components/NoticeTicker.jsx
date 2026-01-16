@@ -12,7 +12,7 @@ const NoticeTicker = () => {
   const { isHindi } = useLanguage();
   const API_URL = import.meta.env.VITE_API_URL;
 
-  /* ================= FETCH NOTICES ================= */
+  /* = FETCH NOTICES == */
   useEffect(() => {
     const fetchNotices = async () => {
       try {
@@ -33,7 +33,7 @@ const NoticeTicker = () => {
       year: "numeric"
     });
 
-  /* ================= EXTERNAL LINK CONFIRM ================= */
+  /* == EXTERNAL LINK CONFIRM = */
   const handleExternalClick = async (e, item) => {
     e.preventDefault();
 

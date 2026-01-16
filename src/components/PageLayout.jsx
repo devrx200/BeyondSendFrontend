@@ -6,19 +6,19 @@ import bgImg from "../assets/page-bg.svg";
 const PageLayout = ({ title, titleHi, children, showBreadcrumb = true }) => {
   const { isHindi } = useLanguage();
 
- 
+
   return (
-<div
-  className="page-layout"
-  style={{
-    backgroundColor: "#f4f6f9",
-    backgroundImage: `url(${bgImg})`,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "top center",
-    backgroundSize: "cover",
-    minHeight: "100vh"
-  }}
->
+    <div
+      className="page-layout"
+      style={{
+        backgroundColor: "#f4f6f9",
+        backgroundImage: `url(${bgImg})`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "top center",
+        backgroundSize: "cover",
+        minHeight: "100vh"
+      }}
+    >
 
       {/* Dynamic Breadcrumb */}
       {showBreadcrumb && <DynamicBreadcrumb />}

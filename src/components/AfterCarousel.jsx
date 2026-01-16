@@ -10,7 +10,7 @@ const AfterCarousel = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= FETCH CURRENT STATS ================= */
+  /* = FETCH CURRENT STATS = */
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -29,7 +29,7 @@ const AfterCarousel = () => {
     fetchStats();
   }, []);
 
-  /* ================= UI DATA ================= */
+  /* =UI DATA = */
   const statsData = stats
     ? [
         {
