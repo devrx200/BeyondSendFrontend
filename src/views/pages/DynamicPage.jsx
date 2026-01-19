@@ -29,6 +29,8 @@ const API = import.meta.env.VITE_API_URL;
 const DynamicPage = () => {
   const location = useLocation();
     const { isHindi } = useLanguage();
+
+    
   
 
   const [pageData2, setPageData2] = useState([]);
@@ -44,6 +46,10 @@ const DynamicPage = () => {
 
   const pageData = pageDataByprops ? pageDataByprops : pageData2;
 
+
+    console.log("Entering in Dynamic Page",menu);
+
+
   useEffect(() => {
     if (!pageDataByprops) {
       fetchPageData();
@@ -52,7 +58,7 @@ const DynamicPage = () => {
 
   const fetchPageData = async () => {
     try {
-      const res = await axios.get(`${API}api/menu-page-data-by-path`, {
+      const res = await axios.get(`${API}/api/menu-page-data-by-path`, {
         params: { path },
       });
 

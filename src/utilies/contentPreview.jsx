@@ -68,7 +68,7 @@ const ContentPreview = ({ contents = [] }) => {
           {/* IMAGE */}
           {item.fileType === "IMAGE" && (
             <img
-              src={API + "/" + item.filePath}
+              src={API  + item.filePath}
               alt="No Image found"
               className="img-fluid rounded shadow-sm my-3"
               style={{ maxHeight: "420px", objectFit: "contain" }}
