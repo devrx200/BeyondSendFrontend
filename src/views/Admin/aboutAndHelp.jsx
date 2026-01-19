@@ -76,10 +76,10 @@ const AboutAndHelp = () => {
 
   // console.log(savedContentList[0]?.contents, "Getting content list");
 
-  // ==================== API CALLS ====================
-  const fetchPages = async () => {
+ // ==================== API CALLS ====================
+const fetchPages = async () => {
   try {
-    const res = await axios.get(`${API}/api/menu-list`);
+    const res = await axios.get(`${API}//api/menu-list`);
     const menuItems = res.data.data || [];
 
     const pages = extractPagesFromMenu(menuItems);
@@ -89,16 +89,17 @@ const AboutAndHelp = () => {
   }
 };
 
+// ==================== FLATTEN MENU + SUBMENU ====================
 const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
   menus.forEach((item) => {
     // Push EVERY menu/submenu as a page
     pages.push({
-      _id: item._id,                // ✅ submenu _id preserved
+      _id: item._id,           // ✅ submenu _id preserved
       titleEn: item.titleEng,
       titleHi: item.titleHi,
       path: item.path,
       isExternal: item.isExternal,
-      parentId,                     // ✅ helpful for hierarchy
+      parentId,               // ✅ helpful for hierarchy
       level: parentId ? "SUB" : "MAIN",
     });
 
@@ -108,17 +109,13 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
     }
   });
 
-  const extractPages = (menus, list = []) => {
-    menus.forEach((m) => {
-      list.push({ _id: m._id, titleEn: m.titleEng, titleHi: m.titleHi });
-      if (m.submenu?.length) extractPages(m.submenu, list);
-    });
-    return list;
-  };
+  return pages; // ✅ VERY IMPORTANT
+};
+
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(`${API}api/categories`);
+      const res = await axios.get(`${API}/api/categories`);
       setCategories(res.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -127,7 +124,7 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
 
   const fetchSavedContent = async () => {
     try {
-      const res = await axios.get(`${API}api/get-about-and-help`);
+      const res = await axios.get(`${API}/api/get-about-and-help`);
       setSavedContentList(res.data.data || res.data || []);
       setContents(res.data.data[0].contents);
     } catch (error) {
@@ -196,8 +193,8 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
 
       // 4️⃣ API call
       const url = editMode
-        ? `${API}api/about-and-help/${editingId}`
-        : `${API}api/about-and-help`;
+        ? `${API}/api/about-and-help/${editingId}`
+        : `${API}/api/about-and-help`;
 
       await axios.post(url, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -219,7 +216,7 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
   const [selectedContent, setSelectedContent] = useState({});
 
   const handleEdit = async (item) => {
-    const res = await axios.get(`${API}api/get-about-and-help/${item._id}`);
+    const res = await axios.get(`${API}/api/get-about-and-help/${item._id}`);
     // console.log("geting somthing adslkfjalkdsjfklajsdlfkjaslkdjf ladsfjl",res.data);
     
     setSelectedContent(res.data.contents);
@@ -250,7 +247,7 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await axios.delete(`${API}api/about-and-help/${id}`);
+      const res = await axios.delete(`${API}/api/about-and-help/${id}`);
       setSavedContentList((prev) => prev.filter((item) => item._id !== id));
 
       setDeleteModal(false);

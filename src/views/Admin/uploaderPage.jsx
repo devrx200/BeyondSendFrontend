@@ -57,7 +57,7 @@ const FileUploader = () => {
       const formData = new FormData();
       formData.append("file", file); // ✅ single key only
 
-      await axios.post(`${API}api/files/upload`, formData, {
+      await axios.post(`${API}/api/files/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

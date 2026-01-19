@@ -29,7 +29,7 @@ const FileManager = () => {
     const fetchFiles = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API}api/files/list`);
+        const res = await axios.get(`${API}/api/files/list`);
         setFiles(res.data?.data || []);
       } catch (err) {
         setError("Failed to load uploaded files");
