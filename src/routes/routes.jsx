@@ -26,6 +26,7 @@ import Downloads from "../views/pages/Downloads";
 import NoticeBoard from "../views/pages/NoticeBoard";
 import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
+import FeedbackForm from "../components/FeedbackForm";  
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -139,6 +140,7 @@ const AppRoutes = () => {
       <Route path="/notice-board" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
+      <Route path="/feedback-page" element={<MainLayout><FeedbackForm /></MainLayout>} />
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>
