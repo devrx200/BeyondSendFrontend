@@ -79,7 +79,7 @@ const AboutAndHelp = () => {
  // ==================== API CALLS ====================
 const fetchPages = async () => {
   try {
-    const res = await axios.get(`${API}//api/menu-list`);
+    const res = await axios.get(`${API}/api/menu-list`);
     const menuItems = res.data.data || [];
 
     const pages = extractPagesFromMenu(menuItems);
@@ -220,6 +220,9 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
     // console.log("geting somthing adslkfjalkdsjfklajsdlfkjaslkdjf ladsfjl",res.data);
     
     setSelectedContent(res.data.contents);
+
+    console.log(res.data.contents,"Getting COntenaeris");
+    
 
     setEditMode(true);
     setEditingId(item._id);

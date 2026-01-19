@@ -42,6 +42,8 @@ import ManageBrands from "../views/Admin/ManageBrands";
 import ManageUniversities from "../views/Admin/ManageUniversities";
 import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
 import AdminEducationStats from "../views/Admin/AdminEducationStats";
+
+
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 /* MIDDLEWARE */
@@ -149,6 +151,7 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="news" element={<NewsManagement />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
+          <Route path="about-and-help" element={<AboutAndHelp />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
           <Route path="image-master" element={<AboutSectionMangement />} />
