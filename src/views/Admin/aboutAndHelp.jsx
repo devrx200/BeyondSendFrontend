@@ -1106,5 +1106,4 @@ const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
     </>
   );
 };
-};
 export default AboutAndHelp;
