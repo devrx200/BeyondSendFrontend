@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Card, CardBody, Button, Table, Form, FormGroup,
-  Label, Input, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col
+  Label, Input, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Container
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -104,14 +104,18 @@ const ContactManagement = () => {
   };
 
   return (
-    <Card className="shadow-sm border-0">
-      <CardBody>
+ <>
+     <Card className="border-0 shadow-sm">
+          <CardBody className="">
+           <div className="d-flex justify-content-between mb-3">
         <h4 className="mb-4">Contact Management</h4>
+
+           </div>
         {/* ================= CONTACT FORM ================= */}
         <Form onSubmit={saveContact}>
           <h6 className="border-bottom pb-2 mb-3">Address & Contact</h6>
           <Row>
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>Address Line *</Label>
                 <Input
@@ -122,7 +126,7 @@ const ContactManagement = () => {
               </FormGroup>
             </Col>
 
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>City *</Label>
                 <Input
@@ -133,7 +137,7 @@ const ContactManagement = () => {
               </FormGroup>
             </Col>
 
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>State *</Label>
                 <Input
@@ -144,7 +148,7 @@ const ContactManagement = () => {
               </FormGroup>
             </Col>
 
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>Pincode *</Label>
                 <Input
@@ -155,7 +159,7 @@ const ContactManagement = () => {
               </FormGroup>
             </Col>
 
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>Phone *</Label>
                 <Input
@@ -166,7 +170,7 @@ const ContactManagement = () => {
               </FormGroup>
             </Col>
 
-            <Col md={6}>
+            <Col xs={6}>
               <FormGroup>
                 <Label>Email *</Label>
                 <Input
@@ -181,21 +185,21 @@ const ContactManagement = () => {
 
           <h6 className="border-bottom pb-2 mt-4 mb-3">Office Hours</h6>
           <Row>
-            <Col md={4}>
+            <Col xs={4}>
               <Input
                 placeholder="Monday to Friday: 10:00 AM - 6:00 PM"
                 value={data.officeHours?.weekdays || ""}
                 onChange={e => setData({ ...data, officeHours: { ...data.officeHours, weekdays: e.target.value } })}
               />
             </Col>
-            <Col md={4}>
+            <Col xs={4}>
               <Input
                 placeholder="Saturday: 10:00 AM - 2:00 PM"
                 value={data.officeHours?.saturday || ""}
                 onChange={e => setData({ ...data, officeHours: { ...data.officeHours, saturday: e.target.value } })}
               />
             </Col>
-            <Col md={4}>
+            <Col xs={4}>
               <Input
                 placeholder="Sunday: Closed"
                 value={data.officeHours?.sunday || ""}
@@ -217,7 +221,13 @@ const ContactManagement = () => {
           <Button size="sm" onClick={() => setModal(true)}>+ Add Official</Button>
         </div>
 
-        <Table bordered responsive>
+        
+      </CardBody>
+      <br>
+      </br>
+      <Card>
+        <CardBody>
+<Table bordered responsive>
           <thead className="table-light">
             <tr>
               <th>Name</th>
@@ -239,10 +249,12 @@ const ContactManagement = () => {
             ))}
           </tbody>
         </Table>
-      </CardBody>
+        </CardBody>
+      </Card>
 
       {/* ================= OFFICIAL MODAL ================= */}
       <Modal isOpen={modal} toggle={() => setModal(false)} size="lg">
+        
         <ModalHeader toggle={() => setModal(false)}>
           {editId ? "Edit Official" : "Add Official"}
         </ModalHeader>
@@ -377,6 +389,10 @@ const ContactManagement = () => {
         </ModalFooter>
       </Modal>
     </Card>
+ </>
+    
+ 
+    
   );
 };
 

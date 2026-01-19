@@ -52,12 +52,12 @@ import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
 import AboutAndHelp from "../views/Admin/aboutAndHelp";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
-
+import DownloadManagement from "../views/Admin/DownloadManagement";
 const API_URL = import.meta.env.VITE_API_URL;
 
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
-   <div
+  <div
     className="app-wrapper d-flex flex-column min-vh-100"
     style={{
       backgroundColor: "#f4f6f9",
@@ -157,15 +157,20 @@ const AppRoutes = () => {
           <Route path="image-master" element={<AboutSectionMangement />} />
           <Route path="menu" element={<MenuManagement />} />
           <Route path="slider" element={<SliderManagement />} />
-          <Route path="categories" element={<ManageCategories/>} />
-          <Route path="brands" element={<ManageBrands/>} />
-          <Route path="universities" element={<ManageUniversities/>} />
-          <Route path="new-updates" element={<NewUpdatesManagement/>} />
-          <Route path="admin-education-stats" element={<AdminEducationStats/>} />
-          <Route path="contact-management" element={<ContactManagement/>} />
-          <Route path="important-links" element={<ImportantLinksManagement/>} />
+          <Route path="categories" element={<ManageCategories />} />
+          <Route path="brands" element={<ManageBrands />} />
+          <Route path="universities" element={<ManageUniversities />} />
+          <Route path="new-updates" element={<NewUpdatesManagement />} />
+          <Route path="admin-education-stats" element={<AdminEducationStats />} />
+          <Route path="contact-management" element={<ContactManagement />} />
+          <Route path="important-links" element={<ImportantLinksManagement />} />
+          <Route path="file-manager" element={<FileManager />} />
+          <Route path="file-uploader" element={<FileUploader />} />
+          <Route path="about-and-help" element={<AboutAndHelp />} />
+          <Route path="download-management" element={<DownloadManagement />} />
         </Route>
       </Route>
+
 
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
     </Routes>
