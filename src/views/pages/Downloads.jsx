@@ -174,7 +174,7 @@ const Downloads = () => {
                   target="_blank"
                 >
                   <FaDownload className="me-1" />
-                  {isHindi ? "डाउनलोड" : "Download"}
+                  {/* {isHindi ? "डाउनलोड" : "Download"} */}
                 </Button>
               </td>
             </tr>
