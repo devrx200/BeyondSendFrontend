@@ -104,7 +104,7 @@ const ContactManagement = () => {
   };
 
   return (
- <>
+   <Container>
      <Card className="border-0 shadow-sm">
           <CardBody className="">
            <div className="d-flex justify-content-between mb-3">
@@ -389,7 +389,7 @@ const ContactManagement = () => {
         </ModalFooter>
       </Modal>
     </Card>
- </>
+ </Container>
     
  
     

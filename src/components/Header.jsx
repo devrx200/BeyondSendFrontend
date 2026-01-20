@@ -17,7 +17,7 @@ import {
   Container,
   Button,
 } from "reactstrap";
-import {  FaPhone, FaEnvelope,  FaLanguage, FaUniversalAccess, FaSitemap } from "react-icons/fa";
+import { FaPhone, FaEnvelope, FaLanguage, FaUniversalAccess, FaSitemap } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -42,7 +42,7 @@ const Header = () => {
 
 
 
-  
+
 
   const fetchMenus = async () => {
     try {
@@ -70,19 +70,19 @@ const Header = () => {
       </a>
 
       {/* Top Bar */}
-      <div className="top-bar border-bottom"> 
-       
+      <div className="top-bar border-bottom py-1">
+
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
             {/* LEFT INFO */}
             <div className="d-flex align-items-center gap-4 small text-dark">
               <span className="d-flex align-items-center text-white fw-bold">
                 <FaPhone className="me-1 text-white" />
-                +91-771-2221234
+               <a href="tel:+91-771-2221234" className="text-decoration-none text-white"> +91-771-2221234</a>
               </span>
               <span className="d-flex align-items-center text-white fw-bold">
                 <FaEnvelope className="me-1 text-white" />
-                wim.higheredu-cg@gov.in
+                 <a href="mailto:wim.higheredu-cg@gov.in" clasdName="text-decoration-none text-white">  wim.higheredu-cg@gov.in</a>
               </span>
             </div>
 
@@ -91,13 +91,13 @@ const Header = () => {
 
               {/* FONT SIZE CONTROLS */}
               <div className="font-controls d-flex align-items-center gap-1">
-                <Button size="sm" className="px-2 fw-bold" color="light" onClick={decreaseFontSize} title="Decrease Font Size">
+                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={decreaseFontSize} title="Decrease Font Size">
                   A-
                 </Button>
-                <Button size="sm" className="px-2 fw-bold" color="light" onClick={resetFontSize} title="Reset Font Size">
+                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={resetFontSize} title="Reset Font Size">
                   A
                 </Button>
-                <Button size="sm" className="px-2 fw-bold" color="light" onClick={increaseFontSize} title="Increase Font Size">
+                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={increaseFontSize} title="Increase Font Size">
                   A+
                 </Button>
               </div>
@@ -109,7 +109,7 @@ const Header = () => {
                 size="sm"
                 color="light"
                 onClick={toggleLanguage}
-                className="d-flex align-items-center gap-1 px-2"
+                className="d-flex align-items-center py-1 gap-1 px-2"
                 title="Change language"
               >
                 <FaLanguage />
@@ -156,12 +156,19 @@ const Header = () => {
                 <p className="mb-0">{t("stateName")}</p>
               </div>
             </div>
+            <div>
+              <img
+                src="/public/Digital_India_logo.svg"
+                alt="India Emblem"
+                height="70"
+              />
+              <img
+                src="/public/Emblem_of_India.svg"
+                alt="India Emblem"
+                height="70"
+              />
+            </div>
 
-            <img
-              src="/public/Emblem_of_India.svg"
-              alt="India Emblem"
-              height="70"
-            />
           </div>
         </Container>
       </div>

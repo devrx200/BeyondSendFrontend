@@ -1,120 +1,119 @@
-import { useState } from "react";
-import {
-  Carousel,
-  CarouselItem,
-  CarouselControl
-} from "reactstrap";
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 
-const brandLogos = [
-  { id: 1, name: "Digital India", image: "/digital-india.webp" },
-  { id: 2, name: "Make in India", image: "/make-India.jpg" },
-  { id: 3, name: "Skill India", image: "/skillindia.png" },
-  { id: 4, name: "NIC", image: "/nic-logo.jpg" },
-  { id: 5, name: "Ministry of Education", image: "/education-ministary.png" },
-  { id: 6, name: "UGC", image: "/ugc-logo.png" },
-  { id: 7, name: "AICTE", image: "/aicte-logo.png" },
-  { id: 8, name: "NAAC", image: "/naac-logo.png" },
-  { id: 9, name: "Scholarship Portal", image: "/scholarship-logo.png" },
-  { id: 10, name: "Voter Service Portal", image: "/voter-portal-logo.png" }
-];
+const GovtBrandMarquee = () => {
+  const [brands, setBrands] = useState([]);
+  const marqueeRef = useRef(null);
+  const speedRef = useRef(0.4);
+  const isPaused = useRef(false);
+  const contentWidthRef = useRef(0);
 
-/* logos per slide */
-const perSlide = 5;
-const slides = [];
-for (let i = 0; i < brandLogos.length; i += perSlide) {
-  slides.push(brandLogos.slice(i, i + perSlide));
-}
+  const API_URL = import.meta.env.VITE_API_URL;
 
-const GovtBrandCarousel = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [animating, setAnimating] = useState(false);
+  /* ================= FETCH BRANDS ================= */
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/get-brands`);
 
-  const next = () => {
-    if (animating) return;
-    setActiveIndex((activeIndex + 1) % slides.length);
-  };
+        const activeBrands = (res.data.data || [])
+          .filter(b => b.isActive)
+          .sort((a, b) => a.position - b.position);
 
-  const previous = () => {
-    if (animating) return;
-    setActiveIndex(
-      activeIndex === 0 ? slides.length - 1 : activeIndex - 1
-    );
-  };
+        setBrands(activeBrands);
+      } catch (err) {
+        console.error("Failed to fetch brands", err);
+      }
+    };
+
+    fetchBrands();
+  }, [API_URL]);
+
+  /* ================= MARQUEE LOGIC ================= */
+  useEffect(() => {
+    if (!brands.length) return;
+
+    const marquee = marqueeRef.current;
+    let x = 0;
+    let animationId;
+
+    // Wait for images to load before measuring
+    const measureWidth = () => {
+      contentWidthRef.current = marquee.scrollWidth / 2;
+    };
+
+    measureWidth();
+    window.addEventListener("resize", measureWidth);
+
+    const animate = () => {
+      if (!isPaused.current) {
+        x -= speedRef.current;
+
+        // ✅ RESET AT EXACT POINT (NO GAP)
+        if (Math.abs(x) >= contentWidthRef.current) {
+          x = 0;
+        }
+
+        marquee.style.transform = `translateX(${x}px)`;
+      }
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener("resize", measureWidth);
+    };
+  }, [brands]);
+
+  if (!brands.length) return null;
 
   return (
-    <section className="py-4 bg-light border-top">
-      <div className="container text-center">
-        <h6 className="text-muted fw-bold mb-3">
+    <section
+      className="py-4 border-top"
+      style={{ background: "rgba(135, 206, 235, 0.18)" }}
+    >
+      <div className="container-fluid">
+        <h6 className="text-center text-muted fw-bold mb-3">
           Associated With Government Initiatives
         </h6>
 
-        <Carousel
-          activeIndex={activeIndex}
-          next={next}
-          previous={previous}
-          interval={2000}          // 🔁 continuous auto slide
-          ride="carousel"
-          pause={false}
-          wrap
+        {/* VIEWPORT */}
+        <div
+          style={{ overflow: "hidden", width: "100%" }}
+          onMouseEnter={() => (isPaused.current = true)}
+          onMouseLeave={() => (isPaused.current = false)}
         >
-          {slides.map((group, index) => (
-            <CarouselItem
-              key={index}
-              onExiting={() => setAnimating(true)}
-              onExited={() => setAnimating(false)}
-            >
-              <div className="row justify-content-center align-items-center g-3">
-                {group.map((logo) => (
-                  <div
-                    key={logo.id}
-                    className="col-4 col-md-2 d-flex justify-content-center align-items-center"
-                  >
-                    <img
-                      src={logo.image}
-                      alt={logo.name}
-                      className="img-fluid"
-                      style={{
-                        maxHeight: "60px",
-                        objectFit: "contain"
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </CarouselItem>
-          ))}
-
-          {/* PREV BUTTON */}
-          <CarouselControl
-            direction="prev"
-            directionText="Previous"
-            onClickHandler={previous}
+          {/* MOVING STRIP */}
+          <div
+            ref={marqueeRef}
             style={{
-              backgroundColor: "#fff",
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              opacity: 1
+              display: "flex",
+              gap: "40px",
+              width: "max-content",
+              alignItems: "center",
+              willChange: "transform"
             }}
-          />
-
-          {/* NEXT BUTTON */}
-          <CarouselControl className="border-primary"
-            direction="next"
-            directionText="Next"
-            onClickHandler={next}
-            style={{
-              backgroundColor: "#ffffffff",
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              opacity: 1,
-            }}
-          />
-        </Carousel>
+          >
+            {[...brands, ...brands].map((logo, i) => (
+              <img
+                key={i}
+                src={`${API_URL}${logo.image}`}
+                alt={logo.name}
+                className="border border-1 border-white rounded"
+                style={{
+                  height: "60px",
+                  objectFit: "contain",
+                  flexShrink: 0
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
 };
 
-export default GovtBrandCarousel;
+export default GovtBrandMarquee;
