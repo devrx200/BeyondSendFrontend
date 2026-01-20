@@ -49,7 +49,7 @@ import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
-import AboutAndHelp from "../views/Admin/aboutAndHelp";
+import ContentUploaderForm from "../views/Admin/ContentUploaderForm";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 
@@ -151,7 +151,7 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="news" element={<NewsManagement />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
-          <Route path="about-and-help" element={<AboutAndHelp />} />
+          <Route path="content-uploader" element={<ContentUploaderForm />} />
           <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
           <Route path="image-master" element={<AboutSectionMangement />} />

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 const API = "http://localhost:4000";
+import "../css/aboutAndHelp.css";
+
+
 
 /* ---------- TABLE VIEW ---------- */
 const TableView = ({ columns = [], rows = [] }) => (
