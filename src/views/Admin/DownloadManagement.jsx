@@ -170,7 +170,7 @@ const DownloadManagement = () => {
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
-      title: "Deactivate download?",
+      title: "Delete download?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
