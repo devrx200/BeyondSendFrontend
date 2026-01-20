@@ -28,56 +28,45 @@ const SliderManagement = () => {
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
-  // const handleImageChange = (e) => {
-  //   const file = e.target.files?.[0];
-  //   if (!file) return;
 
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     uploadefile: file,        //  actual file (FormData ke liye)
-  //     image: file.name,         //  filename store (string)
-  //   }));
+  const [imagePreview, setImagePreview] = useState(null);
+  const MAX_SLIDER_IMAGE_SIZE = 520 * 1024;
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  //   setPreview(URL.createObjectURL(file));
-  // };
-const [imagePreview, setImagePreview] = useState(null);
-const MAX_SLIDER_IMAGE_SIZE = 520 * 1024; // 520 KB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const handleImageChange = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
 
-  //  File type validation
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    setErrors(prev => ({
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setErrors(prev => ({
+        ...prev,
+        image: "Only JPG, PNG or WEBP images are allowed",
+
+      }));
+      setImagePreview(null);
+      return;
+    }
+
+
+    if (file.size > MAX_SLIDER_IMAGE_SIZE) {
+      setErrors(prev => ({
+        ...prev,
+        image: "Slider image size must be 520 KB or less",
+      }));
+      setImagePreview(null);
+      return;
+    }
+
+    // Passed all validations
+    setFormData(prev => ({
       ...prev,
-      image: "Only JPG, PNG or WEBP images are allowed",
-      
+      uploadefile: file,
+      image: file.name,
     }));
-    setImagePreview(null);
-    return;
-  }
 
-
-  if (file.size > MAX_SLIDER_IMAGE_SIZE) {
-    setErrors(prev => ({
-      ...prev,
-      image: "Slider image size must be 520 KB or less",
-    }));
-    setImagePreview(null);
-    return;
-  }
-
-  // Passed all validations
-  setFormData(prev => ({
-    ...prev,
-    uploadefile: file,
-    image: file.name,
-  }));
-
-  setErrors(prev => ({ ...prev, image: "" }));
-  setImagePreview(URL.createObjectURL(file));
-};
+    setErrors(prev => ({ ...prev, image: "" }));
+    setImagePreview(URL.createObjectURL(file));
+  };
 
   const fetchSlides = async () => {
     try {
@@ -131,7 +120,7 @@ const handleImageChange = (e) => {
     });
   };
 
-    const validateField = (name, value, isHindi) => {
+  const validateField = (name, value, isHindi) => {
     const TEXTAREA_FIELDS = ["descriptionEn", "descriptionHi"];
 
     const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
@@ -164,70 +153,70 @@ const handleImageChange = (e) => {
 
     return "";
   };
-  
+
   const validateForm = () => {
-  const newErrors = {};
+    const newErrors = {};
 
-  // English fields
-  newErrors.smallTitleEn = validateField("smallTitleEn", formData.smallTitleEn, false);
-  newErrors.mainTitleEn = validateField("mainTitleEn", formData.mainTitleEn, false);
-  newErrors.linkTextEn = validateField("linkTextEn", formData.linkTextEn, false);
+    // English fields
+    newErrors.smallTitleEn = validateField("smallTitleEn", formData.smallTitleEn, false);
+    newErrors.mainTitleEn = validateField("mainTitleEn", formData.mainTitleEn, false);
+    newErrors.linkTextEn = validateField("linkTextEn", formData.linkTextEn, false);
 
-  // Hindi fields
-  newErrors.smallTitleHi = validateField("smallTitleHi", formData.smallTitleHi, true);
-  newErrors.mainTitleHi = validateField("mainTitleHi", formData.mainTitleHi, true);
-  newErrors.linkTextHi = validateField("linkTextHi", formData.linkTextHi, true);
+    // Hindi fields
+    newErrors.smallTitleHi = validateField("smallTitleHi", formData.smallTitleHi, true);
+    newErrors.mainTitleHi = validateField("mainTitleHi", formData.mainTitleHi, true);
+    newErrors.linkTextHi = validateField("linkTextHi", formData.linkTextHi, true);
 
-  newErrors.descriptionEn = validateField("descriptionEn", formData.descriptionEn, false);
-  newErrors.descriptionHi = validateField("descriptionHi", formData.descriptionHi, true);
+    newErrors.descriptionEn = validateField("descriptionEn", formData.descriptionEn, false);
+    newErrors.descriptionHi = validateField("descriptionHi", formData.descriptionHi, true);
 
-  if (!formData.link || !formData.link.trim()) {
-    newErrors.link = isHindi ? "लिंक आवश्यक है" : "Link is required";
-  }
+    if (!formData.link || !formData.link.trim()) {
+      newErrors.link = isHindi ? "लिंक आवश्यक है" : "Link is required";
+    }
 
-  if (!formData.order || isNaN(formData.order) || formData.order <= 0) {
-    newErrors.order = isHindi
-      ? "क्रम एक मान्य संख्या होनी चाहिए"
-      : "Order must be a valid number";
-  }
+    if (!formData.order || isNaN(formData.order) || formData.order <= 0) {
+      newErrors.order = isHindi
+        ? "क्रम एक मान्य संख्या होनी चाहिए"
+        : "Order must be a valid number";
+    }
 
-  if (!editingSlide && !formData.uploadefile) {
-    newErrors.image = isHindi
-      ? "छवि आवश्यक है"
-      : "Image is required";
-  }
+    if (!editingSlide && !formData.uploadefile) {
+      newErrors.image = isHindi
+        ? "छवि आवश्यक है"
+        : "Image is required";
+    }
 
-  Object.keys(newErrors).forEach(
-    key => newErrors[key] === "" && delete newErrors[key]
-  );
+    Object.keys(newErrors).forEach(
+      key => newErrors[key] === "" && delete newErrors[key]
+    );
 
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
- const handleChange = (e, langType = null) => {
-  const { name, value, type, checked } = e.target;
+  const handleChange = (e, langType = null) => {
+    const { name, value, type, checked } = e.target;
 
-  const fieldValue = type === "checkbox" ? checked : value;
+    const fieldValue = type === "checkbox" ? checked : value;
 
-  setFormData(prev => ({
-    ...prev,
-    [name]: fieldValue,
-  }));
-
-  if (langType) {
-    const error = validateField(name, fieldValue, langType === "hi");
-    setErrors(prev => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: error,
+      [name]: fieldValue,
     }));
-  } else {
-    setErrors(prev => ({
-      ...prev,
-      [name]: "",
-    }));
-  }
-};
+
+    if (langType) {
+      const error = validateField(name, fieldValue, langType === "hi");
+      setErrors(prev => ({
+        ...prev,
+        [name]: error,
+      }));
+    } else {
+      setErrors(prev => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
 
 
   const handleEdit = (slide) => {
@@ -266,7 +255,7 @@ const handleImageChange = (e) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
- if (!validateForm()) {
+    if (!validateForm()) {
       Swal.fire(
         isHindi ? "त्रुटि" : "Validation Error",
         isHindi
@@ -287,6 +276,7 @@ const handleImageChange = (e) => {
       payload.append("descriptionHin", formData.descriptionHi);
       payload.append("linkTextEn", formData.linkTextEn);
       payload.append("linkTextHi", formData.linkTextHi);
+      payload.append("link", formData.link);
       payload.append("displayOrder", formData.order);
       payload.append("isActive", formData.active);
 
@@ -502,9 +492,9 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
                         <Input
                           type="text"
-                          name="smallTitleEn"  
+                          name="smallTitleEn"
                           value={formData.smallTitleEn}
-                           onChange={(e) => handleChange(e, "en")}
+                          onChange={(e) => handleChange(e, "en")}
                           placeholder="e.g., Welcome to"
                           invalid={!!errors.smallTitleEn}
                           required
@@ -516,10 +506,10 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'} *</Label>
                         <Input
                           type="text"
-                          name="mainTitleEn"  
+                          name="mainTitleEn"
                           value={formData.mainTitleEn}
-                              onChange={(e) => handleChange(e, "en")}
-                           invalid={!!errors.mainTitleEn}
+                          onChange={(e) => handleChange(e, "en")}
+                          invalid={!!errors.mainTitleEn}
                           placeholder="e.g., Higher Education Department"
                           required
                         />
@@ -530,11 +520,11 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'विवरण' : 'Description'} *</Label>
                         <Input
                           type="textarea"
-                          name="descriptionEn"  
+                          name="descriptionEn"
                           rows="3"
                           value={formData.descriptionEn}
-                           onChange={(e) => handleChange(e, "en")}
-                            invalid={!!errors.descriptionEn}
+                          onChange={(e) => handleChange(e, "en")}
+                          invalid={!!errors.descriptionEn}
                           placeholder="Brief description..."
                           required
                         />
@@ -546,9 +536,9 @@ const handleImageChange = (e) => {
                         <Input
                           type="text"
                           value={formData.linkTextEn}
-                          name="linkTextEn"  
-                           onChange={(e) => handleChange(e, "en")}
-                           invalid={!!errors.linkTextEn}
+                          name="linkTextEn"
+                          onChange={(e) => handleChange(e, "en")}
+                          invalid={!!errors.linkTextEn}
                           placeholder="e.g., Learn More"
                           required
                         />
@@ -563,7 +553,7 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'छोटा शीर्षक' : 'Small Title'} *</Label>
                         <Input
                           type="text"
-                          name="smallTitleHi"  
+                          name="smallTitleHi"
                           value={formData.smallTitleHi}
                           onChange={(e) => handleChange(e, "hi")}
                           invalid={!!errors.smallTitleHi}
@@ -578,13 +568,13 @@ const handleImageChange = (e) => {
                         <Input
                           type="text"
                           value={formData.mainTitleHi}
-                          name="mainTitleHi"  
-                         onChange={(e) => handleChange(e, "hi")}
+                          name="mainTitleHi"
+                          onChange={(e) => handleChange(e, "hi")}
                           invalid={!!errors.mainTitleHi}
                           placeholder="उदा., उच्च शिक्षा विभाग"
                           required
                         />
-                         {errors.mainTitleHi && <small className="text-danger">{errors.mainTitleHi}</small>}
+                        {errors.mainTitleHi && <small className="text-danger">{errors.mainTitleHi}</small>}
                       </FormGroup>
 
                       <FormGroup>
@@ -592,14 +582,14 @@ const handleImageChange = (e) => {
                         <Input
                           type="textarea"
                           rows="3"
-                           name="descriptionHi"  
+                          name="descriptionHi"
                           value={formData.descriptionHi}
                           onChange={(e) => handleChange(e, "hi")}
-                           invalid={!!errors.descriptionHi}
+                          invalid={!!errors.descriptionHi}
                           placeholder="संक्षिप्त विवरण..."
                           required
                         />
-                         {errors.descriptionHi && <small className="text-danger">{errors.descriptionHi}</small>}
+                        {errors.descriptionHi && <small className="text-danger">{errors.descriptionHi}</small>}
                       </FormGroup>
 
                       <FormGroup>
@@ -607,13 +597,13 @@ const handleImageChange = (e) => {
                         <Input
                           type="text"
                           value={formData.linkTextHi}
-                          name="linkTextHi"  
+                          name="linkTextHi"
                           onChange={(e) => handleChange(e, "hi")}
                           invalid={!!errors.linkTextHi}
                           placeholder="उदा., और जानें"
                           required
                         />
-                         {errors.linkTextHi && <small className="text-danger">{errors.linkTextHi}</small>}
+                        {errors.linkTextHi && <small className="text-danger">{errors.linkTextHi}</small>}
                       </FormGroup>
                     </div>
                   </div>
@@ -627,13 +617,13 @@ const handleImageChange = (e) => {
                         <Input
                           type="text"
                           value={formData.image}
-                          name="image"  
+                          name="image"
                           onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                         
+
                           placeholder="/slider1.jpg"
                           required
                         />
-                        
+
                       </FormGroup>
                     </div>
 
@@ -642,7 +632,7 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'लिंक URL' : 'Link URL'} *</Label>
                         <Input
                           type="text"
-                           name="link" 
+                          name="link"
                           value={formData.link}
                           onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                           placeholder="/about"
@@ -656,7 +646,7 @@ const handleImageChange = (e) => {
                         <Label>{isHindi ? 'क्रम' : 'Order'}</Label>
                         <Input
                           type="number"
-                           name="order" 
+                          name="order"
                           value={formData.order}
                           onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
                           min="1"
@@ -669,7 +659,7 @@ const handleImageChange = (e) => {
                         <Label check>
                           <Input
                             type="checkbox"
-                             name="active" 
+                            name="active"
                             checked={formData.active}
                             onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                           />
@@ -682,8 +672,8 @@ const handleImageChange = (e) => {
                     <Col xs={6}>
                       <FormGroup>
                         <Label>Upload Image</Label>
-                        <Input type="file" name="uploadefile"  invalid={!!errors.image} accept="image/*" onChange={handleImageChange} />
-                         {errors.image && <small className="text-danger">{errors.image}</small>}
+                        <Input type="file" name="uploadefile" invalid={!!errors.image} accept="image/*" onChange={handleImageChange} />
+                        {errors.image && <small className="text-danger">{errors.image}</small>}
                         {/* <p>{formData.image}</p> */}
                       </FormGroup>
                     </Col>

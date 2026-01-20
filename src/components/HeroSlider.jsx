@@ -9,7 +9,6 @@ import {
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useLanguage } from "../contexts/LanguageContext";
-
 const API_URL = import.meta.env.VITE_API_URL;
 
 const HeroSlider = () => {

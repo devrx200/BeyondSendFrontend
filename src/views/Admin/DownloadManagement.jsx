@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter,
-  Form, FormGroup, Label, Input, Container, Badge
+  Form, FormGroup, Label, Input, Container, Badge, Row, Col
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const DownloadManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -14,12 +15,13 @@ const DownloadManagement = () => {
   const [editing, setEditing] = useState(null);
   const [downloads, setDownloads] = useState([]);
   const [fileInfo, setFileInfo] = useState(null);
-
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { isHindi } = useLanguage();
   const [formData, setFormData] = useState({
     titleEn: "",
     titleHi: "",
     category: "",
-    expiryDate: "",
     isActive: true,
     file: null,
   });
@@ -36,7 +38,6 @@ const DownloadManagement = () => {
       titleEn: "",
       titleHi: "",
       category: "",
-      expiryDate: "",
       isActive: true,
       file: null,
     });
@@ -65,6 +66,35 @@ const DownloadManagement = () => {
     });
   };
 
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(
+        `${API_URL}/api/get-categories`,   //  category API
+        {
+          headers: { "web-url": window.location.href },
+        }
+      );
+
+      if (res.status === 200) {
+        setCategories(res.data.data || []);
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to load categories",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,7 +103,6 @@ const DownloadManagement = () => {
     payload.append("titleEn", formData.titleEn);
     payload.append("titleHi", formData.titleHi);
     payload.append("category", formData.category);
-    payload.append("expiryDate", formData.expiryDate);
     payload.append("isActive", formData.isActive);
 
     if (formData.file) {
@@ -102,19 +131,41 @@ const DownloadManagement = () => {
     }
   };
 
-  /* ================= EDIT ================= */
-  const handleEdit = (row) => {
-    setEditing(row);
-    setFormData({
-      titleEn: row.titleEn,
-      titleHi: row.titleHi,
-      category: row.category,
-      expiryDate: row.expiryDate?.split("T")[0],
-      isActive: row.isActive,
-      file: null,
-    });
-    setModal(true);
+
+  const getCategoryName = (categoryValue) => {
+    const cat = categories.find(
+      (c) => c._id === categoryValue || c.slug === categoryValue
+    );
+
+    if (!cat) return "—";
+
+    return isHindi ? cat.categoryNameHi : cat.categoryNameEn;
   };
+
+
+  const handleEdit = (row) => {
+  setEditing(row);
+
+  setFormData({
+    titleEn: row.titleEn,
+    titleHi: row.titleHi,
+    category: row.category,
+    isActive: row.isActive,
+    file: null, 
+  });
+  if (row.filePath) {
+    setFileInfo({
+      name: row.filePath.split("/").pop(),
+      size: row.fileSize,
+      type: row.fileType,
+      path: row.filePath,
+    });
+  } else {
+    setFileInfo(null);
+  }
+
+  setModal(true);
+};
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
@@ -156,7 +207,6 @@ const DownloadManagement = () => {
                 <th>Type</th>
                 <th>Size</th>
                 <th>Created Date</th>
-                <th>Expiry Date</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -167,12 +217,11 @@ const DownloadManagement = () => {
                   <td>{i + 1}</td>
                   <td className="fw-semibold">{d.titleEn}</td>
                   <td>
-                    <Badge color="info" pill>{d.category}</Badge>
+                    <Badge color="info" pill>{getCategoryName(d.category)}</Badge>
                   </td>
                   <td>{d.fileType}</td>
                   <td>{d.fileSize}</td>
                   <td>{new Date(d.createdAt).toLocaleDateString()}</td>
-                    <td>{new Date(d.expiryDate).toLocaleDateString()}</td>
                   <td>
                     <Badge color={d.isActive ? "success" : "secondary"}>
                       {d.isActive ? "Active" : "Inactive"}
@@ -199,56 +248,61 @@ const DownloadManagement = () => {
           {editing ? "Edit Download" : "Add Download"}
         </ModalHeader>
         <ModalBody>
+
           <Form>
-            <FormGroup>
-              <Label>Title (English)</Label>
-              <Input
-                value={formData.titleEn}
-                onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
-              />
-            </FormGroup>
+            <Row>
+              <Col xs={6}>
+                <FormGroup>
+                  <Label>Title (English)</Label>
+                  <Input
+                    value={formData.titleEn}
+                    onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
+                  />
+                </FormGroup>
+              </Col>
+              <Col xs={6}>
+                <FormGroup>
+                  <Label>Title (Hindi)</Label>
+                  <Input
+                    value={formData.titleHi}
+                    onChange={(e) => setFormData({ ...formData, titleHi: e.target.value })}
+                  />
+                </FormGroup>
+              </Col>
 
-            <FormGroup>
-              <Label>Title (Hindi)</Label>
-              <Input
-                value={formData.titleHi}
-                onChange={(e) => setFormData({ ...formData, titleHi: e.target.value })}
-              />
-            </FormGroup>
+            </Row>
+            <Row>
+              <Col xs={6}>
+                <FormGroup>
+                  <Label>Category</Label>
+                  <Input
+                    type="select"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  >
 
-            <FormGroup>
-              <Label>Category</Label>
-              <Input
-                type="select"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              >
-                <option value="">Select</option>
-                <option value="forms">Forms</option>
-                <option value="notifications">Notifications</option>
-                <option value="reports">Reports</option>
-                <option value="guidelines">Guidelines</option>
-              </Input>
-            </FormGroup>
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat.slug || cat._id}>
+                        {cat.categoryNameEn} ({cat.categoryNameHi})
+                      </option>
+                    ))}
 
-            <FormGroup>
-              <Label>Publish Date</Label>
-              <Input
-                type="date"
-                value={formData.expiryDate}
-                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Upload File</Label>
-              <Input type="file" name="file" onChange={handleFileChange} />
-              {fileInfo && (
-                <div className="mt-2 text-muted small">
-                  {fileInfo.name} • {fileInfo.size} • {fileInfo.type}
-                </div>
-              )}
-            </FormGroup>
+                  </Input>
+                </FormGroup>
+              </Col>
+              <Col xs={6}>
+                <FormGroup>
+                  <Label>Upload File</Label>
+                  <Input type="file" name="file" onChange={handleFileChange} />
+                  {fileInfo && (
+                    <div className="mt-2 text-muted small">
+                      {fileInfo.name} • {fileInfo.size} • {fileInfo.type}
+                    </div>
+                  )}
+                </FormGroup>
+              </Col>
+            </Row>
           </Form>
         </ModalBody>
         <ModalFooter>

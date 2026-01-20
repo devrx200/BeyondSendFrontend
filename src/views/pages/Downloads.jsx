@@ -1,171 +1,240 @@
-import { useState } from 'react';
-import { Container, Row, Col, Card, CardBody, Nav, NavItem, NavLink, TabContent, TabPane, Table, Badge, Button } from 'reactstrap';
-import { FaDownload, FaFilePdf, FaFileWord, FaFileExcel, FaCalendar } from 'react-icons/fa';
-import PageLayout from '../../components/PageLayout';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  CardBody,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  Table,
+  Badge,
+  Button,
+} from "reactstrap";
+import {
+  FaDownload,
+  FaFilePdf,
+  FaFileWord,
+  FaFileExcel,
+  FaCalendar,
+} from "react-icons/fa";
+import Swal from "sweetalert2";
+import PageLayout from "../../components/PageLayout";
+import { useLanguage } from "../../contexts/LanguageContext";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Downloads = () => {
   const { isHindi } = useLanguage();
-  const [activeTab, setActiveTab] = useState('forms');
+
+  const [categories, setCategories] = useState([]);
+  const [activeTab, setActiveTab] = useState("");
+  const [downloads, setDownloads] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const breadcrumb = [
-    { label: isHindi ? 'मुख्य पृष्ठ' : 'Home', path: '/' },
-    { label: isHindi ? 'डाउनलोड' : 'Downloads', active: true }
+    { label: isHindi ? "मुख्य पृष्ठ" : "Home", path: "/" },
+    { label: isHindi ? "डाउनलोड" : "Downloads", active: true },
   ];
 
-  const forms = [
-    { id: 1, title: 'Scholarship Application Form', titleHi: 'छात्रवृत्ति आवेदन पत्र', type: 'PDF', size: '245 KB', date: '2024-12-01' },
-    { id: 2, title: 'College Affiliation Form', titleHi: 'महाविद्यालय संबद्धता फॉर्म', type: 'PDF', size: '180 KB', date: '2024-11-28' },
-    { id: 3, title: 'Faculty Recruitment Form', titleHi: 'संकाय भर्ती फॉर्म', type: 'PDF', size: '320 KB', date: '2024-11-25' },
-    { id: 4, title: 'Student Grievance Form', titleHi: 'छात्र शिकायत फॉर्म', type: 'PDF', size: '150 KB', date: '2024-11-20' }
-  ];
+  /* ================= FETCH CATEGORIES ================= */
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/get-categories`, {
+          headers: { "web-url": window.location.href },
+        });
 
-  const notifications = [
-    { id: 1, title: 'Admission Notification 2024-25', titleHi: 'प्रवेश अधिसूचना 2024-25', type: 'PDF', size: '450 KB', date: '2024-12-10' },
-    { id: 2, title: 'Examination Schedule', titleHi: 'परीक्षा कार्यक्रम', type: 'PDF', size: '280 KB', date: '2024-12-05' },
-    { id: 3, title: 'Holiday List 2025', titleHi: 'अवकाश सूची 2025', type: 'PDF', size: '120 KB', date: '2024-11-30' },
-    { id: 4, title: 'Fee Structure Notification', titleHi: 'शुल्क संरचना अधिसूचना', type: 'PDF', size: '200 KB', date: '2024-11-25' }
-  ];
+        const cats = res.data?.data || [];
+        setCategories(cats);
 
-  const reports = [
-    { id: 1, title: 'Annual Report 2023-24', titleHi: 'वार्षिक रिपोर्ट 2023-24', type: 'PDF', size: '2.5 MB', date: '2024-10-15' },
-    { id: 2, title: 'Performance Report Q2 2024', titleHi: 'प्रदर्शन रिपोर्ट Q2 2024', type: 'PDF', size: '1.8 MB', date: '2024-09-30' },
-    { id: 3, title: 'Audit Report 2023-24', titleHi: 'लेखा परीक्षा रिपोर्ट 2023-24', type: 'PDF', size: '3.2 MB', date: '2024-08-20' }
-  ];
+        // ✅ FIX: use _id
+        if (cats.length > 0) {
+          handleTabChange(cats[0]._id);
+        }
+      } catch (error) {
+        Swal.fire("Error", "Failed to load categories", "error");
+      }
+    };
 
-  const guidelines = [
-    { id: 1, title: 'Scholarship Guidelines', titleHi: 'छात्रवृत्ति दिशानिर्देश', type: 'PDF', size: '680 KB', date: '2024-11-15' },
-    { id: 2, title: 'College Affiliation Guidelines', titleHi: 'महाविद्यालय संबद्धता दिशानिर्देश', type: 'PDF', size: '920 KB', date: '2024-10-10' },
-    { id: 3, title: 'Faculty Recruitment Guidelines', titleHi: 'संकाय भर्ती दिशानिर्देश', type: 'PDF', size: '540 KB', date: '2024-09-05' }
-  ];
+    fetchCategories();
+  }, []);
 
-  const getFileIcon = (type) => {
-    switch (type.toUpperCase()) {
-      case 'PDF': return <FaFilePdf className="text-danger" />;
-      case 'DOC':
-      case 'DOCX': return <FaFileWord className="text-primary" />;
-      case 'XLS':
-      case 'XLSX': return <FaFileExcel className="text-success" />;
-      default: return <FaDownload />;
+  /* ================= FETCH DOWNLOADS ================= */
+  const fetchDownloadsByCategory = async (categoryId) => {
+    try {
+      setLoading(true);
+      setDownloads([]);
+
+      const res = await axios.get(
+        `${API_URL}/api/get-downloads-by-categary/${categoryId}`
+      );
+
+      setDownloads(res.data || []);
+    } catch (error) {
+      Swal.fire("Error", "Failed to load downloads", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const renderDownloadTable = (items) => (
-    <Table responsive striped hover className="mt-3">
+  /* ================= TAB CHANGE ================= */
+  const handleTabChange = (categoryId) => {
+    setActiveTab(categoryId);
+    fetchDownloadsByCategory(categoryId);
+  };
+
+  /* ================= FILE ICON ================= */
+  const getFileIcon = (type = "") => {
+    switch (type.toUpperCase()) {
+      case "PDF":
+        return <FaFilePdf className="text-danger" />;
+      case "DOC":
+      case "DOCX":
+        return <FaFileWord className="text-primary" />;
+      case "XLS":
+      case "XLSX":
+        return <FaFileExcel className="text-success" />;
+      default:
+        return <FaDownload />;
+    }
+  };
+
+  /* ================= TABLE ================= */
+  const renderTable = () => (
+    <Table responsive striped hover className="mt-3 align-middle">
       <thead className="table-primary">
         <tr>
           <th>#</th>
-          <th>{isHindi ? 'शीर्षक' : 'Title'}</th>
-          <th>{isHindi ? 'प्रकार' : 'Type'}</th>
-          <th>{isHindi ? 'आकार' : 'Size'}</th>
-          <th>{isHindi ? 'तिथि' : 'Date'}</th>
-          <th>{isHindi ? 'डाउनलोड' : 'Download'}</th>
+          <th>{isHindi ? "शीर्षक" : "Title"}</th>
+          <th>{isHindi ? "प्रकार" : "Type"}</th>
+          <th>{isHindi ? "तिथि" : "Date"}</th>
+          <th>{isHindi ? "फ़ाइल आकार" : "File Size"}</th>
+          <th className="text-center">
+            {isHindi ? "डाउनलोड" : "Download"}
+          </th>
+        
         </tr>
       </thead>
+
       <tbody>
-        {items.map((item, index) => (
-          <tr key={item.id}>
-            <td>{index + 1}</td>
-            <td>
-              <div className="d-flex align-items-center gap-2">
-                {getFileIcon(item.type)}
-                <strong>{isHindi ? item.titleHi : item.title}</strong>
-              </div>
-            </td>
-            <td>
-              <Badge color="secondary">{item.type}</Badge>
-            </td>
-            <td className="small text-muted">{item.size}</td>
-            <td className="small">
-              <FaCalendar className="me-1" />
-              {new Date(item.date).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
-            </td>
-            <td>
-              <Button color="primary" size="sm">
-                <FaDownload className="me-1" />
-                {isHindi ? 'डाउनलोड' : 'Download'}
-              </Button>
+        {loading ? (
+          <tr>
+            <td colSpan="5" className="text-center py-4">
+              {isHindi ? "लोड हो रहा है..." : "Loading..."}
             </td>
           </tr>
-        ))}
+        ) : downloads.length === 0 ? (
+          <tr>
+            <td colSpan="6" className="text-center text-muted py-4">
+              {isHindi
+                ? "इस श्रेणी में कोई फ़ाइल उपलब्ध नहीं है"
+                : "No downloads available"}
+            </td>
+          </tr>
+        ) : (
+          downloads.map((item, index) => (
+            <tr key={item._id}>
+              <td>{index + 1}</td>
+
+              <td>
+                <div className="d-flex align-items-center gap-2">
+                  <Badge pill color="light" className="border">
+                    {getFileIcon(item.fileType)}
+                  </Badge>
+                  <span className="fw-semibold">
+                    {isHindi ? item.titleHi : item.titleEn}
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <Badge color="secondary">{item.fileType}</Badge>
+              </td>
+
+              <td>
+                <FaCalendar className="me-1 text-muted" />
+                {new Date(item.createdAt).toLocaleDateString(
+                  isHindi ? "hi-IN" : "en-IN"
+                )}
+              </td>
+              <td>
+                <Badge color="secondary">{item.fileSize}</Badge>
+              </td>
+              <td className="text-center">
+                <Button
+                  color="primary"
+                  size="sm"
+                  tag="a"
+                  href={`${API_URL}${item.filePath}`}
+                  target="_blank"
+                >
+                  <FaDownload className="me-1" />
+                  {isHindi ? "डाउनलोड" : "Download"}
+                </Button>
+              </td>
+            </tr>
+          ))
+        )}
       </tbody>
     </Table>
   );
 
   return (
-    <PageLayout 
-      title={isHindi ? 'डाउनलोड' : 'Downloads'} 
+    <PageLayout
+      title={isHindi ? "डाउनलोड" : "Downloads"}
       titleHi="डाउनलोड"
       breadcrumb={breadcrumb}
     >
       <Container className="py-5">
         <Row>
           <Col lg={12}>
-            <Card className="border-0 shadow-sm">
-              <CardBody className="p-4">
+            <Card className="border-0 shadow-sm rounded-4">
+              <CardBody className="p-4 bg-light rounded-4">
+
+                {/* HEADER */}
                 <div className="d-flex align-items-center mb-4">
-                  <FaDownload size={40} className="text-primary me-3" />
+                  <FaDownload size={36} className="text-primary me-3" />
                   <div>
-                    <h2 className="mb-1">{isHindi ? 'डाउनलोड केंद्र' : 'Download Center'}</h2>
-                    <p className="text-muted mb-0">
-                      {isHindi ? 'फॉर्म, अधिसूचनाएं, रिपोर्ट और दिशानिर्देश' : 'Forms, Notifications, Reports and Guidelines'}
-                    </p>
+                    <h4 className="fw-bold mb-1">
+                      {isHindi ? "डाउनलोड केंद्र" : "Download Center"}
+                    </h4>
+                    <small className="text-muted">
+                      {isHindi
+                        ? "प्रपत्र, अधिसूचना, रिपोर्ट एवं दिशानिर्देश"
+                        : "Forms, Notifications, Reports & Guidelines"}
+                    </small>
                   </div>
                 </div>
 
-                <Nav tabs>
-                  <NavItem>
-                    <NavLink
-                      className={activeTab === 'forms' ? 'active' : ''}
-                      onClick={() => setActiveTab('forms')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isHindi ? 'प्रपत्र' : 'Forms'}
-                    </NavLink>
-                  </NavItem>
-                  <NavItem>
-                    <NavLink
-                      className={activeTab === 'notifications' ? 'active' : ''}
-                      onClick={() => setActiveTab('notifications')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isHindi ? 'अधिसूचनाएं' : 'Notifications'}
-                    </NavLink>
-                  </NavItem>
-                  <NavItem>
-                    <NavLink
-                      className={activeTab === 'reports' ? 'active' : ''}
-                      onClick={() => setActiveTab('reports')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isHindi ? 'रिपोर्ट' : 'Reports'}
-                    </NavLink>
-                  </NavItem>
-                  <NavItem>
-                    <NavLink
-                      className={activeTab === 'guidelines' ? 'active' : ''}
-                      onClick={() => setActiveTab('guidelines')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isHindi ? 'दिशानिर्देश' : 'Guidelines'}
-                    </NavLink>
-                  </NavItem>
+                {/* TABS */}
+                <Nav pills className="mb-4 gap-2">
+                  {categories.map((cat) => (
+                    <NavItem key={cat._id}>
+                      <NavLink
+                        active={activeTab === cat._id}
+                        onClick={() => handleTabChange(cat._id)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {isHindi
+                          ? cat.categoryNameHi
+                          : cat.categoryNameEn}
+                      </NavLink>
+                    </NavItem>
+                  ))}
                 </Nav>
 
+                {/* TABLE */}
                 <TabContent activeTab={activeTab}>
-                  <TabPane tabId="forms">
-                    {renderDownloadTable(forms)}
-                  </TabPane>
-                  <TabPane tabId="notifications">
-                    {renderDownloadTable(notifications)}
-                  </TabPane>
-                  <TabPane tabId="reports">
-                    {renderDownloadTable(reports)}
-                  </TabPane>
-                  <TabPane tabId="guidelines">
-                    {renderDownloadTable(guidelines)}
+                  <TabPane tabId={activeTab}>
+                    {renderTable()}
                   </TabPane>
                 </TabContent>
+
               </CardBody>
             </Card>
           </Col>
@@ -176,4 +245,3 @@ const Downloads = () => {
 };
 
 export default Downloads;
-
