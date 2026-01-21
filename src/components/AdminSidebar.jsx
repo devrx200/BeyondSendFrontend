@@ -26,7 +26,7 @@ import {
   FaInfoCircle,
   FaFileImage,
   FaPhone,
-  FaLink
+  FaLink, FaDownload
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -143,7 +143,16 @@ const adminMenu = [
         label: { en: "About Content", hi: "परिचय सामग्री" }
       }
     ]
+  },
+  {
+  id: "download-management",
+  icon: FaDownload,
+  path: "/admin/download-management",
+  label: {
+    en: "Downloads Management",
+    hi: "डाउनलोड प्रबंधन"
   }
+}
 ];
 
 const AdminSidebar = ({ collapsed }) => {

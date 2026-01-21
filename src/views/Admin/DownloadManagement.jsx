@@ -1,0 +1,265 @@
+import { useState, useEffect } from "react";
+import {
+  Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter,
+  Form, FormGroup, Label, Input, Container, Badge
+} from "reactstrap";
+import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
+import axios from "axios";
+import Swal from "sweetalert2";
+
+const DownloadManagement = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [modal, setModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [downloads, setDownloads] = useState([]);
+  const [fileInfo, setFileInfo] = useState(null);
+
+  const [formData, setFormData] = useState({
+    titleEn: "",
+    titleHi: "",
+    category: "",
+    expiryDate: "",
+    isActive: true,
+    file: null,
+  });
+
+  const toggleModal = () => {
+    setModal(!modal);
+    if (modal) resetForm();
+  };
+
+  const resetForm = () => {
+    setEditing(null);
+    setFileInfo(null);
+    setFormData({
+      titleEn: "",
+      titleHi: "",
+      category: "",
+      expiryDate: "",
+      isActive: true,
+      file: null,
+    });
+  };
+
+  /* ================= FETCH ================= */
+  const fetchDownloads = async () => {
+    const res = await axios.get(`${API_URL}/api/get-all-downloads`);
+    setDownloads(res.data || []);
+  };
+
+  useEffect(() => {
+    fetchDownloads();
+  }, []);
+
+  /* ================= FILE ================= */
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setFormData({ ...formData, file });
+    setFileInfo({
+      name: file.name,
+      size: (file.size / 1024).toFixed(2) + " KB",
+      type: file.type.split("/")[1].toUpperCase(),
+    });
+  };
+
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = new FormData();
+    payload.append("titleEn", formData.titleEn);
+    payload.append("titleHi", formData.titleHi);
+    payload.append("category", formData.category);
+    payload.append("expiryDate", formData.expiryDate);
+    payload.append("isActive", formData.isActive);
+
+    if (formData.file) {
+      payload.append("file", formData.file);
+    }
+
+    try {
+      let res;
+      if (editing) {
+        res = await axios.put(
+          `${API_URL}/api/update-downloads/${editing._id}`,
+          payload
+        );
+      } else {
+        res = await axios.post(
+          `${API_URL}/api/create-downloads`,
+          payload
+        );
+      }
+
+      Swal.fire("Success", res.data.message, "success");
+      toggleModal();
+      fetchDownloads();
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    }
+  };
+
+  /* ================= EDIT ================= */
+  const handleEdit = (row) => {
+    setEditing(row);
+    setFormData({
+      titleEn: row.titleEn,
+      titleHi: row.titleHi,
+      category: row.category,
+      expiryDate: row.expiryDate?.split("T")[0],
+      isActive: row.isActive,
+      file: null,
+    });
+    setModal(true);
+  };
+
+  /* ================= DELETE ================= */
+  const handleDelete = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Deactivate download?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    await axios.delete(`${API_URL}/api/delete-downloads/${id}`);
+    Swal.fire("Removed", "Download deactivated", "success");
+    fetchDownloads();
+  };
+
+  /* ================= UI ================= */
+  return (
+    <Container className="mt-4">
+      <Card className="shadow-lg border-0">
+        <CardBody>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="fw-bold text-primary">
+              <FaFileAlt className="me-2" />
+              Download Management
+            </h4>
+            <Button color="primary" onClick={toggleModal}>
+              <FaPlus className="me-2" /> Add Download
+            </Button>
+          </div>
+
+          <Table hover responsive className="align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>#</th>
+                <th>Title (EN)</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Created Date</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {downloads.map((d, i) => (
+                <tr key={d._id}>
+                  <td>{i + 1}</td>
+                  <td className="fw-semibold">{d.titleEn}</td>
+                  <td>
+                    <Badge color="info" pill>{d.category}</Badge>
+                  </td>
+                  <td>{d.fileType}</td>
+                  <td>{d.fileSize}</td>
+                  <td>{new Date(d.createdAt).toLocaleDateString()}</td>
+                    <td>{new Date(d.expiryDate).toLocaleDateString()}</td>
+                  <td>
+                    <Badge color={d.isActive ? "success" : "secondary"}>
+                      {d.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </td>
+                  <td className="text-nowrap">
+                    <Button size="sm" color="info" onClick={() => handleEdit(d)}>
+                      <FaEdit />
+                    </Button>{" "}
+                    <Button size="sm" color="danger" onClick={() => handleDelete(d._id)}>
+                      <FaTrash />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </CardBody>
+      </Card>
+
+      {/* ================= MODAL ================= */}
+      <Modal isOpen={modal} toggle={toggleModal} centered size="lg">
+        <ModalHeader toggle={toggleModal}>
+          {editing ? "Edit Download" : "Add Download"}
+        </ModalHeader>
+        <ModalBody>
+          <Form>
+            <FormGroup>
+              <Label>Title (English)</Label>
+              <Input
+                value={formData.titleEn}
+                onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Title (Hindi)</Label>
+              <Input
+                value={formData.titleHi}
+                onChange={(e) => setFormData({ ...formData, titleHi: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Category</Label>
+              <Input
+                type="select"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
+                <option value="">Select</option>
+                <option value="forms">Forms</option>
+                <option value="notifications">Notifications</option>
+                <option value="reports">Reports</option>
+                <option value="guidelines">Guidelines</option>
+              </Input>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Publish Date</Label>
+              <Input
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Upload File</Label>
+              <Input type="file" name="file" onChange={handleFileChange} />
+              {fileInfo && (
+                <div className="mt-2 text-muted small">
+                  {fileInfo.name} • {fileInfo.size} • {fileInfo.type}
+                </div>
+              )}
+            </FormGroup>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={toggleModal}>Cancel</Button>
+          <Button color="primary" onClick={handleSubmit}>
+            Save
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </Container>
+  );
+};
+
+export default DownloadManagement;
