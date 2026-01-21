@@ -167,7 +167,6 @@ const AppRoutes = () => {
           <Route path="important-links" element={<ImportantLinksManagement />} />
           <Route path="file-manager" element={<FileManager />} />
           <Route path="file-uploader" element={<FileUploader />} />
-          <Route path="about-and-help" element={<AboutAndHelp />} />
           <Route path="download-management" element={<DownloadManagement />} />
           <Route path="college-management" element={<CollegeManagement />} />
         </Route>
