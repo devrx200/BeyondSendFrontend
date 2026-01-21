@@ -26,7 +26,7 @@ import {
   FaInfoCircle,
   FaFileImage,
   FaPhone,
-  FaLink, FaDownload
+  FaLink, FaDownload, FaSchool
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -70,6 +70,15 @@ const adminMenu = [
     path: "/admin/universities",
     label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
   },
+   {
+  id: "college",
+  icon: FaSchool,
+  path: "/admin/college-management",
+  label: {
+    en: "College Management",
+    hi: "महाविद्यालय प्रबंधन"
+  }
+},
   {
     id: "categories",
     icon: FaListAlt,

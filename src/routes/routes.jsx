@@ -53,6 +53,7 @@ import AboutAndHelp from "../views/Admin/aboutAndHelp";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
+import CollegeManagement from "../views/Admin/CollegeManagement";
 const API_URL = import.meta.env.VITE_API_URL;
 
 /* MAIN LAYOUT */
@@ -168,6 +169,7 @@ const AppRoutes = () => {
           <Route path="file-uploader" element={<FileUploader />} />
           <Route path="about-and-help" element={<AboutAndHelp />} />
           <Route path="download-management" element={<DownloadManagement />} />
+          <Route path="college-management" element={<CollegeManagement />} />
         </Route>
       </Route>
 
