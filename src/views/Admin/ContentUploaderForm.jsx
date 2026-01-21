@@ -78,8 +78,8 @@ const ContentUploaderForm = () => {
   const fetchCategories = async () => {
     const res = await axios.get(`${API}/api/get-categories`);
 
-    console.log(res.data,"Getting Categories");
-    
+    console.log(res.data, "Getting Categories");
+
     setCategories(res.data || []);
   };
 
@@ -88,7 +88,7 @@ const ContentUploaderForm = () => {
     setSavedContentList(res.data);
 
     // console.log(res.data,"res.data?.data res.data?.data");
-    
+
   };
 
   /* ==================== FORM ==================== */
@@ -198,7 +198,7 @@ const ContentUploaderForm = () => {
       <div className="cms-wrapper">
         <Row className="mb-3">
           <Col md={6}>
-            <h4>About & Help Content</h4>
+            <h4 className="text-white">New Content Uploader</h4>
           </Col>
           <Col md={6} className="text-end">
             <Button
@@ -242,9 +242,8 @@ const ContentUploaderForm = () => {
                         <td>{page?.titleEn || "-"}</td>
                         <td>
                           <span
-                            className={`badge ${
-                              item.isActive ? "bg-success" : "bg-secondary"
-                            }`}
+                            className={`badge ${item.isActive ? "bg-success" : "bg-secondary"
+                              }`}
                           >
                             {item.isActive ? "Active" : "Inactive"}
                           </span>
@@ -278,25 +277,31 @@ const ContentUploaderForm = () => {
           <Col md={6}>
             <h4 className="text-white">{editingId ? "Update Content" : "Create Content"}</h4>
           </Col>
-          <Col md={6} className="text-end">
+
+          <Col md={6} className="text-end d-flex justify-content-end gap-2">
             <Button
-              color={viewMode ? "primary" : "outline-primary"}
               size="sm"
+              color={viewMode ? "warning" : "success"}
+              className="fw-semibold px-3"
               onClick={() => setViewMode(!viewMode)}
             >
-              {viewMode ? "Edit" : "Preview"}
-            </Button>{" "}
+              {viewMode ? "✏️ Edit Mode" : "👁️ Preview Mode"}
+            </Button>
+
             <Button
-              color="secondary"
               size="sm"
+              color="danger"
+              className="fw-semibold px-3"
               onClick={() => {
                 resetForm();
                 setCurrentView("list");
               }}
             >
-              Back to List
+              🔙 Back to List
             </Button>
           </Col>
+
+
         </Row>
 
         {saveStatus && (
@@ -344,7 +349,7 @@ const ContentUploaderForm = () => {
                   disabled={viewMode}
                 >
                   <option value="">-- Select Category --</option>
-                  {categories && categories.length > 0  && categories.map((c) => (
+                  {categories && categories.length > 0 && categories.map((c) => (
                     <option key={c._id} value={c._id}>
                       {c.name || c.title}
                     </option>
@@ -415,8 +420,8 @@ const ContentUploaderForm = () => {
                   {loading
                     ? "Saving..."
                     : editingId
-                    ? "Update Content"
-                    : "Save Content"}
+                      ? "Update Content"
+                      : "Save Content"}
                 </Button>
               </div>
             )}
