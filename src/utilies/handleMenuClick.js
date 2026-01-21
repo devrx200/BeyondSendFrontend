@@ -18,7 +18,7 @@ export const handleMenuClick = async ({ menu, navigate }) => {
 
 
       // 🔹 Fetch page content by menuId
-      const res = await axios.get(`${API}//api/menu-page-data/${pageId}`);
+      const res = await axios.get(`${API}/api/menu-page-data/${pageId}`);
 
 
 
