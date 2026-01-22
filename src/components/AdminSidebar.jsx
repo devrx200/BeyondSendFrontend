@@ -26,7 +26,8 @@ import {
   FaInfoCircle,
   FaFileImage,
   FaPhone,
-  FaLink, FaDownload, FaSchool
+  FaLink, FaDownload, FaSchool,
+  FaComment
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -96,6 +97,12 @@ const adminMenu = [
     icon: FaImages,
     path: "/admin/slider",
     label: { en: "Home Slider", hi: "होम स्लाइडर" }
+  },
+  {
+    id: "feedbacks",
+    icon: FaComment,
+    path: "/admin/feedbacks",
+    label: { en: "Feedbacks", hi: "प्रतिक्रिया" }
   },
   {
     id: "Content Uploader",

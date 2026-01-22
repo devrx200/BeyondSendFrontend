@@ -142,8 +142,8 @@ const AppRoutes = () => {
       <Route path="/notice-board" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
-      <Route path="/feedback-page" element={<MainLayout><FeedbackForm /></MainLayout>} />
-      <Route path="/feedback-list" element={<MainLayout><AdminFeedbackList /></MainLayout>} />
+      <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+     
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>
@@ -173,6 +173,7 @@ const AppRoutes = () => {
           <Route path="file-uploader" element={<FileUploader />} />
           <Route path="download-management" element={<DownloadManagement />} />
           <Route path="college-management" element={<CollegeManagement />} />
+          <Route path="feedbacks" element={<AdminFeedbackList />} />
         </Route>
       </Route>
 

@@ -68,7 +68,7 @@ const AdminFeedbackList = () => {
 
   return (
     <Container className="py-4">
-      <h4 className="mb-4 text-center">Admin – User Feedback List</h4>
+      <h4 className="mb-4">All Users Feedback List</h4>
 
       <Table bordered hover responsive>
         <thead className="table-light">
