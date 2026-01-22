@@ -42,10 +42,12 @@ import ManageBrands from "../views/Admin/ManageBrands";
 import ManageUniversities from "../views/Admin/ManageUniversities";
 import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
 import AdminEducationStats from "../views/Admin/AdminEducationStats";
-
-
+import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
+
+
+
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
@@ -169,6 +171,7 @@ const AppRoutes = () => {
           <Route path="file-uploader" element={<FileUploader />} />
           <Route path="download-management" element={<DownloadManagement />} />
           <Route path="college-management" element={<CollegeManagement />} />
+          <Route path="users-management" element={<AdminUserManagement />} />
         </Route>
       </Route>
 

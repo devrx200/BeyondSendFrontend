@@ -26,7 +26,8 @@ import {
   FaInfoCircle,
   FaFileImage,
   FaPhone,
-  FaLink, FaDownload, FaSchool
+  FaLink, FaDownload, FaSchool,
+  FaUsers
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -46,6 +47,14 @@ const adminMenu = [
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
+  
+  {
+    id: "users",
+    icon: FaUsers,
+    path: "/admin/users-management",
+    label: { en: "Users Management", hi: "उपयोगकर्ता प्रबंधन" }
+  },
+
   {
     id: "important-links",
     icon: FaLink,
