@@ -26,7 +26,7 @@ import {
   FaInfoCircle,
   FaFileImage,
   FaPhone,
-  FaLink, FaDownload, FaSchool
+  FaLink, FaDownload, FaSchool, FaCog
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -161,7 +161,17 @@ const adminMenu = [
     en: "Downloads Management",
     hi: "डाउनलोड प्रबंधन"
   }
+},
+ {
+  id: "footer-section-manager",
+  icon: FaCog, // or FaListAlt / FaSlidersH
+  path: "/admin/footer-section-manager",
+  label: {
+    en: "Footer Manager",
+    hi: "फुटर प्रबंधन"
+  }
 }
+
 ];
 
 const AdminSidebar = ({ collapsed }) => {
