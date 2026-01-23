@@ -78,11 +78,11 @@ const Header = () => {
             <div className="d-flex align-items-center gap-4 small text-dark">
               <span className="d-flex align-items-center text-white fw-bold">
                 <FaPhone className="me-1 text-white" />
-               <a href="tel:+91-771-2221234" className="text-decoration-none text-white"> +91-771-2221234</a>
+                <a href="tel:+91-771-2221234" className="text-decoration-none text-white"> +91-771-2221234</a>
               </span>
               <span className="d-flex align-items-center text-white fw-bold">
                 <FaEnvelope className="me-1 text-white" />
-                 <a href="mailto:wim.higheredu-cg@gov.in" clasdName="text-decoration-none text-white">  wim.higheredu-cg@gov.in</a>
+                <a href="mailto:wim.higheredu-cg@gov.in" clasdName="text-decoration-none text-white">  wim.higheredu-cg@gov.in</a>
               </span>
             </div>
 
@@ -174,10 +174,9 @@ const Header = () => {
       </div>
 
       {/* Main Navigation */}
-      <Navbar expand="lg" className="shadow-sm border-top border-dark">
+      <Navbar expand="lg" className="shadow-sm border-top border-dark"  >
         <Container>
           <NavbarToggler onClick={() => setIsOpen(!isOpen)} />
-
           <Collapse isOpen={isOpen} navbar>
             <Nav className="me-auto" navbar>
               <NavItem>
@@ -265,6 +264,8 @@ const Header = () => {
           </Collapse>
         </Container>
       </Navbar>
+
+
     </>
   );
 };
