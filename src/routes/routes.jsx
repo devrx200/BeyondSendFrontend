@@ -58,6 +58,7 @@ import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
 import CollegeManagement from "../views/Admin/CollegeManagement";
+import FooterSection from "../views/Admin/footerSectionManager";
 const API_URL = import.meta.env.VITE_API_URL;
 
 /* MAIN LAYOUT */
@@ -177,6 +178,7 @@ const AppRoutes = () => {
           <Route path="college-management" element={<CollegeManagement />} />
           <Route path="feedbacks" element={<AdminFeedbackList />} />
           <Route path="users-management" element={<AdminUserManagement />} />
+          <Route path="footer-section-manager" element={<FooterSection />} />
         </Route>
       </Route>
 
