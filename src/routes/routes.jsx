@@ -2,7 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import bgImg from "../assets/page-bg.svg";
-
+import { jwtDecode } from "jwt-decode";
+const API_URL = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
 /* LAYOUTS */
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -58,7 +60,7 @@ import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
 import CollegeManagement from "../views/Admin/CollegeManagement";
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
@@ -176,11 +178,9 @@ const AppRoutes = () => {
           <Route path="download-management" element={<DownloadManagement />} />
           <Route path="college-management" element={<CollegeManagement />} />
           <Route path="feedbacks" element={<AdminFeedbackList />} />
-          <Route path="users-management" element={<AdminUserManagement />} />
+          <Route path="users-management" element={<AdminUserManagement />}/>
         </Route>
       </Route>
-
-
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
     </Routes>
   );

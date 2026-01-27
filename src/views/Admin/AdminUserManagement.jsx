@@ -8,7 +8,7 @@ import { FaUsers, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
-
+const token = sessionStorage.getItem("authToken");
 const API_URL = import.meta.env.VITE_API_URL;
 
 /* ================= INITIAL FORM ================= */
@@ -39,7 +39,12 @@ const AdminUserManagement = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-all-users`);
+      const res = await axios.get(`${API_URL}/api/get-all-users`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+      );
       setUsers(res.data?.data || []);
     } catch {
       Swal.fire("Error", "Failed to load users", "error");
@@ -198,6 +203,7 @@ const AdminUserManagement = () => {
               <th>#</th>
               <th>Profile Images</th>
               <th>Name</th>
+              <th>Role</th>
               <th>Email</th>
               <th>Mobile</th>
               <th>Designation</th>
@@ -218,16 +224,10 @@ const AdminUserManagement = () => {
                 <tr key={u._id}>
                   <td>{i + 1}</td>
                   <td>
-                    <img
-                      src={`${API_URL}${u.profileImage}`}
-                      height="40"
-                      width="40"
-                      alt="Profile"
-                      className="rounded"
-                      style={{ objectFit: 'cover' }}
-                    />
+                    <img src={`${API_URL}${u.profileImage}`} height="45" width="45" alt="Profile" className="rounded" style={{ objectFit: 'cover' }} />
                   </td>
                   <td>{u.name}</td>
+                  <td>{u.role}</td>
                   <td>{u.email}</td>
                   <td>{u.mobile}</td>
                   <td><Badge color="info">{u.userDeginations}</Badge></td>
@@ -240,16 +240,16 @@ const AdminUserManagement = () => {
                   <td>
                     <Badge color={
                       u.status === "APPROVED" ? "success" :
-                      u.status === "REJECTED" ? "danger" : "warning"
+                        u.status === "REJECTED" ? "danger" : "warning"
                     }>
                       {u.status}
                     </Badge>
                   </td>
                   <td>
-                    <Button size="sm" color="primary" className="me-1" onClick={() => handleEdit(u)}>
+                    <Button size="sm" color="primary" className="me-1 p-2" onClick={() => handleEdit(u)}>
                       <FaEdit />
                     </Button>
-                    <Button size="sm" color="danger" onClick={() => handleDelete(u._id)}>
+                    <Button size="sm" color="danger" className="p-2" onClick={() => handleDelete(u._id)}>
                       <FaTrash />
                     </Button>
                   </td>
