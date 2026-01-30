@@ -25,13 +25,13 @@ import {
   FaArrowRight,
   FaCalendar
 } from "react-icons/fa";
-
 import { useLanguage } from "../../contexts/LanguageContext";
 import HeroSlider from "../../components/HeroSlider";
 import NoticeTicker from "../../components/NoticeTicker";
 import AfterCarousel from "../../components/AfterCarousel";
 import AboutSection from "../../components/AboutSection";
 import ImportantLinksSection from "../../components/ImportantLinksSection";
+import AnnouncementsAndSchemes from "../../components/AnnouncementsAndSchemes";
 
 const Home = () => {
   const { isHindi } = useLanguage();
@@ -153,7 +153,7 @@ const Home = () => {
       <HeroSlider />
       <NoticeTicker />
       <AfterCarousel />
-      <AboutSection/>
+      <AboutSection />
 
       {/* QUICK LINKS */}
       <section className="py-5 bg-light">
@@ -178,71 +178,7 @@ const Home = () => {
           </Row>
         </Container>
       </section>
-
-      {/* ANNOUNCEMENTS + SIDEBAR */}
-      <section className="py-5">
-        <Container>
-          <Row className="g-4">
-            <Col lg={8}>
-              <h4 className="mb-3">
-                {isHindi ? "नवीनतम घोषणाएं" : "Latest Announcements"}
-              </h4>
-
-              {announcements.map((a) => (
-                <Card key={a.id} className="mb-3 border-0 shadow-sm">
-                  <CardBody>
-                    <div className="d-flex justify-content-between mb-2">
-                      <Badge color="primary">{a.category}</Badge>
-                      <small className="text-muted">
-                        <FaCalendar className="me-1" />
-                        {new Date(a.date).toLocaleDateString()}
-                      </small>
-                    </div>
-                    <CardTitle tag="h6">
-                      {isHindi ? a.titleHi : a.titleEn}
-                    </CardTitle>
-                    <CardText className="text-muted small">
-                      {isHindi ? a.descriptionHi : a.descriptionEn}
-                    </CardText>
-                    <Link to={a.link} className="btn btn-sm btn-outline-primary">
-                      {isHindi ? "और पढ़ें" : "Read More"} <FaArrowRight />
-                    </Link>
-                  </CardBody>
-                </Card>
-              ))}
-            </Col>
-
-            <Col lg={4}>
-              <Card className="border-0 shadow-sm">
-                <CardBody>
-                  <h5 className="mb-3">
-                    {isHindi ? "प्रमुख योजनाएं" : "Featured Schemes"}
-                  </h5>
-                  {featuredSchemes.map((s) => (
-                    <div key={s.id} className="mb-3 border-bottom pb-3">
-                      <div className="d-flex">
-                        <div className="me-3 text-primary fs-5">
-                          {iconMap[s.icon]}
-                        </div>
-                        <div>
-                          <strong>{isHindi ? s.titleHi : s.titleEn}</strong>
-                          <p className="small text-muted mb-1">
-                            {isHindi ? s.descriptionHi : s.descriptionEn}
-                          </p>
-                          <Link to={s.link} className="small text-primary">
-                            {isHindi ? "और जानें →" : "Learn More →"}
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      </section>
-
+      <AnnouncementsAndSchemes />
       <ImportantLinksSection />
     </div>
   );

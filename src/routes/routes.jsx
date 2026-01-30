@@ -30,7 +30,7 @@ import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";  
 import AdminFeedbackList from "../views/Admin/FeedbackList";
-
+import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
 import AdminDashboard from "../views/Admin/AdminDashboard";
@@ -49,7 +49,7 @@ import AdminEducationStats from "../views/Admin/AdminEducationStats";
 import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
-
+import SchemesDetails from "../views/pages/SchemesDetails";
 
 
 /* MIDDLEWARE */
@@ -147,6 +147,9 @@ const AppRoutes = () => {
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+      <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
+      <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
+
      
 
       {/* ADMIN */}
