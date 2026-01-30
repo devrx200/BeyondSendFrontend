@@ -64,6 +64,29 @@ const AdminEducationStats = () => {
     loadList();
   }, []);
 
+  const blockInvalidNumberKeys = (e) => {
+    if (
+      e.key === "-" ||
+      e.key === "+" ||
+      e.key === "e" ||
+      e.key === "E" ||
+      e.key === "."
+    ) {
+      e.preventDefault();
+    }
+  };
+  const handleNumberInput = (e, key, setForm, form) => {
+    const value = e.target.value;
+
+    if (value === "") {
+      setForm({ ...form, [key]: 0 });
+      return;
+    }
+    if (!/^\d+$/.test(value)) return;
+    setForm({ ...form, [key]: Number(value) });
+  };
+
+
   /* ================= RESET ================= */
   const resetForm = () => {
     setEditingId(null);
@@ -260,11 +283,13 @@ const AdminEducationStats = () => {
                     <FormGroup>
                       <Label>{label}</Label>
                       <Input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={13}
                         value={form[key]}
-                        onChange={e =>
-                          setForm({ ...form, [key]: +e.target.value })
-                        }
+                        onKeyDown={blockInvalidNumberKeys}
+                        onChange={e => handleNumberInput(e, key, setForm, form)}
                       />
                     </FormGroup>
                   </Col>

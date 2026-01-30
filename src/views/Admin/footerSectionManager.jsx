@@ -17,7 +17,7 @@ import {
     FaMapMarkerAlt,
     FaTrash,
     FaPlus,
-    FaLink,FaEdit, FaSave, FaTimes
+    FaLink, FaEdit, FaSave, FaTimes
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -59,54 +59,48 @@ const FooterSection = () => {
         url: "",
     });
     const [editRow, setEditRow] = useState({
-  type: null,   
-  index: null,
-  data: {},
-});
+        type: null,
+        index: null,
+        data: null,   // MUST be null
+    });
 
-    /* ================= ADD SOCIAL LINK ================= */
-    const addSocialLink = () => {
-        const platformError = validateRequired(newSocial.platform);
-        const urlError = validateSocialUrl(newSocial.url);
+    const deleteAnyLink = async (type, link, index) => {
+        const key =
+            type === "social"
+                ? "socialLinks"
+                : type === "quick"
+                    ? "quickLinks"
+                    : "importantLinks";
 
-        setErrors(prev => ({
-            ...prev,
-            socialPlatform: platformError,
-            socialUrl: urlError,
-        }));
-
-        if (platformError || urlError) return;
-
-        setFooter({
-            ...footer,
-            socialLinks: [...footer.socialLinks, newSocial],
-        });
-
-        setNewSocial({ platform: "", url: "" });
-    };
-
-
-    /* ================= DELETE SOCIAL LINK ================= */
-    const deleteSocialLink = async (item, index) => {
-        if (!item?._id) {
-            const updated = footer.socialLinks.filter((_, i) => i !== index);
-            setFooter({ ...footer, socialLinks: updated });
-            return;
-        }
-
-        Swal.fire({
-            title: "Delete this social link?",
+        const confirm = await Swal.fire({
+            title: "Delete this link?",
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Yes",
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                await axios.delete(
-                    `${API}/api/delete-link/social/${item._id}`
-                );
-                fetchFooter();
-            }
         });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            setFooter(prev => ({
+                ...prev,
+                [key]: prev[key].filter((_, i) => i !== index),
+            }));
+
+            if (link?._id) {
+                await axios.delete(`${API}/api/delete-link/${type}/${link._id}`);
+            }
+
+            await saveFooterToDB({
+                ...footer,
+                [key]: footer[key].filter((_, i) => i !== index),
+            });
+
+            Swal.fire("Deleted", "Link removed successfully", "success");
+        } catch (err) {
+            Swal.fire("Error", "Delete failed", "error");
+            fetchFooter(); 
+        }
     };
 
     /* ================= LOAD ================= */
@@ -150,7 +144,21 @@ const FooterSection = () => {
         }
         return "";
     };
+    const validateEnglish = (value) => {
+        if (!value || !value.trim()) return "This field is required";
+        if (!ENGLISH_TEXT_ONLY.test(value)) {
+            return "Only English characters are allowed";
+        }
+        return "";
+    };
 
+    const validateHindi = (value) => {
+        if (!value || !value.trim()) return "This field is required";
+        if (!HINDI_TEXT_ONLY.test(value)) {
+            return "केवल हिंदी अक्षर मान्य हैं";
+        }
+        return "";
+    };
     const validateSocialUrl = (value) => {
         if (!value || !value.trim()) {
             return "This field is required";
@@ -179,7 +187,6 @@ const FooterSection = () => {
         const errors = {};
         const { contactInfo } = footer;
 
-        /* ===== REQUIRED CHECK ===== */
         if (!contactInfo.departmentNameEn?.trim())
             errors.departmentNameEn = "Department Name (English) is required";
 
@@ -244,6 +251,10 @@ const FooterSection = () => {
 
 
     /* ================= SAVE ================= */
+    const saveFooterToDB = async (footerPayload) => {
+        await axios.post(`${API}/api/save-footer`, footerPayload);
+    };
+
     const saveFooter = async () => {
         const validationErrors = validateFooter();
         setErrors(validationErrors);
@@ -276,7 +287,6 @@ const FooterSection = () => {
 
             Swal.fire("Success", "Footer saved successfully", "success");
 
-            //  refetch ONLY after success
             fetchFooter();
         } catch (error) {
             Swal.fire(
@@ -287,83 +297,120 @@ const FooterSection = () => {
         }
     };
 
-    /* ================= ADD LINK ================= */
-    const addLink = () => {
-    const titleEnError = validateRequired(newLink.titleEn);
-    const titleHinError = validateRequired(newLink.titleHin);
-    const urlError = validateRequired(newLink.url);
+    const handleEditLink = (type, link, index) => {
+        if (!link) return;
 
-    setErrors(prev => ({
-        ...prev,
-        newLinkTitle: titleEnError,
-        newLinkTitleHin: titleHinError,
-        newLinkUrl: urlError,
-    }));
+        setEditRow({
+            type,
+            index,
+            data: link,
+        });
 
-    if (titleEnError || titleHinError || urlError) return;
-
-    const key =
-        newLink.type === "quick" ? "quickLinks" : "importantLinks";
-
-    // ✅ CORRECT KEYS
-    const linkToAdd = {
-        titleEn: newLink.titleEn,
-        titleHin: newLink.titleHin,
-        url: newLink.url,
-    };
-
-    setFooter(prev => ({
-        ...prev,
-        [key]: [...prev[key], linkToAdd],
-    }));
-
-    // ✅ CLEAR INPUTS PROPERLY
-    setNewLink({
-        titleEn: "",
-        titleHin: "",
-        url: "",
-        type: newLink.type, // keep type
-    });
-
-    setErrors(prev => ({
-        ...prev,
-        newLinkTitle: "",
-        newLinkTitleHin: "",
-        newLinkUrl: "",
-    }));
-};
-
-
-
-
-    /* ================= DELETE LINK ================= */
-    const deleteLink = async (type, link, index) => {
-        const key = type === "quick" ? "quickLinks" : "importantLinks";
-
-        if (!link?._id) {
-            setFooter(prev => ({
-                ...prev,
-                [key]: prev[key].filter((_, i) => i !== index),
-            }));
-            return;
-        }
-
-        Swal.fire({
-            title: "Delete this link?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Yes",
-        }).then(async result => {
-            if (result.isConfirmed) {
-                await axios.delete(
-                    `${API}/api/delete-link/${type}/${link._id}`
-                );
-                fetchFooter();
-            }
+        setNewLink({
+            titleEn: link.titleEn || "",
+            titleHin: link.titleHin || "",
+            url: link.url || "",
+            type,
         });
     };
 
 
+    const handleEditSocial = (item, index) => {
+        setEditRow({ type: "social", index, data: item });
+        setNewSocial({
+            platform: item.platform,
+            url: item.url,
+        });
+    };
+
+    const addOrUpdateLink = async () => {
+        try {
+            let payload = {};
+            let type = editRow.type
+                || (newSocial.platform || newSocial.url ? "social" : newLink.type);
+
+
+            if (type === "social") {
+                const platformError = validateRequired(newSocial.platform);
+                const urlError = validateSocialUrl(newSocial.url);
+
+                if (platformError || urlError) {
+                    setErrors({ socialPlatform: platformError, socialUrl: urlError });
+                    return;
+                }
+
+                payload = { platform: newSocial.platform, url: newSocial.url };
+            } else {
+                const titleEnError = validateEnglish(newLink.titleEn);
+                const titleHinError = validateHindi(newLink.titleHin);
+                const urlError = validateRequired(newLink.url);
+
+                if (titleEnError || titleHinError || urlError) {
+                    setErrors({
+                        newLinkTitle: titleEnError,
+                        newLinkTitleHin: titleHinError,
+                        newLinkUrl: urlError,
+                    });
+                    return;
+                }
+
+                payload = {
+                    titleEn: newLink.titleEn,
+                    titleHin: newLink.titleHin,
+                    url: newLink.url,
+                };
+            }
+
+            Swal.fire({ title: "Saving...", didOpen: () => Swal.showLoading() });
+
+            let updatedFooter = { ...footer };
+
+            if (editRow.data?._id) {
+                // UPDATE
+                const key =
+                    type === "social"
+                        ? "socialLinks"
+                        : type === "quick"
+                            ? "quickLinks"
+                            : "importantLinks";
+
+                updatedFooter[key] = updatedFooter[key].map(item =>
+                    item._id === editRow.data._id ? { ...item, ...payload } : item
+                );
+            } else {
+                // ADD
+                const key =
+                    type === "social"
+                        ? "socialLinks"
+                        : type === "quick"
+                            ? "quickLinks"
+                            : "importantLinks";
+
+                updatedFooter[key] = [...updatedFooter[key], payload];
+            }
+
+            await saveFooterToDB(updatedFooter);
+
+            setFooter(updatedFooter);
+
+            Swal.fire(
+                "Success",
+                editRow.data ? "Updated & saved successfully" : "Added & saved successfully",
+                "success"
+            );
+
+            setEditRow({ type: null, index: null, data: null });
+            setNewLink({ titleEn: "", titleHin: "", url: "", type: "quick" });
+            setNewSocial({ platform: "", url: "" });
+
+        } catch (err) {
+            Swal.fire(
+                "Error",
+                err?.response?.data?.message || "Operation failed",
+                "error"
+            );
+        }
+    };
 
     return (
         <Container fluid className="footer-admin-page">
@@ -520,11 +567,11 @@ const FooterSection = () => {
 
                     <Row className="align-items-end">
                         <Col md="3">
-                        <Label className="form-contol-label">
-                            Link Title (English)
-                        </Label>
+                            <Label className="form-contol-label">
+                                Link Title (English)
+                            </Label>
                             <Input
-                                
+
                                 value={newLink.titleEn}
                                 invalid={!!errors.newLinkTitle}
                                 onChange={e => {
@@ -532,7 +579,7 @@ const FooterSection = () => {
                                     setNewLink({ ...newLink, titleEn: value });
                                     setErrors(prev => ({
                                         ...prev,
-                                        newLinkTitle: validateRequired(value),
+                                        newLinkTitle: validateEnglish(value),
                                     }));
                                 }}
                             />
@@ -540,10 +587,10 @@ const FooterSection = () => {
                                 <small className="text-danger">{errors.newLinkTitle}</small>
                             )}
                         </Col>
-                         <Col md="3">
-                          <Label className="form-contol-label">
-                            Link Title (Hindi)
-                        </Label>
+                        <Col md="3">
+                            <Label className="form-contol-label">
+                                Link Title (Hindi)
+                            </Label>
                             <Input
                                 value={newLink.titleHin}
                                 invalid={!!errors.newLinkTitleHin}
@@ -552,7 +599,7 @@ const FooterSection = () => {
                                     setNewLink({ ...newLink, titleHin: value });
                                     setErrors(prev => ({
                                         ...prev,
-                                        newLinkTitleHin: validateRequired(value),
+                                        newLinkTitleHin: validateHindi(value),
                                     }));
                                 }}
                             />
@@ -561,9 +608,9 @@ const FooterSection = () => {
                             )}
                         </Col>
                         <Col md="3">
-                        <Label className="form-contol-label">
-                           Title Path
-                        </Label>
+                            <Label className="form-contol-label">
+                                Title Path
+                            </Label>
                             <Input
                                 placeholder="/about /index /downloads"
                                 value={newLink.url}
@@ -582,9 +629,9 @@ const FooterSection = () => {
                             )}
                         </Col>
                         <Col md="2">
-                         <Label className="form-contol-label">
-                          Link Type
-                        </Label>
+                            <Label className="form-contol-label">
+                                Link Type
+                            </Label>
                             <Input
                                 type="select"
                                 value={newLink.type}
@@ -596,10 +643,33 @@ const FooterSection = () => {
                                 <option value="important">Important Links</option>
                             </Input>
                         </Col>
-                        <Col md="1" className="mb-2">
-                            <Button color="success" onClick={addLink} size="sm">
+                        <br></br>
+                        <Col md="3" className="mt-3 text-nowrap ">
+                            {/* <Button color="success" onClick={addLink} size="sm">
                                 <FaPlus /> 
+                            </Button> */}
+                            <Button
+                                color={editRow.data ? "warning" : "success"}
+                                onClick={addOrUpdateLink}
+                                size="sm"
+                            >
+                                {editRow.data ? "Update" : <FaPlus />}
                             </Button>
+
+                            {editRow.data && (
+                                <Button
+                                    color="danger"
+                                    size="sm"
+                                    className="ms-2"
+                                    onClick={() => {
+                                        setEditRow({ type: null, index: null, data: null });
+                                        setNewLink({ titleEn: "", titleHin: "", url: "", type: "quick" });
+                                    }}
+                                >
+                                    <FaTimes />
+                                </Button>
+                            )}
+
                         </Col>
                     </Row>
 
@@ -607,7 +677,7 @@ const FooterSection = () => {
                     <Row className="mt-4">
                         <Col md="6">
                             <h6><FaLink /> Quick Links</h6>
-                              <Table
+                            <Table
                                 responsive
                                 bordered
                                 hover
@@ -629,11 +699,37 @@ const FooterSection = () => {
                                             <td>{link.titleEn}</td>
                                             <td>{link.titleHin}</td>
 
-                                            <td width="60">
+                                            {/* <td width="60">
                                                 <FaTrash
                                                     className="delete-icon"
                                                     onClick={() => deleteLink("quick", link, index)}
                                                 />
+                                            </td> */}
+                                            <td className="text-center">
+                                                <FaEdit 
+                                                    className="edit-icon me-2" style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    marginRight: "6px",
+                                                    cursor: "pointer",
+                                                    fontSize: "23px",
+                                                    lineHeight: "1",
+                                                    color: "#198754", 
+                                                }}
+                                                    onClick={() => handleEditLink("quick", link, index)}
+                                                />
+                                                <FaTrash  style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    marginRight: "6px",
+                                                    cursor: "pointer",
+                                                    fontSize: "23px",
+                                                    lineHeight: "1",
+                                                    color: "#af2e1d", 
+                                                }} onClick={() => deleteAnyLink("quick", link, index)} />
+
                                             </td>
                                         </tr>
                                     ))}
@@ -674,13 +770,39 @@ const FooterSection = () => {
                                                 <td className="link-title-cell">{link.titleEn}</td>
                                                 <td className="link-title-cell">{link.titleHin}</td>
 
-                                                <td className="text-center">
+                                                {/* <td className="text-center">
                                                     <FaTrash
                                                         className="delete-icon"
                                                         onClick={() => deleteLink("important", link, index)}
                                                         title="Delete"
                                                     />
+                                                </td> */}
+                                                <td className="text-center">
+                                                    <FaEdit
+                                                        className="edit-icon me-2" style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    marginRight: "6px",
+                                                    cursor: "pointer",
+                                                    fontSize: "23px",
+                                                    lineHeight: "1",
+                                                    color: "#198754", 
+                                                }}
+                                                        onClick={() => handleEditLink("important", link, index)}
+                                                    />
+                                                    <FaTrash style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    marginRight: "6px",
+                                                    cursor: "pointer",
+                                                    fontSize: "23px",
+                                                    lineHeight: "1",
+                                                    color: "#a71c17", 
+                                                }} onClick={() => deleteAnyLink("important", link, index)} />
                                                 </td>
+
                                             </tr>
                                         ))
                                     )}
@@ -735,8 +857,12 @@ const FooterSection = () => {
                             )}
                         </Col>
                         <Col md="2">
-                            <Button color="success" onClick={addSocialLink} block>
-                                <FaPlus /> Add
+                            <Button
+                                color={editRow.data ? "warning" : "success"}
+                                onClick={addOrUpdateLink}
+                                size="sm"
+                            >
+                                {editRow.data ? "Update" : <FaPlus />}
                             </Button>
                         </Col>
                     </Row>
@@ -756,10 +882,47 @@ const FooterSection = () => {
                                     <td>{item.platform}</td>
                                     <td>{item.url}</td>
                                     <td>
-                                        <FaTrash
-                                            className="delete-icon"
-                                            onClick={() => deleteSocialLink(item, index)}
-                                        />
+
+                                        <td className="text-center" style={{ whiteSpace: "nowrap" }}>
+                                            {/* EDIT */}
+                                            <button
+                                                type="button"
+                                                title="Edit"
+                                                onClick={() => handleEditSocial(item, index)}
+                                                style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    marginRight: "6px",
+                                                    cursor: "pointer",
+                                                    fontSize: "16px",
+                                                    lineHeight: "1",
+                                                    color: "#198754", 
+                                                }}
+                                            >
+                                                <FaEdit />
+                                            </button>
+
+                                            {/* DELETE */}
+                                            <button
+                                                type="button"
+                                                title="Delete"
+                                                onClick={() => deleteAnyLink("social", item, index)}
+                                                style={{
+                                                    background: "transparent",
+                                                    border: "none",
+                                                    padding: "4px",
+                                                    cursor: "pointer",
+                                                    fontSize: "16px",
+                                                    lineHeight: "1",
+                                                    color: "#ad2937", 
+                                                }}
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </td>
+
+
                                     </td>
                                 </tr>
                             ))}

@@ -10,6 +10,10 @@ import IconPicker from "../../components/IconPicker";
 import { ICONS } from "../../utilies/icons";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
+const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
+const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
+const URL_REGEX = /^(https?:\/\/|\/)[^\s]+$/;
+
 const ImportantLinksManagement = () => {
     const API = import.meta.env.VITE_API_URL;
 
@@ -17,6 +21,7 @@ const ImportantLinksManagement = () => {
     const [modal, setModal] = useState(false);
     const [iconModal, setIconModal] = useState(false);
     const [editId, setEditId] = useState(null);
+    const [errors, setErrors] = useState({});
 
     const [form, setForm] = useState({
         titleEng: "",
@@ -63,6 +68,51 @@ const ImportantLinksManagement = () => {
             isActive: item.isActive
         });
         setModal(true);
+    };
+    const validateField = (name, value) => {
+        if (!value || !value.toString().trim()) {
+            return "This field is required";
+        }
+
+        switch (name) {
+            case "titleEng":
+                if (!ENGLISH_TEXT_ONLY.test(value))
+                    return "Only English characters allowed";
+                break;
+
+            case "titleHin":
+                if (value && !HINDI_TEXT_ONLY.test(value))
+                    return "केवल हिंदी अक्षर मान्य हैं";
+                break;
+
+            case "url":
+                if (!URL_REGEX.test(value))
+                    return "Invalid URL (must start with / or http)";
+                break;
+
+            case "icon":
+                if (!value)
+                    return "Icon selection is required";
+                break;
+
+            default:
+                break;
+        }
+
+        return "";
+    };
+    const handleChange = (name, value) => {
+        setForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        const error = validateField(name, value);
+
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
+        }));
     };
 
     /* ================= SAVE ================= */
@@ -146,7 +196,7 @@ const ImportantLinksManagement = () => {
                                     </td>
                                     <td>
                                         <Button size="sm" color="info" onClick={() => openEdit(l)}>
-                                           <FaEdit />
+                                            <FaEdit />
                                         </Button>{" "}
                                         <Button size="sm" color="danger" onClick={() => deleteLink(l._id)}>
                                             <FaTrash />
@@ -171,9 +221,12 @@ const ImportantLinksManagement = () => {
                             <FormGroup>
                                 <Label>Title (English) *</Label>
                                 <Input
+                                    name="titleEng"
                                     value={form.titleEng}
-                                    onChange={e => setForm({ ...form, titleEng: e.target.value })}
+                                    invalid={!!errors.titleEng}
+                                    onChange={e => handleChange("titleEng", e.target.value)}
                                 />
+                                {errors.titleEng && <small className="text-danger">{errors.titleEng}</small>}
                             </FormGroup>
                         </Col>
 
@@ -181,9 +234,13 @@ const ImportantLinksManagement = () => {
                             <FormGroup>
                                 <Label>Title (Hindi)</Label>
                                 <Input
+                                    name="titleHin"
                                     value={form.titleHin}
-                                    onChange={e => setForm({ ...form, titleHin: e.target.value })}
+                                    invalid={!!errors.titleHin}
+                                    onChange={e => handleChange("titleHin", e.target.value)}
                                 />
+                                {errors.titleHin && <small className="text-danger">{errors.titleHin}</small>}
+
                             </FormGroup>
                         </Col>
 
@@ -192,8 +249,10 @@ const ImportantLinksManagement = () => {
                                 <Label>URL *</Label>
                                 <Input
                                     value={form.url}
-                                    onChange={e => setForm({ ...form, url: e.target.value })}
+                                   invalid={!!errors.url}
+  onChange={e => handleChange("url", e.target.value)}
                                 />
+                                {errors.url && <small className="text-danger">{errors.url}</small>}
                             </FormGroup>
                         </Col>
 
@@ -211,6 +270,16 @@ const ImportantLinksManagement = () => {
                                     >
                                         Search & Choose Icon
                                     </Input>
+                                    <IconPicker
+  isOpen={iconModal}
+  toggle={() => setIconModal(false)}
+  onSelect={(icon) => {
+    handleChange("icon", icon);
+    setIconModal(false);
+  }}
+/>
+
+{errors.icon && <small className="text-danger">{errors.icon}</small>}
 
                                     {/* Selected Icon Preview */}
                                     {form.icon && ICONS[form.icon] && (() => {

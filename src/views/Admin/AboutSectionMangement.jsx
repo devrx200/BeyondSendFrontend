@@ -151,8 +151,9 @@ const AboutSectionMangement = () => {
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
   const MAX_FILE_SIZE = 520 * 1024;
-  const MAX_WIDTH = 1920;   // px
-  const MAX_HEIGHT = 1080;  // px
+  const REQUIRED_WIDTH = 250;
+  const REQUIRED_HEIGHT = 300;
+
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -161,36 +162,79 @@ const AboutSectionMangement = () => {
     if (!ALLOWED_TYPES.includes(file.type)) {
       setErrors(prev => ({
         ...prev,
-        image: "Only JPG, PNG or WEBP images are allowed",
+        image: "Only JPG or PNG images are allowed",
       }));
-      setImagePreview(null);
       return;
     }
+
     if (file.size > MAX_FILE_SIZE) {
       setErrors(prev => ({
         ...prev,
         image: "Image size must be less than 520 KB",
       }));
-      setImagePreview(null);
       return;
     }
+
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
 
     img.onload = () => {
-      if (img.width > MAX_WIDTH || img.height > MAX_HEIGHT) {
-        setErrors(prev => ({
-          ...prev,
-          image: `Image dimensions must be max ${MAX_WIDTH}×${MAX_HEIGHT}px`,
-        }));
-        setImagePreview(null);
-        URL.revokeObjectURL(objectUrl);
-        return;
+      const canvas = document.createElement("canvas");
+      canvas.width = REQUIRED_WIDTH;
+      canvas.height = REQUIRED_HEIGHT;
+
+      const ctx = canvas.getContext("2d");
+
+      // 🔥 CENTER CROP LOGIC (PORTRAIT)
+      const imgRatio = img.width / img.height;
+      const targetRatio = REQUIRED_WIDTH / REQUIRED_HEIGHT;
+
+      let sx, sy, sw, sh;
+
+      if (imgRatio > targetRatio) {
+        // image too wide → crop sides
+        sh = img.height;
+        sw = sh * targetRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        // image too tall → crop top/bottom
+        sw = img.width;
+        sh = sw / targetRatio;
+        sx = 0;
+        sy = (img.height - sh) / 2;
       }
 
-      setForm(prev => ({ ...prev, image: file }));
-      setErrors(prev => ({ ...prev, image: "" }));
-      setImagePreview(objectUrl);
+      ctx.drawImage(
+        img,
+        sx,
+        sy,
+        sw,
+        sh,
+        0,
+        0,
+        REQUIRED_WIDTH,
+        REQUIRED_HEIGHT
+      );
+
+      // 🎯 CONVERT TO FILE
+      canvas.toBlob(
+        (blob) => {
+          const resizedFile = new File(
+            [blob],
+            file.name.replace(/\.\w+$/, "_photo.jpg"),
+            { type: "image/jpeg", lastModified: Date.now() }
+          );
+
+          setForm(prev => ({ ...prev, image: resizedFile }));
+          setErrors(prev => ({ ...prev, image: "" }));
+          setImagePreview(URL.createObjectURL(blob));
+        },
+        "image/jpeg",
+        0.9
+      );
+
+      URL.revokeObjectURL(objectUrl);
     };
 
     img.onerror = () => {
@@ -198,7 +242,6 @@ const AboutSectionMangement = () => {
         ...prev,
         image: "Invalid image file",
       }));
-      setImagePreview(null);
     };
 
     img.src = objectUrl;
@@ -477,8 +520,24 @@ const AboutSectionMangement = () => {
                       <small className="text-danger">{errors.image}</small>
                     )}
                     {imagePreview && (
-                      <img src={imagePreview} className="mt-2" width={120} />
+                      <div className="mt-2">
+                        <img
+                          src={imagePreview}
+                          width={250}
+                          height={300}
+                          style={{
+                            objectFit: "cover",
+                            borderRadius: "0px",
+                            border: "1px solid #ccc",
+                          }}
+                          alt="Preview"
+                        />
+                        <small className="text-muted d-block mt-1">
+                          Final size: 250 × 300 px
+                        </small>
+                      </div>
                     )}
+
                   </FormGroup>
                 </Col>
               </Row>

@@ -30,43 +30,114 @@ const SliderManagement = () => {
   const [preview, setPreview] = useState(null);
 
   const [imagePreview, setImagePreview] = useState(null);
-  const MAX_SLIDER_IMAGE_SIZE = 520 * 1024;
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ const MAX_SLIDER_IMAGE_SIZE = 520 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+const SLIDER_WIDTH = 1349;
+const SLIDER_HEIGHT = 450;
+const SLIDER_RATIO = SLIDER_WIDTH / SLIDER_HEIGHT; // ≈ 3
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setErrors(prev => ({
-        ...prev,
-        image: "Only JPG, PNG or WEBP images are allowed",
+ const handleImageChange = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-      }));
-      setImagePreview(null);
-      return;
-    }
-
-
-    if (file.size > MAX_SLIDER_IMAGE_SIZE) {
-      setErrors(prev => ({
-        ...prev,
-        image: "Slider image size must be 520 KB or less",
-      }));
-      setImagePreview(null);
-      return;
-    }
-
-    // Passed all validations
-    setFormData(prev => ({
+  /* ===== TYPE CHECK ===== */
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    setErrors(prev => ({
       ...prev,
-      uploadefile: file,
-      image: file.name,
+      image: "Only JPG, PNG or WEBP images are allowed",
     }));
+    setImagePreview(null);
+    return;
+  }
 
-    setErrors(prev => ({ ...prev, image: "" }));
-    setImagePreview(URL.createObjectURL(file));
+  /* ===== SIZE CHECK ===== */
+  if (file.size > MAX_SLIDER_IMAGE_SIZE) {
+    setErrors(prev => ({
+      ...prev,
+      image: "Slider image size must be 520 KB or less",
+    }));
+    setImagePreview(null);
+    return;
+  }
+
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = SLIDER_WIDTH;
+    canvas.height = SLIDER_HEIGHT;
+
+    const ctx = canvas.getContext("2d");
+
+    const imgRatio = img.width / img.height;
+
+    let sx, sy, sw, sh;
+
+    // 🔥 CENTER CROP TO 3:1
+    if (imgRatio > SLIDER_RATIO) {
+      // image too wide
+      sh = img.height;
+      sw = sh * SLIDER_RATIO;
+      sx = (img.width - sw) / 2;
+      sy = 0;
+    } else {
+      // image too tall
+      sw = img.width;
+      sh = sw / SLIDER_RATIO;
+      sx = 0;
+      sy = (img.height - sh) / 2;
+    }
+
+    ctx.drawImage(
+      img,
+      sx,
+      sy,
+      sw,
+      sh,
+      0,
+      0,
+      SLIDER_WIDTH,
+      SLIDER_HEIGHT
+    );
+
+    // 🎯 Convert to file
+    canvas.toBlob(
+      (blob) => {
+        const resizedFile = new File(
+          [blob],
+          file.name.replace(/\.\w+$/, "_slider.jpg"),
+          { type: "image/jpeg", lastModified: Date.now() }
+        );
+
+        setFormData(prev => ({
+          ...prev,
+          uploadefile: resizedFile,
+          image: resizedFile.name,
+        }));
+
+        setErrors(prev => ({ ...prev, image: "" }));
+        setImagePreview(URL.createObjectURL(blob));
+      },
+      "image/jpeg",
+      0.9
+    );
+
+    URL.revokeObjectURL(objectUrl);
   };
+
+  img.onerror = () => {
+    setErrors(prev => ({
+      ...prev,
+      image: "Invalid image file",
+    }));
+    setImagePreview(null);
+  };
+
+  img.src = objectUrl;
+};
+
 
   const fetchSlides = async () => {
     try {

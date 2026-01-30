@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import {
   Card, CardBody, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter,
-  Form, FormGroup, Label, Input, Badge, Row, Col
+  Form, FormGroup, Label, Input, Badge, Row, Col,
 } from "reactstrap";
-import { FaUsers, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaUsers, FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -26,6 +26,14 @@ const initialForm = {
   isActive: true
 };
 
+const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
+const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-\n\r]+$/;
+
+const PHONE_REGEX = /^(\+91[- ]?)?[6-9][0-9]{9}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
 const AdminUserManagement = () => {
   const { isHindi } = useLanguage();
 
@@ -34,6 +42,8 @@ const AdminUserManagement = () => {
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
@@ -61,34 +71,135 @@ const AdminUserManagement = () => {
     }
   };
 
+  const validateField = (name, value) => {
+    if (!value || !value.trim()) return "This field is required";
+
+    switch (name) {
+      case "name":
+        if (!ENGLISH_TEXT_ONLY.test(value))
+          return "Name must contain English characters only";
+        break;
+
+      case "userDeginations":
+        if (!ENGLISH_TEXT_ONLY.test(value))
+          return "Designation must be in English only";
+        break;
+
+      case "mobile":
+        if (!PHONE_REGEX.test(value))
+          return "Invalid mobile number";
+        break;
+
+      case "email":
+        if (!EMAIL_REGEX.test(value))
+          return "Invalid email address";
+        break;
+
+      case "permissions":
+      case "controls":
+        // comma-separated English words
+        if (!ENGLISH_WITH_NUMBERS.test(value.replace(/,/g, "")))
+          return "Only English text and numbers allowed";
+        break;
+      case "password":
+        if (!PASSWORD_REGEX.test(value))
+          return "Password must be 8+ chars with uppercase, lowercase, number & special character";
+        break;
+      default:
+        break;
+    }
+
+    return "";
+  };
+
   /* ================= INPUT CHANGE ================= */
+  // const handleChange = (e) => {
+  //   const { name, value, type, checked, files } = e.target;
+
+  //   if (type === "file") {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       [name]: files[0] || null
+  //     }));
+  //     return;
+  //   }
+
+  //   if (name === "permissions" || name === "controls") {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       [name]: value.split(",").map(v => v.trim()).filter(Boolean)
+  //     }));
+  //   } else {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       [name]: type === "checkbox" ? checked : value
+  //     }));
+  //   }
+
+  // };
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
+    let newValue;
+
     if (type === "file") {
-      setFormData(prev => ({
-        ...prev,
-        [name]: files[0] || null
-      }));
-      return;
+      newValue = files[0] || null;
+    } else if (name === "permissions" || name === "controls") {
+      newValue = value.split(",").map(v => v.trim()).filter(Boolean);
+    } else if (type === "checkbox") {
+      newValue = checked;
+    } else {
+      newValue = value;
     }
 
-    if (name === "permissions" || name === "controls") {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value.split(",").map(v => v.trim()).filter(Boolean)
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value
-      }));
-    }
+    // update form data
+    setFormData(prev => ({
+      ...prev,
+      [name]: newValue
+    }));
+
+    // validate immediately
+    const error = validateField(
+      name,
+      Array.isArray(newValue) ? newValue.join(",") : newValue
+    );
+
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    Object.keys(formData).forEach(key => {
+      if (["permissions", "controls", "profileImage", "isActive"].includes(key))
+        return;
+
+      const value =
+        Array.isArray(formData[key]) ? formData[key].join(",") : formData[key];
+
+      const error = validateField(key, value);
+      if (error) newErrors[key] = error;
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   /* ================= CREATE / UPDATE ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      Swal.fire(
+        "Validation Error",
+        "Please fix the highlighted errors",
+        "warning"
+      );
+      return;
+    }
 
     try {
       const payload = new FormData();
@@ -240,7 +351,7 @@ const AdminUserManagement = () => {
                   <td>
                     <Badge color={
                       u.status === "APPROVED" ? "success" :
-                      u.status === "REJECTED" ? "danger" : "warning"
+                        u.status === "REJECTED" ? "danger" : "warning"
                     }>
                       {u.status}
                     </Badge>
@@ -272,13 +383,15 @@ const AdminUserManagement = () => {
                 <Col md={6}>
                   <FormGroup>
                     <Label>Name</Label>
-                    <Input name="name" value={formData.name} onChange={handleChange} required />
+                    <Input name="name" value={formData.name} onChange={handleChange} required invalid={!!errors.name} />
+                    {errors.name && <small className="text-danger">{errors.name}</small>}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Email</Label>
-                    <Input type="email" name="email" value={formData.email} onChange={handleChange} disabled={!!editing} required />
+                    <Input type="email" autoComplete="off" name="email" value={formData.email} onChange={handleChange} disabled={!!editing} required invalid={!!errors.email} />
+                    {errors.email && <small className="text-danger">{errors.email}</small>}
                   </FormGroup>
                 </Col>
               </Row>
@@ -287,59 +400,104 @@ const AdminUserManagement = () => {
                 <Col md={6}>
                   <FormGroup>
                     <Label>Mobile</Label>
-                    <Input name="mobile" value={formData.mobile} onChange={handleChange} required />
+                    <Input name="mobile" autoComplete="off" value={formData.mobile} onChange={handleChange} required invalid={!!errors.mobile} maxLength={10} />
+                    {errors.mobile && <small className="text-danger">{errors.mobile}</small>}
                   </FormGroup>
                 </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Designation</Label>
-                    <Input name="userDeginations" value={formData.userDeginations} onChange={handleChange} required />
-                  </FormGroup>
-                </Col>
-              </Row>
+                {!editing && (
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Password</Label>
 
-              {!editing && (
-                <FormGroup>
-                  <Label>Password</Label>
-                  <Input type="password" name="password" value={formData.password} onChange={handleChange} required />
-                </FormGroup>
-              )}
+                      <div style={{ position: "relative" }}>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          required
+                          autoComplete="off"
+                          invalid={!!errors.password}
+                        />
+
+                        <span
+                          onClick={() => setShowPassword(prev => !prev)}
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            right: "10px",
+                            transform: "translateY(-50%)",
+                            cursor: "pointer",
+                            color: "#6c757d",
+                            zIndex: 2
+                          }}
+                          title={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </span>
+                      </div>
+
+                      {errors.password && (
+                        <small className="text-danger">{errors.password}</small>
+                      )}
+                    </FormGroup>
+                  </Col>
+                )}
+
+              </Row>
 
               <Row>
                 <Col md={6}>
                   <FormGroup>
-                    <Label>Permissions (comma separated)</Label>
-                    <Input name="permissions" value={formData.permissions.join(", ")} onChange={handleChange} />
+                    <Label>Designation</Label>
+                    <Input name="userDeginations" autoComplete="off"
+                      data-form-type="other" value={formData.userDeginations} onChange={handleChange} required invalid={!!errors.userDeginations} />
+                    {errors.userDeginations && <small className="text-danger">{errors.userDeginations}</small>}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
-                    <Label>Controls (comma separated)</Label>
-                    <Input name="controls" value={formData.controls.join(", ")} onChange={handleChange} />
+                    <Label>Permissions (comma separated)</Label>
+                    <Input autoComplete="off" name="permissions" value={formData.permissions.join(", ")} onChange={handleChange} invalid={!!errors.permissions} />
+                    {errors.permissions && <small className="text-danger">{errors.permissions}</small>}
                   </FormGroup>
                 </Col>
+
               </Row>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Controls (comma separated)</Label>
+                    <Input autoComplete="off" name="controls" value={formData.controls.join(", ")} onChange={handleChange} invalid={!!errors.controls} />
+                    {errors.controls && <small className="text-danger">{errors.controls}</small>}
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Profile Image</Label>
+                    <Input type="file" name="profileImage" accept="image/*" onChange={handleChange} invalid={!!errors.profileImage} />
+                    {errors.profileImage && <small className="text-danger">{errors.profileImage}</small>}
 
-              <FormGroup>
-                <Label>Profile Image</Label>
-                <Input type="file" name="profileImage" accept="image/*" onChange={handleChange} />
-                {formData.profileImage && (
-                  <img
-                    src={URL.createObjectURL(formData.profileImage)}
-                    alt="Preview"
-                    style={{ width: "80px", marginTop: "10px", borderRadius: "6px" }}
-                  />
-                )}
-              </FormGroup>
+                    {formData.profileImage && (
+                      <img
+                        src={URL.createObjectURL(formData.profileImage)}
+                        alt="Preview"
+                        style={{ width: "80px", marginTop: "10px", borderRadius: "6px" }}
+                      />
+                    )}
+                  </FormGroup>
+                </Col>
 
+              </Row>
               {editing && (
                 <FormGroup>
                   <Label>Status</Label>
-                  <Input type="select" name="status" value={formData.status} onChange={handleChange}>
+                  <Input type="select" name="status" value={formData.status} onChange={handleChange} invalid={!!errors.profileImage}>
                     <option value="PENDING">Pending</option>
                     <option value="APPROVED">Approved</option>
                     <option value="REJECTED">Rejected</option>
                   </Input>
+                  {errors.status && <small className="text-danger">{errors.status}</small>}
                 </FormGroup>
               )}
 

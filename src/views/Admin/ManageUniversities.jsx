@@ -6,9 +6,12 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { ENGLISH_TEXT_ONLY, URL_REGEX, PHONE_REGEX, HINDI_TEXT_ONLY, ENGLISH_WITH_NUMBERS, EMAIL_REGEX, NUMBERS_ONLY } from "../../data/validation.jsx";
 import { FaPlus, FaList, FaEdit, FaTrash, FaEye } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const MAX_LOGO_SIZE = 500 * 1024; // 500 KB
+const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/png"];
 
 const ManageUniversities = () => {
   const token = sessionStorage.getItem("authToken");
@@ -22,6 +25,8 @@ const ManageUniversities = () => {
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [vidhansabhas, setVidhansabhas] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [editErrors, setEditErrors] = useState({});
 
   /* ================= FORM STATE ================= */
   const initialForm = {
@@ -153,10 +158,149 @@ const ManageUniversities = () => {
     );
   }, [universities, search]);
 
+  const validateRequired = (value, msg = "This field is required") => {
+    if (!value || !value.trim()) return msg;
+    return "";
+  };
+
+  const validateRegex = (value, regex, msg) => {
+    if (!value) return "";
+    if (!regex.test(value)) return msg;
+    return "";
+  };
+  const validateCreateForm = () => {
+    let temp = {};
+
+    temp.universityNameEng =
+      validateRequired(form.universityNameEng) ||
+      validateRegex(
+        form.universityNameEng,
+        ENGLISH_TEXT_ONLY,
+        "Only English letters allowed"
+      );
+
+    temp.universityNameHindi =
+      validateRequired(form.universityNameHindi) ||
+      validateRegex(
+        form.universityNameHindi,
+        HINDI_TEXT_ONLY,
+        "केवल हिंदी अक्षर मान्य हैं"
+      );
+
+    temp.universityCode =
+      validateRequired(form.universityCode) ||
+      validateRegex(
+        form.universityCode,
+        ENGLISH_WITH_NUMBERS,
+        "Only English letters & numbers allowed"
+      );
+
+    temp.universityShortName =
+      validateRequired(form.universityShortName) ||
+      validateRegex(
+        form.universityShortName,
+        ENGLISH_TEXT_ONLY,
+        "Only English letters allowed"
+      );
+
+    temp.universityEmail =
+      validateRequired(form.universityEmail) ||
+      validateRegex(
+        form.universityEmail,
+        EMAIL_REGEX,
+        "Invalid email format"
+      );
+
+    temp.contactNumber =
+      validateRequired(form.contactNumber) ||
+      validateRegex(
+        form.contactNumber,
+        PHONE_REGEX,
+        "Invalid mobile number"
+      );
+    temp.contactPerson =
+      validateRequired(form.contactPerson) ||
+      validateRegex(
+        form.contactPerson,
+        ENGLISH_TEXT_ONLY,
+        "Only English letters allowed"
+      );
+    temp.universityWebsiteUrl =
+      validateRegex(
+        form.universityWebsiteUrl,
+        URL_REGEX,
+        "Invalid website URL"
+      );
+    temp.registrationNumber =
+      validateRequired(form.registrationNumber) ||
+      validateRegex(
+        form.registrationNumber,
+        NUMBERS_ONLY,
+        "Only numbers allowed"
+      );
+
+    temp.establishYear =
+      validateRequired(form.establishYear) ||
+      validateRegex(form.establishYear, NUMBERS_ONLY, "Invalid year");
+
+
+    setErrors(temp);
+
+    // agar koi error hai to false
+    return Object.values(temp).every(x => x === "");
+  };
+  const validateLogo = (file) => {
+    if (!file) return "";
+
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      return "Only JPG, PNG or WEBP images are allowed";
+    }
+
+    if (file.size > MAX_LOGO_SIZE) {
+      return "Logo size must be less than 500 KB";
+    }
+
+    return "";
+  };
+
+  const blockNumbersKeys = (e, value) => {
+    const allowedKeys = [
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+      "Home",
+      "End"
+    ];
+
+    if (allowedKeys.includes(e.key)) return;
+
+    // Allow digits only
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+
+    // First digit must be 6
+    if (value.length === 0 && e.key !== "6") {
+      e.preventDefault();
+    }
+  };
+  const currentYear = new Date().getFullYear();
+
+  const establishYears = Array.from(
+    { length: currentYear - 1700 + 1 },
+    (_, i) => currentYear - i
+  );
+
   /* ================= CREATE ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (!validateCreateForm()) {
+      Swal.fire("Validation Error", "Please fix form errors", "warning");
+      return;
+    }
     if (!form.universityNameEng || !form.universityCode || !form.universityShortName || !form.universityNameHindi) {
       Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
       return;
@@ -196,6 +340,32 @@ const ManageUniversities = () => {
   };
 
   /* ================= EDIT ================= */
+  const validateEditForm = () => {
+    let temp = {};
+
+    temp.universityNameEng =
+      validateRequired(editForm.universityNameEng) ||
+      validateRegex(editForm.universityNameEng, ENGLISH_TEXT_ONLY, "Only English letters allowed");
+
+    temp.universityNameHindi =
+      validateRequired(editForm.universityNameHindi) ||
+      validateRegex(editForm.universityNameHindi, HINDI_TEXT_ONLY, "केवल हिंदी अक्षर मान्य हैं");
+
+    temp.universityCode =
+      validateRequired(editForm.universityCode) ||
+      validateRegex(editForm.universityCode, ENGLISH_WITH_NUMBERS, "Only English letters & numbers allowed");
+
+    temp.universityEmail =
+      validateRequired(form.universityEmail) ||
+      validateRegex(editForm.universityEmail, EMAIL_REGEX, "Invalid email");
+
+    temp.contactNumber =
+      validateRegex(editForm.contactNumber, PHONE_REGEX, "Invalid mobile");
+
+    setEditErrors(temp);
+    return Object.values(temp).every(x => x === "");
+  };
+
   const openEditModal = async (u) => {
     setEditId(u._id);
     setEditForm({ ...u });
@@ -209,6 +379,11 @@ const ManageUniversities = () => {
   };
 
   const handleUpdate = async () => {
+    if (!validateEditForm()) {
+      Swal.fire("Validation Error", "Please fix form errors", "warning");
+      return;
+    }
+
     if (!editForm.universityNameEng || !editForm.universityCode || !editForm.universityShortName || !editForm.universityNameHindi) {
       Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
       return;
@@ -285,8 +460,22 @@ const ManageUniversities = () => {
                       <Label>University Name (English)</Label>
                       <Input
                         value={form.universityNameEng}
-                        onChange={e => setForm({ ...form, universityNameEng: e.target.value })}
+                        name="universityNameEng"
+                        invalid={!!errors.universityNameEng}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityNameEng: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityNameEng:
+                              validateRequired(value) ||
+                              validateRegex(value, ENGLISH_TEXT_ONLY, "Only English letters allowed")
+                          }));
+                        }}
                       />
+                      {errors.universityNameEng && (
+                        <small className="text-danger">{errors.universityNameEng}</small>
+                      )}
                     </FormGroup>
                   </Col>
                   <Col xs="4">
@@ -294,8 +483,22 @@ const ManageUniversities = () => {
                       <Label>University Name (Hindi)</Label>
                       <Input
                         value={form.universityNameHindi}
-                        onChange={e => setForm({ ...form, universityNameHindi: e.target.value })}
+                        name="universityNameHindi"
+                        invalid={!!errors.universityNameHindi}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityNameHindi: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityNameHindi:
+                              validateRequired(value) ||
+                              validateRegex(value, HINDI_TEXT_ONLY, "केवल हिंदी अक्षर मान्य हैं")
+                          }));
+                        }}
                       />
+                      {errors.universityNameHindi && (
+                        <small className="text-danger">{errors.universityNameHindi}</small>
+                      )}
                     </FormGroup>
                   </Col>
                   <Col xs="4">
@@ -303,8 +506,23 @@ const ManageUniversities = () => {
                       <Label>University Code</Label>
                       <Input
                         value={form.universityCode}
-                        onChange={e => setForm({ ...form, universityCode: e.target.value })}
+                        name="universityCode"
+                        invalid={!!errors.universityCode}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityCode: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityCode:
+                              validateRequired(value) ||
+                              validateRegex(value, ENGLISH_WITH_NUMBERS, "Only English letters and Numbers are allowed")
+                          }));
+                        }}
+
                       />
+                      {errors.universityCode && (
+                        <small className="text-danger">{errors.universityCode}</small>
+                      )}
                     </FormGroup>
 
                   </Col>
@@ -315,8 +533,21 @@ const ManageUniversities = () => {
                       <Label>Short Name</Label>
                       <Input
                         value={form.universityShortName}
-                        onChange={e => setForm({ ...form, universityShortName: e.target.value })}
+                        invalid={!!errors.universityShortName}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityShortName: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityShortName:
+                              validateRequired(value) ||
+                              validateRegex(value, ENGLISH_TEXT_ONLY, "Only English letters allowed")
+                          }));
+                        }}
                       />
+                      {errors.universityShortName && (
+                        <small className="text-danger">{errors.universityShortName}</small>
+                      )}
                     </FormGroup>
                   </Col>
                   <Col xs="4">
@@ -324,20 +555,50 @@ const ManageUniversities = () => {
                       <Label>Registration Number</Label>
                       <Input
                         value={form.registrationNumber}
-                        onChange={e => setForm({ ...form, registrationNumber: e.target.value })}
+                        invalid={!!errors.registrationNumber}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, registrationNumber: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            registrationNumber:
+                              validateRequired(value) ||
+                              validateRegex(value, NUMBERS_ONLY, "Only numbers allowed")
+                          }));
+                        }}
+                        onKeyDown={blockNumbersKeys}
+                        maxLength={12}
                       />
+                      {errors.registrationNumber && (
+                        <small className="text-danger">{errors.registrationNumber}</small>
+                      )}
                     </FormGroup>
                   </Col>
                   <Col xs="4">
                     <FormGroup className="mb-3">
                       <Label>Establish Year</Label>
                       <Input
-                        type="number"
+                        type="select"
                         value={form.establishYear}
-                        onChange={e => setForm({ ...form, establishYear: e.target.value })}
-                      />
+                        invalid={!!errors.establishYear}
+                        onChange={e =>
+                          setForm({ ...form, establishYear: e.target.value })
+                        }
+                      >
+                        <option value="">Select Year</option>
+                        {establishYears.map(year => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </Input>
+
+                      {errors.establishYear && (
+                        <small className="text-danger">{errors.establishYear}</small>
+                      )}
                     </FormGroup>
                   </Col>
+
                 </Row>
 
                 {/* CONTACT INFO */}
@@ -347,30 +608,79 @@ const ManageUniversities = () => {
                       <Label>Email</Label>
                       <Input
                         type="email"
+                        name="email"
                         value={form.universityEmail}
-                        onChange={e => setForm({ ...form, universityEmail: e.target.value })}
+                        invalid={!!errors.universityEmail}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityEmail: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityEmail: validateRegex(
+                              value,
+                              EMAIL_REGEX,
+                              "Invalid email address"
+                            )
+                          }));
+                        }}
                       />
+                      {errors.universityEmail && (
+                        <small className="text-danger">{errors.universityEmail}</small>
+                      )}
                     </FormGroup>
                   </Col>
+
                   <Col xs="4">
                     <FormGroup className="mb-3">
                       <Label>Contact Person</Label>
                       <Input
                         value={form.contactPerson}
-                        onChange={e => setForm({ ...form, contactPerson: e.target.value })}
+                        invalid={!!errors.contactPerson}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, contactPerson: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            contactPerson: validateRegex(
+                              value,
+                              ENGLISH_TEXT_ONLY,
+                              "Only English letters allowed"
+                            )
+                          }));
+                        }}
                       />
+                      {errors.contactPerson && (
+                        <small className="text-danger">{errors.contactPerson}</small>
+                      )}
                     </FormGroup>
                   </Col>
+
                   <Col xs="4">
                     <FormGroup className="mb-3">
                       <Label>Contact Number</Label>
                       <Input
                         value={form.contactNumber}
-                        maxLength="10"
-                        onChange={e => setForm({ ...form, contactNumber: e.target.value })}
+                        maxLength={10}
+                        invalid={!!errors.contactNumber}
+                        onChange={e => {
+                          const value = e.target.value.replace(/\D/g, ""); // digits only
+                          setForm({ ...form, contactNumber: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            contactNumber: validateRegex(
+                              value,
+                              PHONE_REGEX,
+                              "Enter valid 10 digit mobile number"
+                            )
+                          }));
+                        }}
                       />
+                      {errors.contactNumber && (
+                        <small className="text-danger">{errors.contactNumber}</small>
+                      )}
                     </FormGroup>
                   </Col>
+
                 </Row>
                 {/* CLASSIFICATION */}
                 <Row>
@@ -380,12 +690,24 @@ const ManageUniversities = () => {
                       <Input
                         type="select"
                         value={form.universityType}
-                        onChange={e => setForm({ ...form, universityType: e.target.value })}
+                        // onChange={e => setForm({ ...form, universityType: e.target.value })}
+                        invalid={!!errors.universityType}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityType: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityType: validateRequired(value)
+                          }));
+                        }}
                       >
                         <option value="STATE">STATE</option>
                         <option value="PRIVATE">PRIVATE</option>
                         <option value="CENTRAL">CENTRAL</option>
                       </Input>
+                      {errors.universityType && (
+                        <small className="text-danger">{errors.universityType}</small>
+                      )}
                     </FormGroup>
                   </Col>
                   <Col xs="4">
@@ -470,8 +792,22 @@ const ManageUniversities = () => {
                       <Input
                         type="url"
                         value={form.universityWebsiteUrl}
-                        onChange={e => setForm({ ...form, universityWebsiteUrl: e.target.value })}
+                        // onChange={e => setForm({ ...form, universityWebsiteUrl: e.target.value })}
+                        invalid={!!errors.universityWebsiteUrl}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, universityWebsiteUrl: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            universityWebsiteUrl:
+                              validateRequired(value) ||
+                              validateRegex(value, URL_REGEX, "Invalid website URL")
+                          }));
+                        }}
                       />
+                      {errors.universityWebsiteUrl && (
+                        <small className="text-danger">{errors.universityWebsiteUrl}</small>
+                      )}
                     </FormGroup>
                   </Col>
 
@@ -484,6 +820,40 @@ const ManageUniversities = () => {
                 <Row>
                   <Col xs="4">
                     <FormGroup className="mb-3">
+                      <Label>University Logo </Label><br/>
+                      <small className="text-muted">
+                        Allowed formats: JPG, PNG (Max 500 KB)
+                      </small>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        invalid={!!errors.universityLogo}
+                        onChange={e => {
+                          const file = e.target.files[0];
+                          const error = validateLogo(file);
+
+                          if (error) {
+                            setLogo(null);
+                            e.target.value = ""; // reset file input
+                          } else {
+                            setLogo(file);
+                          }
+
+                          setErrors(prev => ({
+                            ...prev,
+                            universityLogo: error
+                          }));
+                        }}
+                      />
+                      {errors.universityLogo && (
+                        <small className="text-danger">{errors.universityLogo}</small>
+                      )}
+                      
+                    </FormGroup>
+                  </Col>
+
+                  {/* <Col xs="4">
+                    <FormGroup className="mb-3">
                       <Label>University Logo</Label>
                       <Input
                         type="file"
@@ -491,29 +861,61 @@ const ManageUniversities = () => {
                         onChange={e => setLogo(e.target.files[0])}
                       />
                     </FormGroup>
-                  </Col>
+                  </Col> */}
+                 <Col xs="4">
+  <FormGroup className="mb-3">
+    <Label>Address</Label>
+    <Input
+      type="textarea"
+      rows="2"
+      value={form.universityAddress}
+      invalid={!!errors.universityAddress}
+      onChange={e => {
+        const value = e.target.value;
+        setForm({ ...form, universityAddress: value });
+        setErrors(prev => ({
+          ...prev,
+          universityAddress: validateRegex(
+            value,
+            ENGLISH_WITH_NUMBERS,
+            "Only English letters and numbers allowed"
+          )
+        }));
+      }}
+    />
+    {errors.universityAddress && (
+      <small className="text-danger">{errors.universityAddress}</small>
+    )}
+  </FormGroup>
+</Col>
+
                   <Col xs="4">
-                    <FormGroup className="mb-3">
-                      <Label>Address</Label>
-                      <Input
-                        type="textarea"
-                        rows="2"
-                        value={form.universityAddress}
-                        onChange={e => setForm({ ...form, universityAddress: e.target.value })}
-                      />
-                    </FormGroup>
-                  </Col>
-                  <Col xs="4">
-                    <FormGroup className="mb-4">
-                      <Label>Description</Label>
-                      <Input
-                        type="textarea"
-                        rows="3"
-                        value={form.universityDescription}
-                        onChange={e => setForm({ ...form, universityDescription: e.target.value })}
-                      />
-                    </FormGroup>
-                  </Col>
+  <FormGroup className="mb-4">
+    <Label>Description</Label>
+    <Input
+      type="textarea"
+      rows="3"
+      value={form.universityDescription}
+      invalid={!!errors.universityDescription}
+      onChange={e => {
+        const value = e.target.value;
+        setForm({ ...form, universityDescription: value });
+        setErrors(prev => ({
+          ...prev,
+          universityDescription: validateRegex(
+            value,
+            ENGLISH_WITH_NUMBERS,
+            "Only English letters and numbers allowed"
+          )
+        }));
+      }}
+    />
+    {errors.universityDescription && (
+      <small className="text-danger">{errors.universityDescription}</small>
+    )}
+  </FormGroup>
+</Col>
+
                 </Row>
 
                 <Row className="justify-content-center mt-4">
