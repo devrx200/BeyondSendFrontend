@@ -90,11 +90,40 @@ const AnnouncementsManagement = () => {
   };
 
   /* ================= FETCH LIST ================= */
+  // const fetchAnnouncements = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.get(`${API}/api/get-announcements-list`);
+  //     setAnnouncements(res.data.data || []);
+  //   } catch (err) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: isHindi ? "त्रुटि" : "Error",
+  //       text: err.response?.data?.message || "Failed to load announcements"
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/api/get-announcements-list`);
-      setAnnouncements(res.data.data || []);
+
+      const list = (res.data.data || []).map((item) => ({
+        ...item,
+        _id: item.id || item._id,
+        fromDate: item.fromDate ? item.fromDate.split("T")[0] : "",
+        expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
+        categoryId: item.categoryId || null,
+        isActive: item.isActive !== false,
+        isExternal: !!item.isExternal,
+        isNew: !!item.isNew,
+        isSchemes: !!item.isSchemes,
+        openInNewTab: !!item.openInNewTab
+      }));
+
+      setAnnouncements(list);
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -130,68 +159,40 @@ const AnnouncementsManagement = () => {
 
   /* ================= EDIT ================= */
   const handleEdit = (item) => {
-    try {    
-      const itemId = item?._id || item?.id;
-      if (!itemId) {
-        console.error("No ID found in item:", item);
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: "Cannot edit: Item ID not found"
-        });
-        return;
-      }
+    if (!item) return;
+    console.log(item, "getting this data");
+    const itemId = item._id;
+    if (!itemId) return;
 
-      // Helper function to safely extract date string (YYYY-MM-DD format)
-      const parseDate = (dateValue) => {
-        if (!dateValue) return "";
-        try {
-          // If it's already a string in YYYY-MM-DD format, return as is
-          if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}/)) {
-            return dateValue.slice(0, 10);
-          }
-          // Otherwise, convert to ISO string and extract date part
-          const date = new Date(dateValue);
-          if (isNaN(date.getTime())) return "";
-          return date.toISOString().slice(0, 10);
-        } catch (e) {
-          console.error("Date parse error:", e);
-          return "";
-        }
-      };
+    setEditingId(itemId);
 
-      setEditingId(itemId);
-      setFormData({
-        titleEn: item?.titleEn ?? "",
-        titleHi: item?.titleHi ?? "",
-        slug: item?.slug ?? "",
-        shortDescriptionEn: item?.shortDescriptionEn ?? "",
-        shortDescriptionHi: item?.shortDescriptionHi ?? "",
-        descriptionEn: item?.descriptionEn ?? "",
-        descriptionHi: item?.descriptionHi ?? "",
-        categoryId: item?.categoryId?._id ?? item?.categoryId ?? "",
-        image: null,
-        fromDate: parseDate(item?.fromDate),
-        expiryDate: parseDate(item?.expiryDate),
-        isExternal: item?.isExternal ?? false,
-        openInNewTab: item?.openInNewTab ?? false,
-        link: item?.link ?? "",
-        displayOrder: item?.displayOrder ?? 0,
-        isNew: item?.isNew ?? false,
-        isSchemes: item?.isSchemes ?? false,
-        isActive: item?.isActive ?? true
-      });    
-      console.log("Form data set successfully");
-      setModal(true);
-    } catch (error) {
-      console.error("Error in handleEdit:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to load announcement data: " + error.message
-      });
-    }
+    setFormData({
+      titleEn: item.titleEn || "",
+      titleHi: item.titleHi || "",
+      slug: item.slug || "",
+      shortDescriptionEn: item.shortDescriptionEn || "",
+      shortDescriptionHi: item.shortDescriptionHi || "",
+      descriptionEn: item.descriptionEn || "",
+      descriptionHi: item.descriptionHi || "",
+      categoryId: item.categoryId?._id || "",
+      image: null,
+      fromDate: item.fromDate,
+      expiryDate: item.expiryDate,
+      isExternal: !!item.isExternal,
+      openInNewTab: !!item.openInNewTab,
+      link: item.link || "",
+      displayOrder:
+        item.displayOrder !== undefined && item.displayOrder !== null
+          ? String(item.displayOrder)
+          : "",
+      isNew: !!item.isNew,
+      isSchemes: !!item.isSchemes,
+      isActive: item.isActive !== false
+    });
+
+    setModal(true);
   };
+
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
@@ -233,28 +234,30 @@ const AnnouncementsManagement = () => {
     setSubmitting(true);
 
     const fd = new FormData();
-    
+
     // Add all fields except image (handle separately)
     Object.keys(formData).forEach((key) => {
-      if (key === 'image') return; // Skip image, handle below
-      
+      if (key === "image") return;
+
       const value = formData[key];
-      
-      // Skip null, undefined, or empty string values
-      if (value === null || value === undefined || value === '') return;
-      
-      // Convert booleans to string 'true'/'false' for FormData
-      if (typeof value === 'boolean') {
+
+      if (value === null || value === undefined) return;
+
+      if (typeof value === "boolean") {
         fd.append(key, value.toString());
       } else {
         fd.append(key, value);
       }
+
     });
+
 
     // Only add image if a new file was selected
     if (formData.image && formData.image instanceof File) {
       fd.append('image', formData.image);
     }
+
+
 
     // Debug logging
     console.log("=== FORM SUBMISSION DEBUG ===");
@@ -426,6 +429,7 @@ const AnnouncementsManagement = () => {
                     </Label>
                     <Input
                       required
+                      name="titleEn"
                       value={formData.titleEn}
                       onChange={(e) =>
                         setFormData({
@@ -447,6 +451,7 @@ const AnnouncementsManagement = () => {
                     <Input
                       required
                       value={formData.titleHi}
+                      name="titleHi"
                       onChange={(e) => setFormData({ ...formData, titleHi: e.target.value })}
                       placeholder="हिंदी शीर्षक दर्ज करें"
                     />
@@ -458,7 +463,7 @@ const AnnouncementsManagement = () => {
                 <Col md={6}>
                   <FormGroup>
                     <Label className="fw-semibold">Slug (Auto-generated)</Label>
-                    <Input value={formData.slug} disabled className="bg-light" />
+                    <Input name="slug" value={formData.slug} disabled className="bg-light" />
                   </FormGroup>
                 </Col>
 
@@ -476,7 +481,7 @@ const AnnouncementsManagement = () => {
                       <option value="">-- Select Category --</option>
                       {categories.map((cat) => (
                         <option key={cat._id || cat.id} value={cat._id || cat.id}>
-                          {cat.nameEn || cat.name}
+                          {cat.categoryNameEn} ({cat.categoryNameHi})
                         </option>
                       ))}
                     </Input>
@@ -546,6 +551,7 @@ const AnnouncementsManagement = () => {
                   <ReactQuill
                     theme="snow"
                     value={formData.descriptionHi}
+                    name="descriptionHi"
                     onChange={(value) => setFormData({ ...formData, descriptionHi: value })}
                     modules={quillModules}
                     placeholder="हिंदी में विस्तृत विवरण लिखें..."
@@ -595,6 +601,7 @@ const AnnouncementsManagement = () => {
                     </Label>
                     <Input
                       type="date"
+                      name="fromDate"
                       required
                       value={formData.fromDate}
                       onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
@@ -610,6 +617,7 @@ const AnnouncementsManagement = () => {
                     <Input
                       type="date"
                       required
+                      name="expiryDate"
                       value={formData.expiryDate}
                       onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                     />
@@ -623,8 +631,12 @@ const AnnouncementsManagement = () => {
                       type="number"
                       min="0"
                       value={formData.displayOrder}
+                      name="displayOrder"
                       onChange={(e) =>
-                        setFormData({ ...formData, displayOrder: parseInt(e.target.value) || 0 })
+                        setFormData({
+                          ...formData,
+                          displayOrder: e.target.value
+                        })
                       }
                     />
                     <small className="text-muted">Lower numbers appear first</small>
