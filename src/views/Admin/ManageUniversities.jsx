@@ -295,43 +295,93 @@ const ManageUniversities = () => {
   );
 
   /* ================= CREATE ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateCreateForm()) {
-      Swal.fire("Validation Error", "Please fix form errors", "warning");
-      return;
-    }
-    if (!form.universityNameEng || !form.universityCode || !form.universityShortName || !form.universityNameHindi) {
-      Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
-      return;
-    }
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!validateCreateForm()) {
+  //     Swal.fire("Validation Error", "Please fix form errors", "warning");
+  //     return;
+  //   }
+  //   if (!form.universityNameEng || !form.universityCode || !form.universityShortName || !form.universityNameHindi) {
+  //     Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
+  //     return;
+  //   }
 
-    const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => {
-      if (v !== "" && v !== null && v !== undefined) {
-        fd.append(k, v);
-      }
-    });
-    if (logo) fd.append("universityLogo", logo);
+  //   const fd = new FormData();
+  //   Object.entries(form).forEach(([k, v]) => {
+  //     if (v !== "" && v !== null && v !== undefined) {
+  //       fd.append(k, v);
+  //     }
+  //   });
+  //   if (logo) fd.append("universityLogo", logo);
 
-    try {
-      setBtnLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/create-university`,
-        fd,
-        multipartHeaders
-      );
-      Swal.fire("Success", res.data.message, "success");
+  //   try {
+  //     setBtnLoading(true);
+  //     const res = await axios.post(
+  //       `${API_URL}/api/create-university`,
+  //       fd,
+  //       multipartHeaders
+  //     );
+  //     Swal.fire("Success", res.data.message, "success");
+  //     setForm(initialForm);
+  //     setLogo(null);
+  //     document.getElementById("logoInput").value = "";
+  //     fetchUniversities();
+  //   } catch (err) {
+  //     Swal.fire("Error", err.response?.data?.message || "Create failed", "error");
+  //   } finally {
+  //     setBtnLoading(false);
+  //   }
+  // };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  // 1️⃣ Frontend validation
+  if (!validateCreateForm()) {
+    Swal.fire("Validation Error", "Please fix form errors", "warning");
+    return;
+  }
+
+  const fd = new FormData();
+  Object.entries(form).forEach(([k, v]) => {
+    if (v !== "" && v !== null && v !== undefined) {
+      fd.append(k, v);
+    }
+  });
+
+  if (logo) {
+    fd.append("universityLogo", logo);
+  }
+
+  try {
+    setBtnLoading(true);
+
+    const res = await axios.post(
+      `${API_URL}/api/create-university`,
+      fd,
+      multipartHeaders
+    );
+
+    // ✅ IMPORTANT FIX
+    if (res.data?.success) {
+      Swal.fire("Success", res.data.message || "University created", "success");
       setForm(initialForm);
       setLogo(null);
-      document.getElementById("logoInput").value = "";
+      setErrors({});
       fetchUniversities();
-    } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Create failed", "error");
-    } finally {
-      setBtnLoading(false);
+    } else {
+      Swal.fire("Error", res.data?.message || "Create failed", "error");
     }
-  };
+
+  } catch (err) {
+    Swal.fire(
+      "Error",
+      err.response?.data?.message || "Server error",
+      "error"
+    );
+  } finally {
+    setBtnLoading(false);
+  }
+};
 
   /* ================= VIEW ================= */
   const openViewModal = (u) => {
@@ -379,10 +429,10 @@ const ManageUniversities = () => {
   };
 
   const handleUpdate = async () => {
-    if (!validateEditForm()) {
-      Swal.fire("Validation Error", "Please fix form errors", "warning");
-      return;
-    }
+    // if (!validateEditForm()) {
+    //   Swal.fire("Validation Error", "Please fix form errors", "warning");
+    //   return;
+    // }
 
     if (!editForm.universityNameEng || !editForm.universityCode || !editForm.universityShortName || !editForm.universityNameHindi) {
       Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
@@ -581,9 +631,19 @@ const ManageUniversities = () => {
                         type="select"
                         value={form.establishYear}
                         invalid={!!errors.establishYear}
-                        onChange={e =>
-                          setForm({ ...form, establishYear: e.target.value })
-                        }
+                        // onChange={e =>
+                        //   setForm({ ...form, establishYear: e.target.value })
+                        // }
+                         onChange={e => {
+                          const value = e.target.value;
+                          setForm({ ...form, establishYear: value });
+                          setErrors(prev => ({
+                            ...prev,
+                            establishYear:
+                              validateRequired(value) 
+                              // validateRegex(value, NUMBERS_ONLY, "Only numbers allowed")
+                          }));
+                        }}
                       >
                         <option value="">Select Year</option>
                         {establishYears.map(year => (
