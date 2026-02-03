@@ -131,25 +131,21 @@ const adminMenu = [
         path: "/admin/new-updates",
         label: { en: "New Updates", hi: "नवीन सूचना" }
       },
-      {
-        id: "news-list",
-        icon: FaNewspaper,
-        path: "/admin/news",
-        label: { en: "News", hi: "समाचार" }
-      },
+
       {
         id: "announcements",
         icon: FaBullhorn,
         path: "/admin/announcements",
         label: { en: "Announcements", hi: "घोषणाएं" }
       },
-      {
-        id: "notifications",
-        icon: FaBell,
-        path: "/admin/notifications",
-        label: { en: "Notifications", hi: "सूचनाएं" }
-      }
+
     ]
+  },
+  {
+    id: "page-creator-management",
+    icon: FaListAlt,
+    path: "/admin/page-creator-management",
+    label: { en: "Page Creator ", hi: "पृष्ठ निर्माण " }
   },
   {
     id: "gallery",

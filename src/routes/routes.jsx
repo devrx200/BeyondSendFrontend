@@ -36,7 +36,6 @@ import AdminLogin from "../views/Admin/AdminLogin";
 import AdminDashboard from "../views/Admin/AdminDashboard";
 import MenuManagement from "../views/Admin/MenuManagement";
 import SliderManagement from "../views/Admin/SliderManagement";
-import NewsManagement from "../views/Admin/NewsManagement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
@@ -160,7 +159,6 @@ const AppRoutes = () => {
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="news" element={<NewsManagement />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="content-uploader" element={<ContentUploaderForm />} />
           <Route path="notifications" element={<NotificationsManagement />} />
@@ -185,8 +183,6 @@ const AppRoutes = () => {
           <Route path="page-creator-management" element={<PageCreatorManagement />} />
         </Route>
       </Route>
-
-
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
     </Routes>
   );
