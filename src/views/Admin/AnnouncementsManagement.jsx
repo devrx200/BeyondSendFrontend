@@ -35,6 +35,7 @@ const AnnouncementsManagement = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [usedOrders, setUsedOrders] = useState([]);
 
   const initialState = {
     titleEn: "",
@@ -124,6 +125,11 @@ const AnnouncementsManagement = () => {
       }));
 
       setAnnouncements(list);
+      const orders = list
+        .map((a) => Number(a.displayOrder))
+        .filter((o) => !isNaN(o));
+
+      setUsedOrders(orders);
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -134,16 +140,27 @@ const AnnouncementsManagement = () => {
       setLoading(false);
     }
   };
-const [categories, setCategories] = useState([]);
-const fetchCategories = async () => {
-  const res = await axios.get(`${API}/api/get-categories`);
-  setCategories(res.data.data);
-};
+
 
   useEffect(() => {
     fetchAnnouncements();
     fetchCategories();
   }, []);
+
+ const getNextAvailableOrder = (requested, usedOrders) => {
+  let order = requested;
+  while (usedOrders.includes(order)) order++;
+  return order;
+};
+
+useEffect(() => {
+  const schemeOrders = announcements
+    .filter(a => a.isSchemes === formData.isSchemes)
+    .map(a => Number(a.displayOrder))
+    .filter(Boolean);
+
+  setUsedOrders(schemeOrders);
+}, [formData.isSchemes, announcements]);
 
   /* ================= MODAL ================= */
   const toggleModal = () => {
@@ -634,17 +651,32 @@ const fetchCategories = async () => {
                     <Label className="fw-semibold">Display Order</Label>
                     <Input
                       type="number"
-                      min="0"
+                      min="1"
                       value={formData.displayOrder}
                       name="displayOrder"
-                      onChange={(e) =>
+                      placeholder="Auto"
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+
+                        if (!val) {
+                          setFormData({ ...formData, displayOrder: "" });
+                          return;
+                        }
+
+                        const nextOrder = getNextAvailableOrder(val, usedOrders);
+
                         setFormData({
                           ...formData,
-                          displayOrder: e.target.value
-                        })
-                      }
+                          displayOrder: String(nextOrder)
+                        });
+                      }}
                     />
-                    <small className="text-muted">Lower numbers appear first</small>
+
+                    <small className="text-muted">
+                      If entered order exists, next available order is auto-selected
+                    </small>
+
+                    {/* <small className="text-muted">Lower numbers appear first</small> */}
                   </FormGroup>
                 </Col>
               </Row>
