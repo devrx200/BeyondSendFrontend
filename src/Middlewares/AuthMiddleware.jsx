@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AuthMiddleware = ({ allowedRoles = [] }) => {
   const navigate = useNavigate();
   const [isAuthorized, setIsAuthorized] = useState(null);
-  const alertShownRef = useRef(false); 
+  const alertShownRef = useRef(false);
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
@@ -21,7 +21,7 @@ const AuthMiddleware = ({ allowedRoles = [] }) => {
       try {
         const res = await axios.post(
           `${API_URL}/api/check-auth-token`,
-          {token}, 
+          { token },
         );
 
         if (res.status === 200 && res.data?.success) {
@@ -49,7 +49,7 @@ const AuthMiddleware = ({ allowedRoles = [] }) => {
 
     validateToken();
 
-  }, []); 
+  }, []);
 
 
   const denyAccess = (message) => {
@@ -69,8 +69,8 @@ const AuthMiddleware = ({ allowedRoles = [] }) => {
       navigate("/admin/login", { replace: true });
     });
   };
-  
-  if (isAuthorized === null) return null; 
+
+  if (isAuthorized === null) return null;
 
   if (!isAuthorized) return null;
 

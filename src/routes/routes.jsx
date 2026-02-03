@@ -26,9 +26,9 @@ import Downloads from "../views/pages/Downloads";
 import NoticeBoard from "../views/pages/NoticeBoard";
 import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
-import FeedbackForm from "../views/pages/FeedbackForm";  
+import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
-import MyPage from "
+
 
 
 /* ADMIN */
@@ -148,8 +148,8 @@ const AppRoutes = () => {
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
-      <Route path="/page" element={<MainLayout><MyPage /></MainLayout>} />
-     
+      {/* <Route path="/page" element={<MainLayout><MyPage /></MainLayout>} /> */}
+
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>
