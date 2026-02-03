@@ -28,6 +28,8 @@ import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";  
 import AdminFeedbackList from "../views/Admin/FeedbackList";
+import MyPage from "
+
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -47,7 +49,7 @@ import AdminEducationStats from "../views/Admin/AdminEducationStats";
 import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
-
+import PageCreatorManagement from "../views/Admin/PageCreatorMangagement.jsx";
 
 
 /* MIDDLEWARE */
@@ -146,6 +148,7 @@ const AppRoutes = () => {
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+      <Route path="/page" element={<MainLayout><MyPage /></MainLayout>} />
      
 
       {/* ADMIN */}
@@ -179,6 +182,7 @@ const AppRoutes = () => {
           <Route path="feedbacks" element={<AdminFeedbackList />} />
           <Route path="users-management" element={<AdminUserManagement />} />
           <Route path="footer-section-manager" element={<FooterSection />} />
+          <Route path="page-creator-management" element={<PageCreatorManagement />} />
         </Route>
       </Route>
 
