@@ -2,7 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import bgImg from "../assets/page-bg.svg";
-
+import { jwtDecode } from "jwt-decode";
+const API_URL = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
 /* LAYOUTS */
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -28,7 +30,7 @@ import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";  
 import AdminFeedbackList from "../views/Admin/FeedbackList";
-
+import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
 import AdminDashboard from "../views/Admin/AdminDashboard";
@@ -47,7 +49,7 @@ import AdminEducationStats from "../views/Admin/AdminEducationStats";
 import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
-
+import SchemesDetails from "../views/pages/SchemesDetails";
 
 
 /* MIDDLEWARE */
@@ -59,7 +61,8 @@ import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
 import CollegeManagement from "../views/Admin/CollegeManagement";
 import FooterSection from "../views/Admin/footerSectionManager";
-const API_URL = import.meta.env.VITE_API_URL;
+
+
 
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
@@ -146,6 +149,9 @@ const AppRoutes = () => {
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+      <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
+      <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
+
      
 
       {/* ADMIN */}
@@ -181,8 +187,6 @@ const AppRoutes = () => {
           <Route path="footer-section-manager" element={<FooterSection />} />
         </Route>
       </Route>
-
-
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
     </Routes>
   );

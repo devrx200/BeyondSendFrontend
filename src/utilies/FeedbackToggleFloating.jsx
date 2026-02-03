@@ -1,27 +1,28 @@
 import { Button } from "reactstrap";
-import { FaLanguage } from "react-icons/fa";
-import { useLanguage } from "../contexts/LanguageContext";
+import { FaCommentDots } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
-const LanguageToggleFloating = () => {
-  const { isHindi, toggleLanguage } = useLanguage();
+const FeedbackToggleFloating = () => {
+  const navigate = useNavigate();
 
   return (
     <div
       style={{
         position: "fixed",
-        right: "15px",
+        left: "15px",
         bottom: "20px",
         zIndex: 9999
       }}
     >
       <Button
-        color="primary"
-        onClick={toggleLanguage}
+        color="warning"
+        onClick={() => navigate("/feedback")}
         className="d-flex align-items-center gap-2 shadow"
         style={{
           borderRadius: "30px",
           padding: "5px 14px",
           fontSize: "14px",
+          fweight: "bold",
           transition: "all 0.2s ease"
         }}
         onMouseEnter={(e) =>
@@ -31,13 +32,13 @@ const LanguageToggleFloating = () => {
           (e.currentTarget.style.transform = "scale(1)")
         }
       >
-        <FaLanguage size={16} />
-        <span className="d-none d-md-inline">
-          {isHindi ? "English" : "हिंदी"}
+        <FaCommentDots size={16} />
+        <span className="d-none d-md-inline fw-bold">
+          Feedback
         </span>
       </Button>
     </div>
   );
 };
 
-export default LanguageToggleFloating;
+export default FeedbackToggleFloating;

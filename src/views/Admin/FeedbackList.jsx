@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal, ModalHeader, ModalBody } from "reactstrap";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -45,20 +46,40 @@ const AdminFeedbackList = () => {
 
   /* ------------------ Delete Feedback ------------------ */
   const deleteFeedback = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this feedback?"))
-      return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This feedback will be permanently deleted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, delete it",
+      cancelButtonText: "Cancel"
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
-      await axios.delete(
-        `${API_URL}/api/admin/feedbacks/${id}`
-      );
+      await axios.delete(`${API_URL}/api/admin/feedbacks/${id}`);
 
-      // remove from UI
+      // Update UI
       setFeedbacks((prev) =>
         prev.filter((item) => item._id !== id)
       );
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "Feedback has been deleted successfully.",
+        timer: 1500,
+        showConfirmButton: false
+      });
     } catch (error) {
-      console.error("Failed to delete feedback");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to delete feedback. Please try again."
+      });
     }
   };
 
