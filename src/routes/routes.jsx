@@ -31,6 +31,8 @@ import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
+import CeatedDynamamicPage from "";
+
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
 import AdminDashboard from "../views/Admin/AdminDashboard";
@@ -152,6 +154,10 @@ const AppRoutes = () => {
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
+
+      <Route path="/:mainSlug" element={<MainLayout><CeatedDynamamicPage /></MainLayout>} />
+      <Route path="/:mainSlug/:slug" element={<MainLayout><CeatedDynamamicPage /></MainLayout>} />
+
 
 
       {/* ADMIN */}
