@@ -2054,3 +2054,74 @@ body {
 }
 
 /* Admin Dashboard */
+
+
+
+
+/* Upload drop area */
+.upload-drop-area {
+  border: 2px dashed #ced4da;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  color: #0e2b44;
+  transition: background 0.3s;
+}
+
+.upload-drop-area:hover {
+  background: #f8f9fa;
+}
+
+/* Media card */
+.media-card {
+  border: none;
+  overflow: hidden;
+}
+
+/* Image thumb */
+.media-thumb {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.media-thumb img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover blur */
+.media-thumb:hover img {
+  filter: blur(2px);
+  transform: scale(1.05);
+}
+
+/* Overlay */
+.media-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.media-thumb:hover .media-overlay {
+  opacity: 1;
+}
+
+/* Non-image file */
+.media-file {
+  padding: 40px 10px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #447fb3;
+}

@@ -28,7 +28,7 @@ import Downloads from "../views/pages/Downloads";
 import NoticeBoard from "../views/pages/NoticeBoard";
 import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
-import FeedbackForm from "../views/pages/FeedbackForm";  
+import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 /* ADMIN */
@@ -36,7 +36,6 @@ import AdminLogin from "../views/Admin/AdminLogin";
 import AdminDashboard from "../views/Admin/AdminDashboard";
 import MenuManagement from "../views/Admin/MenuManagement";
 import SliderManagement from "../views/Admin/SliderManagement";
-import NewsManagement from "../views/Admin/NewsManagement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
 import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
@@ -50,6 +49,8 @@ import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import SchemesDetails from "../views/pages/SchemesDetails";
+import PageCreatorManagement from "../views/Admin/PageCreatorMangagement.jsx";
+
 
 
 /* MIDDLEWARE */
@@ -152,7 +153,6 @@ const AppRoutes = () => {
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
 
-     
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>
@@ -163,7 +163,6 @@ const AppRoutes = () => {
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="news" element={<NewsManagement />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="content-uploader" element={<ContentUploaderForm />} />
           <Route path="notifications" element={<NotificationsManagement />} />
@@ -185,6 +184,7 @@ const AppRoutes = () => {
           <Route path="feedbacks" element={<AdminFeedbackList />} />
           <Route path="users-management" element={<AdminUserManagement />} />
           <Route path="footer-section-manager" element={<FooterSection />} />
+          <Route path="page-creator-management" element={<PageCreatorManagement />} />
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
