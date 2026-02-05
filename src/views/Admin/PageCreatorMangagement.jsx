@@ -26,7 +26,9 @@ import {
   FaSave,
   FaTimes,
   FaFilePdf,
-  FaSearch
+  FaSearch,
+  FaFileWord,
+  FaFileExcel
 } from "react-icons/fa";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -52,12 +54,15 @@ const initialDocumentData = {
   titleEng: "",
   titleHin: "",
   fileUrl: "",
+  fileName: "",
   fileSize: "",
   fileType: "",
-  publishDate: ""
+  publishDate: "",
+  file: null
 };
 
 const PageCreatorManagement = () => {
+  // Main state
   const [list, setList] = useState([]);
   const [menuList, setMenuList] = useState([]);
   const [modal, setModal] = useState(false);
@@ -91,25 +96,40 @@ const PageCreatorManagement = () => {
         limit: limit.toString()
       });
 
-      if (searchTerm) params.append("search", searchTerm);
-      if (filterDepartment) params.append("department", filterDepartment);
-      if (filterMenuId) params.append("menuId", filterMenuId);
+      if (searchTerm?.trim()) params.append("search", searchTerm.trim());
+      if (filterDepartment?.trim()) params.append("department", filterDepartment.trim());
+      if (filterMenuId?.trim()) params.append("menuId", filterMenuId.trim());
 
-      const res = await axios.get(`${API_URL}/api/get-all-content?${params.toString()}`);
+      const response = await axios.get(
+        `${API_URL}/api/get-all-content?${params.toString()}`
+      );
 
-      if (res.data?.success) {
-        setList(res.data.data || []);
-        setCurrentPage(res.data.pagination?.currentPage || 1);
-        setTotalPages(res.data.pagination?.totalPages || 1);
-        setTotalDocuments(res.data.pagination?.totalDocuments || 0);
+      if (response.data?.success) {
+        setList(response.data.data || []);
+        setCurrentPage(response.data.pagination?.currentPage || 1);
+        setTotalPages(response.data.pagination?.totalPages || 1);
+        setTotalDocuments(response.data.pagination?.totalDocuments || 0);
+      } else {
+        throw new Error(response.data?.message || "Failed to load pages");
       }
-    } catch (err) {
-      console.error("Error loading pages:", err);
-      Swal.fire({
+    } catch (error) {
+      console.error("Error loading pages:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load pages. Please try again.";
+
+      await Swal.fire({
         icon: "error",
-        title: "Error",
-        text: err.response?.data?.message || "Failed to load pages"
+        title: "Error Loading Pages",
+        text: errorMessage,
+        confirmButtonText: "OK"
       });
+
+      setList([]);
+      setTotalPages(1);
+      setTotalDocuments(0);
     } finally {
       setLoading(false);
     }
@@ -117,10 +137,30 @@ const PageCreatorManagement = () => {
 
   const loadMenus = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/menu-list`);
-      setMenuList(res.data?.data || []);
-    } catch (err) {
-      console.error("Error loading menus:", err);
+      const response = await axios.get(`${API_URL}/api/menu-list`);
+
+      if (response.data?.success !== false) {
+        setMenuList(response.data?.data || []);
+      } else {
+        throw new Error(response.data?.message || "Failed to load menus");
+      }
+    } catch (error) {
+      console.error("Error loading menus:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load menus";
+
+      await Swal.fire({
+        icon: "warning",
+        title: "Menu Load Error",
+        text: errorMessage,
+        timer: 3000,
+        showConfirmButton: false
+      });
+
+      setMenuList([]);
     }
   };
 
@@ -133,7 +173,7 @@ const PageCreatorManagement = () => {
     loadMenus();
   }, []);
 
-  /* ================= HELPERS ================= */
+  /* ================= HELPER FUNCTIONS ================= */
   const toggleModal = () => {
     if (modal) {
       resetForm();
@@ -151,8 +191,10 @@ const PageCreatorManagement = () => {
     return text
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
   };
 
   const handleSearch = () => {
@@ -165,6 +207,18 @@ const PageCreatorManagement = () => {
     setFilterDepartment("");
     setFilterMenuId("");
     setCurrentPage(1);
+  };
+
+  const getFileIcon = (fileType) => {
+    if (!fileType) return <FaFilePdf />;
+    
+    const type = fileType.toLowerCase();
+    if (type.includes("pdf")) return <FaFilePdf className="text-danger" />;
+    if (type.includes("word") || type.includes("doc")) return <FaFileWord className="text-primary" />;
+    if (type.includes("excel") || type.includes("xls") || type.includes("sheet")) 
+      return <FaFileExcel className="text-success" />;
+    
+    return <FaFilePdf />;
   };
 
   /* ================= PAGINATION ================= */
@@ -252,60 +306,88 @@ const PageCreatorManagement = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      Swal.fire({
-        icon: "warning",
-        title: "File Too Large",
-        text: "File size should not exceed 10MB"
-      });
-      e.target.value = "";
-      return;
-    }
+    // Calculate file size
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize = file.size < 1024 * 1024
+      ? `${fileSizeKB} KB`
+      : `${fileSizeMB} MB`;
 
-    // Store file object directly
+    // Update document state
     setCurrentDocument((prev) => ({
       ...prev,
       file: file,
       fileName: file.name,
-      fileSize: (file.size / 1024).toFixed(2) + " KB",
-      fileType: file.type || file.name.split(".").pop()
+      fileSize: displaySize,
+      fileType: file.type.split("/").pop() || file.name.split(".").pop()
     }));
   };
 
   const handleAddDocument = () => {
     // Validation
-    if (
-      !currentDocument.titleEng?.trim() ||
-      !currentDocument.titleHin?.trim() ||
-      !currentDocument.publishDate
-    ) {
+    if (!currentDocument.titleEng?.trim()) {
       Swal.fire({
         icon: "warning",
-        title: "Required Fields",
-        text: "Please fill all document fields"
+        title: "Required Field",
+        text: "Please enter document title in English",
+        confirmButtonText: "OK"
       });
       return;
     }
 
-    // Always update local state - will be sent with create/update
+    if (!currentDocument.titleHin?.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Required Field",
+        text: "Please enter document title in Hindi",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
+    if (!currentDocument.publishDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Required Field",
+        text: "Please select publish date",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
+    // For new documents, file is required
+    if (editingDocIndex === null && !currentDocument.file) {
+      Swal.fire({
+        icon: "warning",
+        title: "Required Field",
+        text: "Please upload a file",
+        confirmButtonText: "OK"
+      });
+      return;
+    }
+
     const updatedDocs = [...formData.documentsUpdate];
 
     if (editingDocIndex !== null) {
-      updatedDocs[editingDocIndex] = { ...currentDocument };
+      // Update existing document
+      updatedDocs[editingDocIndex] = {
+        ...updatedDocs[editingDocIndex],
+        ...currentDocument
+      };
       Swal.fire({
         icon: "success",
         title: "Updated",
-        text: "Document updated",
+        text: "Document updated successfully",
         timer: 1500,
         showConfirmButton: false
       });
     } else {
+      // Add new document
       updatedDocs.push({ ...currentDocument });
       Swal.fire({
         icon: "success",
         title: "Added",
-        text: "Document added",
+        text: "Document added successfully",
         timer: 1500,
         showConfirmButton: false
       });
@@ -316,7 +398,11 @@ const PageCreatorManagement = () => {
   };
 
   const handleEditDocument = (index) => {
-    setCurrentDocument({ ...formData.documentsUpdate[index] });
+    const doc = formData.documentsUpdate[index];
+    setCurrentDocument({ 
+      ...doc,
+      file: null // Don't carry over file object when editing
+    });
     setEditingDocIndex(index);
     setDocumentModal(true);
   };
@@ -335,22 +421,34 @@ const PageCreatorManagement = () => {
 
     if (!result.isConfirmed) return;
 
-    // Always update local state - will be sent with update
     const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
 
     Swal.fire({
       icon: "success",
       title: "Deleted",
-      text: "Document removed",
+      text: "Document removed successfully",
       timer: 1500,
       showConfirmButton: false
     });
   };
 
-  /* ================= CRUD ================= */
+  /* ================= CRUD OPERATIONS ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
+    
+    // Format date properly
+    let formattedDate = "";
+    if (item.publishDate) {
+      try {
+        const date = new Date(item.publishDate);
+        formattedDate = date.toISOString().split("T")[0];
+      } catch (e) {
+        console.error("Date parsing error:", e);
+        formattedDate = "";
+      }
+    }
+
     setFormData({
       titleEng: item.titleEng || "",
       titleHin: item.titleHin || "",
@@ -358,10 +456,16 @@ const PageCreatorManagement = () => {
       mainSlug: item.mainSlug || "",
       menuId: item.menuId?._id || item.menuId || "",
       department: item.department || "",
-      publishDate: item.publishDate?.slice(0, 10) || "",
+      publishDate: formattedDate,
       htmlContent: item.htmlContent || "",
-      documentsUpdate: Array.isArray(item.documentsUpdate) ? item.documentsUpdate : []
+      documentsUpdate: Array.isArray(item.documentsUpdate)
+        ? item.documentsUpdate.map((doc) => ({
+            ...doc,
+            file: null // Don't include file object for existing documents
+          }))
+        : []
     });
+    
     setModal(true);
   };
 
@@ -380,132 +484,195 @@ const PageCreatorManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await axios.delete(`${API_URL}/delete-content/${id}`);
-      Swal.fire({
+      const response = await axios.delete(`${API_URL}/delete-content/${id}`);
+
+      const successMessage =
+        response.data?.message || "Page deleted successfully";
+
+      await Swal.fire({
         icon: "success",
         title: "Deleted",
-        text: "Page deleted successfully",
+        text: successMessage,
         timer: 2000,
         showConfirmButton: false
       });
-      loadData(currentPage);
-    } catch (err) {
-      console.error("Delete error:", err);
+
+      // Reload data - if current page is empty, go to previous page
+      const newTotal = totalDocuments - 1;
+      const newTotalPages = Math.ceil(newTotal / limit) || 1;
+      
+      if (currentPage > newTotalPages) {
+        setCurrentPage(newTotalPages);
+        loadData(newTotalPages);
+      } else {
+        loadData(currentPage);
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+
+      const errorMessage =
+        error.response?.data?.message || error.message || "Delete failed";
+
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: err.response?.data?.message || "Delete failed"
+        title: "Error Deleting Page",
+        text: errorMessage,
+        confirmButtonText: "OK"
       });
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    const requiredFields = {
-      titleEng: "Title (English)",
-      titleHin: "Title (Hindi)",
-      slug: "Slug",
-      mainSlug: "Main Slug",
-      menuId: "Menu",
-      department: "Department",
-      publishDate: "Publish Date"
+  setSubmitting(true);
+
+  try {
+    const apiUrl = editingId
+      ? `${API_URL}/update-content/${editingId}`
+      : `${API_URL}/api/create-content`;
+
+    const multipart = hasNewFiles();
+    const payload = multipart ? buildFormData() : buildJsonPayload();
+
+    const response = editingId
+      ? await axios.put(apiUrl, payload, getAxiosConfig(multipart))
+      : await axios.post(apiUrl, payload, getAxiosConfig(multipart));
+
+    await Swal.fire({
+      icon: "success",
+      title: editingId ? "Updated" : "Created",
+      text: response.data?.message || "Saved successfully",
+      timer: 2000,
+      showConfirmButton: false
+    });
+
+    toggleModal();
+    loadData(currentPage);
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Error Saving Page",
+      text:
+        error.response?.data?.message ||
+        "Server error. Please try again."
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+/* ================= HELPERS ================= */
+
+const validateForm = () => {
+  const requiredFields = {
+    titleEng: "Title (English)",
+    titleHin: "Title (Hindi)",
+    slug: "Slug",
+    mainSlug: "Main Slug",
+    menuId: "Menu",
+    department: "Department",
+    publishDate: "Publish Date"
+  };
+
+  for (const [key, label] of Object.entries(requiredFields)) {
+    if (!formData[key]?.toString().trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Required Field",
+        text: `Please fill: ${label}`
+      });
+      return false;
+    }
+  }
+  return true;
+};
+
+const hasNewFiles = () =>
+  formData.documentsUpdate?.some(doc => doc.file instanceof File);
+
+const buildFormData = () => {
+  const fd = new FormData();
+
+  // Append basic content fields
+  [
+    "titleEng",
+    "titleHin",
+    "slug",
+    "mainSlug",
+    "menuId",
+    "department",
+    "publishDate"
+  ].forEach(key => fd.append(key, formData[key]));
+
+  fd.append("htmlContent", formData.htmlContent || "");
+
+  let fileIndex = 0;
+
+  const documents = formData.documentsUpdate.map(doc => {
+    const obj = {
+      titleEng: doc.titleEng || "",
+      titleHin: doc.titleHin || "",
+      fileUrl: doc.fileUrl || "",
+      fileName: doc.fileName || "",
+      fileSize: doc.fileSize || "",
+      fileType: doc.fileType || "",
+      publishDate: doc.publishDate || "",
+      fileIndex: -1
     };
 
-    for (const [field, label] of Object.entries(requiredFields)) {
-      if (!formData[field]?.toString().trim()) {
-        Swal.fire({
-          icon: "warning",
-          title: "Required Field",
-          text: `Please fill: ${label}`
-        });
-        return;
-      }
+    // Append file with field name "file" (matches backend middleware)
+    if (doc.file instanceof File) {
+      obj.fileIndex = fileIndex;
+      fd.append("file", doc.file);  // Changed from "files" to "file"
+      fileIndex++;
     }
 
-    setSubmitting(true);
-    try {
-      // Prepare FormData for file upload
-      const formDataToSend = new FormData();
+    return obj;
+  });
 
-      // Append basic fields
-      formDataToSend.append("titleEng", formData.titleEng);
-      formDataToSend.append("titleHin", formData.titleHin);
-      formDataToSend.append("slug", formData.slug);
-      formDataToSend.append("mainSlug", formData.mainSlug);
-      formDataToSend.append("menuId", formData.menuId);
-      formDataToSend.append("department", formData.department);
-      formDataToSend.append("publishDate", formData.publishDate);
-      formDataToSend.append("htmlContent", formData.htmlContent || "");
+  fd.append("documentsUpdate", JSON.stringify(documents));
 
-      // Append documents as JSON string and files separately
-      if (formData.documentsUpdate && formData.documentsUpdate.length > 0) {
-        const documentsData = [];
+  console.log("FormData being sent:");
+  console.log("- Documents:", documents);
+  console.log("- Total files:", fileIndex);
 
-        formData.documentsUpdate.forEach((doc) => {
-          // Add document metadata
-          documentsData.push({
-            titleEng: doc.titleEng || "",
-            titleHin: doc.titleHin || "",
-            fileUrl: doc.fileUrl || "",
-            fileName: doc.fileName || "",
-            fileSize: doc.fileSize || "",
-            fileType: doc.fileType || "",
-            publishDate: doc.publishDate || ""
-          });
+  return fd;
+};
 
-          // If document has file object, append it
-          if (doc.file) {
-            formDataToSend.append(`files`, doc.file);
-          }
-        });
+const buildJsonPayload = () => ({
+  titleEng: formData.titleEng.trim(),
+  titleHin: formData.titleHin.trim(),
+  slug: formData.slug.trim(),
+  mainSlug: formData.mainSlug.trim(),
+  menuId: formData.menuId,
+  department: formData.department.trim(),
+  publishDate: formData.publishDate,
+  htmlContent: formData.htmlContent || "",
+  documentsUpdate: formData.documentsUpdate.map(doc => ({
+    titleEng: doc.titleEng || "",
+    titleHin: doc.titleHin || "",
+    fileUrl: doc.fileUrl || "",
+    fileName: doc.fileName || "",
+    fileSize: doc.fileSize || "",
+    fileType: doc.fileType || "",
+    publishDate: doc.publishDate || ""
+  }))
+});
 
-        // Append documents metadata as JSON string
-        formDataToSend.append("documentsUpdate", JSON.stringify(documentsData));
-      }
+const getAxiosConfig = (isMultipart) =>
+  isMultipart
+    ? {} // IMPORTANT: let axios set multipart headers
+    : { headers: { "Content-Type": "application/json" } };
 
-      if (editingId) {
-        await axios.put(`${API_URL}/update-content/${editingId}`, formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-        Swal.fire({
-          icon: "success",
-          title: "Updated",
-          text: "Page updated successfully",
-          timer: 2000,
-          showConfirmButton: false
-        });
-      } else {
-        await axios.post(`${API_URL}/api/create-content`, formDataToSend, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-        Swal.fire({
-          icon: "success",
-          title: "Created",
-          text: "Page created successfully",
-          timer: 2000,
-          showConfirmButton: false
-        });
-      }
-      toggleModal();
-      loadData(currentPage);
-    } catch (err) {
-      console.error("Submit error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.response?.data?.message || "Save failed"
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
-  /* ================= UI ================= */
+  /* ================= UI RENDER ================= */
   return (
     <div className="container-fluid mt-4">
       <Card>
         <CardBody>
+          {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">📄 Page Creator Management</h4>
             <Button color="primary" onClick={toggleModal} disabled={loading}>
@@ -513,7 +680,7 @@ const PageCreatorManagement = () => {
             </Button>
           </div>
 
-          {/* ================= FILTERS ================= */}
+          {/* Filters */}
           <Card className="mb-3 bg-light">
             <CardBody>
               <Row>
@@ -526,7 +693,11 @@ const PageCreatorManagement = () => {
                         placeholder="Search by title..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSearch();
+                          }
+                        }}
                       />
                       <Button
                         color="primary"
@@ -561,7 +732,7 @@ const PageCreatorManagement = () => {
                       <option value="">All Menus</option>
                       {menuList.map((menu) => (
                         <option key={menu._id} value={menu._id}>
-                          {menu.titleEng || menu.name}
+                          {menu.titleEng || menu.name || "Unnamed Menu"}
                         </option>
                       ))}
                     </Input>
@@ -583,99 +754,117 @@ const PageCreatorManagement = () => {
             </CardBody>
           </Card>
 
-          {/* ================= STATS ================= */}
+          {/* Stats */}
           <div className="mb-3">
             <small className="text-muted">
-              Showing {list.length} of {totalDocuments} pages (Page {currentPage} of {totalPages})
+              Showing {list.length} of {totalDocuments} pages (Page{" "}
+              {currentPage} of {totalPages})
             </small>
           </div>
 
-          {/* ================= TABLE ================= */}
+          {/* Table */}
           {loading ? (
             <div className="text-center py-5">
-              <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
+              <Spinner
+                color="primary"
+                style={{ width: "3rem", height: "3rem" }}
+              />
               <p className="mt-3 text-muted">Loading pages...</p>
             </div>
           ) : (
             <>
-              <Table responsive bordered hover>
-                <thead className="table-light">
-                  <tr>
-                    <th style={{ width: "50px" }}>#</th>
-                    <th>Title (EN)</th>
-                    <th>Slug</th>
-                    <th>Department</th>
-                    <th>Menu</th>
-                    <th>Publish Date</th>
-                    <th style={{ width: "100px" }}>Documents</th>
-                    <th style={{ width: "120px" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.length === 0 ? (
+              <div className="table-responsive">
+                <Table bordered hover>
+                  <thead className="table-light">
                     <tr>
-                      <td colSpan="8" className="text-center py-4">
-                        <p className="mb-0 text-muted">No pages found</p>
-                      </td>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th>Title (EN)</th>
+                      <th>Slug</th>
+                      <th>Department</th>
+                      <th>Menu</th>
+                      <th>Publish Date</th>
+                      <th style={{ width: "100px" }}>Documents</th>
+                      <th style={{ width: "120px" }}>Actions</th>
                     </tr>
-                  ) : (
-                    list.map((item, i) => (
-                      <tr key={item._id || i}>
-                        <td>{(currentPage - 1) * limit + i + 1}</td>
-                        <td>{item.titleEng || "N/A"}</td>
-                        <td>
-                          <code className="text-primary">{item.slug || "N/A"}</code>
-                        </td>
-                        <td>{item.department || "N/A"}</td>
-                        <td>{item.menuId?.titleEng || "N/A"}</td>
-                        <td>
-                          {item.publishDate
-                            ? new Date(item.publishDate).toLocaleDateString("en-IN")
-                            : "N/A"}
-                        </td>
-                        <td className="text-center">
-                          <span className="badge bg-info">
-                            {item.documentsUpdate?.length || 0}
-                          </span>
-                        </td>
-                        <td>
-                          <Button
-                            size="sm"
-                            color="warning"
-                            className="me-1"
-                            onClick={() => handleEdit(item)}
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDelete(item._id)}
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </Button>
+                  </thead>
+                  <tbody>
+                    {list.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="text-center py-4">
+                          <p className="mb-0 text-muted">
+                            No pages found. Try adjusting your filters.
+                          </p>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-              {/* ================= PAGINATION ================= */}
+                    ) : (
+                      list.map((item, i) => (
+                        <tr key={item._id || i}>
+                          <td>{(currentPage - 1) * limit + i + 1}</td>
+                          <td>{item.titleEng || "N/A"}</td>
+                          <td>
+                            <code className="text-primary">
+                              {item.slug || "N/A"}
+                            </code>
+                          </td>
+                          <td>{item.department || "N/A"}</td>
+                          <td>
+                            {item.menuId?.titleEng ||
+                              item.menuId?.name ||
+                              "N/A"}
+                          </td>
+                          <td>
+                            {item.publishDate
+                              ? new Date(item.publishDate).toLocaleDateString(
+                                  "en-IN"
+                                )
+                              : "N/A"}
+                          </td>
+                          <td className="text-center">
+                            <span className="badge bg-info">
+                              {item.documentsUpdate?.length || 0}
+                            </span>
+                          </td>
+                          <td>
+                            <Button
+                              size="sm"
+                              color="warning"
+                              className="me-1"
+                              onClick={() => handleEdit(item)}
+                              title="Edit"
+                            >
+                              <FaEdit />
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="danger"
+                              onClick={() => handleDelete(item._id)}
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
               {renderPagination()}
             </>
           )}
         </CardBody>
       </Card>
 
-      {/* ================= MAIN MODAL ================= */}
+      {/* Main Form Modal */}
       <Modal isOpen={modal} toggle={toggleModal} size="xl" backdrop="static">
         <ModalHeader toggle={toggleModal}>
           {editingId ? "✏️ Edit Page" : "➕ Create Page"}
         </ModalHeader>
         <Form onSubmit={handleSubmit}>
           <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            {/* Title Fields */}
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -709,13 +898,17 @@ const PageCreatorManagement = () => {
                     placeholder="शीर्षक हिंदी में दर्ज करें"
                     value={formData.titleHin}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, titleHin: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        titleHin: e.target.value
+                      }))
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
+            {/* Slug Fields */}
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -728,10 +921,15 @@ const PageCreatorManagement = () => {
                     placeholder="auto-generated-slug"
                     value={formData.slug}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, slug: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        slug: generateSlug(e.target.value)
+                      }))
                     }
                   />
-                  <small className="text-muted">Auto-generated from title</small>
+                  <small className="text-muted">
+                    Auto-generated from title
+                  </small>
                 </FormGroup>
               </Col>
               <Col md={6}>
@@ -745,13 +943,17 @@ const PageCreatorManagement = () => {
                     placeholder="main-slug"
                     value={formData.mainSlug}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, mainSlug: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        mainSlug: e.target.value
+                      }))
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
+            {/* Menu and Department */}
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -763,7 +965,10 @@ const PageCreatorManagement = () => {
                     required
                     value={formData.menuId}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, menuId: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        menuId: e.target.value
+                      }))
                     }
                   >
                     <option value="">-- Select Menu --</option>
@@ -786,13 +991,17 @@ const PageCreatorManagement = () => {
                     placeholder="Enter department name"
                     value={formData.department}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, department: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        department: e.target.value
+                      }))
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
+            {/* Publish Date */}
             <Row>
               <Col md={12}>
                 <FormGroup>
@@ -804,19 +1013,23 @@ const PageCreatorManagement = () => {
                     required
                     value={formData.publishDate}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, publishDate: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        publishDate: e.target.value
+                      }))
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
-
-
-            {/* ================= DOCUMENTS SECTION ================= */}
+            {/* Documents Section */}
             <hr className="my-4" />
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0">📎 Documents For Sub Page Content ({formData.documentsUpdate.length})</h5>
+              <h5 className="mb-0">
+                📎 Documents For Sub Page Content (
+                {formData.documentsUpdate.length})
+              </h5>
               <Button
                 color="success"
                 size="sm"
@@ -828,76 +1041,86 @@ const PageCreatorManagement = () => {
             </div>
 
             {formData.documentsUpdate.length > 0 ? (
-              <Table size="sm" bordered hover>
-                <thead className="table-light">
-                  <tr>
-                    <th style={{ width: "50px" }}>#</th>
-                    <th>Title (EN)</th>
-                    <th>Title (HI)</th>
-                    <th>File</th>
-                    <th style={{ width: "100px" }}>Size</th>
-                    <th style={{ width: "120px" }}>Publish Date</th>
-                    <th style={{ width: "120px" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.documentsUpdate.map((doc, idx) => (
-                    <tr key={idx}>
-                      <td>{idx + 1}</td>
-                      <td>{doc.titleEng || "N/A"}</td>
-                      <td>{doc.titleHin || "N/A"}</td>
-                      <td>
-                        {doc.fileUrl ? (
-                          <a
-                            href={`${API_URL}${doc.fileUrl}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-decoration-none"
-                          >
-                            <FaFilePdf className="me-1" /> View
-                          </a>
-                        ) : (
-                          <span className="text-muted">No file</span>
-                        )}
-                      </td>
-                      <td>{doc.fileSize || "N/A"}</td>
-                      <td>
-                        {doc.publishDate
-                          ? new Date(doc.publishDate).toLocaleDateString("en-IN")
-                          : "N/A"}
-                      </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          color="warning"
-                          className="me-1"
-                          onClick={() => handleEditDocument(idx)}
-                          type="button"
-                          title="Edit Document"
-                        >
-                          <FaEdit />
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="danger"
-                          onClick={() => handleDeleteDocument(idx)}
-                          type="button"
-                          title="Delete Document"
-                        >
-                          <FaTrash />
-                        </Button>
-                      </td>
+              <div className="table-responsive">
+                <Table size="sm" bordered hover>
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th>Title (EN)</th>
+                      <th>Title (HI)</th>
+                      <th>File</th>
+                      <th style={{ width: "100px" }}>Size</th>
+                      <th style={{ width: "120px" }}>Publish Date</th>
+                      <th style={{ width: "120px" }}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {formData.documentsUpdate.map((doc, idx) => (
+                      <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>{doc.titleEng || "N/A"}</td>
+                        <td>{doc.titleHin || "N/A"}</td>
+                        <td>
+                          {doc.fileUrl ? (
+                            <a
+                              href={`${API_URL}${doc.fileUrl}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-decoration-none"
+                            >
+                              {getFileIcon(doc.fileType)}{" "}
+                              {doc.fileName || "View"}
+                            </a>
+                          ) : doc.fileName ? (
+                            <span className="text-success">
+                              {getFileIcon(doc.fileType)} {doc.fileName}
+                            </span>
+                          ) : (
+                            <span className="text-muted">No file</span>
+                          )}
+                        </td>
+                        <td>{doc.fileSize || "N/A"}</td>
+                        <td>
+                          {doc.publishDate
+                            ? new Date(doc.publishDate).toLocaleDateString(
+                                "en-IN"
+                              )
+                            : "N/A"}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            color="warning"
+                            className="me-1"
+                            onClick={() => handleEditDocument(idx)}
+                            type="button"
+                            title="Edit Document"
+                          >
+                            <FaEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="danger"
+                            onClick={() => handleDeleteDocument(idx)}
+                            type="button"
+                            title="Delete Document"
+                          >
+                            <FaTrash />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center text-muted py-3 bg-light rounded">
                 <p className="mb-0">No documents added yet</p>
               </div>
             )}
-            <hr />
 
+            {/* HTML Content */}
+            <hr className="my-4" />
             <FormGroup>
               <Label>HTML Content</Label>
               <ReactQuill
@@ -910,8 +1133,6 @@ const PageCreatorManagement = () => {
                 placeholder="Enter page content here..."
               />
             </FormGroup>
-
-
           </ModalBody>
           <ModalFooter>
             <Button color="primary" type="submit" disabled={submitting}>
@@ -922,7 +1143,8 @@ const PageCreatorManagement = () => {
                 </>
               ) : (
                 <>
-                  <FaSave className="me-1" /> {editingId ? "Update" : "Save"}
+                  <FaSave className="me-1" />{" "}
+                  {editingId ? "Update" : "Save"}
                 </>
               )}
             </Button>
@@ -938,7 +1160,7 @@ const PageCreatorManagement = () => {
         </Form>
       </Modal>
 
-      {/* ================= DOCUMENT MODAL ================= */}
+      {/* Document Modal */}
       <Modal
         isOpen={documentModal}
         toggle={toggleDocumentModal}
@@ -953,7 +1175,8 @@ const PageCreatorManagement = () => {
             <Col md={6}>
               <FormGroup>
                 <Label>
-                  Document Title (English) <span className="text-danger">*</span>
+                  Document Title (English){" "}
+                  <span className="text-danger">*</span>
                 </Label>
                 <Input
                   type="text"
@@ -990,7 +1213,10 @@ const PageCreatorManagement = () => {
 
           <FormGroup>
             <Label>
-              Upload File <span className="text-danger">*</span>
+              Upload File{" "}
+              {editingDocIndex === null && (
+                <span className="text-danger">*</span>
+              )}
             </Label>
             <Input
               type="file"
@@ -1002,6 +1228,13 @@ const PageCreatorManagement = () => {
                 ✓ File Selected: {currentDocument.fileName}
               </small>
             )}
+            {editingDocIndex !== null &&
+              !currentDocument.file &&
+              currentDocument.fileUrl && (
+                <small className="text-info d-block mt-2">
+                  📎 Current file will be kept if no new file is uploaded
+                </small>
+              )}
           </FormGroup>
 
           <Row>
@@ -1048,16 +1281,11 @@ const PageCreatorManagement = () => {
           </FormGroup>
         </ModalBody>
         <ModalFooter>
-          <Button
-            color="primary"
-            onClick={handleAddDocument}
-          >
-            <FaSave className="me-1" /> {editingDocIndex !== null ? "Update" : "Add"}
+          <Button color="primary" onClick={handleAddDocument}>
+            <FaSave className="me-1" />{" "}
+            {editingDocIndex !== null ? "Update" : "Add"}
           </Button>
-          <Button
-            color="secondary"
-            onClick={toggleDocumentModal}
-          >
+          <Button color="secondary" onClick={toggleDocumentModal}>
             <FaTimes className="me-1" /> Cancel
           </Button>
         </ModalFooter>
@@ -1067,4 +1295,3 @@ const PageCreatorManagement = () => {
 };
 
 export default PageCreatorManagement;
-
