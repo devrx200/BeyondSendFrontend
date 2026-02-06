@@ -13,11 +13,7 @@ import {
   Label,
   Input,
   Row,
-  Col,
-  Spinner,
-  Pagination,
-  PaginationItem,
-  PaginationLink
+  Col
 } from "reactstrap";
 import {
   FaPlus,
@@ -25,10 +21,8 @@ import {
   FaTrash,
   FaSave,
   FaTimes,
-  FaFilePdf,
-  FaSearch,
-  FaFileWord,
-  FaFileExcel
+  FaFileUpload,
+  FaFilePdf
 } from "react-icons/fa";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -37,418 +31,194 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-/* ================= INITIAL FORM STATE ================= */
-const initialFormData = {
-  titleEng: "",
-  titleHin: "",
-  slug: "",
-  mainSlug: "",
-  menuId: "",
-  department: "",
-  publishDate: "",
-  htmlContent: "",
-  documentsUpdate: []
-};
-
-const initialDocumentData = {
-  titleEng: "",
-  titleHin: "",
-  fileUrl: "",
-  fileName: "",
-  fileSize: "",
-  fileType: "",
-  publishDate: "",
-  file: null
-};
-
 const PageCreatorManagement = () => {
-  // Main state
   const [list, setList] = useState([]);
   const [menuList, setMenuList] = useState([]);
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState(initialFormData);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalDocuments, setTotalDocuments] = useState(0);
-  const [limit] = useState(10);
-
-  // Filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("");
-  const [filterMenuId, setFilterMenuId] = useState("");
+  const [formData, setFormData] = useState({
+    titleEng: "",
+    titleHin: "",
+    slug: "",
+    mainSlug: "",
+    menuId: "",
+    department: "",
+    examYear: "",
+    publishDate: "",
+    htmlContent: "",
+    documentsUpdate: []
+  });
 
   // Document form state
   const [documentModal, setDocumentModal] = useState(false);
-  const [currentDocument, setCurrentDocument] = useState(initialDocumentData);
+  const [currentDocument, setCurrentDocument] = useState({
+    titleEng: "",
+    titleHin: "",
+    fileUrl: "",
+    fileSize: "",
+    fileType: "",
+    publishDate: ""
+  });
   const [editingDocIndex, setEditingDocIndex] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
-  /* ================= LOAD DATA WITH PAGINATION ================= */
-  const loadData = async (page = 1) => {
-    setLoading(true);
+  /* ================= LOAD DATA ================= */
+  const loadData = async () => {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
-      });
-
-      if (searchTerm?.trim()) params.append("search", searchTerm.trim());
-      if (filterDepartment?.trim()) params.append("department", filterDepartment.trim());
-      if (filterMenuId?.trim()) params.append("menuId", filterMenuId.trim());
-
-      const response = await axios.get(
-        `${API_URL}/api/get-all-content?${params.toString()}`
-      );
-
-      if (response.data?.success) {
-        setList(response.data.data || []);
-        setCurrentPage(response.data.pagination?.currentPage || 1);
-        setTotalPages(response.data.pagination?.totalPages || 1);
-        setTotalDocuments(response.data.pagination?.totalDocuments || 0);
-      } else {
-        throw new Error(response.data?.message || "Failed to load pages");
-      }
-    } catch (error) {
-      console.error("Error loading pages:", error);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load pages. Please try again.";
-
-      await Swal.fire({
-        icon: "error",
-        title: "Error Loading Pages",
-        text: errorMessage,
-        confirmButtonText: "OK"
-      });
-
-      setList([]);
-      setTotalPages(1);
-      setTotalDocuments(0);
-    } finally {
-      setLoading(false);
+      const res = await axios.get(`${API_URL}/api/content/get-all-content`);
+      setList(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Failed to load pages", "error");
     }
   };
 
   const loadMenus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/menu-list`);
-
-      if (response.data?.success !== false) {
-        setMenuList(response.data?.data || []);
-      } else {
-        throw new Error(response.data?.message || "Failed to load menus");
-      }
-    } catch (error) {
-      console.error("Error loading menus:", error);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load menus";
-
-      await Swal.fire({
-        icon: "warning",
-        title: "Menu Load Error",
-        text: errorMessage,
-        timer: 3000,
-        showConfirmButton: false
-      });
-
-      setMenuList([]);
+      const res = await axios.get(`${API_URL}/api/menu/get-all-menus`);
+      setMenuList(res.data?.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
-    loadData(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, filterDepartment, filterMenuId]);
-
-  useEffect(() => {
+    loadData();
     loadMenus();
   }, []);
 
-  /* ================= HELPER FUNCTIONS ================= */
+  /* ================= HELPERS ================= */
   const toggleModal = () => {
-    if (modal) {
-      resetForm();
-    }
     setModal(!modal);
+    if (modal) resetForm();
   };
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData(initialFormData);
+    setFormData({
+      titleEng: "",
+      titleHin: "",
+      slug: "",
+      mainSlug: "",
+      menuId: "",
+      department: "",
+      examYear: "",
+      publishDate: "",
+      htmlContent: "",
+      documentsUpdate: []
+    });
   };
 
-  const generateSlug = (text) => {
-    if (!text) return "";
-    return text
+  const generateSlug = (text) =>
+    text
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
-
-  const handleSearch = () => {
-    setCurrentPage(1);
-    loadData(1);
-  };
-
-  const handleResetFilters = () => {
-    setSearchTerm("");
-    setFilterDepartment("");
-    setFilterMenuId("");
-    setCurrentPage(1);
-  };
-
-  const getFileIcon = (fileType) => {
-    if (!fileType) return <FaFilePdf />;
-    
-    const type = fileType.toLowerCase();
-    if (type.includes("pdf")) return <FaFilePdf className="text-danger" />;
-    if (type.includes("word") || type.includes("doc")) return <FaFileWord className="text-primary" />;
-    if (type.includes("excel") || type.includes("xls") || type.includes("sheet")) 
-      return <FaFileExcel className="text-success" />;
-    
-    return <FaFilePdf />;
-  };
-
-  /* ================= PAGINATION ================= */
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const pages = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-    if (endPage - startPage < maxPagesToShow - 1) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return (
-      <Pagination className="mt-3">
-        <PaginationItem disabled={currentPage === 1}>
-          <PaginationLink first onClick={() => setCurrentPage(1)} />
-        </PaginationItem>
-        <PaginationItem disabled={currentPage === 1}>
-          <PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
-        </PaginationItem>
-
-        {startPage > 1 && (
-          <>
-            <PaginationItem>
-              <PaginationLink onClick={() => setCurrentPage(1)}>1</PaginationLink>
-            </PaginationItem>
-            {startPage > 2 && (
-              <PaginationItem disabled>
-                <PaginationLink>...</PaginationLink>
-              </PaginationItem>
-            )}
-          </>
-        )}
-
-        {pages.map((page) => (
-          <PaginationItem key={page} active={page === currentPage}>
-            <PaginationLink onClick={() => setCurrentPage(page)}>
-              {page}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && (
-              <PaginationItem disabled>
-                <PaginationLink>...</PaginationLink>
-              </PaginationItem>
-            )}
-            <PaginationItem>
-              <PaginationLink onClick={() => setCurrentPage(totalPages)}>
-                {totalPages}
-              </PaginationLink>
-            </PaginationItem>
-          </>
-        )}
-
-        <PaginationItem disabled={currentPage === totalPages}>
-          <PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
-        </PaginationItem>
-        <PaginationItem disabled={currentPage === totalPages}>
-          <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
-        </PaginationItem>
-      </Pagination>
-    );
-  };
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
 
   /* ================= DOCUMENT MANAGEMENT ================= */
   const toggleDocumentModal = () => {
+    setDocumentModal(!documentModal);
     if (documentModal) {
-      setCurrentDocument(initialDocumentData);
+      setCurrentDocument({
+        titleEng: "",
+        titleHin: "",
+        fileUrl: "",
+        fileSize: "",
+        fileType: "",
+        publishDate: ""
+      });
       setEditingDocIndex(null);
     }
-    setDocumentModal(!documentModal);
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
     if (!file) return;
 
-    // Calculate file size
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize = file.size < 1024 * 1024
-      ? `${fileSizeKB} KB`
-      : `${fileSizeMB} MB`;
+    setUploadingFile(true);
+    const formDataFile = new FormData();
+    formDataFile.append("file", file);
 
-    // Update document state
-    setCurrentDocument((prev) => ({
-      ...prev,
-      file: file,
-      fileName: file.name,
-      fileSize: displaySize,
-      fileType: file.type.split("/").pop() || file.name.split(".").pop()
-    }));
+    try {
+      // Adjust this endpoint to match your file upload API
+      const res = await axios.post(
+        `${API_URL}/api/upload/document`,
+        formDataFile,
+        {
+          headers: { "Content-Type": "multipart/form-data" }
+        }
+      );
+
+      const uploadedFile = res.data?.data || res.data;
+      setCurrentDocument({
+        ...currentDocument,
+        fileUrl: uploadedFile.url || uploadedFile.fileUrl,
+        fileSize: (file.size / 1024).toFixed(2) + " KB",
+        fileType: file.type || file.name.split(".").pop()
+      });
+
+      Swal.fire("Success", "File uploaded successfully", "success");
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "File upload failed", "error");
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const handleAddDocument = () => {
-    // Validation
-    if (!currentDocument.titleEng?.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please enter document title in English",
-        confirmButtonText: "OK"
-      });
-      return;
-    }
-
-    if (!currentDocument.titleHin?.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please enter document title in Hindi",
-        confirmButtonText: "OK"
-      });
-      return;
-    }
-
-    if (!currentDocument.publishDate) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please select publish date",
-        confirmButtonText: "OK"
-      });
-      return;
-    }
-
-    // For new documents, file is required
-    if (editingDocIndex === null && !currentDocument.file) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please upload a file",
-        confirmButtonText: "OK"
-      });
+    if (
+      !currentDocument.titleEng ||
+      !currentDocument.titleHin ||
+      !currentDocument.fileUrl ||
+      !currentDocument.publishDate
+    ) {
+      Swal.fire("Required", "Please fill all document fields", "warning");
       return;
     }
 
     const updatedDocs = [...formData.documentsUpdate];
 
     if (editingDocIndex !== null) {
-      // Update existing document
-      updatedDocs[editingDocIndex] = {
-        ...updatedDocs[editingDocIndex],
-        ...currentDocument
-      };
-      Swal.fire({
-        icon: "success",
-        title: "Updated",
-        text: "Document updated successfully",
-        timer: 1500,
-        showConfirmButton: false
-      });
+      updatedDocs[editingDocIndex] = currentDocument;
+      Swal.fire("Updated", "Document updated", "success");
     } else {
-      // Add new document
-      updatedDocs.push({ ...currentDocument });
-      Swal.fire({
-        icon: "success",
-        title: "Added",
-        text: "Document added successfully",
-        timer: 1500,
-        showConfirmButton: false
-      });
+      updatedDocs.push(currentDocument);
+      Swal.fire("Added", "Document added", "success");
     }
 
-    setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
+    setFormData({ ...formData, documentsUpdate: updatedDocs });
     toggleDocumentModal();
   };
 
   const handleEditDocument = (index) => {
-    const doc = formData.documentsUpdate[index];
-    setCurrentDocument({ 
-      ...doc,
-      file: null // Don't carry over file object when editing
-    });
+    setCurrentDocument(formData.documentsUpdate[index]);
     setEditingDocIndex(index);
     setDocumentModal(true);
   };
 
-  const handleDeleteDocument = async (index) => {
-    const result = await Swal.fire({
+  const handleDeleteDocument = (index) => {
+    Swal.fire({
       title: "Delete Document?",
-      text: "This action cannot be undone",
+      text: "This will remove the document from the list",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, Delete",
-      cancelButtonText: "Cancel"
-    });
-
-    if (!result.isConfirmed) return;
-
-    const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-
-    Swal.fire({
-      icon: "success",
-      title: "Deleted",
-      text: "Document removed successfully",
-      timer: 1500,
-      showConfirmButton: false
+      confirmButtonText: "Yes, Delete"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const updatedDocs = formData.documentsUpdate.filter(
+          (_, i) => i !== index
+        );
+        setFormData({ ...formData, documentsUpdate: updatedDocs });
+        Swal.fire("Deleted", "Document removed", "success");
+      }
     });
   };
 
-  /* ================= CRUD OPERATIONS ================= */
+  /* ================= CRUD ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
-    
-    // Format date properly
-    let formattedDate = "";
-    if (item.publishDate) {
-      try {
-        const date = new Date(item.publishDate);
-        formattedDate = date.toISOString().split("T")[0];
-      } catch (e) {
-        console.error("Date parsing error:", e);
-        formattedDate = "";
-      }
-    }
-
     setFormData({
       titleEng: item.titleEng || "",
       titleHin: item.titleHin || "",
@@ -456,415 +226,152 @@ const PageCreatorManagement = () => {
       mainSlug: item.mainSlug || "",
       menuId: item.menuId?._id || item.menuId || "",
       department: item.department || "",
-      publishDate: formattedDate,
+      examYear: item.examYear || "",
+      publishDate: item.publishDate?.slice(0, 10) || "",
       htmlContent: item.htmlContent || "",
-      documentsUpdate: Array.isArray(item.documentsUpdate)
-        ? item.documentsUpdate.map((doc) => ({
-            ...doc,
-            file: null // Don't include file object for existing documents
-          }))
-        : []
+      documentsUpdate: item.documentsUpdate || []
     });
-    
     setModal(true);
   };
 
   const handleDelete = async (id) => {
-    const result = await Swal.fire({
+    const confirm = await Swal.fire({
       title: "Delete Page?",
       text: "This action cannot be undone",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, Delete",
-      cancelButtonText: "Cancel"
+      confirmButtonText: "Yes, Delete"
     });
-
-    if (!result.isConfirmed) return;
+    if (!confirm.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/delete-content/${id}`);
+      await axios.delete(`${API_URL}/api/content/delete-content/${id}`);
+      Swal.fire("Deleted", "Page deleted successfully", "success");
+      loadData();
+    } catch {
+      Swal.fire("Error", "Delete failed", "error");
+    }
+  };
 
-      const successMessage =
-        response.data?.message || "Page deleted successfully";
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const required = [
+      "titleEng",
+      "titleHin",
+      "slug",
+      "mainSlug",
+      "menuId",
+      "department",
+      "examYear",
+      "publishDate"
+    ];
 
-      await Swal.fire({
-        icon: "success",
-        title: "Deleted",
-        text: successMessage,
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      // Reload data - if current page is empty, go to previous page
-      const newTotal = totalDocuments - 1;
-      const newTotalPages = Math.ceil(newTotal / limit) || 1;
-      
-      if (currentPage > newTotalPages) {
-        setCurrentPage(newTotalPages);
-        loadData(newTotalPages);
-      } else {
-        loadData(currentPage);
+    for (let field of required) {
+      if (!formData[field]) {
+        Swal.fire("Required", `Please fill: ${field}`, "warning");
+        return;
       }
-    } catch (error) {
-      console.error("Delete error:", error);
+    }
 
-      const errorMessage =
-        error.response?.data?.message || error.message || "Delete failed";
-
-      Swal.fire({
-        icon: "error",
-        title: "Error Deleting Page",
-        text: errorMessage,
-        confirmButtonText: "OK"
-      });
+    try {
+      if (editingId) {
+        await axios.put(
+          `${API_URL}/api/content/update-content/${editingId}`,
+          formData
+        );
+        Swal.fire("Updated", "Page updated successfully", "success");
+      } else {
+        await axios.post(`${API_URL}/api/content/create-content`, formData);
+        Swal.fire("Created", "Page created successfully", "success");
+      }
+      toggleModal();
+      loadData();
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Error", "Save failed", "error");
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
-
-  setSubmitting(true);
-
-  try {
-    const apiUrl = editingId
-      ? `${API_URL}/update-content/${editingId}`
-      : `${API_URL}/api/create-content`;
-
-    const multipart = hasNewFiles();
-    const payload = multipart ? buildFormData() : buildJsonPayload();
-
-    const response = editingId
-      ? await axios.put(apiUrl, payload, getAxiosConfig(multipart))
-      : await axios.post(apiUrl, payload, getAxiosConfig(multipart));
-
-    await Swal.fire({
-      icon: "success",
-      title: editingId ? "Updated" : "Created",
-      text: response.data?.message || "Saved successfully",
-      timer: 2000,
-      showConfirmButton: false
-    });
-
-    toggleModal();
-    loadData(currentPage);
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error Saving Page",
-      text:
-        error.response?.data?.message ||
-        "Server error. Please try again."
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-/* ================= HELPERS ================= */
-
-const validateForm = () => {
-  const requiredFields = {
-    titleEng: "Title (English)",
-    titleHin: "Title (Hindi)",
-    slug: "Slug",
-    mainSlug: "Main Slug",
-    menuId: "Menu",
-    department: "Department",
-    publishDate: "Publish Date"
-  };
-
-  for (const [key, label] of Object.entries(requiredFields)) {
-    if (!formData[key]?.toString().trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: `Please fill: ${label}`
-      });
-      return false;
-    }
-  }
-  return true;
-};
-
-const hasNewFiles = () =>
-  formData.documentsUpdate?.some(doc => doc.file instanceof File);
-
-const buildFormData = () => {
-  const fd = new FormData();
-
-  // Append basic content fields
-  [
-    "titleEng",
-    "titleHin",
-    "slug",
-    "mainSlug",
-    "menuId",
-    "department",
-    "publishDate"
-  ].forEach(key => fd.append(key, formData[key]));
-
-  fd.append("htmlContent", formData.htmlContent || "");
-
-  let fileIndex = 0;
-
-  const documents = formData.documentsUpdate.map(doc => {
-    const obj = {
-      titleEng: doc.titleEng || "",
-      titleHin: doc.titleHin || "",
-      fileUrl: doc.fileUrl || "",
-      fileName: doc.fileName || "",
-      fileSize: doc.fileSize || "",
-      fileType: doc.fileType || "",
-      publishDate: doc.publishDate || "",
-      fileIndex: -1
-    };
-
-    // Append file with field name "file" (matches backend middleware)
-    if (doc.file instanceof File) {
-      obj.fileIndex = fileIndex;
-      fd.append("file", doc.file);  // Changed from "files" to "file"
-      fileIndex++;
-    }
-
-    return obj;
-  });
-
-  fd.append("documentsUpdate", JSON.stringify(documents));
-
-  console.log("FormData being sent:");
-  console.log("- Documents:", documents);
-  console.log("- Total files:", fileIndex);
-
-  return fd;
-};
-
-const buildJsonPayload = () => ({
-  titleEng: formData.titleEng.trim(),
-  titleHin: formData.titleHin.trim(),
-  slug: formData.slug.trim(),
-  mainSlug: formData.mainSlug.trim(),
-  menuId: formData.menuId,
-  department: formData.department.trim(),
-  publishDate: formData.publishDate,
-  htmlContent: formData.htmlContent || "",
-  documentsUpdate: formData.documentsUpdate.map(doc => ({
-    titleEng: doc.titleEng || "",
-    titleHin: doc.titleHin || "",
-    fileUrl: doc.fileUrl || "",
-    fileName: doc.fileName || "",
-    fileSize: doc.fileSize || "",
-    fileType: doc.fileType || "",
-    publishDate: doc.publishDate || ""
-  }))
-});
-
-const getAxiosConfig = (isMultipart) =>
-  isMultipart
-    ? {} // IMPORTANT: let axios set multipart headers
-    : { headers: { "Content-Type": "application/json" } };
-
-
-  /* ================= UI RENDER ================= */
+  /* ================= UI ================= */
   return (
     <div className="container-fluid mt-4">
       <Card>
         <CardBody>
-          {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">📄 Page Creator Management</h4>
-            <Button color="primary" onClick={toggleModal} disabled={loading}>
-              <FaPlus className="me-1" /> Add Page
+            <Button color="primary" onClick={toggleModal}>
+              <FaPlus /> Add Page
             </Button>
           </div>
 
-          {/* Filters */}
-          <Card className="mb-3 bg-light">
-            <CardBody>
-              <Row>
-                <Col md={4}>
-                  <FormGroup>
-                    <Label>Search</Label>
-                    <div className="d-flex">
-                      <Input
-                        type="text"
-                        placeholder="Search by title..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleSearch();
-                          }
-                        }}
-                      />
+          <Table responsive bordered hover>
+            <thead className="table-light">
+              <tr>
+                <th>#</th>
+                <th>Title (EN)</th>
+                <th>Slug</th>
+                <th>Department</th>
+                <th>Exam Year</th>
+                <th>Publish Date</th>
+                <th>Documents</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center">
+                    No pages found
+                  </td>
+                </tr>
+              ) : (
+                list.map((item, i) => (
+                  <tr key={item._id}>
+                    <td>{i + 1}</td>
+                    <td>{item.titleEng}</td>
+                    <td>
+                      <code>{item.slug}</code>
+                    </td>
+                    <td>{item.department}</td>
+                    <td>{item.examYear}</td>
+                    <td>{item.publishDate?.slice(0, 10)}</td>
+                    <td>
+                      <span className="badge bg-info">
+                        {item.documentsUpdate?.length || 0} files
+                      </span>
+                    </td>
+                    <td>
                       <Button
-                        color="primary"
-                        className="ms-2"
-                        onClick={handleSearch}
-                        disabled={loading}
+                        size="sm"
+                        color="warning"
+                        className="me-2"
+                        onClick={() => handleEdit(item)}
                       >
-                        <FaSearch />
+                        <FaEdit />
                       </Button>
-                    </div>
-                  </FormGroup>
-                </Col>
-                <Col md={3}>
-                  <FormGroup>
-                    <Label>Filter by Department</Label>
-                    <Input
-                      type="text"
-                      placeholder="Department name"
-                      value={filterDepartment}
-                      onChange={(e) => setFilterDepartment(e.target.value)}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={3}>
-                  <FormGroup>
-                    <Label>Filter by Menu</Label>
-                    <Input
-                      type="select"
-                      value={filterMenuId}
-                      onChange={(e) => setFilterMenuId(e.target.value)}
-                    >
-                      <option value="">All Menus</option>
-                      {menuList.map((menu) => (
-                        <option key={menu._id} value={menu._id}>
-                          {menu.titleEng || menu.name || "Unnamed Menu"}
-                        </option>
-                      ))}
-                    </Input>
-                  </FormGroup>
-                </Col>
-                <Col md={2} className="d-flex align-items-end">
-                  <FormGroup className="w-100">
-                    <Button
-                      color="secondary"
-                      className="w-100"
-                      onClick={handleResetFilters}
-                      disabled={loading}
-                    >
-                      Reset
-                    </Button>
-                  </FormGroup>
-                </Col>
-              </Row>
-            </CardBody>
-          </Card>
-
-          {/* Stats */}
-          <div className="mb-3">
-            <small className="text-muted">
-              Showing {list.length} of {totalDocuments} pages (Page{" "}
-              {currentPage} of {totalPages})
-            </small>
-          </div>
-
-          {/* Table */}
-          {loading ? (
-            <div className="text-center py-5">
-              <Spinner
-                color="primary"
-                style={{ width: "3rem", height: "3rem" }}
-              />
-              <p className="mt-3 text-muted">Loading pages...</p>
-            </div>
-          ) : (
-            <>
-              <div className="table-responsive">
-                <Table bordered hover>
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: "50px" }}>#</th>
-                      <th>Title (EN)</th>
-                      <th>Slug</th>
-                      <th>Department</th>
-                      <th>Menu</th>
-                      <th>Publish Date</th>
-                      <th style={{ width: "100px" }}>Documents</th>
-                      <th style={{ width: "120px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {list.length === 0 ? (
-                      <tr>
-                        <td colSpan="8" className="text-center py-4">
-                          <p className="mb-0 text-muted">
-                            No pages found. Try adjusting your filters.
-                          </p>
-                        </td>
-                      </tr>
-                    ) : (
-                      list.map((item, i) => (
-                        <tr key={item._id || i}>
-                          <td>{(currentPage - 1) * limit + i + 1}</td>
-                          <td>{item.titleEng || "N/A"}</td>
-                          <td>
-                            <code className="text-primary">
-                              {item.slug || "N/A"}
-                            </code>
-                          </td>
-                          <td>{item.department || "N/A"}</td>
-                          <td>
-                            {item.menuId?.titleEng ||
-                              item.menuId?.name ||
-                              "N/A"}
-                          </td>
-                          <td>
-                            {item.publishDate
-                              ? new Date(item.publishDate).toLocaleDateString(
-                                  "en-IN"
-                                )
-                              : "N/A"}
-                          </td>
-                          <td className="text-center">
-                            <span className="badge bg-info">
-                              {item.documentsUpdate?.length || 0}
-                            </span>
-                          </td>
-                          <td>
-                            <Button
-                              size="sm"
-                              color="warning"
-                              className="me-1"
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <FaEdit />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="danger"
-                              onClick={() => handleDelete(item._id)}
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {renderPagination()}
-            </>
-          )}
+                      <Button
+                        size="sm"
+                        color="danger"
+                        onClick={() => handleDelete(item._id)}
+                      >
+                        <FaTrash />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
         </CardBody>
       </Card>
 
-      {/* Main Form Modal */}
-      <Modal isOpen={modal} toggle={toggleModal} size="xl" backdrop="static">
+      {/* ================= MAIN MODAL ================= */}
+      <Modal isOpen={modal} toggle={toggleModal} size="xl">
         <ModalHeader toggle={toggleModal}>
           {editingId ? "✏️ Edit Page" : "➕ Create Page"}
         </ModalHeader>
         <Form onSubmit={handleSubmit}>
-          <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
-            {/* Title Fields */}
+          <ModalBody>
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -874,15 +381,14 @@ const getAxiosConfig = (isMultipart) =>
                   <Input
                     type="text"
                     required
-                    placeholder="Enter title in English"
                     value={formData.titleEng}
                     onChange={(e) => {
                       const title = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
+                      setFormData({
+                        ...formData,
                         titleEng: title,
                         slug: generateSlug(title)
-                      }));
+                      });
                     }}
                   />
                 </FormGroup>
@@ -895,20 +401,15 @@ const getAxiosConfig = (isMultipart) =>
                   <Input
                     type="text"
                     required
-                    placeholder="शीर्षक हिंदी में दर्ज करें"
                     value={formData.titleHin}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        titleHin: e.target.value
-                      }))
+                      setFormData({ ...formData, titleHin: e.target.value })
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
-            {/* Slug Fields */}
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -918,18 +419,11 @@ const getAxiosConfig = (isMultipart) =>
                   <Input
                     type="text"
                     required
-                    placeholder="auto-generated-slug"
                     value={formData.slug}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        slug: generateSlug(e.target.value)
-                      }))
+                      setFormData({ ...formData, slug: e.target.value })
                     }
                   />
-                  <small className="text-muted">
-                    Auto-generated from title
-                  </small>
                 </FormGroup>
               </Col>
               <Col md={6}>
@@ -940,20 +434,15 @@ const getAxiosConfig = (isMultipart) =>
                   <Input
                     type="text"
                     required
-                    placeholder="main-slug"
                     value={formData.mainSlug}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        mainSlug: e.target.value
-                      }))
+                      setFormData({ ...formData, mainSlug: e.target.value })
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
-            {/* Menu and Department */}
             <Row>
               <Col md={6}>
                 <FormGroup>
@@ -965,16 +454,13 @@ const getAxiosConfig = (isMultipart) =>
                     required
                     value={formData.menuId}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        menuId: e.target.value
-                      }))
+                      setFormData({ ...formData, menuId: e.target.value })
                     }
                   >
                     <option value="">-- Select Menu --</option>
                     {menuList.map((menu) => (
                       <option key={menu._id} value={menu._id}>
-                        {menu.titleEng || menu.name || "Unnamed Menu"}
+                        {menu.titleEng || menu.name}
                       </option>
                     ))}
                   </Input>
@@ -988,22 +474,32 @@ const getAxiosConfig = (isMultipart) =>
                   <Input
                     type="text"
                     required
-                    placeholder="Enter department name"
                     value={formData.department}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        department: e.target.value
-                      }))
+                      setFormData({ ...formData, department: e.target.value })
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
-            {/* Publish Date */}
             <Row>
-              <Col md={12}>
+              <Col md={6}>
+                <FormGroup>
+                  <Label>
+                    Exam Year <span className="text-danger">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    required
+                    value={formData.examYear}
+                    onChange={(e) =>
+                      setFormData({ ...formData, examYear: e.target.value })
+                    }
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={6}>
                 <FormGroup>
                   <Label>
                     Publish Date <span className="text-danger">*</span>
@@ -1013,159 +509,110 @@ const getAxiosConfig = (isMultipart) =>
                     required
                     value={formData.publishDate}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        publishDate: e.target.value
-                      }))
+                      setFormData({ ...formData, publishDate: e.target.value })
                     }
                   />
                 </FormGroup>
               </Col>
             </Row>
 
-            {/* Documents Section */}
-            <hr className="my-4" />
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0">
-                📎 Documents For Sub Page Content (
-                {formData.documentsUpdate.length})
-              </h5>
-              <Button
-                color="success"
-                size="sm"
-                onClick={toggleDocumentModal}
-                type="button"
-              >
-                <FaPlus className="me-1" /> Add Document
-              </Button>
-            </div>
-
-            {formData.documentsUpdate.length > 0 ? (
-              <div className="table-responsive">
-                <Table size="sm" bordered hover>
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: "50px" }}>#</th>
-                      <th>Title (EN)</th>
-                      <th>Title (HI)</th>
-                      <th>File</th>
-                      <th style={{ width: "100px" }}>Size</th>
-                      <th style={{ width: "120px" }}>Publish Date</th>
-                      <th style={{ width: "120px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.documentsUpdate.map((doc, idx) => (
-                      <tr key={idx}>
-                        <td>{idx + 1}</td>
-                        <td>{doc.titleEng || "N/A"}</td>
-                        <td>{doc.titleHin || "N/A"}</td>
-                        <td>
-                          {doc.fileUrl ? (
-                            <a
-                              href={`${API_URL}${doc.fileUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-decoration-none"
-                            >
-                              {getFileIcon(doc.fileType)}{" "}
-                              {doc.fileName || "View"}
-                            </a>
-                          ) : doc.fileName ? (
-                            <span className="text-success">
-                              {getFileIcon(doc.fileType)} {doc.fileName}
-                            </span>
-                          ) : (
-                            <span className="text-muted">No file</span>
-                          )}
-                        </td>
-                        <td>{doc.fileSize || "N/A"}</td>
-                        <td>
-                          {doc.publishDate
-                            ? new Date(doc.publishDate).toLocaleDateString(
-                                "en-IN"
-                              )
-                            : "N/A"}
-                        </td>
-                        <td>
-                          <Button
-                            size="sm"
-                            color="warning"
-                            className="me-1"
-                            onClick={() => handleEditDocument(idx)}
-                            type="button"
-                            title="Edit Document"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDeleteDocument(idx)}
-                            type="button"
-                            title="Delete Document"
-                          >
-                            <FaTrash />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center text-muted py-3 bg-light rounded">
-                <p className="mb-0">No documents added yet</p>
-              </div>
-            )}
-
-            {/* HTML Content */}
-            <hr className="my-4" />
             <FormGroup>
               <Label>HTML Content</Label>
               <ReactQuill
                 theme="snow"
                 value={formData.htmlContent}
                 onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, htmlContent: value }))
+                  setFormData({ ...formData, htmlContent: value })
                 }
                 style={{ height: "200px", marginBottom: "50px" }}
-                placeholder="Enter page content here..."
               />
             </FormGroup>
+
+            {/* ================= DOCUMENTS SECTION ================= */}
+            <hr />
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5>📎 Documents ({formData.documentsUpdate.length})</h5>
+              <Button
+                color="success"
+                size="sm"
+                onClick={toggleDocumentModal}
+                type="button"
+              >
+                <FaPlus /> Add Document
+              </Button>
+            </div>
+
+            {formData.documentsUpdate.length > 0 && (
+              <Table size="sm" bordered>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Title (EN)</th>
+                    <th>Title (HI)</th>
+                    <th>File</th>
+                    <th>Size</th>
+                    <th>Publish Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.documentsUpdate.map((doc, idx) => (
+                    <tr key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{doc.titleEng}</td>
+                      <td>{doc.titleHin}</td>
+                      <td>
+                        
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <FaFilePdf /> View
+                        </a>
+                      </td>
+                      <td>{doc.fileSize}</td>
+                      <td>{doc.publishDate?.slice(0, 10)}</td>
+                      <td>
+                        <Button
+                          size="sm"
+                          color="warning"
+                          className="me-1"
+                          onClick={() => handleEditDocument(idx)}
+                          type="button"
+                        >
+                          <FaEdit />
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="danger"
+                          onClick={() => handleDeleteDocument(idx)}
+                          type="button"
+                        >
+                          <FaTrash />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
           </ModalBody>
           <ModalFooter>
-            <Button color="primary" type="submit" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Spinner size="sm" className="me-1" />
-                  {editingId ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <FaSave className="me-1" />{" "}
-                  {editingId ? "Update" : "Save"}
-                </>
-              )}
+            <Button color="primary" type="submit">
+              <FaSave /> {editingId ? "Update" : "Save"}
             </Button>
-            <Button
-              color="secondary"
-              onClick={toggleModal}
-              type="button"
-              disabled={submitting}
-            >
-              <FaTimes className="me-1" /> Cancel
+            <Button color="secondary" onClick={toggleModal} type="button">
+              <FaTimes /> Cancel
             </Button>
           </ModalFooter>
         </Form>
       </Modal>
 
-      {/* Document Modal */}
+      {/* ================= DOCUMENT MODAL ================= */}
       <Modal
         isOpen={documentModal}
         toggle={toggleDocumentModal}
         size="lg"
-        backdrop="static"
       >
         <ModalHeader toggle={toggleDocumentModal}>
           {editingDocIndex !== null ? "✏️ Edit Document" : "➕ Add Document"}
@@ -1175,12 +622,10 @@ const getAxiosConfig = (isMultipart) =>
             <Col md={6}>
               <FormGroup>
                 <Label>
-                  Document Title (English){" "}
-                  <span className="text-danger">*</span>
+                  Document Title (English) <span className="text-danger">*</span>
                 </Label>
                 <Input
                   type="text"
-                  placeholder="Enter document title"
                   value={currentDocument.titleEng}
                   onChange={(e) =>
                     setCurrentDocument({
@@ -1198,7 +643,6 @@ const getAxiosConfig = (isMultipart) =>
                 </Label>
                 <Input
                   type="text"
-                  placeholder="दस्तावेज़ शीर्षक दर्ज करें"
                   value={currentDocument.titleHin}
                   onChange={(e) =>
                     setCurrentDocument({
@@ -1213,28 +657,22 @@ const getAxiosConfig = (isMultipart) =>
 
           <FormGroup>
             <Label>
-              Upload File{" "}
-              {editingDocIndex === null && (
-                <span className="text-danger">*</span>
-              )}
+              Upload File <span className="text-danger">*</span>
             </Label>
             <Input
               type="file"
               onChange={handleFileUpload}
+              disabled={uploadingFile}
               accept=".pdf,.doc,.docx,.xls,.xlsx"
             />
-            {currentDocument.fileName && (
-              <small className="text-success d-block mt-2">
-                ✓ File Selected: {currentDocument.fileName}
+            {uploadingFile && (
+              <small className="text-info">Uploading...</small>
+            )}
+            {currentDocument.fileUrl && (
+              <small className="text-success d-block mt-1">
+                ✓ File uploaded: {currentDocument.fileUrl}
               </small>
             )}
-            {editingDocIndex !== null &&
-              !currentDocument.file &&
-              currentDocument.fileUrl && (
-                <small className="text-info d-block mt-2">
-                  📎 Current file will be kept if no new file is uploaded
-                </small>
-              )}
           </FormGroup>
 
           <Row>
@@ -1246,7 +684,6 @@ const getAxiosConfig = (isMultipart) =>
                   value={currentDocument.fileSize}
                   readOnly
                   disabled
-                  className="bg-light"
                 />
               </FormGroup>
             </Col>
@@ -1258,7 +695,6 @@ const getAxiosConfig = (isMultipart) =>
                   value={currentDocument.fileType}
                   readOnly
                   disabled
-                  className="bg-light"
                 />
               </FormGroup>
             </Col>
@@ -1282,11 +718,10 @@ const getAxiosConfig = (isMultipart) =>
         </ModalBody>
         <ModalFooter>
           <Button color="primary" onClick={handleAddDocument}>
-            <FaSave className="me-1" />{" "}
-            {editingDocIndex !== null ? "Update" : "Add"}
+            <FaSave /> {editingDocIndex !== null ? "Update" : "Add"}
           </Button>
           <Button color="secondary" onClick={toggleDocumentModal}>
-            <FaTimes className="me-1" /> Cancel
+            <FaTimes /> Cancel
           </Button>
         </ModalFooter>
       </Modal>

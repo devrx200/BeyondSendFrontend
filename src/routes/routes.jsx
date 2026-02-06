@@ -31,7 +31,7 @@ import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
-import CeatedDynamamicPage from "";
+import CreatedDynamicPage from "../views/pages/CreatedDynamicPage";
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -51,7 +51,7 @@ import AdminUserManagement from "../views/Admin/AdminUserManagement";
 import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import SchemesDetails from "../views/pages/SchemesDetails";
-import PageCreatorManagement from "../views/Admin/PageCreatorMangagement.jsx";
+import PageCreatorManagement from "../views/Admin/PageCreatorMangagement";
 
 
 
@@ -154,9 +154,7 @@ const AppRoutes = () => {
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
-
-      <Route path="/:mainSlug" element={<MainLayout><CeatedDynamamicPage /></MainLayout>} />
-      <Route path="/:mainSlug/:slug" element={<MainLayout><CeatedDynamamicPage /></MainLayout>} />
+      <Route path="/notice-board/:mainSlug/:slug?" element={<MainLayout><CreatedDynamicPage /></MainLayout>} />
 
 
 
