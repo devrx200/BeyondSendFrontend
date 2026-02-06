@@ -562,7 +562,7 @@ const PageCreatorManagement = () => {
                       <td>{doc.titleEng}</td>
                       <td>{doc.titleHin}</td>
                       <td>
-                        
+                        <a
                           href={doc.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
