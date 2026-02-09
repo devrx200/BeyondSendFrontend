@@ -9,39 +9,25 @@ import {
   Badge,
   Spinner,
   Container,
+  Button,
 } from "reactstrap";
-import { FaCalendarAlt, FaFileAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaFileAlt, FaDownload } from "react-icons/fa";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const API = import.meta.env.VITE_API_URL;
 
 const CreatedDynamicPage = () => {
   const { mainSlug, slug } = useParams();
+  console.log("mainSlug", mainSlug);
+  const { isHindi } = useLanguage(); // ✅ FIXED
 
-  const [pageData, setPageData] = useState(null);
-  const [listData, setListData] = useState([]);
+  const [contentDetail, setContentDetail] = useState(null);
+  const [contentList, setContentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  /* ================= FETCHERS ================= */
-  const fetchSinglePage = async () => {
-    try {
-      setLoading(true);
-      setError(false);
-
-      const res = await axios.get(
-        `${API}/api/get-content-by-slug/${slug}`
-      );
-
-      setPageData(res?.data?.data || null);
-    } catch (err) {
-      console.error(err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchListPage = async () => {
+  /* ================= LIST PAGE FETCH ================= */
+  const fetchContentListByMainSlug = async () => {
     try {
       setLoading(true);
       setError(false);
@@ -50,27 +36,54 @@ const CreatedDynamicPage = () => {
         `${API}/api/get-content-by-main-slug/${mainSlug}`
       );
 
-      setListData(res?.data?.data || []);
+      setContentList(res?.data?.data || []);
     } catch (err) {
-      console.error(err);
       setError(true);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= EFFECT ================= */
+  /* ================= DETAIL PAGE FETCH ================= */
+  const fetchContentDetailBySlug = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+
+      const res = await axios.get(
+        `${API}/api/get-content-by-slug/${mainSlug}/${slug}`
+      );
+
+      setContentDetail(res?.data?.data || null);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   useEffect(() => {
-    slug ? fetchSinglePage() : fetchListPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mainSlug, slug]);
+  setError(false);
+
+  if (slug) {
+    setContentDetail(null);
+    fetchContentDetailBySlug();
+  } else {
+    setContentList([]);
+    fetchContentListByMainSlug();
+  }
+}, [mainSlug, slug]);
+
 
   /* ================= STATES ================= */
   if (loading) {
     return (
       <div className="text-center py-5">
         <Spinner color="primary" />
-        <p className="text-muted mt-2">Loading content...</p>
+        <p className="text-muted mt-2">
+          {isHindi ? "लोड हो रहा है..." : "Loading content..."}
+        </p>
       </div>
     );
   }
@@ -78,67 +91,65 @@ const CreatedDynamicPage = () => {
   if (error) {
     return (
       <div className="text-center py-5 text-danger">
-        Something went wrong. Please try again.
+        {isHindi
+          ? "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
+          : "Something went wrong. Please try again."}
       </div>
     );
   }
 
   /* =================================================
-     LIST PAGE (mainSlug)
+     LIST PAGE
   ================================================= */
   if (!slug) {
     return (
-      <Container className="my-5">
+      <Container className="py-5">
         <Card className="border-0 shadow rounded-4">
           <CardBody className="p-4 p-md-5">
             <h3 className="fw-bold mb-4 text-capitalize">
-              {mainSlug?.replace(/-/g, " ")}
+              {mainSlug.replace(/-/g, " ")}
             </h3>
 
-            {listData.length === 0 && (
-              <p className="text-muted">No records available</p>
+            {contentList.length === 0 && (
+              <p className="text-muted">
+                {isHindi ? "कोई रिकॉर्ड नहीं मिला" : "No records found"}
+              </p>
             )}
 
-            {listData.map((item) => (
-              <div
+            {contentList.map((item) => (
+              <Card
                 key={item._id}
-                className="py-3 border-bottom d-flex justify-content-between align-items-start"
+                className="mb-3 border-start border-4 border-primary"
               >
-                <div>
-                  {/* TITLE */}
-                  <Link
-                    to={`/${mainSlug}/${item.slug}`}
-                    className="fw-semibold fs-6 text-decoration-none text-dark d-block"
-                  >
-                    {item.titleHin || item.titleEng}
-                  </Link>
+                <CardBody className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <Link
+                      to={`${item.menuId.path}/${mainSlug}/${item.slug}`}
+                      className="fw-semibold fs-6 text-decoration-none text-dark"
+                    >
+                      {isHindi
+                        ? item.titleHin || item.titleEng
+                        : item.titleEng}
+                    </Link>
 
-                  {/* META */}
-                  <div className="small text-muted mt-1">
-                    <span className="me-3">
+                    <div className="small text-muted mt-1">
                       <FaCalendarAlt className="me-1" />
-                      Published:{" "}
                       {item.publishDate
-                        ? new Date(item.publishDate).toLocaleDateString("hi-IN")
+                        ? new Date(item.publishDate).toLocaleDateString(
+                            isHindi ? "hi-IN" : "en-IN"
+                          )
                         : "—"}
-                    </span>
-
-                    <span>
-                      Updated:{" "}
-                      {item.updatedAt
-                        ? new Date(item.updatedAt).toLocaleDateString("hi-IN")
-                        : "—"}
-                    </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* FILE COUNT */}
-                {item.documentsUpdate?.length > 0 && (
-                  <Badge color="success" pill>
-                    {item.documentsUpdate.length} Files
-                  </Badge>
-                )}
-              </div>
+                  {item.documentsUpdate?.length > 0 && (
+                    <Badge color="success" pill>
+                      {item.documentsUpdate.length}{" "}
+                      {isHindi ? "फ़ाइलें" : "Files"}
+                    </Badge>
+                  )}
+                </CardBody>
+              </Card>
             ))}
           </CardBody>
         </Card>
@@ -149,94 +160,88 @@ const CreatedDynamicPage = () => {
   /* =================================================
      DETAIL PAGE
   ================================================= */
-  if (!pageData) {
-    return (
-      <div className="text-center py-5 text-danger">
-        Page not found
-      </div>
-    );
-  }
-
   return (
-    <Container className="my-5">
+    <Container className="py-5">
       <Card className="border-0 shadow rounded-4">
         <CardBody className="p-4 p-md-5">
 
           {/* BREADCRUMB */}
           <small className="text-muted d-block mb-2">
-            <Link to={`/${mainSlug}`} className="text-decoration-none">
-              {mainSlug?.replace(/-/g, " ")}
+            <Link to={`${contentDetail.menuId.path}/${mainSlug}`} className="text-decoration-none">
+              {mainSlug.replace(/-/g, " ")}
             </Link>{" "}
-            / {pageData.titleHin || pageData.titleEng}
+            /{" "}
+            {contentDetail && (isHindi
+              ? contentDetail.titleHin || contentDetail.titleEng
+              : contentDetail.titleEng)}
           </small>
 
           {/* TITLE */}
           <h2 className="fw-bold mb-3">
-            {pageData.titleHin || pageData.titleEng}
+            {isHindi
+              ? contentDetail.titleHin || contentDetail.titleEng
+              : contentDetail.titleEng}
           </h2>
 
           {/* META */}
-          <Row className="mb-4 text-muted small">
+          <Row className="text-muted small mb-4">
             <Col md="6">
               <FaCalendarAlt className="me-1" />
-              Published:{" "}
-              {pageData.publishDate
-                ? new Date(pageData.publishDate).toLocaleDateString()
-                : "—"}
+              {isHindi ? "प्रकाशित:" : "Published:"}{" "}
+              {new Date(contentDetail.publishDate).toLocaleDateString(
+                isHindi ? "hi-IN" : "en-IN"
+              )}
             </Col>
             <Col md="6" className="text-md-end">
-              Updated:{" "}
-              {pageData.updatedAt
-                ? new Date(pageData.updatedAt).toLocaleDateString()
-                : "—"}
+              {isHindi ? "अपडेट:" : "Updated:"}{" "}
+              {new Date(contentDetail.updatedAt).toLocaleDateString(
+                isHindi ? "hi-IN" : "en-IN"
+              )}
             </Col>
           </Row>
 
           <hr />
 
           {/* CONTENT */}
-          {pageData.htmlContent && (
-            <div
-              className="content-area"
-              style={{ fontSize: "16px", lineHeight: "1.9" }}
-              dangerouslySetInnerHTML={{
-                __html: pageData.htmlContent,
-              }}
-            />
-          )}
+          <div
+            style={{ fontSize: "16px", lineHeight: "1.9" }}
+            dangerouslySetInnerHTML={{
+              __html: contentDetail.htmlContent,
+            }}
+          />
 
-          {/* DOCUMENTS */}
+          {/* ATTACHMENTS */}
           <div className="mt-5">
             <h5 className="fw-bold mb-3">
               <FaFileAlt className="me-2" />
-              Attachments
+              {isHindi ? "संलग्नक" : "Attachments"}
             </h5>
 
-            {pageData.documentsUpdate?.length === 0 && (
-              <p className="text-muted">No documents attached.</p>
-            )}
+            {contentDetail.documentsUpdate?.map((doc, index) => (
+              <Card key={index} className="mb-2">
+                <CardBody className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <FaFileAlt className="me-2 text-primary" />
+                    {isHindi
+                      ? doc.titleHin || doc.titleEng
+                      : doc.titleEng}
+                  </div>
 
-            {pageData.documentsUpdate?.map((doc) => (
-              <div
-                key={doc._id}
-                className="d-flex justify-content-between align-items-center border rounded-3 p-3 mb-2"
-              >
-                <a
-                  href={`${API}${doc.fileUrl}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-decoration-none fw-semibold"
-                >
-                  {doc.titleHin || doc.titleEng}
-                </a>
-
-                <Badge color="secondary">
-                  {doc.fileType?.toUpperCase() || "FILE"}
-                  {doc.fileSize && ` • ${doc.fileSize}`}
-                </Badge>
-              </div>
+                  <Button
+                    size="sm"
+                    color="primary"
+                    tag="a"
+                    href={`${API}${doc.fileUrl}`}
+                    target="_blank"
+                  >
+                    <FaDownload className="me-1" />
+                    {isHindi ? "डाउनलोड" : "Download"}
+                  </Button>
+                </CardBody>
+              </Card>
             ))}
           </div>
+
         </CardBody>
       </Card>
     </Container>

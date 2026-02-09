@@ -88,6 +88,8 @@ const MainLayout = ({ children }) => (
 
 const AppRoutes = () => {
   const [pages, setPages] = useState([]);
+  const [staticPages, setStaticPages] = useState([]);
+
 
   useEffect(() => {
     fetchPages();
@@ -96,12 +98,23 @@ const AppRoutes = () => {
   const fetchPages = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/menu-list`);
-      const menuItems = res.data.data || [];
+
+      const menuItems = (res.data.data || []).filter(
+        (item) => item.isDynamic !== false
+      );
+
+      const menuItemsStatic = (res.data.data || []).filter(
+        (item) => item.isDynamic === false
+      );
+
       setPages(extractPagesFromMenu(menuItems));
+      setStaticPages(extractPagesFromMenu(menuItemsStatic));
+
     } catch (err) {
       console.error("Page Fetch Error", err);
     }
   };
+
 
   const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
     menus.forEach(item => {
@@ -137,6 +150,18 @@ const AppRoutes = () => {
           />
         ))}
 
+
+      {staticPages
+        .filter(p => !p.isExternal)
+        .map(p => (
+          <Route
+            key={p._id}
+            path={`${p.path}/:mainSlug/:slug?`}
+            element={<MainLayout><CreatedDynamicPage /></MainLayout>}
+          />
+        ))}
+
+
       <Route path="/aboutUs" element={<MainLayout><AboutAndHelpView /></MainLayout>} />
 
       {/* STATIC */}
@@ -148,15 +173,11 @@ const AppRoutes = () => {
       <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
-      <Route path="/notice-board" element={<MainLayout><NoticeBoard /></MainLayout>} />
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
       <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
-      <Route path="/notice-board/:mainSlug/:slug?" element={<MainLayout><CreatedDynamicPage /></MainLayout>} />
-
-
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>

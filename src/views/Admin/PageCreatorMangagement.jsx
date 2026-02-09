@@ -211,13 +211,13 @@ const PageCreatorManagement = () => {
 
   const getFileIcon = (fileType) => {
     if (!fileType) return <FaFilePdf />;
-    
+
     const type = fileType.toLowerCase();
     if (type.includes("pdf")) return <FaFilePdf className="text-danger" />;
     if (type.includes("word") || type.includes("doc")) return <FaFileWord className="text-primary" />;
-    if (type.includes("excel") || type.includes("xls") || type.includes("sheet")) 
+    if (type.includes("excel") || type.includes("xls") || type.includes("sheet"))
       return <FaFileExcel className="text-success" />;
-    
+
     return <FaFilePdf />;
   };
 
@@ -399,7 +399,7 @@ const PageCreatorManagement = () => {
 
   const handleEditDocument = (index) => {
     const doc = formData.documentsUpdate[index];
-    setCurrentDocument({ 
+    setCurrentDocument({
       ...doc,
       file: null // Don't carry over file object when editing
     });
@@ -436,7 +436,7 @@ const PageCreatorManagement = () => {
   /* ================= CRUD OPERATIONS ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
-    
+
     // Format date properly
     let formattedDate = "";
     if (item.publishDate) {
@@ -460,12 +460,12 @@ const PageCreatorManagement = () => {
       htmlContent: item.htmlContent || "",
       documentsUpdate: Array.isArray(item.documentsUpdate)
         ? item.documentsUpdate.map((doc) => ({
-            ...doc,
-            file: null // Don't include file object for existing documents
-          }))
+          ...doc,
+          file: null // Don't include file object for existing documents
+        }))
         : []
     });
-    
+
     setModal(true);
   };
 
@@ -500,7 +500,7 @@ const PageCreatorManagement = () => {
       // Reload data - if current page is empty, go to previous page
       const newTotal = totalDocuments - 1;
       const newTotalPages = Math.ceil(newTotal / limit) || 1;
-      
+
       if (currentPage > newTotalPages) {
         setCurrentPage(newTotalPages);
         loadData(newTotalPages);
@@ -522,149 +522,149 @@ const PageCreatorManagement = () => {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  setSubmitting(true);
+    setSubmitting(true);
 
-  try {
-    const apiUrl = editingId
-      ? `${API_URL}/update-content/${editingId}`
-      : `${API_URL}/api/create-content`;
+    try {
+      const apiUrl = editingId
+        ? `${API_URL}/api/update-content/${editingId}`
+        : `${API_URL}/api/create-content`;
 
-    const multipart = hasNewFiles();
-    const payload = multipart ? buildFormData() : buildJsonPayload();
+      const multipart = hasNewFiles();
+      const payload = multipart ? buildFormData() : buildJsonPayload();
 
-    const response = editingId
-      ? await axios.put(apiUrl, payload, getAxiosConfig(multipart))
-      : await axios.post(apiUrl, payload, getAxiosConfig(multipart));
+      const response = editingId
+        ? await axios.put(apiUrl, payload, getAxiosConfig(multipart))
+        : await axios.post(apiUrl, payload, getAxiosConfig(multipart));
 
-    await Swal.fire({
-      icon: "success",
-      title: editingId ? "Updated" : "Created",
-      text: response.data?.message || "Saved successfully",
-      timer: 2000,
-      showConfirmButton: false
-    });
+      await Swal.fire({
+        icon: "success",
+        title: editingId ? "Updated" : "Created",
+        text: response.data?.message || "Saved successfully",
+        timer: 2000,
+        showConfirmButton: false
+      });
 
-    toggleModal();
-    loadData(currentPage);
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Error Saving Page",
-      text:
-        error.response?.data?.message ||
-        "Server error. Please try again."
-    });
-  } finally {
-    setSubmitting(false);
-  }
-};
-
-/* ================= HELPERS ================= */
-
-const validateForm = () => {
-  const requiredFields = {
-    titleEng: "Title (English)",
-    titleHin: "Title (Hindi)",
-    slug: "Slug",
-    mainSlug: "Main Slug",
-    menuId: "Menu",
-    department: "Department",
-    publishDate: "Publish Date"
+      toggleModal();
+      loadData(currentPage);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error Saving Page",
+        text:
+          error.response?.data?.message ||
+          "Server error. Please try again."
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  for (const [key, label] of Object.entries(requiredFields)) {
-    if (!formData[key]?.toString().trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: `Please fill: ${label}`
-      });
-      return false;
+  /* ================= HELPERS ================= */
+
+  const validateForm = () => {
+    const requiredFields = {
+      titleEng: "Title (English)",
+      titleHin: "Title (Hindi)",
+      slug: "Slug",
+      mainSlug: "Main Slug",
+      menuId: "Menu",
+      department: "Department",
+      publishDate: "Publish Date"
+    };
+
+    for (const [key, label] of Object.entries(requiredFields)) {
+      if (!formData[key]?.toString().trim()) {
+        Swal.fire({
+          icon: "warning",
+          title: "Required Field",
+          text: `Please fill: ${label}`
+        });
+        return false;
+      }
     }
-  }
-  return true;
-};
+    return true;
+  };
 
-const hasNewFiles = () =>
-  formData.documentsUpdate?.some(doc => doc.file instanceof File);
+  const hasNewFiles = () =>
+    formData.documentsUpdate?.some(doc => doc.file instanceof File);
 
-const buildFormData = () => {
-  const fd = new FormData();
+  const buildFormData = () => {
+    const fd = new FormData();
 
-  // Append basic content fields
-  [
-    "titleEng",
-    "titleHin",
-    "slug",
-    "mainSlug",
-    "menuId",
-    "department",
-    "publishDate"
-  ].forEach(key => fd.append(key, formData[key]));
+    // Append basic content fields
+    [
+      "titleEng",
+      "titleHin",
+      "slug",
+      "mainSlug",
+      "menuId",
+      "department",
+      "publishDate"
+    ].forEach(key => fd.append(key, formData[key]));
 
-  fd.append("htmlContent", formData.htmlContent || "");
+    fd.append("htmlContent", formData.htmlContent || "");
 
-  let fileIndex = 0;
+    let fileIndex = 0;
 
-  const documents = formData.documentsUpdate.map(doc => {
-    const obj = {
+    const documents = formData.documentsUpdate.map(doc => {
+      const obj = {
+        titleEng: doc.titleEng || "",
+        titleHin: doc.titleHin || "",
+        fileUrl: doc.fileUrl || "",
+        fileName: doc.fileName || "",
+        fileSize: doc.fileSize || "",
+        fileType: doc.fileType || "",
+        publishDate: doc.publishDate || "",
+        fileIndex: -1
+      };
+
+      // Append file with field name "file" (matches backend middleware)
+      if (doc.file instanceof File) {
+        obj.fileIndex = fileIndex;
+        fd.append("file", doc.file);  // Changed from "files" to "file"
+        fileIndex++;
+      }
+
+      return obj;
+    });
+
+    fd.append("documentsUpdate", JSON.stringify(documents));
+
+    console.log("FormData being sent:");
+    console.log("- Documents:", documents);
+    console.log("- Total files:", fileIndex);
+
+    return fd;
+  };
+
+  const buildJsonPayload = () => ({
+    titleEng: formData.titleEng.trim(),
+    titleHin: formData.titleHin.trim(),
+    slug: formData.slug.trim(),
+    mainSlug: formData.mainSlug.trim(),
+    menuId: formData.menuId,
+    department: formData.department.trim(),
+    publishDate: formData.publishDate,
+    htmlContent: formData.htmlContent || "",
+    documentsUpdate: formData.documentsUpdate.map(doc => ({
       titleEng: doc.titleEng || "",
       titleHin: doc.titleHin || "",
       fileUrl: doc.fileUrl || "",
       fileName: doc.fileName || "",
       fileSize: doc.fileSize || "",
       fileType: doc.fileType || "",
-      publishDate: doc.publishDate || "",
-      fileIndex: -1
-    };
-
-    // Append file with field name "file" (matches backend middleware)
-    if (doc.file instanceof File) {
-      obj.fileIndex = fileIndex;
-      fd.append("file", doc.file);  // Changed from "files" to "file"
-      fileIndex++;
-    }
-
-    return obj;
+      publishDate: doc.publishDate || ""
+    }))
   });
 
-  fd.append("documentsUpdate", JSON.stringify(documents));
-
-  console.log("FormData being sent:");
-  console.log("- Documents:", documents);
-  console.log("- Total files:", fileIndex);
-
-  return fd;
-};
-
-const buildJsonPayload = () => ({
-  titleEng: formData.titleEng.trim(),
-  titleHin: formData.titleHin.trim(),
-  slug: formData.slug.trim(),
-  mainSlug: formData.mainSlug.trim(),
-  menuId: formData.menuId,
-  department: formData.department.trim(),
-  publishDate: formData.publishDate,
-  htmlContent: formData.htmlContent || "",
-  documentsUpdate: formData.documentsUpdate.map(doc => ({
-    titleEng: doc.titleEng || "",
-    titleHin: doc.titleHin || "",
-    fileUrl: doc.fileUrl || "",
-    fileName: doc.fileName || "",
-    fileSize: doc.fileSize || "",
-    fileType: doc.fileType || "",
-    publishDate: doc.publishDate || ""
-  }))
-});
-
-const getAxiosConfig = (isMultipart) =>
-  isMultipart
-    ? {} // IMPORTANT: let axios set multipart headers
-    : { headers: { "Content-Type": "application/json" } };
+  const getAxiosConfig = (isMultipart) =>
+    isMultipart
+      ? {} // IMPORTANT: let axios set multipart headers
+      : { headers: { "Content-Type": "application/json" } };
 
 
   /* ================= UI RENDER ================= */
@@ -815,8 +815,8 @@ const getAxiosConfig = (isMultipart) =>
                           <td>
                             {item.publishDate
                               ? new Date(item.publishDate).toLocaleDateString(
-                                  "en-IN"
-                                )
+                                "en-IN"
+                              )
                               : "N/A"}
                           </td>
                           <td className="text-center">
@@ -1083,8 +1083,8 @@ const getAxiosConfig = (isMultipart) =>
                         <td>
                           {doc.publishDate
                             ? new Date(doc.publishDate).toLocaleDateString(
-                                "en-IN"
-                              )
+                              "en-IN"
+                            )
                             : "N/A"}
                         </td>
                         <td>

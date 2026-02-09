@@ -39,6 +39,9 @@ export const handleMenuClick = async ({ menu, navigate }) => {
         },
       });
     }
+    else {
+      navigate(menu.path);
+    }
   } catch (error) {
     console.error("Menu click failed", error);
 
