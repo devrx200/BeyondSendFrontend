@@ -151,12 +151,14 @@ const AppRoutes = () => {
         ))}
 
 
+
+      {/* Extra Page PAGES CREATED FROM ADMIN */}
       {staticPages
         .filter(p => !p.isExternal)
         .map(p => (
           <Route
             key={p._id}
-            path={`${p.path}/:mainSlug/:slug?`}
+            path={`${p.path}/:slug?`} 
             element={<MainLayout><CreatedDynamicPage /></MainLayout>}
           />
         ))}

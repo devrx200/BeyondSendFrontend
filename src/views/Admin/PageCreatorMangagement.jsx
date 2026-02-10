@@ -28,12 +28,16 @@ import {
   FaFilePdf,
   FaSearch,
   FaFileWord,
-  FaFileExcel
+  FaFileExcel,
+  FaEye
 } from "react-icons/fa";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
+import { useLanguage } from "../../contexts/LanguageContext";
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -62,6 +66,9 @@ const initialDocumentData = {
 };
 
 const PageCreatorManagement = () => {
+
+  const { isHindi } = useLanguage();
+
   // Main state
   const [list, setList] = useState([]);
   const [menuList, setMenuList] = useState([]);
@@ -484,7 +491,7 @@ const PageCreatorManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/delete-content/${id}`);
+      const response = await axios.delete(`${API_URL}/api/delete-content/${id}`);
 
       const successMessage =
         response.data?.message || "Page deleted successfully";
@@ -828,7 +835,7 @@ const PageCreatorManagement = () => {
                             <Button
                               size="sm"
                               color="warning"
-                              className="me-1"
+                              className="me-1 p-1 text-dark"
                               onClick={() => handleEdit(item)}
                               title="Edit"
                             >
@@ -837,12 +844,33 @@ const PageCreatorManagement = () => {
                             <Button
                               size="sm"
                               color="danger"
+                              className="p-1"
                               onClick={() => handleDelete(item._id)}
                               title="Delete"
                             >
                               <FaTrash />
                             </Button>
+
+                            {/* Visit Page */}
+                            <Button
+                              size="sm"
+                              color="primary"
+                              className="p-1 ms-1"
+                              onClick={() =>
+                                window.open(
+                                  `${item.menuId?.path}/${item.mainSlug}`,
+                                  "_blank"
+                                )
+                              }
+                              title="Visit Page"
+                            >
+                              <FaEye className="me-1" />
+                              {isHindi ? "देखें" : "View"}
+                      
+                            </Button>
+
                           </td>
+
                         </tr>
                       ))
                     )}
