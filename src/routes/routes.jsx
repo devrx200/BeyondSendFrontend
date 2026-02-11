@@ -138,6 +138,7 @@ const AppRoutes = () => {
       <Route path="/" element={<MainLayout><Home /></MainLayout>} />
       <Route path="/about" element={<MainLayout><About /></MainLayout>} />
       <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+      <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
 
       {/* DYNAMIC CMS PAGES */}
       {pages
@@ -176,7 +177,6 @@ const AppRoutes = () => {
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
-      <Route path="/gallery-page" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
