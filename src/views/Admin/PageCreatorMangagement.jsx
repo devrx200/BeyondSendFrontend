@@ -49,9 +49,10 @@ const initialFormData = {
   mainSlug: "",
   menuId: "",
   department: "",
-  publishDate: "",
   htmlContent: "",
-  documentsUpdate: []
+  htmlContentHi: "",
+  documentsUpdate: [],
+  isActive: true
 };
 
 const initialDocumentData = {
@@ -61,8 +62,9 @@ const initialDocumentData = {
   fileName: "",
   fileSize: "",
   fileType: "",
-  publishDate: "",
-  file: null
+  file: null,
+  shortDescriptionEn:"",
+  shortDescriptionHin:"",
 };
 
 const PageCreatorManagement = () => {
@@ -312,11 +314,25 @@ const PageCreatorManagement = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+ const MAX_SIZE = 5 * 1024 * 1024; 
+if (file.size > MAX_SIZE) {
+  Swal.fire({
+    icon: "warning",
+    title: "File Too Large 📁",
+    text: "File size should not exceed 5 MB.",
+    confirmButtonText: "OK",
+    confirmButtonColor: "#3085d6"
+  });
+
+  e.target.value = null; // Reset file input
+  return;
+}
 
     // Calculate file size
-    const fileSizeKB = (file.size / 1024).toFixed(2);
-    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize = file.size < 1024 * 1024
+      const fileSizeKB = (file.size / 1024).toFixed(2);
+  const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const displaySize =
+    file.size < 1024 * 1024
       ? `${fileSizeKB} KB`
       : `${fileSizeMB} MB`;
 
@@ -347,16 +363,6 @@ const PageCreatorManagement = () => {
         icon: "warning",
         title: "Required Field",
         text: "Please enter document title in Hindi",
-        confirmButtonText: "OK"
-      });
-      return;
-    }
-
-    if (!currentDocument.publishDate) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please select publish date",
         confirmButtonText: "OK"
       });
       return;
@@ -446,16 +452,6 @@ const PageCreatorManagement = () => {
 
     // Format date properly
     let formattedDate = "";
-    if (item.publishDate) {
-      try {
-        const date = new Date(item.publishDate);
-        formattedDate = date.toISOString().split("T")[0];
-      } catch (e) {
-        console.error("Date parsing error:", e);
-        formattedDate = "";
-      }
-    }
-
     setFormData({
       titleEng: item.titleEng || "",
       titleHin: item.titleHin || "",
@@ -463,8 +459,9 @@ const PageCreatorManagement = () => {
       mainSlug: item.mainSlug || "",
       menuId: item.menuId?._id || item.menuId || "",
       department: item.department || "",
-      publishDate: formattedDate,
       htmlContent: item.htmlContent || "",
+      htmlContentHi: item.htmlContentHi || "",
+      isActive: item.isActive !== false,
       documentsUpdate: Array.isArray(item.documentsUpdate)
         ? item.documentsUpdate.map((doc) => ({
           ...doc,
@@ -580,7 +577,6 @@ const PageCreatorManagement = () => {
       mainSlug: "Main Slug",
       menuId: "Menu",
       department: "Department",
-      publishDate: "Publish Date"
     };
 
     for (const [key, label] of Object.entries(requiredFields)) {
@@ -610,11 +606,11 @@ const PageCreatorManagement = () => {
       "mainSlug",
       "menuId",
       "department",
-      "publishDate"
     ].forEach(key => fd.append(key, formData[key]));
 
     fd.append("htmlContent", formData.htmlContent || "");
-
+    fd.append("htmlContentHi", formData.htmlContentHi || "");
+     fd.append("isActive", formData.isActive);
     let fileIndex = 0;
 
     const documents = formData.documentsUpdate.map(doc => {
@@ -625,8 +621,10 @@ const PageCreatorManagement = () => {
         fileName: doc.fileName || "",
         fileSize: doc.fileSize || "",
         fileType: doc.fileType || "",
-        publishDate: doc.publishDate || "",
-        fileIndex: -1
+        fileIndex: -1,
+        shortDescriptionEn: doc.shortDescriptionEn || "",
+        shortDescriptionHin: doc.shortDescriptionHin || "",
+
       };
 
       // Append file with field name "file" (matches backend middleware)
@@ -655,8 +653,9 @@ const PageCreatorManagement = () => {
     mainSlug: formData.mainSlug.trim(),
     menuId: formData.menuId,
     department: formData.department.trim(),
-    publishDate: formData.publishDate,
     htmlContent: formData.htmlContent || "",
+    htmlContentHi: formData.htmlContentHi || "",
+     isActive: formData.isActive, 
     documentsUpdate: formData.documentsUpdate.map(doc => ({
       titleEng: doc.titleEng || "",
       titleHin: doc.titleHin || "",
@@ -664,7 +663,9 @@ const PageCreatorManagement = () => {
       fileName: doc.fileName || "",
       fileSize: doc.fileSize || "",
       fileType: doc.fileType || "",
-      publishDate: doc.publishDate || ""
+      shortDescriptionEn :doc.shortDescriptionEn || "",
+      shortDescriptionHin :doc.shortDescriptionHin || ""
+
     }))
   });
 
@@ -789,7 +790,6 @@ const PageCreatorManagement = () => {
                       <th>Slug</th>
                       <th>Department</th>
                       <th>Menu</th>
-                      <th>Publish Date</th>
                       <th style={{ width: "100px" }}>Documents</th>
                       <th style={{ width: "120px" }}>Actions</th>
                     </tr>
@@ -819,13 +819,7 @@ const PageCreatorManagement = () => {
                               item.menuId?.name ||
                               "N/A"}
                           </td>
-                          <td>
-                            {item.publishDate
-                              ? new Date(item.publishDate).toLocaleDateString(
-                                "en-IN"
-                              )
-                              : "N/A"}
-                          </td>
+
                           <td className="text-center">
                             <span className="badge bg-info">
                               {item.documentsUpdate?.length || 0}
@@ -866,7 +860,7 @@ const PageCreatorManagement = () => {
                             >
                               <FaEye className="me-1" />
                               {isHindi ? "देखें" : "View"}
-                      
+
                             </Button>
 
                           </td>
@@ -894,7 +888,7 @@ const PageCreatorManagement = () => {
           <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
             {/* Title Fields */}
             <Row>
-              <Col md={6}>
+              <Col md={12}>
                 <FormGroup>
                   <Label>
                     Title (English) <span className="text-danger">*</span>
@@ -915,7 +909,9 @@ const PageCreatorManagement = () => {
                   />
                 </FormGroup>
               </Col>
-              <Col md={6}>
+            </Row>
+            <Row>
+              <Col md={12}>
                 <FormGroup>
                   <Label>
                     Title (Hindi) <span className="text-danger">*</span>
@@ -938,52 +934,7 @@ const PageCreatorManagement = () => {
 
             {/* Slug Fields */}
             <Row>
-              <Col md={6}>
-                <FormGroup>
-                  <Label>
-                    Slug <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="auto-generated-slug"
-                    value={formData.slug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        slug: generateSlug(e.target.value)
-                      }))
-                    }
-                  />
-                  <small className="text-muted">
-                    Auto-generated from title
-                  </small>
-                </FormGroup>
-              </Col>
-              <Col md={6}>
-                <FormGroup>
-                  <Label>
-                    Main Slug <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="main-slug"
-                    value={formData.mainSlug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        mainSlug: e.target.value
-                      }))
-                    }
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-
-            {/* Menu and Department */}
-            <Row>
-              <Col md={6}>
+              <Col md={4}>
                 <FormGroup>
                   <Label>
                     Menu <span className="text-danger">*</span>
@@ -1008,7 +959,52 @@ const PageCreatorManagement = () => {
                   </Input>
                 </FormGroup>
               </Col>
-              <Col md={6}>
+              <Col md={4}>
+                <FormGroup>
+                  <Label>
+                    Slug <span className="text-danger">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="auto-generated-slug"
+                    value={formData.slug}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        slug: generateSlug(e.target.value)
+                      }))
+                    }
+                    disabled ={editingId}
+                  />
+                  <small className="text-muted">
+                    Auto-generated from title
+                  </small>
+                </FormGroup>
+              </Col>
+              <Col md={4}>
+                <FormGroup>
+                  <Label>
+                    Main Slug <span className="text-danger">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="main-slug"
+                    value={formData.mainSlug}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        mainSlug: e.target.value
+                      }))
+                    }
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+            {/* Menu and Department */}
+            <Row>
+              <Col md={8}>
                 <FormGroup>
                   <Label>
                     Department <span className="text-danger">*</span>
@@ -1026,30 +1022,27 @@ const PageCreatorManagement = () => {
                     }
                   />
                 </FormGroup>
+              </Col> 
+              <Col md={4} className="mt-5 ml-3">
+              <FormGroup check className="mb-3">
+                   <Input
+  type="checkbox"
+  name="isActive"
+  checked={formData.isActive}
+  onChange={(e) =>
+    setFormData({
+      ...formData,
+      isActive: e.target.checked   // 🔥 THIS IS IMPORTANT
+    })
+  }
+/>
+                    <Label check for="isActive" className="fw-semibold">
+                      Is Active
+                    </Label>
+                  </FormGroup>
               </Col>
             </Row>
 
-            {/* Publish Date */}
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <Label>
-                    Publish Date <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="date"
-                    required
-                    value={formData.publishDate}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        publishDate: e.target.value
-                      }))
-                    }
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
 
             {/* Documents Section */}
             <hr className="my-4" />
@@ -1078,7 +1071,6 @@ const PageCreatorManagement = () => {
                       <th>Title (HI)</th>
                       <th>File</th>
                       <th style={{ width: "100px" }}>Size</th>
-                      <th style={{ width: "120px" }}>Publish Date</th>
                       <th style={{ width: "120px" }}>Actions</th>
                     </tr>
                   </thead>
@@ -1108,13 +1100,7 @@ const PageCreatorManagement = () => {
                           )}
                         </td>
                         <td>{doc.fileSize || "N/A"}</td>
-                        <td>
-                          {doc.publishDate
-                            ? new Date(doc.publishDate).toLocaleDateString(
-                              "en-IN"
-                            )
-                            : "N/A"}
-                        </td>
+
                         <td>
                           <Button
                             size="sm"
@@ -1150,7 +1136,7 @@ const PageCreatorManagement = () => {
             {/* HTML Content */}
             <hr className="my-4" />
             <FormGroup>
-              <Label>HTML Content</Label>
+              <Label>HTML Content (English)</Label>
               <ReactQuill
                 theme="snow"
                 value={formData.htmlContent}
@@ -1159,6 +1145,18 @@ const PageCreatorManagement = () => {
                 }
                 style={{ height: "200px", marginBottom: "50px" }}
                 placeholder="Enter page content here..."
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>HTML Content (Hindi)</Label>
+              <ReactQuill
+                theme="snow"
+                value={formData.htmlContentHi}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, htmlContentHi: value }))
+                }
+                style={{ height: "200px", marginBottom: "50px" }}
+                placeholder="यहाँ पेज की सामग्री दर्ज करें..."
               />
             </FormGroup>
           </ModalBody>
@@ -1172,7 +1170,7 @@ const PageCreatorManagement = () => {
               ) : (
                 <>
                   <FaSave className="me-1" />{" "}
-                  {editingId ? "Update" : "Save"}
+                  {editingId ? "Update" : "Publish"}
                 </>
               )}
             </Button>
@@ -1238,13 +1236,53 @@ const PageCreatorManagement = () => {
               </FormGroup>
             </Col>
           </Row>
-
-          <FormGroup>
+          <Row>
+            <Col md={6}>
+              <FormGroup>
+                <Label>
+                  Short Description (English) 
+                </Label>
+                <Input
+                  type="textarea"
+                  placeholder="Enter Short Description"
+                  value={currentDocument.shortDescriptionEn}
+                  onChange={(e) =>
+                    setCurrentDocument({
+                      ...currentDocument,
+                      shortDescriptionEn: e.target.value
+                    })
+                  }
+                />
+              </FormGroup>
+            </Col>
+             <Col md={6}>
+              <FormGroup>
+                <Label>
+                  Short Description (Hindi) 
+                </Label>
+                <Input
+                  type="textarea"
+                 placeholder="संक्षिप्त विवरण दर्ज करें"
+                  value={currentDocument.shortDescriptionHin}
+                  onChange={(e) =>
+                    setCurrentDocument({
+                      ...currentDocument,
+                      shortDescriptionHin: e.target.value
+                    })
+                  }
+                />
+              </FormGroup>
+            </Col>
+             <Col md={6}>
+             <FormGroup>
             <Label>
               Upload File{" "}
               {editingDocIndex === null && (
                 <span className="text-danger">*</span>
-              )}
+              )} 
+              <small className="text-muted d-block">
+    Maximum allowed file size: 5 MB
+  </small>
             </Label>
             <Input
               type="file"
@@ -1264,7 +1302,8 @@ const PageCreatorManagement = () => {
                 </small>
               )}
           </FormGroup>
-
+             </Col>
+          </Row>
           <Row>
             <Col md={6}>
               <FormGroup>
@@ -1291,22 +1330,6 @@ const PageCreatorManagement = () => {
               </FormGroup>
             </Col>
           </Row>
-
-          <FormGroup>
-            <Label>
-              Publish Date <span className="text-danger">*</span>
-            </Label>
-            <Input
-              type="date"
-              value={currentDocument.publishDate}
-              onChange={(e) =>
-                setCurrentDocument({
-                  ...currentDocument,
-                  publishDate: e.target.value
-                })
-              }
-            />
-          </FormGroup>
         </ModalBody>
         <ModalFooter>
           <Button color="primary" onClick={handleAddDocument}>
