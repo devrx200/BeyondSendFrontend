@@ -148,14 +148,19 @@ const CreatedDynamicPage = () => {
     }
   };
 
-  const formatDateTime = (date) =>
-    new Date(date).toLocaleString(isHindi ? "hi-IN" : "en-IN", {
+  const formatDateTime = (date) => {
+    if (!date) return "";
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return "";
+    return dateObj.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: true,
     });
+  };
 
   const stripHtml = (html) => {
     if (!html) return "";
@@ -452,8 +457,8 @@ const CreatedDynamicPage = () => {
             </div>
             <div className="px-4 ">
               <div className="content-body mb-5">
-                <div className="prose-content"
-                  dangerouslySetInnerHTML={{ __html: contentDetail.htmlContent, }} />
+              <div className="prose-content"
+                  dangerouslySetInnerHTML={{ __html: isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContentEng || contentDetail.htmlContentEng }} />
               </div>
 
               {/* Documents Section */}
@@ -464,6 +469,7 @@ const CreatedDynamicPage = () => {
                       ? "इस सूचना से संबंधित सभी अद्यतन दस्तावेज़"
                       : "All Updates Related to This Notification"}
                   </h4>
+                  <hr className="my-3 py-0 " />
                   {contentDetail.documentsUpdate.map((doc, i) => (
                     <table key={`file-${i}`} className="table table-bordered align-middle mb-3" >
                       <tbody>
@@ -515,23 +521,28 @@ const CreatedDynamicPage = () => {
                             </div>
                           </td>
                         </tr>
-
+                        {/* Description */}
+                        <tr>
+                          <td style={{ width: "180px" }} className="fw-semibold bg-light">
+                            {isHindi ? "विवरण" : "Description"}
+                          </td>
+                          <td>
+                            <div className="d-flex flex-column gap-2">
+                              <p>{isHindi ? doc.shortDescriptionHin || doc.shortDescriptionEn : doc.shortDescriptionEn}</p>
+                            </div>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   ))}
+                  <div className="mt-5 pt-4 my-2 mx-3 text-center border-top">
+                    <small className="mb-3 fw-bold text-secondary ">
+                      <i>{isHindi ? "* इस सूचना का पूर्ण विवरण * " : " * Complete Details of This Notification *"}</i>
+                    </small>
+                  </div>
                 </div>
-
               )}
-
             </div>
-
-            {/* Footer Section */}
-            <div className="mt-5 pt-4 my-2 mx-3 text-center border-top">
-              <small className="mb-3 fw-bold text-secondary ">
-                <i>{isHindi ? "* इस सूचना का पूर्ण विवरण * " : " * Complete Details of This Notification *"}</i>
-              </small>
-            </div>
-
           </CardBody>
         </Card>
       )}

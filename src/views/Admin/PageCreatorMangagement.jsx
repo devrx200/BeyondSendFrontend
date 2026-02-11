@@ -63,8 +63,8 @@ const initialDocumentData = {
   fileSize: "",
   fileType: "",
   file: null,
-  shortDescriptionEn:"",
-  shortDescriptionHin:"",
+  shortDescriptionEn: "",
+  shortDescriptionHin: "",
 };
 
 const PageCreatorManagement = () => {
@@ -314,27 +314,27 @@ const PageCreatorManagement = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
- const MAX_SIZE = 5 * 1024 * 1024; 
-if (file.size > MAX_SIZE) {
-  Swal.fire({
-    icon: "warning",
-    title: "File Too Large 📁",
-    text: "File size should not exceed 5 MB.",
-    confirmButtonText: "OK",
-    confirmButtonColor: "#3085d6"
-  });
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      Swal.fire({
+        icon: "warning",
+        title: "File Too Large 📁",
+        text: "File size should not exceed 5 MB.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#3085d6"
+      });
 
-  e.target.value = null; // Reset file input
-  return;
-}
+      e.target.value = null; // Reset file input
+      return;
+    }
 
     // Calculate file size
-      const fileSizeKB = (file.size / 1024).toFixed(2);
-  const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const fileSizeKB = (file.size / 1024).toFixed(2);
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
     const displaySize =
-    file.size < 1024 * 1024
-      ? `${fileSizeKB} KB`
-      : `${fileSizeMB} MB`;
+      file.size < 1024 * 1024
+        ? `${fileSizeKB} KB`
+        : `${fileSizeMB} MB`;
 
     // Update document state
     setCurrentDocument((prev) => ({
@@ -610,7 +610,7 @@ if (file.size > MAX_SIZE) {
 
     fd.append("htmlContent", formData.htmlContent || "");
     fd.append("htmlContentHi", formData.htmlContentHi || "");
-     fd.append("isActive", formData.isActive);
+    fd.append("isActive", formData.isActive);
     let fileIndex = 0;
 
     const documents = formData.documentsUpdate.map(doc => {
@@ -655,7 +655,7 @@ if (file.size > MAX_SIZE) {
     department: formData.department.trim(),
     htmlContent: formData.htmlContent || "",
     htmlContentHi: formData.htmlContentHi || "",
-     isActive: formData.isActive, 
+    isActive: formData.isActive,
     documentsUpdate: formData.documentsUpdate.map(doc => ({
       titleEng: doc.titleEng || "",
       titleHin: doc.titleHin || "",
@@ -663,8 +663,8 @@ if (file.size > MAX_SIZE) {
       fileName: doc.fileName || "",
       fileSize: doc.fileSize || "",
       fileType: doc.fileType || "",
-      shortDescriptionEn :doc.shortDescriptionEn || "",
-      shortDescriptionHin :doc.shortDescriptionHin || ""
+      shortDescriptionEn: doc.shortDescriptionEn || "",
+      shortDescriptionHin: doc.shortDescriptionHin || ""
 
     }))
   });
@@ -787,9 +787,10 @@ if (file.size > MAX_SIZE) {
                     <tr>
                       <th style={{ width: "50px" }}>#</th>
                       <th>Title (EN)</th>
+                      <th>Menu</th>
+                      <th>Main Slug</th>
                       <th>Slug</th>
                       <th>Department</th>
-                      <th>Menu</th>
                       <th style={{ width: "100px" }}>Documents</th>
                       <th style={{ width: "120px" }}>Actions</th>
                     </tr>
@@ -809,16 +810,22 @@ if (file.size > MAX_SIZE) {
                           <td>{(currentPage - 1) * limit + i + 1}</td>
                           <td>{item.titleEng || "N/A"}</td>
                           <td>
+                            {item.menuId?.titleEng ||
+                              item.menuId?.name ||
+                              "N/A"}
+                          </td>
+                          <td>
+                            <code className="text-primary">
+                              {item.mainSlug || "N/A"}
+                            </code>
+                          </td>
+                          <td>
                             <code className="text-primary">
                               {item.slug || "N/A"}
                             </code>
                           </td>
                           <td>{item.department || "N/A"}</td>
-                          <td>
-                            {item.menuId?.titleEng ||
-                              item.menuId?.name ||
-                              "N/A"}
-                          </td>
+
 
                           <td className="text-center">
                             <span className="badge bg-info">
@@ -962,30 +969,7 @@ if (file.size > MAX_SIZE) {
               <Col md={4}>
                 <FormGroup>
                   <Label>
-                    Slug <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="auto-generated-slug"
-                    value={formData.slug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        slug: generateSlug(e.target.value)
-                      }))
-                    }
-                    disabled ={editingId}
-                  />
-                  <small className="text-muted">
-                    Auto-generated from title
-                  </small>
-                </FormGroup>
-              </Col>
-              <Col md={4}>
-                <FormGroup>
-                  <Label>
-                    Main Slug <span className="text-danger">*</span>
+                    Main Slug (Main List Page ) <span className="text-danger">*</span>
                   </Label>
                   <Input
                     type="text"
@@ -1001,6 +985,30 @@ if (file.size > MAX_SIZE) {
                   />
                 </FormGroup>
               </Col>
+              <Col md={4}>
+                <FormGroup>
+                  <Label>
+                    Slug <span className="text-danger">*</span>
+                  </Label>
+                  <Input
+                    type="text"
+                    required
+                    placeholder="auto-generated-slug"
+                    value={formData.slug}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        slug: generateSlug(e.target.value)
+                      }))
+                    }
+                    disabled={editingId}
+                  />
+                  <small className="text-muted">
+                    Auto-generated from title
+                  </small>
+                </FormGroup>
+              </Col>
+
             </Row>
             {/* Menu and Department */}
             <Row>
@@ -1022,24 +1030,24 @@ if (file.size > MAX_SIZE) {
                     }
                   />
                 </FormGroup>
-              </Col> 
+              </Col>
               <Col md={4} className="mt-5 ml-3">
-              <FormGroup check className="mb-3">
-                   <Input
-  type="checkbox"
-  name="isActive"
-  checked={formData.isActive}
-  onChange={(e) =>
-    setFormData({
-      ...formData,
-      isActive: e.target.checked   // 🔥 THIS IS IMPORTANT
-    })
-  }
-/>
-                    <Label check for="isActive" className="fw-semibold">
-                      Is Active
-                    </Label>
-                  </FormGroup>
+                <FormGroup check className="mb-3">
+                  <Input
+                    type="checkbox"
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isActive: e.target.checked   // 🔥 THIS IS IMPORTANT
+                      })
+                    }
+                  />
+                  <Label check for="isActive" className="fw-semibold">
+                    Is Active
+                  </Label>
+                </FormGroup>
               </Col>
             </Row>
 
@@ -1240,7 +1248,7 @@ if (file.size > MAX_SIZE) {
             <Col md={6}>
               <FormGroup>
                 <Label>
-                  Short Description (English) 
+                  Short Description (English)
                 </Label>
                 <Input
                   type="textarea"
@@ -1255,14 +1263,14 @@ if (file.size > MAX_SIZE) {
                 />
               </FormGroup>
             </Col>
-             <Col md={6}>
+            <Col md={6}>
               <FormGroup>
                 <Label>
-                  Short Description (Hindi) 
+                  Short Description (Hindi)
                 </Label>
                 <Input
                   type="textarea"
-                 placeholder="संक्षिप्त विवरण दर्ज करें"
+                  placeholder="संक्षिप्त विवरण दर्ज करें"
                   value={currentDocument.shortDescriptionHin}
                   onChange={(e) =>
                     setCurrentDocument({
@@ -1273,36 +1281,36 @@ if (file.size > MAX_SIZE) {
                 />
               </FormGroup>
             </Col>
-             <Col md={6}>
-             <FormGroup>
-            <Label>
-              Upload File{" "}
-              {editingDocIndex === null && (
-                <span className="text-danger">*</span>
-              )} 
-              <small className="text-muted d-block">
-    Maximum allowed file size: 5 MB
-  </small>
-            </Label>
-            <Input
-              type="file"
-              onChange={handleFileUpload}
-              accept=".pdf,.doc,.docx,.xls,.xlsx"
-            />
-            {currentDocument.fileName && (
-              <small className="text-success d-block mt-2">
-                ✓ File Selected: {currentDocument.fileName}
-              </small>
-            )}
-            {editingDocIndex !== null &&
-              !currentDocument.file &&
-              currentDocument.fileUrl && (
-                <small className="text-info d-block mt-2">
-                  📎 Current file will be kept if no new file is uploaded
-                </small>
-              )}
-          </FormGroup>
-             </Col>
+            <Col md={6}>
+              <FormGroup>
+                <Label>
+                  Upload File{" "}
+                  {editingDocIndex === null && (
+                    <span className="text-danger">*</span>
+                  )}
+                  <small className="text-muted d-block">
+                    Maximum allowed file size: 5 MB
+                  </small>
+                </Label>
+                <Input
+                  type="file"
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                />
+                {currentDocument.fileName && (
+                  <small className="text-success d-block mt-2">
+                    ✓ File Selected: {currentDocument.fileName}
+                  </small>
+                )}
+                {editingDocIndex !== null &&
+                  !currentDocument.file &&
+                  currentDocument.fileUrl && (
+                    <small className="text-info d-block mt-2">
+                      📎 Current file will be kept if no new file is uploaded
+                    </small>
+                  )}
+              </FormGroup>
+            </Col>
           </Row>
           <Row>
             <Col md={6}>
