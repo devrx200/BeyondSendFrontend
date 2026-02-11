@@ -49,6 +49,53 @@ const adminMenu = [
     path: "/admin/menu",
     label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
   },
+  {
+    id: "page-creator-management",
+    icon: FaListAlt,
+    path: "/admin/page-creator-management",
+    label: { en: "Simple Page Creator", hi: "पृष्ठ निर्माण " }
+  },
+
+    {
+    id: "Content Uploader",
+    icon: FaImages,
+    path: "/admin/content-uploader",
+    label: { en: "Page Content Uploader", hi: "सामग्री अपलोडर" }
+  },
+   {
+    id: "news",
+    icon: FaNewspaper,
+    label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
+    submenu: [
+      {
+        id: "news-updates",
+        icon: FaBullhorn,
+        path: "/admin/new-updates",
+        label: { en: "New Updates", hi: "नवीन सूचना" }
+      },
+
+      {
+        id: "announcements",
+        icon: FaBullhorn,
+        path: "/admin/announcements",
+        label: { en: "Announcements", hi: "घोषणाएं" }
+      },
+      {
+        id: "directorate-notices",
+        icon: FaBullhorn,
+        path: "/admin/directorate-notices",
+        label: { en: " Directorate Notices", hi: " संचालनालय  सूचनाएं " }
+      },
+      {
+        id: "department-notices",
+        icon: FaBullhorn,
+        path: "/admin/department-notices",
+        label: { en: " Department Notices", hi: "विभाग सूचनाएं " }
+      }
+
+
+    ]
+  },
   
   {
     id: "users",
@@ -114,39 +161,9 @@ const adminMenu = [
     path: "/admin/feedbacks",
     label: { en: "Feedbacks", hi: "प्रतिक्रिया" }
   },
-  {
-    id: "Content Uploader",
-    icon: FaImages,
-    path: "/admin/content-uploader",
-    label: { en: "Content Uploader", hi: "सामग्री अपलोडर" }
-  },
-  {
-    id: "news",
-    icon: FaNewspaper,
-    label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
-    submenu: [
-      {
-        id: "news-updates",
-        icon: FaBullhorn,
-        path: "/admin/new-updates",
-        label: { en: "New Updates", hi: "नवीन सूचना" }
-      },
 
-      {
-        id: "announcements",
-        icon: FaBullhorn,
-        path: "/admin/announcements",
-        label: { en: "Announcements", hi: "घोषणाएं" }
-      },
+ 
 
-    ]
-  },
-  {
-    id: "page-creator-management",
-    icon: FaListAlt,
-    path: "/admin/page-creator-management",
-    label: { en: "Page Creator ", hi: "पृष्ठ निर्माण " }
-  },
   {
     id: "gallery",
     icon: FaPhotoVideo,
