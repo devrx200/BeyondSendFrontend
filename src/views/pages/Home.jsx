@@ -32,6 +32,7 @@ import AfterCarousel from "../../components/AfterCarousel";
 import AboutSection from "../../components/AboutSection";
 import ImportantLinksSection from "../../components/ImportantLinksSection";
 import AnnouncementsAndSchemes from "../../components/AnnouncementsAndSchemes";
+import NoticeDepAndDirectorate from "../../components/NoticeDepAndDirectorate";
 
 const Home = () => {
   const { isHindi } = useLanguage();
@@ -178,6 +179,7 @@ const Home = () => {
           </Row>
         </Container>
       </section>
+      <NoticeDepAndDirectorate />
       <AnnouncementsAndSchemes />
       <ImportantLinksSection />
     </div>
