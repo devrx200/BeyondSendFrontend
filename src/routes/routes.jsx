@@ -32,6 +32,9 @@ import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 import CreatedDynamicPage from "../views/pages/CreatedDynamicPage";
+import DirectorateNoticeDetails from "../views/pages/DirectorateNoticeDetails";
+import DepartmentNoticeDetails from "../views/pages/DepartmentNoticeDetails";
+
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -180,6 +183,9 @@ const AppRoutes = () => {
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
+      <Route path="/directorate-notice/:slug" element={<DirectorateNoticeDetails />} />
+      <Route path="/department-notice/:slug" element={<DepartmentNoticeDetails />} />
+
 
       {/* ADMIN */}
       <Route element={<PublicAdminRoute />}>

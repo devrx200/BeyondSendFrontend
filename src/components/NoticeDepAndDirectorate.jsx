@@ -28,10 +28,15 @@ const DUMMY_NOTICE_DATA = {
     indravati: [
         {
             id: "i1",
-            titleEng:
-                "New orders for offices functioning in Indravati Bhavan",
-            titleHin:
-                "इंद्रावती भवन में संचालित कार्यालयों हेतु नवीन आदेश।",
+            titleEng:"New orders for offices functioning in Indravati Bhavan",
+            titleHin:"इंद्रावती भवन में संचालित कार्यालयों हेतु नवीन आदेश।",
+            link:"https://www.chhattisgarh.gov.in/uploads/notice/2025-09-29/1695992475591_1695992475591.pdf",
+            createdAt : "2025-09-29",
+            updatedAt : "2025-09-29",
+            isActive: true,
+            isExternal: false,
+            openInNewTab: false,    
+            displayOrder: 1,
         },
     ],
 };
@@ -44,7 +49,7 @@ const NoticeDepAndDirectorate = () => {
     useEffect(() => {
         (async () => {
             try {
-                const res = await axios.get(`${API}/api/notice-tabs`);
+                const res = await axios.get(`${API}/api/notice-directorate`);
                 setData(res?.data?.data || DUMMY_NOTICE_DATA);
             } catch {
                 setData(DUMMY_NOTICE_DATA);
@@ -122,8 +127,8 @@ const NoticeDepAndDirectorate = () => {
                                     <FaBuilding className="text-white me-2" />
                                     <h6 className="fw-bold mb-0 text-white">
                                         {isHindi
-                                            ? "संचालनालय (इंद्रावती भवन)"
-                                            : "Directorate (Indravati Bhavan)"}
+                                            ? "संचालनालय (इंद्रावती भवन) सूचनाए"
+                                            : "Directorate (Indravati Bhavan) Notice"}
                                     </h6>
                                 </div>
                                 <hr className="p-0 m-0" />
@@ -146,8 +151,8 @@ const NoticeDepAndDirectorate = () => {
                                     <FaBuilding className="text-white me-2" />
                                     <h6 className="fw-bold mb-0 text-white">
                                         {isHindi
-                                            ? "विभाग (महानदी भवन)"
-                                            : "Department (Mahanadi Bhavan)"}
+                                            ? "विभाग (महानदी भवन) सूचनाए"
+                                            : "Department (Mahanadi Bhavan) Notices"}
                                     </h6>
                                 </div>
                                 <hr className="p-0 m-0" />
