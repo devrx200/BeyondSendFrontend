@@ -412,7 +412,7 @@ const CreatedDynamicPage = () => {
         <Card className="shadow border-0">
           <CardBody className="p-0">
             <div className="bg-gradient-primary text-dark p-4 rounded-top">
-              <h1 className="h2 fw-bold mb-3">
+              <h1 className="h3 fw-bold mb-3">
                 {isHindi ? contentDetail.titleHin || contentDetail.titleEng : contentDetail.titleEng}
               </h1>
               <hr className="my-0 py-0" />
