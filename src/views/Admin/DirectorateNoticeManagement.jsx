@@ -25,7 +25,7 @@ import "react-quill/dist/quill.snow.css";
 
 const API = import.meta.env.VITE_API_URL;
 
-const DepartmentNoticeManagement = () => {
+const DirectorateNoticeManagement = () => {
 
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -43,12 +43,14 @@ const DepartmentNoticeManagement = () => {
     descriptionEn: "",
     descriptionHi: "",
     categoryId: "",
-    // image: null,
     file: null,
     isActive: true
   };
 
   const [formData, setFormData] = useState(initialState);
+
+  const generateSlug = (text) =>
+    text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
 
   const quillModules = {
     toolbar: [
@@ -60,17 +62,14 @@ const DepartmentNoticeManagement = () => {
     ]
   };
 
-  const generateSlug = (text) =>
-    text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
-
   /* ================= FETCH DATA ================= */
 
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/get-department-notice-all`);
+      const res = await axios.get(`${API}/api/get-directorate-notice-all`);
       setList(res.data.data || []);
-    } catch (err) {
+    } catch {
       Swal.fire("Error", "Failed to load notices", "error");
     } finally {
       setLoading(false);
@@ -115,7 +114,6 @@ const DepartmentNoticeManagement = () => {
       descriptionEn: item.descriptionEn || "",
       descriptionHi: item.descriptionHi || "",
       categoryId: item.categoryId?._id || "",
-      // image: null,
       file: null,
       isActive: item.isActive !== false
     });
@@ -130,29 +128,27 @@ const DepartmentNoticeManagement = () => {
       title: "Are you sure?",
       text: "This notice will be deleted",
       icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel"
+      showCancelButton: true
     });
 
     if (!confirm.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API}/api/dept-notice/delete/${id}`);
+      const res = await axios.delete(
+        `${API}/api/directorate-notice/delete/${id}`
+      );
 
       Swal.fire(
         "Deleted!",
-        response.data?.message || "Notice deleted successfully",
+        res.data?.message || "Notice deleted successfully",
         "success"
       );
 
-      fetchList(); // refresh list
-    } catch (error) {
-      console.error("Delete Error:", error);
+      fetchList();
+    } catch {
       Swal.fire("Error", "Delete failed", "error");
     }
   };
-
 
   /* ================= SUBMIT ================= */
 
@@ -163,10 +159,10 @@ const DepartmentNoticeManagement = () => {
     const fd = new FormData();
 
     Object.keys(formData).forEach((key) => {
-      if (key === "file") return;
-      fd.append(key, formData[key]);
+      if (key !== "file") {
+        fd.append(key, formData[key]);
+      }
     });
-
 
     if (formData.file instanceof File) {
       fd.append("file", formData.file);
@@ -175,13 +171,13 @@ const DepartmentNoticeManagement = () => {
     try {
       if (editingId) {
         await axios.put(
-          `${API}/api/update-dept-notice/${editingId}`,
+          `${API}/api/update-directorate-notice/${editingId}`,
           fd
         );
         Swal.fire("Updated!", "Notice updated successfully", "success");
       } else {
         await axios.post(
-          `${API}/api/create-dept-notice`,
+          `${API}/api/create-directorate-notice`,
           fd
         );
         Swal.fire("Created!", "Notice created successfully", "success");
@@ -190,7 +186,11 @@ const DepartmentNoticeManagement = () => {
       toggleModal();
       fetchList();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Failed", "error");
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Failed",
+        "error"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -199,8 +199,9 @@ const DepartmentNoticeManagement = () => {
   return (
     <Card className="shadow-sm">
       <CardBody>
+
         <div className="d-flex justify-content-between mb-3">
-          <h4>Department Notices</h4>
+          <h4>Directorate Notices</h4>
           <Button color="primary" onClick={toggleModal}>
             <FaPlus /> Add Notice
           </Button>
@@ -209,7 +210,7 @@ const DepartmentNoticeManagement = () => {
         {loading ? (
           <Spinner />
         ) : (
-          <Table bordered hover>
+          <Table bordered hover responsive>
             <thead>
               <tr>
                 <th>#</th>
@@ -245,13 +246,16 @@ const DepartmentNoticeManagement = () => {
         )}
 
         {/* ================= MODAL ================= */}
+
         <Modal isOpen={modal} toggle={toggleModal} size="xl">
           <ModalHeader toggle={toggleModal}>
             {editingId ? "Edit Notice" : "Create Notice"}
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-            <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <ModalBody style={{ maxHeight: "75vh", overflowY: "auto" }}>
+
+              {/* Titles */}
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -283,18 +287,17 @@ const DepartmentNoticeManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
+
+              {/* Slug + Category */}
               <Row>
-
-
                 <Col md={6}>
                   <FormGroup>
                     <Label>Slug</Label>
                     <Input value={formData.slug} disabled />
                   </FormGroup>
-
                 </Col>
-                <Col md={6}>
 
+                <Col md={6}>
                   <FormGroup>
                     <Label>Category</Label>
                     <Input
@@ -314,40 +317,71 @@ const DepartmentNoticeManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
+
+              {/* Short Description */}
               <Row>
-
                 <Col md={6}>
                   <FormGroup>
-                    <Label>Description (English)</Label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.descriptionEn}
-                      onChange={(value) =>
-                        setFormData({ ...formData, descriptionEn: value })
+                    <Label>Short Description (English)</Label>
+                    <Input
+                      type="textarea"
+                      value={formData.shortDescriptionEn}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          shortDescriptionEn: e.target.value
+                        })
                       }
-                      modules={quillModules}
                     />
                   </FormGroup>
                 </Col>
 
                 <Col md={6}>
                   <FormGroup>
-                    <Label>Description (Hindi)</Label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.descriptionHi}
-                      onChange={(value) =>
-                        setFormData({ ...formData, descriptionHi: value })
+                    <Label>Short Description (Hindi)</Label>
+                    <Input
+                      type="textarea"
+                      value={formData.shortDescriptionHi}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          shortDescriptionHi: e.target.value
+                        })
                       }
-                      modules={quillModules}
                     />
                   </FormGroup>
                 </Col>
-
               </Row>
 
+              {/* Description */}
               <Row>
+                <Col md={6}>
+                  <Label>Description (English)</Label>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.descriptionEn}
+                    onChange={(value) =>
+                      setFormData({ ...formData, descriptionEn: value })
+                    }
+                    modules={quillModules}
+                  />
+                </Col>
 
+                <Col md={6}>
+                  <Label>Description (Hindi)</Label>
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.descriptionHi}
+                    onChange={(value) =>
+                      setFormData({ ...formData, descriptionHi: value })
+                    }
+                    modules={quillModules}
+                  />
+                </Col>
+              </Row>
+
+              {/* File */}
+              <Row className="mt-3">
                 <Col md={12}>
                   <FormGroup>
                     <Label>Upload File (PDF/DOC - Max 5MB)</Label>
@@ -362,7 +396,8 @@ const DepartmentNoticeManagement = () => {
                 </Col>
               </Row>
 
-              <FormGroup check>
+              {/* Active */}
+              <FormGroup check className="mt-2">
                 <Input
                   type="checkbox"
                   checked={formData.isActive}
@@ -372,6 +407,7 @@ const DepartmentNoticeManagement = () => {
                 />
                 <Label check>Is Active</Label>
               </FormGroup>
+
             </ModalBody>
 
             <ModalFooter>
@@ -382,11 +418,13 @@ const DepartmentNoticeManagement = () => {
                 {submitting ? <Spinner size="sm" /> : editingId ? "Update" : "Create"}
               </Button>
             </ModalFooter>
+
           </Form>
         </Modal>
+
       </CardBody>
     </Card>
   );
 };
 
-export default DepartmentNoticeManagement;
+export default DirectorateNoticeManagement;

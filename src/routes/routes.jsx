@@ -67,6 +67,8 @@ import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
 import CollegeManagement from "../views/Admin/CollegeManagement";
 import FooterSection from "../views/Admin/footerSectionManager";
+import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagement";
+import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement"
 
 
 
@@ -218,6 +220,11 @@ const AppRoutes = () => {
           <Route path="users-management" element={<AdminUserManagement />} />
           <Route path="footer-section-manager" element={<FooterSection />} />
           <Route path="page-creator-management" element={<PageCreatorManagement />} />
+          <Route path="department-notices" element={<DepartmentNoticeManagement />} />
+          <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
+
+
+
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />

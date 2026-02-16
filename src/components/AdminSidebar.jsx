@@ -56,13 +56,19 @@ const adminMenu = [
     label: { en: "Simple Page Creator", hi: "पृष्ठ निर्माण " }
   },
 
-    {
+  {
+    id: "dept-notice-management",
+    icon: FaListAlt,
+    path: "/admin/dept-notice-management",
+    label: { en: "Department Notice Management", hi: "विभागीय सूचना प्रबंधन" }
+  },
+  {
     id: "Content Uploader",
     icon: FaImages,
     path: "/admin/content-uploader",
-    label: { en: "Page Content Uploader", hi: "सामग्री अपलोडर" }
+    label: { en: "Page Content Uploader ", hi: "सामग्री अपलोडर" }
   },
-   {
+  {
     id: "news",
     icon: FaNewspaper,
     label: { en: "News & Updates", hi: "समाचार एवं अपडेट" },
@@ -96,7 +102,7 @@ const adminMenu = [
 
     ]
   },
-  
+
   {
     id: "users",
     icon: FaUsers,
@@ -128,15 +134,15 @@ const adminMenu = [
     path: "/admin/universities",
     label: { en: "Manage Universities", hi: "विश्वविद्यालय प्रबंधन" }
   },
-   {
-  id: "college",
-  icon: FaSchool,
-  path: "/admin/college-management",
-  label: {
-    en: "College Management",
-    hi: "महाविद्यालय प्रबंधन"
-  }
-},
+  {
+    id: "college",
+    icon: FaSchool,
+    path: "/admin/college-management",
+    label: {
+      en: "College Management",
+      hi: "महाविद्यालय प्रबंधन"
+    }
+  },
   {
     id: "categories",
     icon: FaListAlt,
@@ -162,7 +168,7 @@ const adminMenu = [
     label: { en: "Feedbacks", hi: "प्रतिक्रिया" }
   },
 
- 
+
 
   {
     id: "gallery",
@@ -184,23 +190,23 @@ const adminMenu = [
     ]
   },
   {
-  id: "download-management",
-  icon: FaDownload,
-  path: "/admin/download-management",
-  label: {
-    en: "Downloads Management",
-    hi: "डाउनलोड प्रबंधन"
+    id: "download-management",
+    icon: FaDownload,
+    path: "/admin/download-management",
+    label: {
+      en: "Downloads Management",
+      hi: "डाउनलोड प्रबंधन"
+    }
+  },
+  {
+    id: "footer-section-manager",
+    icon: FaCog, // or FaListAlt / FaSlidersH
+    path: "/admin/footer-section-manager",
+    label: {
+      en: "Footer Manager",
+      hi: "फुटर प्रबंधन"
+    }
   }
-},
- {
-  id: "footer-section-manager",
-  icon: FaCog, // or FaListAlt / FaSlidersH
-  path: "/admin/footer-section-manager",
-  label: {
-    en: "Footer Manager",
-    hi: "फुटर प्रबंधन"
-  }
-}
 
 ];
 
