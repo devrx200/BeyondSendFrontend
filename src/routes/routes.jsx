@@ -32,9 +32,7 @@ import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 import CreatedDynamicPage from "../views/pages/CreatedDynamicPage";
-import DirectorateNoticeDetails from "../views/pages/DirectorateNoticeDetails";
-import DepartmentNoticeDetails from "../views/pages/DepartmentNoticeDetails";
-
+import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -171,7 +169,6 @@ const AppRoutes = () => {
 
 
       <Route path="/aboutUs" element={<MainLayout><AboutAndHelpView /></MainLayout>} />
-
       {/* STATIC */}
       <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
       <Route path="/terms-conditions" element={<MainLayout><TermsConditions /></MainLayout>} />
@@ -185,14 +182,17 @@ const AppRoutes = () => {
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
-      <Route path="/directorate-notice/:slug" element={<DirectorateNoticeDetails />} />
-      <Route path="/department-notice/:slug" element={<DepartmentNoticeDetails />} />
+
+      {/* Directorate And Department Notices */}
+      <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView />  </MainLayout>}/>
+      <Route path="/directorate-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView/></MainLayout>}/>
+      <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>}/>
+      <Route path="/departments-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView /></MainLayout>}/>
+
 
 
       {/* ADMIN */}
-      <Route element={<PublicAdminRoute />}>
-        <Route path="/admin/login" element={<AdminLogin />} />
-      </Route>
+      <Route element={<PublicAdminRoute />}>  <Route path="/admin/login" element={<AdminLogin />} /> </Route>
 
       <Route path="/admin" element={<AuthMiddleware allowedRoles={["OFFICER", "ADMIN"]} />}>
         <Route element={<AdminLayout />}>
@@ -222,9 +222,6 @@ const AppRoutes = () => {
           <Route path="page-creator-management" element={<PageCreatorManagement />} />
           <Route path="department-notices" element={<DepartmentNoticeManagement />} />
           <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
-
-
-
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
