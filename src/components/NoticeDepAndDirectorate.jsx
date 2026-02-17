@@ -1,185 +1,388 @@
 import React, { useEffect, useState } from "react";
 import {
-    Card,
-    CardBody,
-    CardTitle,
-    Spinner,
-    Badge,
-    Container,
-    Row,
-    Col,
+  Card,
+  CardBody,
+  CardTitle,
+  Spinner,
+  Badge,
+  Container,
+  Row,
+  Col,
 } from "reactstrap";
 import axios from "axios";
-import { FaCalendarAlt, FaBuilding } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaBuilding,
+  FaArchive,
+  FaMapMarkerAlt,
+  FaChevronRight,
+  FaBell,
+} from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 
 const API = import.meta.env.VITE_API_URL;
 
-const DUMMY_NOTICE_DATA = {
-    mahanadi: [
-        {
-            id: "m1",
-            titleEng:
-                "Administrative instructions for offices operating in Mahanadi Bhavan",
-            titleHin:
-                "महानदी भवन में संचालित कार्यालयों हेतु प्रशासनिक निर्देश।",
-        },
-    ],
-    indravati: [
-        {
-            id: "i1",
-            titleEng:"New orders for offices functioning in Indravati Bhavan",
-            titleHin:"इंद्रावती भवन में संचालित कार्यालयों हेतु नवीन आदेश।",
-            link:"https://www.chhattisgarh.gov.in/uploads/notice/2025-09-29/1695992475591_1695992475591.pdf",
-            createdAt : "2025-09-29",
-            updatedAt : "2025-09-29",
-            isActive: true,
-            isExternal: false,
-            openInNewTab: false,    
-            displayOrder: 1,
-        },
-    ],
-};
-
 const NoticeDepAndDirectorate = () => {
-    const { isHindi } = useLanguage(); // ✅ SINGLE SOURCE
-    const [data, setData] = useState(DUMMY_NOTICE_DATA);
-    const [loading, setLoading] = useState(true);
+  const { isHindi } = useLanguage();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await axios.get(`${API}/api/notice-directorate`);
-                setData(res?.data?.data || DUMMY_NOTICE_DATA);
-            } catch {
-                setData(DUMMY_NOTICE_DATA);
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, []);
+  const [directorateList, setDirectorateList] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    const renderNotices = (list, type) => {
-        if (!list || list.length === 0) {
-            return (
-                <p className="text-muted small mb-0">
-                    {isHindi ? "कोई सूचना उपलब्ध नहीं है" : "No notices available"}
-                </p>
-            );
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [directorateRes, departmentRes] = await Promise.all([
+          axios.get(`${API}/api/get-directorate-notice-all`),
+          axios.get(`${API}/api/get-department-notice-all`),
+        ]);
+
+        if (directorateRes?.data?.success) {
+          setDirectorateList(directorateRes.data.data || []);
         }
 
-        return list.map((item) => (
-            <Card
-                key={item.id}
-                className="mb-2 border-0 shadow-sm hover-shadow"
-            >
-                <CardBody className="py-2 px-3">
-                    <div className="d-flex justify-content-between align-items-start mb-1">
-                        <Badge
-                            color={type === "directorate" ? "primary" : "success"}
-                            pill
-                            style={{ fontSize: "0.65rem" }}
-                        >
-                            {type === "directorate"
-                                ? isHindi ? "निर्देशालय" : "Directorate"
-                                : isHindi ? "विभाग" : "Department"}
-                        </Badge>
-
-                        <small className="text-muted d-flex align-items-center" style={{ fontSize: "0.7rem" }}>
-                            <FaCalendarAlt className="me-1" />
-                            {new Date().toLocaleDateString(
-                                isHindi ? "hi-IN" : "en-IN",
-                                { day: "numeric", month: "short", year: "numeric" }
-                            )}
-                        </small>
-                    </div>
-
-                    <CardTitle
-                        tag="h6"
-                        className="fw-semibold mb-0"
-                        style={{ fontSize: "0.85rem" }}
-                    >
-                        {isHindi ? item.titleHin : item.titleEng}
-                    </CardTitle>
-                </CardBody>
-            </Card>
-        ));
+        if (departmentRes?.data?.success) {
+          setDepartmentList(departmentRes.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching notices:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
+    fetchData();
+  }, []);
+  /* ─── Helpers ─── */
+  const formatDateTime = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+  const renderNotices = (list, type) => {
+    if (!list || list.length === 0) {
+      return (
+        <Card className="border-0 text-center py-4" style={{ background: "transparent" }}>
+          <CardBody>
+            <FaBell size={28} className="text-muted mb-2 opacity-50" />
+            <p className="text-muted small mb-0">
+              {isHindi ? "कोई सूचना उपलब्ध नहीं है" : "No notices available"}
+            </p>
+          </CardBody>
+        </Card>
+      );
+    }
+
+    return list.map((item) => (
+      <Card
+        key={item._id}
+        className="mb-2 border-0 shadow-sm"
+        style={{
+          borderRadius: "12px",
+          cursor: "pointer",
+          transition: "all 0.22s ease",
+          borderLeft: `3px solid ${type === "directorate" ? "#1a3a8f" : "#1a6b3a"} !important`,
+        }}
+        onClick={() =>
+          navigate(
+            type === "directorate"
+              ? `/directorate-notice/${item.slug}`
+              : `/department-notice/${item.slug}`
+          )
+        }
+      >
+        <CardBody className="py-2 px-3">
+          {/* Top row: badge + date */}
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <Badge
+              color={type === "directorate" ? "primary" : "success"}
+              pill
+              style={{ fontSize: "0.52rem", letterSpacing: "0.03em" }}
+            >
+              {type === "directorate"
+                ? isHindi ? item.categoryId.categoryNameHi : item.categoryId.categoryNameEn
+                : isHindi ? item.categoryId.categoryNameHi : item.categoryId.categoryNameEn}
+            </Badge>
+
+            <small
+              className="text-muted d-flex align-items-center gap-1"
+              style={{ fontSize: "0.68rem" }}
+            >
+              <FaCalendarAlt size={10} />
+              {formatDateTime(item.createdAt)}
+            </small>
+          </div>
+
+          {/* Title row */}
+          <div className="d-flex align-items-start justify-content-between gap-2">
+            <CardTitle
+              tag="h6"
+              className="fw-semibold mb-0 text-black"
+              style={{ fontSize: "0.83rem", lineHeight: "1.5" }}
+            >
+              {isHindi ? item.titleHi : item.titleEn}
+            </CardTitle>
+            <FaChevronRight
+              size={10}
+              className={type === "directorate" ? "text-primary mt-1 flex-shrink-0" : "text-success mt-1 flex-shrink-0"}
+            />
+          </div>
+        </CardBody>
+      </Card>
+    ));
+  };
+
+  /* ─── Loading state ─── */
+  if (loading) {
     return (
-        <Container className="py-4">
-            {loading ? (
-                <Card className="border-0 shadow-sm">
-                    <CardBody className="text-center py-4">
-                        <Spinner size="sm" color="primary" />
-                        <p className="text-muted mt-2 mb-0" style={{ fontSize: "0.85rem" }}>
-                            {isHindi ? "लोड हो रहा है..." : "Loading..."}
-                        </p>
-                    </CardBody>
-                </Card>
-            ) : (
-                <Row className="g-4">
-                    {/* DIRECTORATE */}
-                    <Col lg={6}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <CardBody className="bg-light">
-                                <div className="d-flex align-items-center bg-black p-3  mb-2 rounded-top">
-                                    <FaBuilding className="text-white me-2" />
-                                    <h6 className="fw-bold mb-0 text-white">
-                                        {isHindi
-                                            ? "संचालनालय (इंद्रावती भवन) सूचनाए"
-                                            : "Directorate (Indravati Bhavan) Notice"}
-                                    </h6>
-                                </div>
-                                <hr className="p-0 m-0" />
-                                <small className="text-muted ms-2">
-                                    {isHindi ? "ब्लॉक-03, तृतीय तल, इंद्रावती भवन, नवा रायपुर अटल नगर, छ.ग, 492002" : " Block-03, Third Floor, Indravati Bhavan, New Raipur, Chhattisgarh, 492002 "}
-                                </small>
-                                <hr className="p-0 m-0" />
-                                <br />
-
-                                {renderNotices(data.indravati, "directorate")}
-                            </CardBody>
-                        </Card>
-                    </Col>
-
-                    {/* DEPARTMENT */}
-                    <Col lg={6}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <CardBody className="bg-light">
-                                <div className="d-flex align-items-center mb-2 bg-success  p-3 rounded-top">
-                                    <FaBuilding className="text-white me-2" />
-                                    <h6 className="fw-bold mb-0 text-white">
-                                        {isHindi
-                                            ? "विभाग (महानदी भवन) सूचनाए"
-                                            : "Department (Mahanadi Bhavan) Notices"}
-                                    </h6>
-                                </div>
-                                <hr className="p-0 m-0" />
-                              <small className="text-muted ms-2">
-                                    {isHindi ? " प्रथम तल,  महानदी भवन, नवा रायपुर अटल नगर, छ.ग, 492002" : " First floor, Mahanadi Bhawan, Nava Raipur Atal Nagar, Chhattisgarh, 492002"}
-                                </small>
-                                <hr className="p-0 m-0" />
-                                <br />
-                                {renderNotices(data.mahanadi, "department")}
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </Row>
-            )}
-
-            {/* Hover */}
-            <style jsx>{`
-        .hover-shadow {
-          transition: all 0.25s ease;
-        }
-        .hover-shadow:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 0.4rem 0.8rem rgba(0, 0, 0, 0.12) !important;
-        }
-      `}</style>
-        </Container>
+      <Container className="py-5">
+        <Card className="border-0 shadow-sm mx-auto" style={{ maxWidth: 340, borderRadius: 16 }}>
+          <CardBody className="text-center py-5">
+            <Spinner color="primary" />
+            <p className="text-muted mt-3 mb-0 small">
+              {isHindi ? "लोड हो रहा है..." : "Loading..."}
+            </p>
+          </CardBody>
+        </Card>
+      </Container>
     );
+  }
+
+  /* ─── Main render ─── */
+  return (
+    <Container className="py-4">
+      <Row className="g-4">
+
+        {/* ══════════════ DIRECTORATE CARD ══════════════ */}
+        <Col lg={6}>
+          <Card
+            className="border-0 shadow h-100"
+            style={{ borderRadius: 20, overflow: "hidden" }}
+          >
+            {/* ── Header ── */}
+            <div
+              className="px-4 pt-4 pb-3"
+              style={{
+                background: "linear-gradient(135deg, #0a1f5c 0%, #1a3a8f 60%, #1565c0 100%)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* decorative circles using inline style only */}
+              <div
+                style={{
+                  position: "absolute", top: -28, right: -28,
+                  width: 100, height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.06)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute", bottom: -36, right: 64,
+                  width: 72, height: 72,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.04)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              <div className="d-flex align-items-center justify-content-between gap-2">
+                {/* Left: icon + title */}
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="d-flex align-items-center justify-content-center"
+                    style={{
+                      width: 42, height: 42,
+                      borderRadius: 12,
+                      background: "rgba(255,255,255,0.15)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FaBuilding color="#fff" size={17} />
+                  </div>
+                  <div>
+                    <h6
+                      className="fw-bold mb-0 text-white"
+                      style={{ fontSize: "0.95rem", fontFamily: "'Georgia', serif" }}
+                    >
+                      {isHindi
+                        ? "संचालनालय (इंद्रावती भवन) सूचनाए"
+                        : "Directorate (Indravati Bhavan) Notices"}
+                    </h6>
+                  
+                  </div>
+                </div>
+
+                {/* Right: View All */}
+                <div
+                  className="d-flex align-items-center gap-2 text-white"
+                  style={{
+                    background: "rgba(255,255,255,0.15)",
+                    border: "1px solid rgba(255,255,255,0.28)",
+                    borderRadius: 20,
+                    padding: "6px 13px",
+                    fontSize: "0.74rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    userSelect: "none",
+                  }}
+                  onClick={() => navigate("/directorate-notices")}
+                >
+                  <FaArchive size={11} />
+                  {isHindi ? "सभी देखें" : "View All"}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Address strip ── */}
+            <div
+              className="d-flex align-items-center gap-2 px-3 py-2"
+              style={{ background: "#eef2ff", borderBottom: "1px solid #dde4f7" }}
+            >
+              <FaMapMarkerAlt size={11} color="#7a8fc4" style={{ flexShrink: 0 }} />
+              <small className="text-muted" style={{ fontSize: "0.72rem" }}>
+                {isHindi
+                  ? "ब्लॉक-03, तृतीय तल, इंद्रावती भवन, नवा रायपुर अटल नगर, छ.ग, 492002"
+                  : "Block-03, Third Floor, Indravati Bhavan, New Raipur, Chhattisgarh, 492002"}
+              </small>
+            </div>
+
+            {/* ── Notice list ── */}
+            <CardBody
+              className="px-3 pt-3 pb-2"
+              style={{ background: "#f8faff", overflowY: "auto" }}
+            >
+              {renderNotices(directorateList, "directorate")}
+            </CardBody>
+          </Card>
+        </Col>
+
+        {/* ══════════════ DEPARTMENT CARD ══════════════ */}
+        <Col lg={6}>
+          <Card
+            className="border-0 shadow h-100"
+            style={{ borderRadius: 20, overflow: "hidden" }}
+          >
+            {/* ── Header ── */}
+            <div
+              className="px-4 pt-4 pb-3"
+              style={{
+                background: "linear-gradient(135deg, #0a3d1f 0%, #1a6b3a 60%, #2e8b57 100%)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute", top: -28, right: -28,
+                  width: 100, height: 100,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.06)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute", bottom: -36, right: 64,
+                  width: 72, height: 72,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.04)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              <div className="d-flex align-items-center justify-content-between gap-2">
+                {/* Left: icon + title */}
+                <div className="d-flex align-items-center gap-3">
+                  <div
+                    className="d-flex align-items-center justify-content-center"
+                    style={{
+                      width: 42, height: 42,
+                      borderRadius: 12,
+                      background: "rgba(255,255,255,0.15)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FaBuilding color="#fff" size={17} />
+                  </div>
+                  <div>
+                    <h6
+                      className="fw-bold mb-0 text-white"
+                      style={{ fontSize: "0.95rem", fontFamily: "'Georgia', serif" }}
+                    >
+                      {isHindi
+                        ? "विभाग (महानदी भवन) सूचनाए"
+                        : "Department (Mahanadi Bhavan) Notices"}
+                    </h6>
+                  
+                  </div>
+                </div>
+
+                {/* Right: View All */}
+                <div
+                  className="d-flex align-items-center gap-2 text-white"
+                  style={{
+                    background: "rgba(255,255,255,0.15)",
+                    border: "1px solid rgba(255,255,255,0.28)",
+                    borderRadius: 20,
+                    padding: "6px 13px",
+                    fontSize: "0.74rem",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    userSelect: "none",
+                  }}
+                  onClick={() => navigate("/departments-notices")}
+                >
+                  <FaArchive size={11} />
+                  {isHindi ? "सभी देखें" : "View All"}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Address strip ── */}
+            <div
+              className="d-flex align-items-center gap-2 px-3 py-2"
+              style={{ background: "#eef8f2", borderBottom: "1px solid #d3ead9" }}
+            >
+              <FaMapMarkerAlt size={11} color="#4a9b6a" style={{ flexShrink: 0 }} />
+              <small className="text-muted" style={{ fontSize: "0.72rem" }}>
+                {isHindi
+                  ? "प्रथम तल, महानदी भवन, नवा रायपुर अटल नगर, छ.ग, 492002"
+                  : "First floor, Mahanadi Bhawan, Nava Raipur Atal Nagar, Chhattisgarh, 492002"}
+              </small>
+            </div>
+
+            {/* ── Notice list ── */}
+            <CardBody
+              className="px-3 pt-3 pb-2"
+              style={{ background: "#f6fbf8", overflowY: "auto" }}
+            >
+              {renderNotices(departmentList, "department")}
+            </CardBody>
+          </Card>
+        </Col>
+
+      </Row>
+    </Container>
+  );
 };
 
 export default NoticeDepAndDirectorate;

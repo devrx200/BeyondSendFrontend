@@ -172,7 +172,7 @@ const AppRoutes = () => {
       {/* STATIC */}
       <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
       <Route path="/terms-conditions" element={<MainLayout><TermsConditions /></MainLayout>} />
-      <Route path="/disclaimer" element={<MainLayout><Disclaimer /></MainLayout>} />
+      <Route path="/disclaimer" element={<MainLayout><Disclaimer /></MainLayout>} />m
       <Route path="/sitemap" element={<MainLayout><Sitemap /></MainLayout>} />
       <Route path="/accessibility" element={<MainLayout><Accessibility /></MainLayout>} />
       <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
