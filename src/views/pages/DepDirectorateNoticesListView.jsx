@@ -57,8 +57,8 @@ const DepDirectorateNoticesListView = () => {
 
   /* ─── API endpoints ─── */
   const LIST_API = isDirectorateList
-    ? "/api/get-directorate-notice-all"
-    : "/api/get-department-notice-all";
+    ? "/api/get-directorate-notice-for-user"
+    : "/api/get-department-notice-for-user";
 
   const DETAIL_API = isDirectorateDetail
     ? `/api/get-directorate-notice-by-slug/${slug}`

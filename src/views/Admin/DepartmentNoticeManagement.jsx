@@ -101,6 +101,11 @@ const DepartmentNoticeManagement = () => {
     }
   };
 
+const handleOpenCreate = () => {
+  setEditingId(null);
+  setFormData(initialState); // ← explicit reset BEFORE opening
+  setModal(true);
+};
   /* ================= EDIT ================= */
 
   const handleEdit = (item) => {
@@ -201,7 +206,10 @@ const DepartmentNoticeManagement = () => {
       <CardBody>
         <div className="d-flex justify-content-between mb-3">
           <h4>Department Notices</h4>
-          <Button color="primary" onClick={toggleModal}>
+          {/* <Button color="primary" onClick={toggleModal}>
+            <FaPlus /> Add Notice
+          </Button> */}
+            <Button color="primary" onClick={handleOpenCreate}>
             <FaPlus /> Add Notice
           </Button>
         </div>
@@ -259,6 +267,8 @@ const DepartmentNoticeManagement = () => {
                     <Input
                       required
                       value={formData.titleEn}
+                      name="titleEn"
+                      autoComplete="off"
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -378,9 +388,23 @@ const DepartmentNoticeManagement = () => {
               <Button color="secondary" onClick={toggleModal}>
                 Cancel
               </Button>
-              <Button color="primary" type="submit" disabled={submitting}>
+              {/* <Button color="primary" type="submit" disabled={submitting}>
                 {submitting ? <Spinner size="sm" /> : editingId ? "Update" : "Create"}
+              </Button> */}
+              <Button
+                color="primary"
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <Spinner size="sm" />
+                ) : editingId === null ? (
+                  "Create"
+                ) : (
+                  "Update"
+                )}
               </Button>
+
             </ModalFooter>
           </Form>
         </Modal>

@@ -99,7 +99,11 @@ const DirectorateNoticeManagement = () => {
       setFormData(initialState);
     }
   };
-
+const handleOpenCreate = () => {
+  setEditingId(null);
+  setFormData(initialState); 
+  setModal(true);
+};
   /* ================= EDIT ================= */
 
   const handleEdit = (item) => {
@@ -202,7 +206,10 @@ const DirectorateNoticeManagement = () => {
 
         <div className="d-flex justify-content-between mb-3">
           <h4>Directorate Notices</h4>
-          <Button color="primary" onClick={toggleModal}>
+          {/* <Button color="primary" onClick={toggleModal}>
+            <FaPlus /> Add Notice
+          </Button> */}
+           <Button color="primary" onClick={handleOpenCreate}>
             <FaPlus /> Add Notice
           </Button>
         </div>

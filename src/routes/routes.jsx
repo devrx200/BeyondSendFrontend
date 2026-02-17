@@ -187,7 +187,7 @@ const AppRoutes = () => {
       <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView />  </MainLayout>}/>
       <Route path="/directorate-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView/></MainLayout>}/>
       <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>}/>
-      <Route path="/departments-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView /></MainLayout>}/>
+      <Route path="/department-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView /></MainLayout>}/>
 
 
 
