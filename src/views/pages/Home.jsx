@@ -57,68 +57,6 @@ const Home = () => {
           { id: 5, titleEn: "E-Library", titleHi: "ई-पुस्तकालय", link: "/resources/e-library", icon: "FaBookReader" },
           { id: 6, titleEn: "Grievances", titleHi: "शिकायतें", link: "/services/grievances", icon: "FaExclamationCircle" }
         ]);
-
-        setAnnouncements([
-          {
-            id: 1,
-            titleEn: "Admission Notice 2024-25",
-            titleHi: "प्रवेश सूचना 2024-25",
-            descriptionEn: "Online applications are invited for UG & PG courses.",
-            descriptionHi: "यूजी एवं पीजी पाठ्यक्रमों के लिए ऑनलाइन आवेदन आमंत्रित हैं।",
-            category: isHindi ? "प्रवेश" : "Admissions",
-            date: "2024-12-15",
-            link: "/announcements/admission-2024"
-          },
-          {
-            id: 2,
-            titleEn: "Scholarship Deadline Extended",
-            titleHi: "छात्रवृत्ति तिथि बढ़ी",
-            descriptionEn: "Last date extended till 31 December 2024.",
-            descriptionHi: "अंतिम तिथि 31 दिसंबर 2024 तक बढ़ाई गई।",
-            category: isHindi ? "छात्रवृत्ति" : "Scholarship",
-            date: "2024-12-10",
-            link: "/announcements/scholarship"
-          }
-        ]);
-
-        setFeaturedSchemes([
-          {
-            id: 1,
-            titleEn: "Medhavi Vidyarthi Yojana",
-            titleHi: "मेधावी विद्यार्थी योजना",
-            descriptionEn: "Financial assistance for meritorious students",
-            descriptionHi: "मेधावी छात्रों के लिए वित्तीय सहायता",
-            link: "/schemes/medhavi",
-            icon: "FaAward"
-          },
-          {
-            id: 2,
-            titleEn: "Post Matric Scholarship",
-            titleHi: "पोस्ट मैट्रिक छात्रवृत्ति",
-            descriptionEn: "Scholarship for SC/ST/OBC",
-            descriptionHi: "SC/ST/OBC छात्रों के लिए",
-            link: "/schemes/post-matric",
-            icon: "FaGraduationCap"
-          },
-          {
-            id: 3,
-            titleEn: "Kanya Shiksha Yojana",
-            titleHi: "कन्या शिक्षा योजना",
-            descriptionEn: "Support for girl students",
-            descriptionHi: "बालिका छात्रों के लिए सहायता",
-            link: "/schemes/kanya",
-            icon: "FaFemale"
-          },
-          {
-            id: 4,
-            titleEn: "Research Fellowship",
-            titleHi: "अनुसंधान फेलोशिप",
-            descriptionEn: "Support for researchers",
-            descriptionHi: "शोधार्थियों के लिए सहायता",
-            link: "/schemes/research",
-            icon: "FaFlask"
-          }
-        ]);
       } finally {
         setLoading(false);
       }
@@ -159,18 +97,64 @@ const Home = () => {
       {/* QUICK LINKS */}
       <section className="py-5 bg-light">
         <Container>
+          <div className="text-center mb-5">
+            <h4 className="fw-bold">
+              {isHindi ? "त्वरित लिंक" : "Quick Access"}
+            </h4>
+            <div
+              className="mx-auto mt-2"
+              style={{
+                width: "60px",
+                height: "3px",
+                background: "#0d6efd",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+
           <Row className="g-4 justify-content-center">
             {quickLinks.map((link) => (
               <Col key={link.id} xs={6} sm={4} md={3} lg={2}>
                 <Link to={link.link} className="text-decoration-none">
-                  <Card className="h-100 text-center border-0 shadow-sm">
+                  <Card
+                    className="text-center border-0 shadow-sm h-100"
+                    style={{
+                      borderRadius: "18px",
+                      transition: "all 0.3s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-6px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 12px 25px rgba(13,110,253,0.2)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 12px rgba(0,0,0,0.08)";
+                    }}
+                  >
                     <CardBody className="py-4">
-                      <div className="mb-3 text-primary fs-4">
+
+                      {/* Icon Circle */}
+                      <div
+                        className="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style={{
+                          width: "60px",
+                          height: "60px",
+                          borderRadius: "50%",
+                          background:
+                            "linear-gradient(135deg, #0d6efd, #6610f2)",
+                          color: "#fff",
+                          fontSize: "22px",
+                        }}
+                      >
                         {iconMap[link.icon]}
                       </div>
-                      <small className="fw-semibold">
+
+                      <div className="fw-semibold text-dark small">
                         {isHindi ? link.titleHi : link.titleEn}
-                      </small>
+                      </div>
+
                     </CardBody>
                   </Card>
                 </Link>
@@ -179,6 +163,7 @@ const Home = () => {
           </Row>
         </Container>
       </section>
+
       <NoticeDepAndDirectorate />
       <AnnouncementsAndSchemes />
       <ImportantLinksSection />

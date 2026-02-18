@@ -243,7 +243,7 @@ const DepDirectorateNoticesListView = () => {
                   key={item._id}
                   action
                   tag={Link}
-                  to={isDirectorateList ? `/directorate-notice/${item.slug}` : `/departments-notice/${item.slug}`}
+                  to={isDirectorateList ? `/directorate-notice/${item.slug}` : `/department-notice/${item.slug}`}
                   className="text-decoration-none px-4 py-3 border-bottom d-flex align-items-center gap-3" >
                   {/* Serial Number Badge */}
                   <Badge color="primary" className="rounded-3 fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: 32, height: 32, fontSize: 12 }}>
