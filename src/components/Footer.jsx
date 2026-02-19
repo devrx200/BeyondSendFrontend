@@ -209,7 +209,7 @@ const Footer = () => {
             <Col md={6} className="text-center text-md-start">
               <small>
                 <Link to="/privacy-policy">Privacy Policy</Link> |{" "}
-                <Link to="/terms-conditions">Terms & Conditions</Link> |{" "}
+                <Link to="/terms-condition">Terms & Conditions</Link> |{" "}
                 <Link to="/disclaimer">Disclaimer</Link> |{" "}
                 <Link to="/sitemap">Site Map</Link>
               </small>

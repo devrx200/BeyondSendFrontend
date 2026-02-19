@@ -57,10 +57,10 @@ const adminMenu = [
   },
 
   {
-    id: "dept-notice-management",
+    id: "important-page-management",
     icon: FaListAlt,
-    path: "/admin/dept-notice-management",
-    label: { en: "Department Notice Management", hi: "विभागीय सूचना प्रबंधन" }
+    path: "/admin/important-page-management",
+    label: { en: "Add Important Page", hi: " महत्वपूर्ण पृष्ठ जोड़ें " }
   },
   {
     id: "Content Uploader",

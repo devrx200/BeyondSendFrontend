@@ -16,7 +16,7 @@ import Home from "../views/pages/Home";
 import About from "../views/pages/About";
 import Contact from "../views/pages/Contact";
 import DynamicPage from "../views/pages/DynamicPage";
-import AboutAndHelpView from "../views/pages/AboutAndHelpView";
+// import AboutAndHelpView from "../views/pages/AboutAndHelpView";
 import PrivacyPolicy from "../views/pages/PrivacyPolicy";
 import TermsConditions from "../views/pages/TermsConditions";
 import Disclaimer from "../views/pages/Disclaimer";
@@ -33,6 +33,7 @@ import AdminFeedbackList from "../views/Admin/FeedbackList";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 import CreatedDynamicPage from "../views/pages/CreatedDynamicPage";
 import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
+import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 
 /* ADMIN */
 import AdminLogin from "../views/Admin/AdminLogin";
@@ -53,6 +54,7 @@ import ContactManagement from "../views/Admin/ContactManagement";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import SchemesDetails from "../views/pages/SchemesDetails";
 import PageCreatorManagement from "../views/Admin/PageCreatorMangagement";
+import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
 
 
 
@@ -142,58 +144,38 @@ const AppRoutes = () => {
       <Route path="/about" element={<MainLayout><About /></MainLayout>} />
       <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
       <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
-
-      {/* DYNAMIC CMS PAGES */}
-      {pages
-        .filter(p => !p.isExternal)
-        .map(p => (
-          <Route
-            key={p._id}
-            path={p.path}
-            element={<MainLayout><DynamicPage /></MainLayout>}
-          />
-        ))}
-
-
-
-      {/* Extra Page PAGES CREATED FROM ADMIN */}
-      {staticPages
-        .filter(p => !p.isExternal)
-        .map(p => (
-          <Route
-            key={p._id}
-            path={`${p.path}/:slug?`} 
-            element={<MainLayout><CreatedDynamicPage /></MainLayout>}
-          />
-        ))}
-
-
-      <Route path="/aboutUs" element={<MainLayout><AboutAndHelpView /></MainLayout>} />
-      {/* STATIC */}
-      <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
-      <Route path="/terms-conditions" element={<MainLayout><TermsConditions /></MainLayout>} />
-      <Route path="/disclaimer" element={<MainLayout><Disclaimer /></MainLayout>} />m
-      <Route path="/sitemap" element={<MainLayout><Sitemap /></MainLayout>} />
-      <Route path="/accessibility" element={<MainLayout><Accessibility /></MainLayout>} />
       <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
-      <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} />
-      <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+
+      {/* DYNAMIC CMS PAGES From Content Uploader */}
+      {pages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={p.path}  element={<MainLayout><DynamicPage /></MainLayout>} />))}
+
+      {/* Extra Page PAGES CREATED FROM ADMIN */}
+      {staticPages.filter(p => !p.isExternal).map(p => ( <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} /> ))}
+
+      {/* */}
+      {/* <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
+      <Route path="/terms-conditions" element={<MainLayout><TermsConditions /></MainLayout>} />
+      <Route path="/disclaimer" element={<MainLayout><Disclaimer /></MainLayout>} />
+      <Route path="/sitemap" element={<MainLayout><Sitemap /></MainLayout>} />
+      <Route path="/accessibility" element={<MainLayout><Accessibility /></MainLayout>} />
+      <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} /> */}
+
+      {/* Important Pages From Admin STATIC PAGES */}
+        <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} /> 
+      {/* Announcements And Schemes Details */}
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
-
       {/* Directorate And Department Notices */}
-      <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView />  </MainLayout>}/>
-      <Route path="/directorate-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView/></MainLayout>}/>
-      <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>}/>
-      <Route path="/department-notice/:slug" element={ <MainLayout> <DepDirectorateNoticesListView /></MainLayout>}/>
+      <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView />  </MainLayout>} />
+      <Route path="/directorate-notice/:slug" element={<MainLayout> <DepDirectorateNoticesListView /></MainLayout>} />
+      <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
+      <Route path="/department-notice/:slug" element={<MainLayout> <DepDirectorateNoticesListView /></MainLayout>} />
 
-
-
-      {/* ADMIN */}
+      {/* ADMIN  All Routes */}
       <Route element={<PublicAdminRoute />}>  <Route path="/admin/login" element={<AdminLogin />} /> </Route>
-
+      {/* Protected Admin Routes After Login its Work */}
       <Route path="/admin" element={<AuthMiddleware allowedRoles={["OFFICER", "ADMIN"]} />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -222,6 +204,7 @@ const AppRoutes = () => {
           <Route path="page-creator-management" element={<PageCreatorManagement />} />
           <Route path="department-notices" element={<DepartmentNoticeManagement />} />
           <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
+          <Route path="important-page-management" element={<ImportantPageManagement />} />
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />
