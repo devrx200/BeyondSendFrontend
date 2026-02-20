@@ -346,7 +346,7 @@ const PageCreatorManagement = () => {
     }));
   };
 
-  const handleAddDocument = () => {
+  const handleAddDocument = async () => {
     // Validation
     if (!currentDocument.titleEng?.trim()) {
       Swal.fire({
@@ -379,35 +379,122 @@ const PageCreatorManagement = () => {
       return;
     }
 
-    const updatedDocs = [...formData.documentsUpdate];
+    // If content doesn't exist yet (creating new content), manage locally
+    if (!editingId) {
+      const updatedDocs = [...formData.documentsUpdate];
 
-    if (editingDocIndex !== null) {
-      // Update existing document
-      updatedDocs[editingDocIndex] = {
-        ...updatedDocs[editingDocIndex],
-        ...currentDocument
-      };
-      Swal.fire({
-        icon: "success",
-        title: "Updated",
-        text: "Document updated successfully",
-        timer: 1500,
-        showConfirmButton: false
-      });
-    } else {
-      // Add new document
-      updatedDocs.push({ ...currentDocument });
-      Swal.fire({
-        icon: "success",
-        title: "Added",
-        text: "Document added successfully",
-        timer: 1500,
-        showConfirmButton: false
-      });
+      if (editingDocIndex !== null) {
+        // Update existing document locally
+        updatedDocs[editingDocIndex] = {
+          ...updatedDocs[editingDocIndex],
+          ...currentDocument
+        };
+        Swal.fire({
+          icon: "success",
+          title: "Updated",
+          text: "Document updated successfully",
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } else {
+        // Add new document locally
+        updatedDocs.push({ ...currentDocument });
+        Swal.fire({
+          icon: "success",
+          title: "Added",
+          text: "Document added successfully",
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+
+      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
+      toggleDocumentModal();
+      return;
     }
 
-    setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-    toggleDocumentModal();
+    // If content exists (editing mode), use API
+    try {
+      const fd = new FormData();
+      fd.append("titleEng", currentDocument.titleEng);
+      fd.append("titleHin", currentDocument.titleHin);
+      fd.append("shortDescriptionEn", currentDocument.shortDescriptionEn || "");
+      fd.append("shortDescriptionHin", currentDocument.shortDescriptionHin || "");
+
+      if (currentDocument.file) {
+        fd.append("file", currentDocument.file);
+        // Calculate file size
+        const fileSizeKB = (currentDocument.file.size / 1024).toFixed(2);
+        const fileSizeMB = (currentDocument.file.size / (1024 * 1024)).toFixed(2);
+        const displaySize = currentDocument.file.size < 1024 * 1024
+          ? `${fileSizeKB} KB`
+          : `${fileSizeMB} MB`;
+
+        fd.append("fileSize", displaySize);
+        fd.append("fileType", currentDocument.file.type.split("/").pop() || currentDocument.file.name.split(".").pop());
+      }
+
+      if (editingDocIndex !== null) {
+        // Update existing document via API
+        const docId = formData.documentsUpdate[editingDocIndex]._id;
+
+        if (!docId) {
+          throw new Error("Document ID not found");
+        }
+
+        const response = await axios.put(
+          `${API_URL}/api/update-single-document/${editingId}/${docId}`,
+          fd
+        );
+
+        // Update local state with the updated document
+        const updatedDocs = [...formData.documentsUpdate];
+        updatedDocs[editingDocIndex] = {
+          ...updatedDocs[editingDocIndex],
+          ...response.data.data
+        };
+        setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
+
+        Swal.fire({
+          icon: "success",
+          title: "Updated",
+          text: response.data?.message || "Document updated successfully",
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } else {
+        // Add new document via API
+        const response = await axios.post(
+          `${API_URL}/api/add-document-to-content/${editingId}`,
+          fd
+        );
+
+        // Add the new document to local state
+        const newDocument = response.data.data;
+        setFormData((prev) => ({
+          ...prev,
+          documentsUpdate: [...prev.documentsUpdate, newDocument]
+        }));
+
+        Swal.fire({
+          icon: "success",
+          title: "Added",
+          text: response.data?.message || "Document added successfully",
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+
+      toggleDocumentModal();
+    } catch (error) {
+      console.error("Error saving document:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || error.message || "Failed to save document",
+        confirmButtonText: "OK"
+      });
+    }
   };
 
   const handleEditDocument = (index) => {
@@ -434,24 +521,59 @@ const PageCreatorManagement = () => {
 
     if (!result.isConfirmed) return;
 
-    const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
-    setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
+    // If content doesn't exist yet (creating new content), manage locally
+    if (!editingId) {
+      const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
 
-    Swal.fire({
-      icon: "success",
-      title: "Deleted",
-      text: "Document removed successfully",
-      timer: 1500,
-      showConfirmButton: false
-    });
+      Swal.fire({
+        icon: "success",
+        title: "Deleted",
+        text: "Document removed successfully",
+        timer: 1500,
+        showConfirmButton: false
+      });
+      return;
+    }
+
+    // If content exists (editing mode), use API
+    try {
+      const docId = formData.documentsUpdate[index]._id;
+
+      if (!docId) {
+        throw new Error("Document ID not found");
+      }
+
+      const response = await axios.delete(
+        `${API_URL}/api/delete-document/${editingId}/${docId}`
+      );
+
+      // Update local state by removing the deleted document
+      const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
+      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted",
+        text: response.data?.message || "Document deleted successfully",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || error.message || "Failed to delete document",
+        confirmButtonText: "OK"
+      });
+    }
   };
 
   /* ================= CRUD OPERATIONS ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
 
-    // Format date properly
-    let formattedDate = "";
     setFormData({
       titleEng: item.titleEng || "",
       titleHin: item.titleHin || "",

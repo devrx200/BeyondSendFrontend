@@ -211,7 +211,9 @@ const Footer = () => {
                 <Link to="/privacy-policy">Privacy Policy</Link> |{" "}
                 <Link to="/terms-condition">Terms & Conditions</Link> |{" "}
                 <Link to="/disclaimer">Disclaimer</Link> |{" "}
-                <Link to="/sitemap">Site Map</Link>
+                <Link to="/accessibility-statement">Accessibility</Link> |{" "}
+                <Link to="/right-information">RTI</Link> |{" "}
+                <Link to="/feedback">Feedback</Link> 
               </small>
             </Col>
 

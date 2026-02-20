@@ -458,7 +458,7 @@ const CreatedDynamicPage = () => {
             <div className="px-4 ">
               <div className="content-body mb-5">
               <div className="prose-content"
-                  dangerouslySetInnerHTML={{ __html: isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContentEng || contentDetail.htmlContentEng }} />
+                  dangerouslySetInnerHTML={{ __html: isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContent || contentDetail.htmlContent }} />
               </div>
 
               {/* Documents Section */}

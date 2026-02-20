@@ -17,16 +17,11 @@ import About from "../views/pages/About";
 import Contact from "../views/pages/Contact";
 import DynamicPage from "../views/pages/DynamicPage";
 // import AboutAndHelpView from "../views/pages/AboutAndHelpView";
-import PrivacyPolicy from "../views/pages/PrivacyPolicy";
-import TermsConditions from "../views/pages/TermsConditions";
-import Disclaimer from "../views/pages/Disclaimer";
-import Sitemap from "../views/pages/Sitemap";
-import Accessibility from "../views/pages/Accessibility";
+
 import Universities from "../views/pages/Universities";
 import Colleges from "../views/pages/Colleges";
 import Downloads from "../views/pages/Downloads";
 import NoticeBoard from "../views/pages/NoticeBoard";
-import RTI from "../views/pages/RTI";
 import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
@@ -147,6 +142,8 @@ const AppRoutes = () => {
       <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
+      <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
+
 
       {/* DYNAMIC CMS PAGES From Content Uploader */}
       {pages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={p.path}  element={<MainLayout><DynamicPage /></MainLayout>} />))}
@@ -154,13 +151,6 @@ const AppRoutes = () => {
       {/* Extra Page PAGES CREATED FROM ADMIN */}
       {staticPages.filter(p => !p.isExternal).map(p => ( <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} /> ))}
 
-      {/* */}
-      {/* <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
-      <Route path="/terms-conditions" element={<MainLayout><TermsConditions /></MainLayout>} />
-      <Route path="/disclaimer" element={<MainLayout><Disclaimer /></MainLayout>} />
-      <Route path="/sitemap" element={<MainLayout><Sitemap /></MainLayout>} />
-      <Route path="/accessibility" element={<MainLayout><Accessibility /></MainLayout>} />
-      <Route path="/rti" element={<MainLayout><RTI /></MainLayout>} /> */}
 
       {/* Important Pages From Admin STATIC PAGES */}
         <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} /> 
