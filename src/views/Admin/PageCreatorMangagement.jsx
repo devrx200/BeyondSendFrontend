@@ -314,12 +314,12 @@ const PageCreatorManagement = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const MAX_SIZE = 5 * 1024 * 1024;
+    const MAX_SIZE = 26 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       Swal.fire({
         icon: "warning",
         title: "File Too Large 📁",
-        text: "File size should not exceed 5 MB.",
+        text: "File size should not exceed 26 MB.",
         confirmButtonText: "OK",
         confirmButtonColor: "#3085d6"
       });
@@ -1289,7 +1289,7 @@ const PageCreatorManagement = () => {
                     <span className="text-danger">*</span>
                   )}
                   <small className="text-muted d-block">
-                    Maximum allowed file size: 5 MB
+                    Maximum allowed file size: 26 MB
                   </small>
                 </Label>
                 <Input
