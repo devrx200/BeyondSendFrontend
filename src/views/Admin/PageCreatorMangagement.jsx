@@ -314,12 +314,20 @@ const PageCreatorManagement = () => {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+<<<<<<< HEAD
     const MAX_SIZE = 30 * 1024 * 1024;
+=======
+    const MAX_SIZE = 26 * 1024 * 1024;
+>>>>>>> origin/feature/fix-code
     if (file.size > MAX_SIZE) {
       Swal.fire({
         icon: "warning",
         title: "File Too Large 📁",
+<<<<<<< HEAD
         text: "File size should not exceed 30 MB.",
+=======
+        text: "File size should not exceed 26 MB.",
+>>>>>>> origin/feature/fix-code
         confirmButtonText: "OK",
         confirmButtonColor: "#3085d6"
       });
