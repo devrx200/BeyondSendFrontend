@@ -155,11 +155,11 @@ const Universities = () => {
       titleHi="विश्वविद्यालय"
       breadcrumb={breadcrumb}
     >
-      <Container className="py-5">
+      <Container >
         <Row>
           <Col lg={12}>
             <Card className="border-0 shadow-sm rounded-4">
-              <CardBody className="p-4">
+              <CardBody className="p-4 m-0">
                 {/* HEADER */}
                 <div className="d-flex align-items-center mb-4">
                   <FaUniversity size={42} className="text-primary me-3" />

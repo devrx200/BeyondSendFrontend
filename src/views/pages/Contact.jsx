@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
-import { Row, Col, Card, CardBody, Button } from "reactstrap";
+import { Row, Col, Card, CardBody, Button, Badge } from "reactstrap";
 import {
   FaMapMarkerAlt,
   FaPhone,
-  FaEnvelope,
   FaClock,
   FaUserTie,
+  FaEnvelope,
+  FaBuilding,
+  FaUniversity,
+  FaFax,
+
+
 } from "react-icons/fa";
 import PageLayout from "../../components/PageLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -52,6 +57,7 @@ const Contact = () => {
       titleHi="संपर्क विवरण"
       showBreadcrumb
     >
+
       {/* ================= TOP INFO ================= */}
       <Row className="g-4 mb-4">
         <Col md={4}>
@@ -240,11 +246,248 @@ const Contact = () => {
         </Col>
       </Row>
 
+      <Row className="mt-5 g-4">
+
+        {/* ── Department of Higher Education ── */}
+        <Col xs={12} lg={6}>
+          <Card className="h-100 border-0 shadow rounded-4 overflow-hidden">
+
+            {/* top colour bar */}
+            <div className="bg-primary" style={{ height: 5 }} />
+
+            {/* gradient header */}
+            <div
+              className="px-4 pt-4 pb-3"
+              style={{
+                background: "linear-gradient(135deg,#e8f0fe 0%,#fff 70%)",
+                borderBottom: "1px solid rgba(13,110,253,0.1)",
+              }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                {/* icon badge */}
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-primary text-white shadow-sm flex-shrink-0"
+                  style={{ width: 54, height: 54, fontSize: 22 }}
+                >
+                  <FaBuilding />
+                </div>
+
+                <div>
+                  <Badge
+                    color="primary"
+                    pill
+                    className="mb-1 fw-semibold"
+                    style={{ fontSize: "0.6rem", letterSpacing: "0.08em", opacity: 0.85 }}
+                  >
+                    DEPT. OF HIGHER EDUCATION
+                  </Badge>
+                  <h5 className="fw-bold mb-0 lh-sm" style={{ color: "#1a1f36" }}>
+                    Department of Higher Education
+                  </h5>
+                  <small className="text-muted">Government of Chhattisgarh</small>
+                </div>
+              </div>
+            </div>
+
+            <CardBody className="px-4 py-3">
+
+              {/* Address */}
+              <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
+                style={{ background: "#f8f9fa" }}>
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                  style={{ width: 36, height: 36, background: "#e8f0fe", color: "#1a56db", marginTop: 1 }}
+                >
+                  <FaMapMarkerAlt />
+                </div>
+                <div>
+                  <div className="text-uppercase fw-bold text-secondary mb-1"
+                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                    Office Address
+                  </div>
+                  <div className="small text-dark lh-sm">
+                    First Floor, Mahanadi Bhawan, Nava Raipur Atal Nagar, Chhattisgarh – 492002
+                  </div>
+                </div>
+              </div>
+
+              {/* Email */}
+              <a href="mailto:higher-education@cg.gov.in" className="text-decoration-none d-block">
+                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                  style={{ background: "#f8f9fa" }}>
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                    style={{ width: 36, height: 36, background: "#e8f0fe", color: "#1a56db" }}
+                  >
+                    <FaEnvelope />
+                  </div>
+                  <div>
+                    <div className="text-uppercase fw-bold text-secondary mb-1"
+                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                      Email
+                    </div>
+                    <div className="small fw-semibold" style={{ color: "#1a56db" }}>
+                      higher-education@cg.gov.in
+                    </div>
+                  </div>
+                </div>
+              </a>
+
+            </CardBody>
+
+            {/* bottom dots */}
+            <div className="px-4 pb-3 d-flex gap-1 align-items-center">
+              <div className="bg-primary rounded-pill" style={{ width: 28, height: 4 }} />
+              <div className="rounded-pill" style={{ width: 14, height: 4, background: "#4f83e7" }} />
+              <div className="rounded-pill" style={{ width: 7, height: 4, background: "#c7d8fc" }} />
+            </div>
+          </Card>
+        </Col>
+
+        {/* ── Directorate of Higher Education ── */}
+        <Col xs={12} lg={6}>
+          <Card className="h-100 border-0 shadow rounded-4 overflow-hidden">
+
+            {/* top colour bar */}
+            <div className="bg-success" style={{ height: 5 }} />
+
+            {/* gradient header */}
+            <div
+              className="px-4 pt-4 pb-3"
+              style={{
+                background: "linear-gradient(135deg,#d1fae5 0%,#fff 70%)",
+                borderBottom: "1px solid rgba(25,135,84,0.1)",
+              }}
+            >
+              <div className="d-flex align-items-center gap-3">
+                {/* icon badge */}
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3 bg-success text-white shadow-sm flex-shrink-0"
+                  style={{ width: 54, height: 54, fontSize: 22 }}
+                >
+                  <FaUniversity />
+                </div>
+
+                <div>
+                  <Badge
+                    color="success"
+                    pill
+                    className="mb-1 fw-semibold"
+                    style={{ fontSize: "0.6rem", letterSpacing: "0.08em", opacity: 0.85 }}
+                  >
+                    DIRECTORATE · HIGHER EDUCATION
+                  </Badge>
+                  <h5 className="fw-bold mb-0 lh-sm" style={{ color: "#1a1f36" }}>
+                    Directorate of Higher Education
+                  </h5>
+                  <small className="text-muted">Government of Chhattisgarh</small>
+                </div>
+              </div>
+            </div>
+
+            <CardBody className="px-4 py-3">
+
+              {/* Address */}
+              <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
+                style={{ background: "#f8f9fa" }}>
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                  style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55", marginTop: 1 }}
+                >
+                  <FaMapMarkerAlt />
+                </div>
+                <div>
+                  <div className="text-uppercase fw-bold text-secondary mb-1"
+                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                    Office Address
+                  </div>
+                  <div className="small text-dark lh-sm">
+                    Block-03, Second / Third Floor, Indravati Bhawan, Nava Raipur Atal Nagar, Chhattisgarh – 492002
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone */}
+              <a href="tel:07712263411" className="text-decoration-none d-block mb-2">
+                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                  style={{ background: "#f8f9fa" }}>
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                    style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
+                  >
+                    <FaPhone />
+                  </div>
+                  <div>
+                    <div className="text-uppercase fw-bold text-secondary mb-1"
+                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                      Phone
+                    </div>
+                    <div className="small fw-semibold" style={{ color: "#057a55" }}>
+                      0771-2263411
+                    </div>
+                  </div>
+                </div>
+              </a>
+
+              {/* Fax */}
+              <div className="d-flex gap-3 align-items-center p-3 rounded-3 mb-2"
+                style={{ background: "#f8f9fa" }}>
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                  style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
+                >
+                  <FaFax />
+                </div>
+                <div>
+                  <div className="text-uppercase fw-bold text-secondary mb-1"
+                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                    Fax
+                  </div>
+                  <div className="small text-dark fw-semibold">0771-2263412</div>
+                </div>
+              </div>
+
+              {/* Email */}
+              <a href="mailto:che-higheredu.cg@gov.in" className="text-decoration-none d-block">
+                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                  style={{ background: "#f8f9fa" }}>
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
+                    style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
+                  >
+                    <FaEnvelope />
+                  </div>
+                  <div>
+                    <div className="text-uppercase fw-bold text-secondary mb-1"
+                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
+                      Email
+                    </div>
+                    <div className="small fw-semibold" style={{ color: "#057a55" }}>
+                      che-higheredu.cg@gov.in
+                    </div>
+                  </div>
+                </div>
+              </a>
+
+            </CardBody>
+
+            {/* bottom dots */}
+            <div className="px-4 pb-3 d-flex gap-1 align-items-center">
+              <div className="bg-success rounded-pill" style={{ width: 28, height: 4 }} />
+              <div className="rounded-pill" style={{ width: 14, height: 4, background: "#0e9f6e" }} />
+              <div className="rounded-pill" style={{ width: 7, height: 4, background: "#bbf7d0" }} />
+            </div>
+
+          </Card>
+        </Col>
+
+      </Row>
+
       {/* CONTACT IMAGE */}
       <Row className="mt-4">
         <Col>
           <img
-            src={indrawatiBhavan? indrawatiBhavan : "/indrawati-bhavan.png"}
+            src={indrawatiBhavan ? indrawatiBhavan : "/indrawati-bhavan.png"}
             alt="Contact"
             className="img-fluid rounded shadow-sm w-100 h-100"
           />

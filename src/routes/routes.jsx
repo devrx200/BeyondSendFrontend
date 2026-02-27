@@ -21,7 +21,7 @@ import DynamicPage from "../views/pages/DynamicPage";
 import Universities from "../views/pages/Universities";
 import Colleges from "../views/pages/Colleges";
 import Downloads from "../views/pages/Downloads";
-import NoticeBoard from "../views/pages/NoticeBoard";
+
 import Gallery from "../views/pages/Gallery";
 import FeedbackForm from "../views/pages/FeedbackForm";
 import AdminFeedbackList from "../views/Admin/FeedbackList";
@@ -89,6 +89,7 @@ const MainLayout = ({ children }) => (
 const AppRoutes = () => {
   const [pages, setPages] = useState([]);
   const [staticPages, setStaticPages] = useState([]);
+  const [importantPages, setImportantPages] = useState([]);
 
 
   useEffect(() => {
@@ -104,11 +105,16 @@ const AppRoutes = () => {
       );
 
       const menuItemsStatic = (res.data.data || []).filter(
-        (item) => item.isDynamic === false
+        (item) => item.isDynamic === false && item.isImportant === false
+      );
+
+      const importantPages = (res.data.data || []).filter(
+        (item) => item.isImportant === true
       );
 
       setPages(extractPagesFromMenu(menuItems));
       setStaticPages(extractPagesFromMenu(menuItemsStatic));
+      setImportantPages(extractPagesFromMenu(importantPages));
 
     } catch (err) {
       console.error("Page Fetch Error", err);
@@ -145,15 +151,16 @@ const AppRoutes = () => {
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
 
 
+
       {/* DYNAMIC CMS PAGES From Content Uploader */}
-      {pages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={p.path}  element={<MainLayout><DynamicPage /></MainLayout>} />))}
+      {pages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={p.path} element={<MainLayout><DynamicPage /></MainLayout>} />))}
 
       {/* Extra Page PAGES CREATED FROM ADMIN */}
-      {staticPages.filter(p => !p.isExternal).map(p => ( <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} /> ))}
-
+      {staticPages.filter(p => !p.isExternal ).map(p => (<Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} />))}
 
       {/* Important Pages From Admin STATIC PAGES */}
-        <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} /> 
+      <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} />
+
       {/* Announcements And Schemes Details */}
       <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />

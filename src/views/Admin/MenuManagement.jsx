@@ -17,7 +17,6 @@ import {
 } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 
-
 const API = import.meta.env.VITE_API_URL;
 
 const MenuManagement = () => {
@@ -41,6 +40,7 @@ const MenuManagement = () => {
     isActive: true,
     parentMenuId: "",
     parentSubmenuId: "",
+    isDynamic: false,
   });
 
   /* ================= FETCH ================= */
@@ -65,8 +65,7 @@ const MenuManagement = () => {
     const token = sessionStorage.getItem("authToken");
     
 
-    await axios.post(
-      `${API}/api/menu/reorder`,
+    await axios.post(`${API}/api/menu/reorder`,
       {
         menus: updatedMenus, // <-- full ordered tree
       },
@@ -78,7 +77,7 @@ const MenuManagement = () => {
       }
     );
 
-    alert("Menu order saved successfully");
+    alert("Menu Order Saved Successfully");
   } catch (err) {
     console.error(
       "Order save failed",
@@ -141,6 +140,8 @@ const MenuManagement = () => {
       isActive: true,
       parentMenuId: "",
       parentSubmenuId: "",
+      isDynamic: false,
+      isImportant : false,
     });
   };
 
@@ -212,6 +213,8 @@ const MenuManagement = () => {
       isActive: data.isActive,
       parentMenuId: menuId || "",
       parentSubmenuId: submenuId || "",
+      isDynamic : data.isDynamic|| false,
+      isImportant : data.isImportant|| false,
     });
 
     setModal(true);
@@ -547,6 +550,24 @@ const MenuManagement = () => {
                   onChange={handleChange}
                 />{" "}
                 Active
+              </FormGroup>
+              <FormGroup check>
+                <Input
+                  type="checkbox"
+                  name="isDynamic"
+                  checked={form.isDynamic}
+                  onChange={handleChange}
+                />{" "}
+                Dynamic
+              </FormGroup>
+              <FormGroup check>
+                <Input
+                  type="checkbox"
+                  name="isImportant"
+                  checked={form.isImportant}
+                  onChange={handleChange}
+                />{" "}
+                Important
               </FormGroup>
             </ModalBody>
 

@@ -117,7 +117,7 @@ const CreatedDynamicPage = () => {
       setContentDetail(null);
       fetchContentListByMainSlug();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainSlug, slug]);
 
   // Pagination helpers
@@ -179,7 +179,7 @@ const CreatedDynamicPage = () => {
     return base.replace(/\/$/, "");
   };
 
-  
+
 
   const getSlugTitle = (slug) => {
     return slug
@@ -237,147 +237,205 @@ const CreatedDynamicPage = () => {
     const currentPath = getCurrentPath();
 
     return (
-      <Container className="py-4 bg-light rounded my-4 border border-3 border-white shadow">
+      <Container className="py-4 my-4">
+
         {/* Breadcrumb */}
         <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb bg-white p-3 rounded shadow-sm border">
+          <ol className="breadcrumb bg-white px-3 py-2 rounded-3 shadow-sm border align-items-center">
             <li className="breadcrumb-item">
-              <Link to="/" className="text-decoration-none d-flex align-items-center">
-                <FaHome className="me-2 text-primary" />
-                <span className="text-primary fw-medium">
-                  {isHindi ? "होम" : "Home"}
-                </span>
+              <Link
+                to="/"
+                className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
+              >
+                <FaHome size={13} />
+                {isHindi ? "होम" : "Home"}
               </Link>
             </li>
-            <li className="breadcrumb-item active fw-semibold">
-              <FaNewspaper className="me-2 text-secondary" />
+            <li className="breadcrumb-item active fw-semibold text-secondary d-flex align-items-center gap-1">
+              <FaNewspaper size={13} />
               {getSlugTitle(mainSlug)}
             </li>
           </ol>
         </nav>
 
-        {/* Header */}
-        <div className="bg-gradient-primary text-white p-3 mb-3 rounded shadow-sm">
-          <div className="d-flex align-items-center justify-content-between">
-            <h5 className="mb-0 fw-semibold">
-              <FaNewspaper className="me-2" />
-              {getSlugTitle(mainSlug)}
-            </h5>
+        {/* Page Header */}
+        <Card
+          className="border-0 shadow-sm mb-4 text-white rounded-4"
+          style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+        >
+          <CardBody className="py-3 px-4">
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 className="mb-0 fw-semibold d-flex text-white align-items-center gap-2">
+                <FaNewspaper />
+                {getSlugTitle(mainSlug)}
+              </h5>
+              <Badge pill color="light" className="text-primary fw-bold px-3 py-2">
+                {totalDocuments} {isHindi ? "आइटम" : "Items"}
+              </Badge>
+            </div>
+          </CardBody>
+        </Card>
 
-            <small className="opacity-75 text-dark fw-bold">
-              {isHindi
-                ? `${totalDocuments} आइटम`
-                : `${totalDocuments} Items`}
-            </small>
-          </div>
-        </div>
-
-
-        {/* Content List */}
+        {/* ================= CONTENT LIST ================= */}
         {totalDocuments > 0 ? (
-          <div className="p-3">
+          <div>
+
             {displayedList.length > 0 ? (
               displayedList.map((item, idx) => (
                 <Card
                   key={item._id}
-                  className="border-0 shadow-sm mb-2 hover-shadow transition-all"
+                  className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden"
+                  style={{
+                    transition: "all 0.3s ease",
+                    cursor: "pointer",
+                  }}
                 >
                   <Link
                     to={`${currentPath}/${item.slug}`}
                     className="text-decoration-none text-dark"
                   >
-                    <CardBody className="py-2 px-3 border-left  border-primary shadow border rounded">
-                      <div className="d-flex align-items-center">
-                        {/* Content */}
+                    <CardBody className="py-3 px-4 position-relative">
+
+                      <div className="d-flex align-items-start">
+
+                        {/* MODERN GRADIENT LEFT BAR */}
+                        <div
+                          className="me-3 rounded-pill"
+                          style={{
+                            width: "6px",
+                            minHeight: "100%",
+                            background: "linear-gradient(180deg, #0d6efd, #6610f2)",
+                          }}
+                        ></div>
+
                         <div className="flex-grow-1">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <div className="fw-semibold hover-text-primary" style={{ fontSize: 15 }}>
-                              {isHindi ? item.titleHin || item.titleEng : item.titleEng}
-                            </div>
+
+                          {/* TITLE */}
+                          <h6 className="fw-bold mb-2 text-dark">
+                            {isHindi ? item.titleHin || item.titleEng : item.titleEng}
+                          </h6>
+
+                          {/* EXCERPT */}
+                          <div className="small text-muted mb-3">
+                            { isHindi ? getExcerpt(item.htmlContentHi, 100) ||getExcerpt(item.htmlContent, 100) : getExcerpt(item.htmlContent, 100) }
                           </div>
 
-                          <div className="small text-muted mt-1">{getExcerpt(item.htmlContent, 100)}</div>
+                          {/* META INFO */}
+                          <div className="d-flex flex-wrap gap-3 text-secondary small">
 
-                          <div className="d-flex flex-wrap gap-3 mt-2 text-muted" style={{ fontSize: 12 }}>
                             {item.department && (
-                              <span className="d-flex align-items-center">
-                                <FaBuilding size={11} className="me-1" />
+                              <span className="d-flex align-items-center gap-1">
+                                <FaBuilding size={12} className="text-primary" />
                                 {item.department}
                               </span>
                             )}
 
-                            <span className="d-flex align-items-center">
-                              <FaCalendarAlt size={11} className="me-1" />
+                            <span className="d-flex align-items-center gap-1">
+                              <FaCalendarAlt size={12} className="text-success" />
+                              {isHindi ? "प्रकाशन:" : "Created:"}{" "}
                               {formatDateTime(item.createdAt)}
                             </span>
 
-                            <span className="d-flex align-items-center">
-                              <FaClock size={11} className="me-1" />
+                            <span className="d-flex align-items-center gap-1">
+                              <FaClock size={12} className="text-warning" />
+                              {isHindi ? "अपडेट:" : "Updated:"}{" "}
                               {formatDateTime(item.updatedAt)}
                             </span>
 
                             {item.documentsUpdate?.length > 0 && (
-                              <span className="d-flex align-items-center">
-                                <FaFileAlt size={11} className="me-1" />
-                                {item.documentsUpdate.length} {isHindi ? 'दस्तावेज़' : 'docs'}
+                              <span className="d-flex align-items-center gap-1">
+                                <FaFileAlt size={12} className="text-danger" />
+                                {item.documentsUpdate.length}{" "}
+                                {isHindi ? "दस्तावेज़" : "Docs"}
                               </span>
                             )}
+
                           </div>
                         </div>
-                        {/* Arrow */}
-                        <FaChevronRight className="text-muted ms-2" size={12} />
+
+                        {/* RIGHT ARROW */}
+                        <div className="ms-3 text-primary align-self-center">
+                          <FaChevronRight size={16} />
+                        </div>
+
                       </div>
                     </CardBody>
                   </Link>
                 </Card>
+
               ))
             ) : (
-              <Card className="border-0 shadow-sm">
+              <Card className="border-0 shadow-sm rounded-3">
                 <CardBody className="text-center py-4">
-                  <h6 className="mb-0 text-muted">{isHindi ? 'इस पृष्ठ पर कोई आइटम नहीं' : 'No items on this page'}</h6>
+                  <h6 className="text-muted mb-0">
+                    {isHindi
+                      ? "इस पृष्ठ पर कोई आइटम नहीं"
+                      : "No items on this page"}
+                  </h6>
                 </CardBody>
               </Card>
             )}
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="d-flex justify-content-center m-3">
-                <nav>
-                  <ul className="pagination">
-                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                      <button className="page-link" onClick={() => onPageChange(currentPage - 1)}>{isHindi ? 'पिछला' : 'Prev'}</button>
+              <div className="d-flex justify-content-center mt-4">
+                <ul className="pagination shadow-sm rounded">
+                  <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => onPageChange(currentPage - 1)}
+                    >
+                      {isHindi ? "पिछला" : "Prev"}
+                    </button>
+                  </li>
+
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <li
+                      key={i}
+                      className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => onPageChange(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
                     </li>
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <li key={`p-${i+1}`} className={`page-item ${currentPage === i+1 ? 'active' : ''}`}>
-                        <button className="page-link" onClick={() => onPageChange(i+1)}>{i+1}</button>
-                      </li>
-                    ))}
-                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                      <button className="page-link" onClick={() => onPageChange(currentPage + 1)}>{isHindi ? 'अगला' : 'Next'}</button>
-                    </li>
-                  </ul>
-                </nav>
+                  ))}
+
+                  <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                    <button
+                      className="page-link"
+                      onClick={() => onPageChange(currentPage + 1)}
+                    >
+                      {isHindi ? "अगला" : "Next"}
+                    </button>
+                  </li>
+                </ul>
               </div>
             )}
+
           </div>
         ) : (
-        <Card className="border-0 shadow-sm">
-          <CardBody className="text-center py-5">
-            <FaFileAlt size={48} className="text-muted mb-3" />
-            <h5 className="text-muted mb-2">
-              {isHindi ? "कोई सामग्री नहीं मिली" : "No Content Found"}
-            </h5>
-            <p className="text-muted">
-              {isHindi
-                ? "इस श्रेणी में अभी तक कोई सामग्री नहीं है।"
-                : "No content available in this category yet."}
-            </p>
-          </CardBody>
-        </Card>
+          <Card className="border-0 shadow-sm rounded-3">
+            <CardBody className="text-center py-5">
+              <FaFileAlt size={48} className="text-muted mb-3" />
+              <h5 className="text-muted mb-2">
+                {isHindi ? "कोई सामग्री नहीं मिली" : "No Content Found"}
+              </h5>
+              <p className="text-muted">
+                {isHindi
+                  ? "इस श्रेणी में अभी तक कोई सामग्री नहीं है।"
+                  : "No content available in this category yet."}
+              </p>
+            </CardBody>
+          </Card>
         )}
+
       </Container>
     );
   }
+
 
   /* ================= DETAIL PAGE ================= */
   const currentPath = getCurrentPath();
@@ -457,7 +515,7 @@ const CreatedDynamicPage = () => {
             </div>
             <div className="px-4 ">
               <div className="content-body mb-5">
-              <div className="prose-content"
+                <div className="prose-content"
                   dangerouslySetInnerHTML={{ __html: isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContent || contentDetail.htmlContent }} />
               </div>
 

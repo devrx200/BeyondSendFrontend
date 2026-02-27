@@ -25,14 +25,32 @@ const PageLayout = ({ title, titleHi, children, showBreadcrumb = true }) => {
 
       {/* Page Header */}
       {title && (
-        <div className="page-header bg-gradient-primary text-white py-4 mb-4">
-          <Container>
-            <h1 className="page-title mb-0">
-              {isHindi && titleHi ? titleHi : title}
-            </h1>
-          </Container>
-        </div>
+        <Container className="mt-3">
+          <div
+            className="rounded-top-3 border border-1 border-white  shadow text-white p-4 mb-4"
+            style={{
+              background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)",
+            }}
+          >
+            <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+
+              {/* Title */}
+              <div>
+                <h1 className="h3 fw-bold mb-2 mb-md-0 text-white">
+                  {isHindi && titleHi ? titleHi : title}
+                </h1>
+                <div className="opacity-75 small">
+                  {isHindi
+                    ? "आधिकारिक पृष्ठ जानकारी"
+                    : "Official Page Information"}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </Container>
       )}
+
 
       {/* Page Content */}
       <div className="page-content pb-5">

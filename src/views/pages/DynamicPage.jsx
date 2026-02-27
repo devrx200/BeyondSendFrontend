@@ -19,6 +19,7 @@ import {
   Badge,
 } from "reactstrap";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { FaHome, FaNewspaper } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -90,17 +91,22 @@ const DynamicPage = () => {
   return (
     <Container className="py-4">
 
-      {/* Breadcrumb */}
-      <Breadcrumb className="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4">
-        <BreadcrumbItem>
-          <a href="/" className="text-decoration-none text-primary fw-medium">
-            {isHindi ? "होम" : "Home"}
-          </a>
-        </BreadcrumbItem>
-        <BreadcrumbItem active className="fw-semibold text-secondary">
-          {isHindi ? pageData.titleHi : pageData.titleEn}
-        </BreadcrumbItem>
-      </Breadcrumb>
+        {/* Breadcrumb */}
+        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+          <BreadcrumbItem>
+            <Link
+              to="/"
+              className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
+            >
+              <FaHome size={13} />
+              {isHindi ? "होम" : "Home"}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
+            <FaNewspaper size={13} />
+           {isHindi ? pageData.titleHi : pageData.titleEn}
+          </BreadcrumbItem>
+        </Breadcrumb>
 
       {/* Main Card */}
       <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
