@@ -799,7 +799,7 @@ const PageCreatorManagement = () => {
 
   /* ================= UI RENDER ================= */
   return (
-    <div className="container-fluid mt-4">
+    <div className="container mt-4">
       <Card>
         <CardBody>
           {/* Header */}

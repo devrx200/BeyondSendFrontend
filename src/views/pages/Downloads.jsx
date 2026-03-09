@@ -183,7 +183,6 @@ const Downloads = () => {
       </tbody>
     </Table>
   );
-
   return (
     <PageLayout
       title={isHindi ? "डाउनलोड" : "Downloads"}

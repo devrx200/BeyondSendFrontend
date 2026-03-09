@@ -32,35 +32,35 @@ const AfterCarousel = () => {
   /* =UI DATA = */
   const statsData = stats
     ? [
-        {
-          value: stats.totalUniversities,
-          labelEn: "Total Universities",
-          labelHi: "विश्वविद्यालय",
-          icon: "bi-bank",
-          bg: "bg-primary"
-        },
-        {
-          value: stats.governmentColleges,
-          labelEn: "Government Colleges",
-          labelHi: "सरकारी महाविद्यालय",
-          icon: "bi-building",
-          bg: "bg-danger"
-        },
-        {
-          value: stats.privateColleges,
-          labelEn: "Private Colleges",
-          labelHi: "निजी महाविद्यालय",
-          icon: "bi-buildings",
-          bg: "bg-info"
-        },
-        {
-          value: stats.totalStudents,
-          labelEn: "Total Students",
-          labelHi: "कुल छात्र",
-          icon: "bi-mortarboard",
-          bg: "bg-success"
-        }
-      ]
+      {
+        value: stats.totalUniversities,
+        labelEn: "Total Universities",
+        labelHi: "विश्वविद्यालय",
+        icon: "bi-bank",
+        bg: "bg-primary"
+      },
+      {
+        value: stats.governmentColleges,
+        labelEn: "Government Colleges",
+        labelHi: "सरकारी महाविद्यालय",
+        icon: "bi-building",
+        bg: "bg-danger"
+      },
+      {
+        value: stats.privateColleges,
+        labelEn: "Private Colleges",
+        labelHi: "निजी महाविद्यालय",
+        icon: "bi-buildings",
+        bg: "bg-info"
+      },
+      {
+        value: stats.totalStudents,
+        labelEn: "Total Students",
+        labelHi: "कुल छात्र",
+        icon: "bi-mortarboard",
+        bg: "bg-success"
+      }
+    ]
     : [];
 
   return (

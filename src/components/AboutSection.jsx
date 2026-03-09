@@ -16,7 +16,7 @@ const AboutSection = () => {
     const [profiles, setProfiles] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(false);
-const { isHindi } = useLanguage();
+    const { isHindi } = useLanguage();
     useEffect(() => {
         const fetchProfiles = async () => {
             try {
@@ -54,24 +54,24 @@ const { isHindi } = useLanguage();
                 <Row className="align-items-start">
                     {/* LEFT CONTENT */}
                     <Col lg="8" md="12">
-                        <h4 className="mb-4 text-secondary">{ isHindi ? "हमारे बारे में" :"About Us" }</h4>
-  {(isHindi
-      ? currentProfile.aboutContentHi
-      : currentProfile.aboutContentEn
-    )
-      ?.split("\n")              //  STRING → ARRAY
-      .filter(line => line.trim() !== "")
-      .map((text, i) => (
-        <div
-          key={i}
-          className={i < 3 ? "border-bottom pb-2 mb-3" : "pb-2"}
-        >
-          <p className="mb-0 text-secondary" style={{ textAlign: "justify" }}>
-            {text}
-          </p>
-        </div>
-      ))}
-                       {/* {(
+                        <h4 className="mb-4 text-secondary">{isHindi ? "हमारे बारे में" : "About Us"}</h4>
+                        {(isHindi
+                            ? currentProfile.aboutContentHi
+                            : currentProfile.aboutContentEn
+                        )
+                            ?.split("\n")              //  STRING → ARRAY
+                            .filter(line => line.trim() !== "")
+                            .map((text, i) => (
+                                <div
+                                    key={i}
+                                    className={i < 3 ? "border-bottom pb-2 mb-3" : "pb-2"}
+                                >
+                                    <p className="mb-0 text-secondary" style={{ textAlign: "justify" }}>
+                                        {text}
+                                    </p>
+                                </div>
+                            ))}
+                        {/* {(
   isHindi
     ? [currentProfile.aboutContentHi]
     :[currentProfile.aboutContentEn]
@@ -96,7 +96,7 @@ const { isHindi } = useLanguage();
                                 fontSize: "0.9rem",
                             }}
                         >
-                           { isHindi ? "और अधिक पढ़ें" : "Read More"}
+                            {isHindi ? "और अधिक पढ़ें" : "Read More"}
                         </Button>
                     </Col>
 
@@ -134,7 +134,7 @@ const { isHindi } = useLanguage();
                                     {loading
                                         ? "Loading..."
                                         :
-                                        isHindi ? currentProfile.imgNameHin : currentProfile.imgNameEng  || "—"}
+                                        isHindi ? currentProfile.imgNameHin : currentProfile.imgNameEng || "—"}
                                 </h6>
                                 <small className="text-white-50">
                                     {isHindi ? currentProfile.designationHin : currentProfile.designationEng || ""}

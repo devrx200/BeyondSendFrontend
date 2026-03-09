@@ -26,15 +26,15 @@ const AnnouncementsAndSchemes = () => {
   const [schemes, setSchemes] = useState([]);
   const [announcementPage, setAnnouncementPage] = useState(1);
   const [schemePage, setSchemePage] = useState(1);
-  const [announcementPagination, setAnnouncementPagination] = useState({ 
-    total: 0, 
+  const [announcementPagination, setAnnouncementPagination] = useState({
+    total: 0,
     limit: 5,
-    totalPages: 0 
+    totalPages: 0
   });
-  const [schemePagination, setSchemePagination] = useState({ 
-    total: 0, 
+  const [schemePagination, setSchemePagination] = useState({
+    total: 0,
     limit: 5,
-    totalPages: 0 
+    totalPages: 0
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -57,7 +57,7 @@ const AnnouncementsAndSchemes = () => {
       );
 
       setAnnouncements(res?.data?.data || []);
-      
+
       const pagination = res?.data?.pagination || {};
       setAnnouncementPagination({
         total: pagination.total || 0,
@@ -79,7 +79,7 @@ const AnnouncementsAndSchemes = () => {
       );
 
       setSchemes(res?.data?.data || []);
-      
+
       const pagination = res?.data?.pagination || {};
       setSchemePagination({
         total: pagination.total || 0,
@@ -112,8 +112,8 @@ const AnnouncementsAndSchemes = () => {
   const truncateText = (text, maxLength = 150) => {
     if (!text) return "";
     const cleanText = stripHtmlTags(text);
-    return cleanText.length > maxLength 
-      ? cleanText.substring(0, maxLength) + "..." 
+    return cleanText.length > maxLength
+      ? cleanText.substring(0, maxLength) + "..."
       : cleanText;
   };
 
@@ -124,7 +124,6 @@ const AnnouncementsAndSchemes = () => {
           {error}
         </Alert>
       )}
-
       <Row className="g-4">
         {/* LEFT: ANNOUNCEMENTS */}
         <Col lg={8}>
@@ -155,8 +154,8 @@ const AnnouncementsAndSchemes = () => {
                   {isHindi ? "कोई घोषणा उपलब्ध नहीं है" : "No announcements available"}
                 </h5>
                 <p className="text-muted small">
-                  {isHindi 
-                    ? "नई घोषणाओं के लिए बाद में देखें" 
+                  {isHindi
+                    ? "नई घोषणाओं के लिए बाद में देखें"
                     : "Check back later for new announcements"}
                 </p>
               </CardBody>
@@ -433,8 +432,8 @@ const AnnouncementsAndSchemes = () => {
                   {isHindi ? "त्वरित जानकारी" : "Quick Info"}
                 </h6>
                 <p className="small text-muted mb-0">
-                  {isHindi 
-                    ? "नवीनतम घोषणाओं और योजनाओं के बारे में सूचित रहें।" 
+                  {isHindi
+                    ? "नवीनतम घोषणाओं और योजनाओं के बारे में सूचित रहें।"
                     : "Stay informed about the latest announcements and schemes."}
                 </p>
               </CardBody>

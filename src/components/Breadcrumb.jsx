@@ -47,9 +47,8 @@ const DynamicBreadcrumb = () => {
             <BreadcrumbItem
               key={routeTo}
               active={isLast}
-              className={`d-flex align-items-center gap-1 ${
-                isLast ? "fw-semibold text-secondary" : ""
-              }`}
+              className={`d-flex align-items-center gap-1 ${isLast ? "fw-semibold text-secondary" : ""
+                }`}
             >
               {isLast ? (
                 <span>{formatName(segment)}</span>

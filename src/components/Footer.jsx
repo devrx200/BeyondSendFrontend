@@ -13,9 +13,7 @@ import {
 } from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
 import axios from "axios";
-
 const API_URL = import.meta.env.VITE_API_URL;
-
 /* ================= ICON MAP ================= */
 const iconMap = {
   facebook: <FaFacebook />,
@@ -87,7 +85,7 @@ const Footer = () => {
         <Row>
 
           {/* ================= CONTACT INFO ================= */}
-          <Col md={4} className="mb-4">
+          <Col md={4} className="mb-1">
             <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
 
             <p className="small text-white">
@@ -113,7 +111,7 @@ const Footer = () => {
           </Col>
 
           {/* ================= QUICK LINKS ================= */}
-          <Col md={3} className="mb-4">
+          <Col md={3} className="mb-1">
             <h5>{isHindi ? "त्वरित लिंक" : "Quick Links"}</h5>
             <ul className="list-unstyled footer-links">
               {quickLinks.map((link, i) => (
@@ -127,7 +125,7 @@ const Footer = () => {
           </Col>
 
           {/* ================= IMPORTANT LINKS ================= */}
-          <Col md={3} className="mb-4">
+          <Col md={3} className="mb-1">
             <h5>{isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}</h5>
             <ul className="list-unstyled footer-links">
               {importantLinks.map((link, i) => (
@@ -141,7 +139,7 @@ const Footer = () => {
           </Col>
 
           {/* ================= SOCIAL + VISITOR ================= */}
-          <Col md={2} className="mb-4">
+          <Col md={2} className="mb-1">
             <h5>{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
 
             <div className="d-flex gap-2 flex-wrap">
@@ -171,9 +169,8 @@ const Footer = () => {
           </Col>
         </Row>
       </Container>
-
       {/* ================= BOTTOM BAR ================= */}
-      <div className="footer-bottom py-2 bg-black">
+      <div className="footer-bottom py-1 bg-black">
         <Container>
           <Row>
             <Col md={12} className="text-center">
@@ -195,17 +192,15 @@ const Footer = () => {
             <Col md={12} className="text-center">
               <small>
                 {isHindi
-                  ? "वेब सूचना प्रबंधक: आनंद चरपे"
-                  : "Web Information Manager: Anand Charpe"}
+                  ? "वेब सूचना प्रबंधक: श्री आनंद चरपे"
+                  : "Web Information Manager: Mr. Anand Charpe"}
               </small>
-               <br />
+              <br />
               <strong>Managed By National Informatics Centre</strong>
               <br />
               <img src="/public/nic-logo.jpg" height="50" className='mb-2' alt="National Informatics Centre" />
             </Col>
-
             <hr />
-
             <Col md={6} className="text-center text-md-start">
               <small>
                 <Link to="/privacy-policy">Privacy Policy</Link> |{" "}
@@ -213,10 +208,9 @@ const Footer = () => {
                 <Link to="/disclaimer">Disclaimer</Link> |{" "}
                 <Link to="/accessibility-statement">Accessibility</Link> |{" "}
                 <Link to="/right-information">RTI</Link> |{" "}
-                <Link to="/feedback">Feedback</Link> 
+                <Link to="/feedback">Feedback</Link>
               </small>
             </Col>
-
             <Col md={6} className="text-center text-md-end">
               <small>
                 {isHindi ? "अंतिम अपडेट" : "Last Updated"}: {lastUpdated}

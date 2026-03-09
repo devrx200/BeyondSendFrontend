@@ -92,17 +92,17 @@ const HeroSlider = () => {
               : slide.descriptionEng}
           </p>
 
-         
-            <Button
-              color="warning"
-              size="lg"
-              tag={Link}
-              to={slide.linkTextEn}
-              className="mt-3"
-            >
-              {isHindi ? slide.linkTextHi :slide.linkTextEn}
-            </Button>
-          
+
+          <Button
+            color="warning"
+            size="lg"
+            tag={Link}
+            to={slide.linkTextEn}
+            className="mt-3"
+          >
+            {isHindi ? slide.linkTextHi : slide.linkTextEn}
+          </Button>
+
         </div>
       </div>
     </CarouselItem>

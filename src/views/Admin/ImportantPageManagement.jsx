@@ -16,7 +16,7 @@ import {
   Col,
   Spinner
 } from "reactstrap";
-import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaEye } from "react-icons/fa";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import Swal from "sweetalert2";
@@ -181,6 +181,26 @@ const ImportantPageManagement = () => {
     }
   };
 
+
+
+  const viewPage = (slug) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to open this page?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, Open it",
+      cancelButtonText: "Cancel"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.open(`/${slug}`, "_blank");
+      }
+    });
+  };
+
+
   return (
     <div className="container-fluid mt-4">
       <Card>
@@ -199,13 +219,14 @@ const ImportantPageManagement = () => {
           ) : (
             <Table bordered hover responsive>
               <thead className="table-light">
-                <tr>
-                  <th>#</th>
+                <tr className="align-middle text-center">
+                  <th>SN.</th>
                   <th>Title (EN)</th>
                   <th>Slug</th>
                   <th>Status</th>
-                  <th>Created</th>
                   <th>Actions</th>
+                  <th>Created</th>
+                  <th>Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,9 +249,7 @@ const ImportantPageManagement = () => {
                           <span className="badge bg-danger">Inactive</span>
                         )}
                       </td>
-                      <td>
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </td>
+            
                       <td>
                         <Button
                           size="sm"
@@ -247,6 +266,22 @@ const ImportantPageManagement = () => {
                         >
                           <FaTrash />
                         </Button>
+                        <Button
+                          className="ms-1"
+                          size="sm"
+                          color="primary"
+                          onClick={() => viewPage(item.slug)}
+                        >
+                          <FaEye />
+                        </Button>
+                      </td>
+                      <td>
+                        <small className="text-muted">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </small>
+                      </td>
+                                <td>
+                        {new Date(item.updatedAt).toLocaleDateString()}
                       </td>
                     </tr>
                   ))

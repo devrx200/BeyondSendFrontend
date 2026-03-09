@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 const API = import.meta.env.VITE_API_URL;
 import "../css/aboutAndHelp.css";
-
-
-
 /* ---------- TABLE VIEW ---------- */
 const TableView = ({ columns = [], rows = [] }) => (
   <div className="table-responsive my-4">
@@ -71,7 +68,7 @@ const ContentPreview = ({ contents = [] }) => {
           {/* IMAGE */}
           {item.fileType === "IMAGE" && (
             <img
-              src={API  + item.filePath}
+              src={API + item.filePath}
               alt="No Image found"
               className="img-fluid rounded shadow-sm my-3"
               style={{ maxHeight: "420px", objectFit: "contain" }}
@@ -128,29 +125,29 @@ const ContentPreview = ({ contents = [] }) => {
 
           {/* TABLE */}
           {item.fileType === "TABLE" && item.tableData && (
-  <div className="table-responsive">
-    <table className="table table-bordered table-sm">
-      <thead>
-        <tr>
-          {item.tableData.columns.map((col, i) => (
-            <th key={i}>{col}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {item.tableData.rows.map((row, rIdx) => (
-          <tr key={rIdx}>
-            {item.tableData.columns.map((_, cIdx) => (
-              <td key={cIdx}>
-                {row[`col_${cIdx + 1}`] ?? "-"}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
+            <div className="table-responsive">
+              <table className="table table-bordered table-sm">
+                <thead>
+                  <tr>
+                    {item.tableData.columns.map((col, i) => (
+                      <th key={i}>{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {item.tableData.rows.map((row, rIdx) => (
+                    <tr key={rIdx}>
+                      {item.tableData.columns.map((_, cIdx) => (
+                        <td key={cIdx}>
+                          {row[`col_${cIdx + 1}`] ?? "-"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
         </div>
       ))}

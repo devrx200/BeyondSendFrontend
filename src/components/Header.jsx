@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -16,24 +14,31 @@ import {
   DropdownItem,
   Container,
   Button,
+  Badge,
 } from "reactstrap";
-import { FaPhone, FaEnvelope, FaLanguage, FaUniversalAccess, FaSitemap } from "react-icons/fa";
+import {
+  FaPhone,
+  FaEnvelope,
+  FaLanguage,
+  FaUniversalAccess,
+  FaSitemap,
+  FaEllipsisH,
+} from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import { translations } from "../data/translations";
 import { handleMenuClick } from "../utilies/handleMenuClick";
-import DynamicPage from "../views/pages/DynamicPage";
+import Swal from "sweetalert2";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
-
-
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const { language, toggleLanguage, isHindi } = useLanguage();
   const { increaseFontSize, decreaseFontSize, resetFontSize } =
     useAccessibility();
@@ -42,13 +47,32 @@ const Header = () => {
 
 
 
+  const openExternalLink = (url, newTab = true) => {
+    Swal.fire({
+      title: "External Website",
+      html: `<b>You are about to leave this website and visit an external site.</b>`,
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Continue",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#0d6efd",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (newTab) {
+          window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+          window.location.href = url;
+        }
+      }
+    });
+  };
 
-
+  /* ================= FETCH MENU ================= */
   const fetchMenus = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/api/menu-list`);
-      setMenuItems(res.data.data || []);
+      setMenuItems(res?.data?.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);
     } finally {
@@ -58,196 +82,188 @@ const Header = () => {
 
   useEffect(() => {
     fetchMenus();
-  }, [API_URL]);
+  }, []);
+
+
+
+
+  // Menus 
+
+  const visibleMenus = menuItems.slice(0, 8);
+  const extraMenus = menuItems.slice(8);
+
 
   if (loading) return null;
 
   return (
     <>
-      {/* Skip to Main Content */}
+      {/* ================= SKIP LINK ================= */}
       <a href="#main-content" className="skip-link">
         {t("skipToMain")}
       </a>
 
-      {/* Top Bar */}
-      <div className="top-bar border-bottom py-1">
-
+      {/* ================= TOP BAR ================= */}
+      <div className="top-bar py-1 text-white">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
-            {/* LEFT INFO */}
-            <div className="d-flex align-items-center gap-4 small text-dark">
-              <span className="d-flex align-items-center text-white fw-bold">
-                <FaPhone className="me-1 text-white" />
-                <a href="tel:+91-771-2221234" className="text-decoration-none text-white"> +91-771-2221234</a>
+
+            {/* LEFT CONTACT */}
+            <div className="d-flex align-items-center gap-4 small fw-semibold">
+              <span className="d-flex align-items-center">
+                <FaPhone className="me-2" />
+                <a
+                  href="tel:+91-771-2221234"
+                  className="text-white text-decoration-none"
+                >
+                  +91-771-2221234
+                </a>
               </span>
-              <span className="d-flex align-items-center text-white fw-bold">
-                <FaEnvelope className="me-1 text-white" />
-                <a href="mailto:wim.higheredu-cg@gov.in" clasdName="text-decoration-none text-white">  wim.higheredu-cg@gov.in</a>
+
+              <span className="d-flex align-items-center">
+                <FaEnvelope className="me-2" />
+                <a
+                  href="mailto:wim.higheredu-cg@gov.in"
+                  className="text-white text-decoration-none"
+                >
+                  wim.higheredu-cg@gov.in
+                </a>
               </span>
             </div>
 
             {/* RIGHT CONTROLS */}
-            <div className="d-flex align-items-center gap-3 flex-wrap">
+            <div className="d-none d-lg-flex align-items-center gap-3">
 
-              {/* FONT SIZE CONTROLS */}
-              <div className="font-controls d-flex align-items-center gap-1">
-                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={decreaseFontSize} title="Decrease Font Size">
+              {/* FONT SIZE */}
+              <div className="d-flex gap-1">
+                <Badge color="light" className="p-1 text-dark fw-bold" onClick={decreaseFontSize}>
                   A-
-                </Button>
-                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={resetFontSize} title="Reset Font Size">
+                </Badge>
+                <Badge color="light" className="p-1 text-dark fw-bold" onClick={resetFontSize}>
                   A
-                </Button>
-                <Button size="sm" className="px-2 fw-bold py-1" color="light" onClick={increaseFontSize} title="Increase Font Size">
+                </Badge>
+                <Badge color="light" className="p-1 text-dark fw-bold" onClick={increaseFontSize}>
                   A+
-                </Button>
+                </Badge>
               </div>
 
-              <span className="divider">|</span>
-
-              {/* LANGUAGE SWITCH */}
-              <Button
-                size="sm"
+              {/* LANGUAGE */}
+              <Badge
                 color="light"
+                className="p-1 text-dark fw-bold d-flex align-items-center gap-1"
                 onClick={toggleLanguage}
-                className="d-flex align-items-center py-1 gap-1 px-2"
-                title="Change language"
               >
                 <FaLanguage />
-                <span>{isHindi ? "English" : "हिंदी"}</span>
-              </Button>
-
-              <span className="divider">|</span>
+                {isHindi ? "English" : "हिंदी"}
+              </Badge>
 
               {/* ACCESSIBILITY */}
-              <Link
-                to="/accessibility"
-                className="top-link d-flex align-items-center gap-1 fw-bold"
-              >
-                <FaUniversalAccess />
-                <span>{t("accessibility")}</span>
+              <Link to="/accessibility-statement" className="top-link text-white">
+                <FaUniversalAccess className="me-1" />
+                {t("accessibility")}
               </Link>
-
-              <span className="divider">|</span>
 
               {/* SITEMAP */}
-              <Link
-                to="/sitemap"
-                className="top-link d-flex align-items-center gap-1 fw-bold"
-              >
-                <FaSitemap />
-                <span>{t("sitemap")}</span>
+              <Link to="/sitemap" className="top-link text-white">
+                <FaSitemap className="me-1" />
+                {t("sitemap")}
               </Link>
-
             </div>
-
-
           </div>
         </Container>
       </div>
 
-      {/* Logo Bar */}
-      <div className="logo-bar py-1 border-bottom bg-light">
+      {/* ================= LOGO BAR ================= */}
+      <div className="logo-bar py-2 border-bottom bg-light">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
+
             <div className="d-flex align-items-center gap-3">
-              <img src="/public/Chhattisgarh.svg" alt="CG Logo" height="70" />
+              <img src="/Chhattisgarh.svg" alt="CG Logo" height="70" />
               <div>
                 <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
                 <p className="mb-0">{t("stateName")}</p>
               </div>
             </div>
-            <div>
-              <img
-                src="/public/Digital_India_logo.svg"
-                alt="India Emblem"
-                height="70"
-              />
-              <img
-                src="/public/Emblem_of_India.svg"
-                alt="India Emblem"
-                height="70"
-              />
+
+            <div className="d-flex gap-3">
+              <img src="/Digital_India_logo.svg" alt="Digital India" height="60" />
+              <img src="/Emblem_of_India.svg" alt="India Emblem" height="60" />
             </div>
 
           </div>
         </Container>
       </div>
 
-      {/* Main Navigation */}
-      <Navbar expand="lg" className="shadow-sm border-top border-dark"  >
+      {/* ================= NAVBAR ================= */}
+      <Navbar expand="lg" light className="shadow-sm bg-white sticky-top py-1">
         <Container>
-          <NavbarToggler onClick={() => setIsOpen(!isOpen)} />
+          <NavbarToggler onClick={() => setIsOpen(!isOpen)} className="border-0" />
+
           <Collapse isOpen={isOpen} navbar>
             <Nav className="me-auto" navbar>
+
+              {/* HOME */}
               <NavItem>
                 <NavLink tag={Link} to="/" className="fw-semibold">
-                  <FaHouse className="me-1 fs-5 mb-2 " />
+                  <FaHouse className="me-1" />
                   {t("home")}
                 </NavLink>
               </NavItem>
 
-              {menuItems.map((menu) => {
-                if (menu.submenu?.length) {
-                  return (
-                    <UncontrolledDropdown nav inNavbar key={menu._id}>
-                      <DropdownToggle nav caret className="fw-semibold">
-                        {isHindi ? menu.titleHi : menu.titleEng}
-                      </DropdownToggle>
+              {/* DYNAMIC MENUS */}
+              {visibleMenus.map((menu) =>
+                menu.submenu?.length ? (
+                  <UncontrolledDropdown nav inNavbar key={menu._id}>
+                    <DropdownToggle nav caret className="fw-semibold">
+                      {isHindi ? menu.titleHi : menu.titleEng}
+                    </DropdownToggle>
 
-                      <DropdownMenu>
-                        {menu.submenu.map((sub) =>
-                          sub.submenu?.length ? (
-                            <UncontrolledDropdown key={sub._id} direction="end">
-                              <DropdownToggle
-                                tag="div"
-                                className="dropdown-item"
-                                style={{ cursor: "pointer" }}
-                              >
-                                {isHindi ? sub.titleHi : sub.titleEng}
-                                <span className="float-end">›</span>
-                              </DropdownToggle>
-
-                              <DropdownMenu>
-                                {sub.submenu.map((child) => (
-                                  <DropdownItem
-                                    key={child._id}
-                                    onClick={() =>
-                                      handleMenuClick({
-                                        menu: child, // key name MUST be "menu"
-                                        navigate, // key name MUST be "navigate"
-                                      })
-                                    }
-                                  >
-                                    {isHindi ? child.titleHi : child.titleEng}
-                                  </DropdownItem>
-                                ))}
-                              </DropdownMenu>
-                            </UncontrolledDropdown>
-                          ) : (
-                            <DropdownItem
-                              key={sub._id}
-                              onClick={() =>
-                                handleMenuClick({
-                                  menu: sub, // key name MUST be "menu"
-                                  navigate, // key name MUST be "navigate"
-                                })
-                              }
+                    <DropdownMenu>
+                      {menu.submenu.map((sub) =>
+                        sub.submenu?.length ? (
+                          <UncontrolledDropdown key={sub._id} direction="end">
+                            <DropdownToggle
+                              tag="div"
+                              className="dropdown-item"
+                              style={{ cursor: "pointer" }}
                             >
                               {isHindi ? sub.titleHi : sub.titleEng}
-                            </DropdownItem>
-                          )
-                        )}
-                      </DropdownMenu>
-                    </UncontrolledDropdown>
-                  );
-                }
+                              <span className="float-end">›</span>
+                            </DropdownToggle>
 
-                return menu.isExternal ? (
+                            <DropdownMenu>
+                              {sub.submenu.map((child) => (
+                                <DropdownItem
+                                  key={child._id}
+                                  onClick={() =>
+                                    handleMenuClick({ menu: child, navigate })
+                                  }
+                                >
+                                  {isHindi ? child.titleHi : child.titleEng}
+                                </DropdownItem>
+                              ))}
+                            </DropdownMenu>
+                          </UncontrolledDropdown>
+                        ) : (
+                          <DropdownItem
+                            key={sub._id}
+                            onClick={() => handleMenuClick({ menu: sub, navigate })}
+                          >
+                            {isHindi ? sub.titleHi : sub.titleEng}
+                          </DropdownItem>
+                        )
+                      )}
+                    </DropdownMenu>
+                  </UncontrolledDropdown>
+                ) : menu.isExternal ? (
                   <NavItem key={menu._id}>
                     <NavLink
-                      href={menu.path}
-                      target={menu.openInNewTab ? "_blank" : "_self"}
+                      href="#"
                       className="fw-semibold"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openExternalLink(menu.path, menu.openInNewTab);
+                      }}
                     >
                       {isHindi ? menu.titleHi : menu.titleEng}
                     </NavLink>
@@ -258,14 +274,43 @@ const Header = () => {
                       {isHindi ? menu.titleHi : menu.titleEng}
                     </NavLink>
                   </NavItem>
-                );
-              })}
+                )
+              )}
+              {/* <Extra></Extra> */}
+
+              {extraMenus.length > 0 && (
+                <UncontrolledDropdown nav inNavbar>
+                  <DropdownToggle nav caret className="fw-semibold">
+                    <b className="text-primary"> {isHindi ? "अन्य लिंक" : "Other Links"}<FaEllipsisH /></b>
+                  </DropdownToggle>
+
+                  <DropdownMenu>
+
+                    {extraMenus.map((menu) =>
+                      menu.isExternal ? (
+                        <DropdownItem
+                          key={menu._id}
+                          onClick={() => openExternalLink(menu.path, menu.openInNewTab)}
+                        >
+                          {isHindi ? menu.titleHi : menu.titleEng}
+                        </DropdownItem>
+                      ) : (
+                        <DropdownItem
+                          key={menu._id}
+                          onClick={() => navigate(menu.path)}
+                        >
+                          {isHindi ? menu.titleHi : menu.titleEng}
+                        </DropdownItem>
+                      )
+                    )}
+
+                  </DropdownMenu>
+                </UncontrolledDropdown>
+              )}
             </Nav>
           </Collapse>
         </Container>
       </Navbar>
-
-
     </>
   );
 };

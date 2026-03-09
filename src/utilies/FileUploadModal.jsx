@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, ModalHeader, ModalBody, Button, Progress } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { 
-  FaUpload, 
-  FaEye, 
-  FaCopy, 
-  FaFilePdf, 
-  FaFileExcel, 
+import {
+  FaUpload,
+  FaEye,
+  FaCopy,
+  FaFilePdf,
+  FaFileExcel,
   FaFileAlt,
   FaFileWord,
   FaFileImage,
@@ -17,7 +17,6 @@ import {
   FaFileCode,
   FaFileArchive
 } from "react-icons/fa";
-
 const API_URL = import.meta.env.VITE_API_URL;
 
 const FileUploadModal = ({ isOpen, toggle }) => {
@@ -47,18 +46,18 @@ const FileUploadModal = ({ isOpen, toggle }) => {
   /* ================= FILE ICON HELPER ================= */
   const getFileIcon = (mimeType, size = 32) => {
     const iconProps = { size };
-    
+
     if (mimeType?.startsWith("image")) return <FaFileImage {...iconProps} color="#10b981" />;
     if (mimeType === "application/pdf") return <FaFilePdf {...iconProps} color="#ef4444" />;
-    if (mimeType?.includes("spreadsheet") || mimeType?.includes("excel")) 
+    if (mimeType?.includes("spreadsheet") || mimeType?.includes("excel"))
       return <FaFileExcel {...iconProps} color="#22c55e" />;
-    if (mimeType?.includes("document") || mimeType?.includes("word")) 
+    if (mimeType?.includes("document") || mimeType?.includes("word"))
       return <FaFileWord {...iconProps} color="#3b82f6" />;
-    if (mimeType?.includes("zip") || mimeType?.includes("rar")) 
+    if (mimeType?.includes("zip") || mimeType?.includes("rar"))
       return <FaFileArchive {...iconProps} color="#f59e0b" />;
-    if (mimeType?.includes("json") || mimeType?.includes("javascript") || mimeType?.includes("xml")) 
+    if (mimeType?.includes("json") || mimeType?.includes("javascript") || mimeType?.includes("xml"))
       return <FaFileCode {...iconProps} color="#8b5cf6" />;
-    
+
     return <FaFileAlt {...iconProps} color="#6b7280" />;
   };
 
@@ -84,7 +83,7 @@ const FileUploadModal = ({ isOpen, toggle }) => {
     if (diffMins < 60) return `${diffMins} min ago`;
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
+
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
@@ -173,7 +172,7 @@ const FileUploadModal = ({ isOpen, toggle }) => {
 
   return (
     <Modal isOpen={isOpen} toggle={closeModal} size="xl" style={{ maxWidth: "1100px" }}>
-      <ModalHeader 
+      <ModalHeader
         toggle={closeModal}
         style={{
           background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -203,22 +202,22 @@ const FileUploadModal = ({ isOpen, toggle }) => {
               textAlign: "center",
               cursor: "pointer",
               marginBottom: 24,
-              background: isDragging 
+              background: isDragging
                 ? "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)"
                 : "white",
               transition: "all 0.3s ease"
             }}
           >
-            <FaCloudUploadAlt 
-              size={48} 
-              style={{ 
+            <FaCloudUploadAlt
+              size={48}
+              style={{
                 color: isDragging ? "#667eea" : "#cbd5e0",
                 marginBottom: 12
-              }} 
+              }}
             />
-            <div style={{ 
-              fontSize: 16, 
-              fontWeight: 600, 
+            <div style={{
+              fontSize: 16,
+              fontWeight: 600,
               color: isDragging ? "#667eea" : "#4a5568",
               marginBottom: 6
             }}>
@@ -260,10 +259,10 @@ const FileUploadModal = ({ isOpen, toggle }) => {
                 flexShrink: 0
               }}>
                 {preview ? (
-                  <img 
-                    src={preview} 
-                    alt="Preview" 
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
                   <div style={{ color: "white" }}>
@@ -274,9 +273,9 @@ const FileUploadModal = ({ isOpen, toggle }) => {
 
               {/* File Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ 
-                  fontSize: 15, 
-                  fontWeight: 600, 
+                <div style={{
+                  fontSize: 15,
+                  fontWeight: 600,
                   color: "#2d3748",
                   marginBottom: 4,
                   overflow: "hidden",
@@ -326,17 +325,17 @@ const FileUploadModal = ({ isOpen, toggle }) => {
             {/* Progress Bar */}
             {uploading && (
               <div style={{ marginTop: 16 }}>
-                <Progress 
-                  value={progress} 
+                <Progress
+                  value={progress}
                   style={{ height: 6, borderRadius: 6 }}
                   barStyle={{
                     background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)"
                   }}
                 />
-                <div style={{ 
-                  textAlign: "right", 
-                  marginTop: 6, 
-                  fontSize: 12, 
+                <div style={{
+                  textAlign: "right",
+                  marginTop: 6,
+                  fontSize: 12,
                   fontWeight: 600,
                   color: "#667eea"
                 }}>
@@ -348,16 +347,16 @@ const FileUploadModal = ({ isOpen, toggle }) => {
         )}
 
         {/* ===== FILE LIST HEADER ===== */}
-        <hr/>
-        <div style={{ 
-          display: "flex", 
-          alignItems: "center", 
+        <hr />
+        <div style={{
+          display: "flex",
+          alignItems: "center",
           justifyContent: "space-between",
           marginBottom: 16
         }}>
-          <h5 style={{ 
-            fontSize: 16, 
-            fontWeight: 600, 
+          <h5 style={{
+            fontSize: 16,
+            fontWeight: 600,
             color: "#2d3748",
             margin: 0,
             display: "flex",
@@ -401,8 +400,8 @@ const FileUploadModal = ({ isOpen, toggle }) => {
                     background: "white",
                     borderRadius: 12,
                     overflow: "hidden",
-                    boxShadow: isHover 
-                      ? "0 8px 24px rgba(0,0,0,0.12)" 
+                    boxShadow: isHover
+                      ? "0 8px 24px rgba(0,0,0,0.12)"
                       : "0 2px 8px rgba(0,0,0,0.06)",
                     transform: isHover ? "translateY(-4px)" : "translateY(0)",
                     transition: "all 0.25s ease",
@@ -412,8 +411,8 @@ const FileUploadModal = ({ isOpen, toggle }) => {
                   {/* Preview Section */}
                   <div style={{
                     height: 100,
-                    background: isImage 
-                      ? "#f3f4f6" 
+                    background: isImage
+                      ? "#f3f4f6"
                       : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     display: "flex",
                     alignItems: "center",
@@ -536,20 +535,20 @@ const FileUploadModal = ({ isOpen, toggle }) => {
                       }}>
                         {f.mimeType?.split("/")[1] || "FILE"}
                       </span>
-                        {/* Upload Date */}
-                    <strong style={{
-                      fontSize: 11,
-                      color: "#a0aec0",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4
-                    }}>
-                      <span>📅</span>
-                      <span>{formatDate(f.createdAt)}</span>
-                    </strong>
+                      {/* Upload Date */}
+                      <strong style={{
+                        fontSize: 11,
+                        color: "#a0aec0",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4
+                      }}>
+                        <span>📅</span>
+                        <span>{formatDate(f.createdAt)}</span>
+                      </strong>
                     </div>
 
-                  
+
                   </div>
                 </div>
               );

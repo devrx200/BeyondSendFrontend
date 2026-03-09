@@ -14,8 +14,7 @@ export const handleMenuClick = async ({ menu, navigate }) => {
 
       // 🔹 Fetch page content by menuId
       const res = await axios.get(`${API}/api/menu-page-data/${pageId}`);
-
-
+      
       const pageData = res.data;
       // 🔹 External link
       if (menu.isExternal) {
@@ -23,7 +22,7 @@ export const handleMenuClick = async ({ menu, navigate }) => {
         return;
       }
 
-      
+
       // 🔹 Internal navigation (SINGLE PAGE)
       navigate(menu.path, {
         state: {
