@@ -2086,12 +2086,14 @@ body {
   overflow: hidden;
 }
 
-/* .media-thumb img {
+/* Commented out - media-thumb img styles
+.media-thumb img {
   width: 100%;
   height: 160px;
   object-fit: cover;
   transition: filter 0.3s ease, transform 0.3s ease;
-} */
+}
+*/
 
 /* Hover blur */
 .media-thumb:hover img {
@@ -2115,9 +2117,9 @@ body {
 .media-thumb:hover .media-overlay {
   opacity: 1;
 }
-/* 
+
 /* Non-image file */
-.media-file {
+/* .media-file {
   padding: 40px 10px;
   text-align: center;
   background: #f8f9fa;
