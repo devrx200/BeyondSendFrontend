@@ -34,6 +34,8 @@ import {
 
 import { useLanguage } from "../contexts/LanguageContext";
 import { jwtDecode } from "jwt-decode";
+const API_URL = import.meta.env.VITE_API_URL;
+
 
 
 const adminMenu = [
@@ -275,13 +277,15 @@ const AdminSidebar = ({ collapsed }) => {
       <div className="text-center p-3 border-bottom border-light">
         <img
           src={
-            decoded?.profileImage ||
-            "https://ui-avatars.com/api/?name=Admin&background=6610f2&color=fff"
+            decoded?.profileImage
+              ? `${API_URL}${decoded.profileImage}`
+              : "https://ui-avatars.com/api/?name=Admin&background=6610f2&color=fff"
           }
           className="rounded mb-2 border border-2 border-white"
-          width="45"
-          height="45"
-          alt="Admin"
+          width={55}
+          height={50}
+          
+          alt="Profile Pic"
         />
 
         {!collapsed && decoded && (

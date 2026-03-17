@@ -7,10 +7,10 @@ import AppRoutes from './routes/routes';
 import './App.css';
 function App() {
   return (
-    <Router>
+    <Router basename="/hrmis">
       <LanguageProvider>
         <AccessibilityProvider>
-          <AppRoutes />
+          <AppRoutes  />
           <LanguageToggleFloating />
           <FeedbackToggleFloating />
         </AccessibilityProvider>

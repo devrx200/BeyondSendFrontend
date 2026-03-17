@@ -2,7 +2,7 @@ import { Container } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
 import DynamicBreadcrumb from "./Breadcrumb";
 import { useEffect, useState } from "react";
-import bgImg from "../assets/page-bg.svg";
+import bgImg from "../../public/page-bg.svg";
 const PageLayout = ({ title, titleHi, children, showBreadcrumb = true }) => {
   const { isHindi } = useLanguage();
 

@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import bgImg from "../assets/page-bg.svg";
+import bgImg from "../../public/page-bg.svg";
 import { jwtDecode } from "jwt-decode";
 const API_URL = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");

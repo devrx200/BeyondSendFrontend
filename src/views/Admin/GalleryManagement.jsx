@@ -19,7 +19,6 @@ const GalleryManagement = () => {
   const [removedImages, setRemovedImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
 
-  /* IMAGE SLIDER */
   const [imageModal, setImageModal] = useState(false);
   const [sliderImages, setSliderImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -39,8 +38,16 @@ const GalleryManagement = () => {
 
   /* ================= LOAD ================= */
   const loadGallery = async () => {
-    const res = await axios.get(`${API_URL}/api/get-gallery`);
-    setList(res.data?.data || []);
+    try {
+      const res = await axios.get(`${API_URL}/api/get-gallery`);
+      setList(res.data?.data || []);
+
+      if (!res.data.success) {
+        Swal.fire("Error", res.data.message, "error");
+      }
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Failed to load gallery", "error");
+    }
   };
 
   useEffect(() => {
@@ -113,58 +120,84 @@ const GalleryManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = new FormData();
+    try {
+      const payload = new FormData();
 
-    payload.append("titleEng", form.titleEng);
-    payload.append("titleHin", form.titleHin);
-    payload.append("shortDescEng", form.shortDescEng);
-    payload.append("shortDescHin", form.shortDescHin);
-    payload.append("displayOrder", form.displayOrder);
-    payload.append("link", form.link);
-    payload.append("isExternal", form.isExternal);
-    payload.append("openInNewTab", form.openInNewTab);
-    payload.append("isActive", form.isActive);
+      payload.append("titleEng", form.titleEng);
+      payload.append("titleHin", form.titleHin);
+      payload.append("shortDescEng", form.shortDescEng);
+      payload.append("shortDescHin", form.shortDescHin);
+      payload.append("displayOrder", form.displayOrder);
+      payload.append("link", form.link);
+      payload.append("isExternal", form.isExternal);
+      payload.append("openInNewTab", form.openInNewTab);
+      payload.append("isActive", form.isActive);
 
-    form.images.forEach(file => payload.append("images", file));
-    removedImages.forEach(img => payload.append("removeImages[]", img));
+      form.images.forEach(file => payload.append("images", file));
+      removedImages.forEach(img => payload.append("removeImages[]", img));
 
-    const url = editingId
-      ? `${API_URL}/api/updtae-gallery/${editingId}`
-      : `${API_URL}/api/add-gallery`;
+      const url = editingId
+        ? `${API_URL}/api/update-gallery/${editingId}`
+        : `${API_URL}/api/add-gallery`;
 
-    const method = editingId ? "put" : "post";
+      const method = editingId ? "put" : "post";
 
-    await axios({ method, url, data: payload });
+      const res = await axios({ method, url, data: payload });
 
-    Swal.fire("Success", "Gallery saved successfully", "success");
-    toggleModal();
-    loadGallery();
+      Swal.fire(
+        res.data.success ? "Success" : "Error",
+        res.data.message,
+        res.data.success ? "success" : "error"
+      );
+
+      if (res.data.success) {
+        toggleModal();
+        loadGallery();
+      }
+
+    } catch (err) {
+      Swal.fire(
+        "Error",
+        err.response?.data?.message || "Something went wrong",
+        "error"
+      );
+    }
   };
 
   /* ================= EDIT ================= */
   const handleEdit = async (id) => {
-    const res = await axios.get(`${API_URL}/api/get-gallery-by-id/${id}`);
-    const item = res.data.data;
+    try {
+      const res = await axios.get(`${API_URL}/api/get-gallery-by-id/${id}`);
 
-    setEditingId(item._id);
-    setExistingImages(item.images || []);
-    setRemovedImages([]);
+      if (!res.data.success) {
+        return Swal.fire("Error", res.data.message, "error");
+      }
 
-    setForm({
-      titleEng: item.titleEng,
-      titleHin: item.titleHin,
-      shortDescEng: item.shortDescEng || "",
-      shortDescHin: item.shortDescHin || "",
-      images: [],
-      displayOrder: item.displayOrder,
-      link: item.link || "",
-      isExternal: item.isExternal,
-      openInNewTab: item.openInNewTab,
-      isActive: item.isActive
-    });
+      const item = res.data.data;
 
-    setPreviewImages([]);
-    setModal(true);
+      setEditingId(item._id);
+      setExistingImages(item.images || []);
+      setRemovedImages([]);
+
+      setForm({
+        titleEng: item.titleEng,
+        titleHin: item.titleHin,
+        shortDescEng: item.shortDescEng || "",
+        shortDescHin: item.shortDescHin || "",
+        images: [],
+        displayOrder: item.displayOrder,
+        link: item.link || "",
+        isExternal: item.isExternal,
+        openInNewTab: item.openInNewTab,
+        isActive: item.isActive
+      });
+
+      setPreviewImages([]);
+      setModal(true);
+
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Failed to fetch", "error");
+    }
   };
 
   /* ================= DELETE ================= */
@@ -179,9 +212,20 @@ const GalleryManagement = () => {
 
     if (!confirm.isConfirmed) return;
 
-    await axios.delete(`${API_URL}/api/delete-gallery/${id}`);
-    Swal.fire("Deleted", "Gallery removed", "success");
-    loadGallery();
+    try {
+      const res = await axios.delete(`${API_URL}/api/delete-gallery/${id}`);
+
+      Swal.fire(
+        res.data.success ? "Deleted" : "Error",
+        res.data.message,
+        res.data.success ? "success" : "error"
+      );
+
+      if (res.data.success) loadGallery();
+
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Delete failed", "error");
+    }
   };
 
   /* ================= IMAGE SLIDER ================= */

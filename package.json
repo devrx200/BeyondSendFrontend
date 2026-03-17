@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "/hrmis",
+  "main": "index.html",
+  "proxy": "http://164.100.150.78",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
