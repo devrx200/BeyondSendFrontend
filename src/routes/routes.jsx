@@ -171,7 +171,7 @@ const AppRoutes = () => {
       <Route path="/department-notice/:slug" element={<MainLayout> <DepDirectorateNoticesListView /></MainLayout>} />
 
       {/* ADMIN  All Routes */}
-      <Route element={<PublicAdminRoute />}>  <Route path="/admin/login" element={<AdminLogin />} /> </Route>
+      <Route element={<PublicAdminRoute />}>  <Route path="/admin/login" element={<MainLayout><AdminLogin /></MainLayout>} /> </Route>
       {/* Protected Admin Routes After Login its Work */}
       <Route path="/admin" element={<AuthMiddleware allowedRoles={["OFFICER", "ADMIN"]} />}>
         <Route element={<AdminLayout />}>
