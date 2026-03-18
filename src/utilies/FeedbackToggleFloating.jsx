@@ -1,9 +1,16 @@
+import { useEffect, useState } from "react";
 import { Button } from "reactstrap";
 import { FaCommentDots } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const FeedbackToggleFloating = () => {
   const navigate = useNavigate();
+  const [hasToken, setHasToken] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("authToken");
+    setHasToken(!!token); // true if exists
+  }, []);
 
   return (
     <div
@@ -22,7 +29,7 @@ const FeedbackToggleFloating = () => {
           borderRadius: "30px",
           padding: "5px 14px",
           fontSize: "14px",
-          fweight: "bold",
+          fontWeight: "bold",
           transition: "all 0.2s ease"
         }}
         onMouseEnter={(e) =>
@@ -33,9 +40,12 @@ const FeedbackToggleFloating = () => {
         }
       >
         <FaCommentDots size={16} />
-        <span className="d-none d-md-inline fw-bold">
-          Feedback
-        </span>
+
+        {!hasToken && (
+          <span className="d-none d-md-inline fw-bold">
+            Feedback
+          </span>
+        )}
       </Button>
     </div>
   );
