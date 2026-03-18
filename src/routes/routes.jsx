@@ -50,8 +50,8 @@ import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import SchemesDetails from "../views/pages/SchemesDetails";
 import PageCreatorManagement from "../views/Admin/PageCreatorMangagement";
 import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
-
-
+import HelpGuidance from "../views/Admin/HelpGuidance";
+import HelpSupport from "../views/pages/HelpSupport";
 
 /* MIDDLEWARE */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
@@ -149,14 +149,14 @@ const AppRoutes = () => {
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
-
+      <Route path="/help-and-support" element={<MainLayout><HelpSupport/></MainLayout>}/>
 
 
       {/* DYNAMIC CMS PAGES From Content Uploader */}
       {pages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={p.path} element={<MainLayout><DynamicPage /></MainLayout>} />))}
 
       {/* Extra Page PAGES CREATED FROM ADMIN */}
-      {staticPages.filter(p => !p.isExternal ).map(p => (<Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} />))}
+      {staticPages.filter(p => !p.isExternal).map(p => (<Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} />))}
 
       {/* Important Pages From Admin STATIC PAGES */}
       <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} />
@@ -202,6 +202,7 @@ const AppRoutes = () => {
           <Route path="department-notices" element={<DepartmentNoticeManagement />} />
           <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
           <Route path="important-page-management" element={<ImportantPageManagement />} />
+          <Route path="help-guidance" element={<HelpGuidance />} />
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />

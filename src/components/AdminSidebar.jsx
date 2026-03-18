@@ -55,20 +55,19 @@ const adminMenu = [
     id: "page-creator-management",
     icon: FaListAlt,
     path: "/admin/page-creator-management",
-    label: { en: "Simple Page Creator", hi: "पृष्ठ निर्माण " }
+    label: { en: "Simple Page Creator", hi: "पृष्ठ निर्माण" }
   },
-
   {
     id: "important-page-management",
     icon: FaListAlt,
     path: "/admin/important-page-management",
-    label: { en: "Add Important Page", hi: " महत्वपूर्ण पृष्ठ जोड़ें " }
+    label: { en: "Add Important Page", hi: "महत्वपूर्ण पृष्ठ जोड़ें" }
   },
   {
-    id: "Content Uploader",
+    id: "content-uploader",
     icon: FaImages,
     path: "/admin/content-uploader",
-    label: { en: "Page Content Uploader ", hi: "सामग्री अपलोडर" }
+    label: { en: "Page Content Uploader", hi: "सामग्री अपलोडर" }
   },
   {
     id: "news",
@@ -81,7 +80,6 @@ const adminMenu = [
         path: "/admin/new-updates",
         label: { en: "New Updates", hi: "नवीन सूचना" }
       },
-
       {
         id: "announcements",
         icon: FaBullhorn,
@@ -92,26 +90,22 @@ const adminMenu = [
         id: "directorate-notices",
         icon: FaBullhorn,
         path: "/admin/directorate-notices",
-        label: { en: " Directorate Notices", hi: " संचालनालय  सूचनाएं " }
+        label: { en: "Directorate Notices", hi: "संचालनालय सूचनाएं" }
       },
       {
         id: "department-notices",
         icon: FaBullhorn,
         path: "/admin/department-notices",
-        label: { en: " Department Notices", hi: "विभाग सूचनाएं " }
+        label: { en: "Department Notices", hi: "विभाग सूचनाएं" }
       }
-
-
     ]
   },
-
   {
     id: "users",
     icon: FaUsers,
     path: "/admin/users-management",
     label: { en: "Users Management", hi: "उपयोगकर्ता प्रबंधन" }
   },
-
   {
     id: "important-links",
     icon: FaLink,
@@ -169,9 +163,12 @@ const adminMenu = [
     path: "/admin/feedbacks",
     label: { en: "Feedbacks", hi: "प्रतिक्रिया" }
   },
-
-
-
+  {
+    id: "help-guidance",
+    icon: FaComment,
+    path: "/admin/help-guidance",
+    label: { en: "Help & Guidance", hi: "मदद सुज्हाव" }
+  },
   {
     id: "gallery",
     icon: FaPhotoVideo,
@@ -202,14 +199,13 @@ const adminMenu = [
   },
   {
     id: "footer-section-manager",
-    icon: FaCog, // or FaListAlt / FaSlidersH
+    icon: FaCog,
     path: "/admin/footer-section-manager",
     label: {
       en: "Footer Manager",
       hi: "फुटर प्रबंधन"
     }
   }
-
 ];
 
 const AdminSidebar = ({ collapsed }) => {
