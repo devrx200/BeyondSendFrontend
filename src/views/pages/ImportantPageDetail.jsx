@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import {
   Container,
   Card,
@@ -17,6 +17,7 @@ import {
   FaCalendarPlus,
   FaChevronLeft,
   FaDownload,
+  FaHome,
   FaPrint
 } from "react-icons/fa";
 import axios from "axios";
@@ -205,7 +206,57 @@ const ImportantPageDetail = () => {
     );
 
   if (!detail)
-    return <div className="text-center py-5">Page Not Found</div>;
+    return <Container className="py-5">
+      <Row className="justify-content-center align-items-center">
+        <Col md={8} lg={6}>
+          <Card
+            className="border-0 shadow-lg text-center"
+            style={{
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #f8fbff, #eef4ff)"
+            }}
+          >
+            <CardBody className="p-5">
+
+              {/* BIG 404 */}
+              <h1
+                className="fw-bold mb-3"
+                style={{
+                  fontSize: "80px",
+                  color: "#0d6efd",
+                  letterSpacing: "2px"
+                }}
+              >
+                404
+              </h1>
+
+              {/* TITLE */}
+              <h4 className="fw-semibold mb-2">
+                Oops! Page Not Found
+              </h4>
+
+              {/* DESCRIPTION */}
+              <p className="text-muted mb-4">
+                The page you are looking for might have been removed,<br />
+                renamed or is temporarily unavailable.
+              </p>
+
+              {/* BUTTON */}
+              <Button
+                color="primary"
+                size="lg"
+                className="rounded-pill px-4"
+                onClick={() => Navigate("/")}
+              >
+                <FaHome className="me-2" />
+                Go to Home
+              </Button>
+
+            </CardBody>
+          </Card>
+        </Col>
+      </Row>
+    </Container>;
 
   return (
     <Container className="py-4">
