@@ -58,7 +58,7 @@ const NoticeTicker = () => {
   };
 
   return (
-    <Container fluid className="px-0 mt-2">
+  <Container fluid className="px-0 bg-white py-2 border-bottom border-dark">
       <div className="d-flex align-items-center gap-3 overflow-hidden">
 
         {/* LEFT BADGE */}

@@ -1,151 +1,153 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import {
-    Container,
-    Row,
-    Col,
-    Button,
-    Card,
-    CardImg,
-    CardBody,
-} from "reactstrap";
+import { Container, Row, Col, Button, Card } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
+
 const AboutSection = () => {
-    const API_URL = import.meta.env.VITE_API_URL;
-    const [profiles, setProfiles] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const { isHindi } = useLanguage();
-    useEffect(() => {
-        const fetchProfiles = async () => {
-            try {
-                setLoading(true);
-                const res = await axios.get(
-                    `${API_URL}/api/get-about-sections`
-                );
-                setProfiles(res.data || []);
-            } catch (err) {
-                console.error("Failed to fetch profiles", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const API_URL = import.meta.env.VITE_API_URL;
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { isHindi } = useLanguage();
 
-        fetchProfiles();
-    }, []);
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_URL}/api/get-about-sections`);
 
-    useEffect(() => {
-        if (profiles.length === 0) return;
+        // ✅ sort (optional: latest first)
+        const sorted = (res.data || []).sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
 
-        const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % profiles.length);
-        }, 4000);
+        setProfiles(sorted);
+      } catch (err) {
+        console.error("Failed to fetch profiles", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        return () => clearInterval(interval);
-    }, [profiles]);
+    fetchProfiles();
+  }, []);
 
-    const currentProfile = profiles[currentIndex] || {};
+  // 👉 About content (first item)
+  const aboutData = profiles[0] || {};
 
+  return (
+    <Container fluid className="my-0">
+      <section >
+        <Container className="py-3 bg-white rounded">
+          <Row className="align-items-start">
 
-    return (
-        <section className="py-3 bg-white">
-            <Container>
-                <Row className="align-items-start">
-                    {/* LEFT CONTENT */}
-                    <Col lg="8" md="12">
-                        <h4 className="mb-4 text-secondary">{isHindi ? "हमारे बारे में" : "About Us"}</h4>
-                        {(isHindi
-                            ? currentProfile.aboutContentHi
-                            : currentProfile.aboutContentEn
-                        )
-                            ?.split("\n")              //  STRING → ARRAY
-                            .filter(line => line.trim() !== "")
-                            .map((text, i) => (
-                                <div
-                                    key={i}
-                                    className={i < 3 ? "border-bottom pb-2 mb-3" : "pb-2"}
-                                >
-                                    <p className="mb-0 text-secondary" style={{ textAlign: "justify" }}>
-                                        {text}
-                                    </p>
-                                </div>
-                            ))}
-                        {/* {(
-  isHindi
-    ? [currentProfile.aboutContentHi]
-    :[currentProfile.aboutContentEn]
-).map((text, i) => (
-  <div
-    key={i}
-    className={i < 3 ? "border-bottom pb-3 mb-3" : "pb-3"}
-  >
-    <p className="mb-0 text-secondary">{text}</p>
-  </div>
-))} */}
+            {/* ================= LEFT CONTENT ================= */}
+            <Col lg="8" md="12">
+              <h4 className="mb-3 text-dark fw-bold">
+                {isHindi ? "हमारे विभाग के बारे में" : "About Department"}
+              </h4>
 
+              {(isHindi
+                ? aboutData.aboutContentHi
+                : aboutData.aboutContentEn
+              )
+                ?.split("\n")
+                .filter(line => line.trim() !== "")
+                .map((text, i) => (
+                  <p
+                    key={i}
+                    className="text-secondary mb-2"
+                    style={{ textAlign: "justify", fontSize: "0.95rem" }}
+                  >
+                    {text}
+                  </p>
+                ))}
 
-                        <Button
-                            tag={Link}
-                            to="/about"
-                            className="rounded-0 px-4 mt-2"
-                            style={{
-                                backgroundColor: "#E65100",
-                                borderColor: "#E65100",
-                                color: "#fff",
-                                fontSize: "0.9rem",
-                            }}
-                        >
-                            {isHindi ? "और अधिक पढ़ें" : "Read More"}
-                        </Button>
-                    </Col>
+              <Button
+                tag={Link}
+                to="/about"
+                className="mt-2 px-4"
+                style={{
+                  backgroundColor: "#f4b400",
+                  border: "1px solid #c49000",
+                  color: "#000",
+                  borderRadius: "20px",
+                  fontSize: "0.85rem",
+                }}
+              >
+                {isHindi ? "और पढ़ें" : "Read More"}
+              </Button>
+            </Col>
 
-                    {/* RIGHT PROFILE CARD */}
-                    <Col lg="4" md="8" className="mt-4 mt-lg-0 mx-auto">
-                        <Card className="border-0 shadow-sm rounded-0">
-                            <div style={{ overflow: "hidden" }}>
-                                <CardImg
-                                    top
-                                    src={
-                                        currentProfile.image
-                                            ? `${API_URL}${currentProfile.image.replace(/\\/g, "/")}`
-                                            : "/placeholder.png"
-                                    }
-                                    alt={currentProfile.imgNameEng || "Profile"}
-                                    className="rounded-0"
-                                    style={{
-                                        width: "250px",
-                                        height: "300px",
-                                        objectFit: "cover",
-                                        maxWidth: "none",
-                                        transition: "opacity 0.5s ease-in-out",
-                                        display: "block",
-                                        margin: "0 auto",
-                                    }}
-                                />
+            {/* ================= RIGHT PROFILE LIST ================= */}
+            <Col lg="4" md="12" className="mt-4 mt-lg-0">
 
-                            </div>
+              {profiles.map((profile) => (
+                <Card
+                  key={profile._id}
+                  className="mb-3 p-3 shadow-sm"
+                  style={{
+                    borderRadius: "10px",
+                    background: "#fafafa",
+                    border: "1px solid #eee",
+                  }}
+                >
+                  <div className="d-flex align-items-center">
 
-                            <CardBody
-                                className="text-center p-2 rounded-0"
-                                style={{ backgroundColor: "#003f6b" }}
-                            >
-                                <h6 className="mb-0 text-white fw-bold">
-                                    {loading
-                                        ? "Loading..."
-                                        :
-                                        isHindi ? currentProfile.imgNameHin : currentProfile.imgNameEng || "—"}
-                                </h6>
-                                <small className="text-white-50">
-                                    {isHindi ? currentProfile.designationHin : currentProfile.designationEng || ""}
-                                </small>
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </Row>
-            </Container>
-        </section>
-    );
+                    {/* IMAGE */}
+                    <img
+                      src={
+                        profile.image
+                          ? `${API_URL}${profile.image}`
+                          : "/placeholder.png"
+                      }
+                      alt={profile.imgNameEng}
+                      style={{
+                        width: "70px",
+                        height: "70px",
+                        borderRadius: "30%",
+                        objectFit: "cover",
+                        marginRight: "15px",
+                        padding:"3px",
+                        border: "2px solid #afccf8",
+                      }}
+                    />
+
+                    {/* TEXT */}
+                    <div>
+                      <h6
+                        className="mb-1 fw-bold text-dark"
+                        style={{ fontSize: "0.9rem" }}
+                      >
+                        {isHindi
+                          ? profile.designationHin
+                          : profile.designationEng}
+                      </h6>
+
+                      <small
+                        className="text-muted d-block"
+                        style={{ fontSize: "0.85rem" }}
+                      >
+                        {isHindi
+                          ? profile.imgNameHin
+                          : profile.imgNameEng}
+                      </small>
+                    </div>
+
+                  </div>
+                </Card>
+              ))}
+
+              {loading && (
+                <p className="text-center text-muted">Loading...</p>
+              )}
+
+            </Col>
+          </Row>
+        </Container>
+      </section>
+    </Container>
+  );
 };
 
 export default AboutSection;

@@ -241,12 +241,12 @@ const ImportantPageDetail = () => {
                 renamed or is temporarily unavailable.
               </p>
 
-              {/* BUTTON */}
               <Button
+                tag={Link}
+                to="/"
                 color="primary"
                 size="lg"
                 className="rounded-pill px-4"
-                onClick={() => Navigate("/")}
               >
                 <FaHome className="me-2" />
                 Go to Home

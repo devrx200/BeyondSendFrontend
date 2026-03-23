@@ -208,7 +208,8 @@ const Footer = () => {
                 <Link to="/disclaimer">Disclaimer</Link> |{" "}
                 <Link to="/accessibility-statement">Accessibility</Link> |{" "}
                 <Link to="/right-information">RTI</Link> |{" "}
-                <Link to="/feedback">Feedback</Link>
+                <Link to="/feedback">Feedback</Link> |{" "}
+                <Link to="/help-and-support">Help And Support</Link>
               </small>
             </Col>
             <Col md={6} className="text-center text-md-end">

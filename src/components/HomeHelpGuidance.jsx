@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/immutability */
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import {
     Container,
