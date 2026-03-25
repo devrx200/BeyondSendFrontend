@@ -126,6 +126,12 @@ const adminMenu = [
     path: "/admin/contact-management",
     label: { en: "Contact Management", hi: "संपर्क प्रबंधन" }
   },
+   {
+    id: "contact-card-management",
+    icon: FaPhone,
+    path: "/admin/contact-card-management",
+    label: { en: "Contact Card Management", hi: "संपर्क कार्ड प्रबंधन" }
+  },
   {
     id: "education-stats",
     icon: FaChartBar,

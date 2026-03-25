@@ -24,7 +24,16 @@ const Contact = () => {
 
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
+const [cards, setCards] = useState([]);
 
+useEffect(() => {
+  fetchCards();
+}, []);
+
+const fetchCards = async () => {
+  const res = await axios.get(`${API}/api/contact-card/get`);
+  setCards(res.data.data);
+};
   /* ================= LOAD CONTACT ================= */
   const loadContact = async () => {
     try {
@@ -482,7 +491,72 @@ const Contact = () => {
         </Col>
 
       </Row>
+<Row>
+  {cards.map((item, i) => (
+    <Col xs={12} lg={6} key={i}>
+      <Card className="h-100 border-0 shadow rounded-4 overflow-hidden">
 
+        {/* top bar */}
+        <div className={`bg-${item.color}`} style={{ height: 5 }} />
+
+        {/* header */}
+        <div
+          className="px-4 pt-4 pb-3"
+          style={{
+            background:
+              item.color === "primary"
+                ? "linear-gradient(135deg,#e8f0fe 0%,#fff 70%)"
+                : "linear-gradient(135deg,#d1fae5 0%,#fff 70%)",
+          }}
+        >
+          <div className="d-flex align-items-center gap-3">
+            <div
+              className={`rounded-3 text-white d-flex align-items-center justify-content-center bg-${item.color}`}
+              style={{ width: 54, height: 54 }}
+            >
+              {item.type === "department" ? <FaBuilding /> : <FaUniversity />}
+            </div>
+
+            <div>
+              <Badge color={item.color}>{item.badge}</Badge>
+              <h5 className="fw-bold mb-0">{item.title}</h5>
+              <small className="text-muted">{item.subtitle}</small>
+            </div>
+          </div>
+        </div>
+
+        {/* body */}
+        <CardBody>
+
+          {/* Address */}
+          <div className="p-3 mb-2 bg-light rounded">
+            <b>Address:</b> {item.address}
+          </div>
+
+          {/* Phone */}
+          {item.phone && (
+            <div className="p-3 mb-2 bg-light rounded">
+              <b>Phone:</b> {item.phone}
+            </div>
+          )}
+
+          {/* Fax */}
+          {item.fax && (
+            <div className="p-3 mb-2 bg-light rounded">
+              <b>Fax:</b> {item.fax}
+            </div>
+          )}
+
+          {/* Email */}
+          <div className="p-3 bg-light rounded">
+            <b>Email:</b> {item.email}
+          </div>
+
+        </CardBody>
+      </Card>
+    </Col>
+  ))}
+</Row>
       {/* CONTACT IMAGE */}
       <Row className="mt-4">
         <Col>
