@@ -35,12 +35,14 @@ const AdminEducationStats = () => {
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // ✅ FIXED STATE
   const [form, setForm] = useState({
     totalGovernmentUniversities: 0,
     totalPrivateUniversities: 0,
     totalCentralUniversities: 0,
     governmentColleges: 0,
     privateColleges: 0,
+    aidedColleges: 0, // ✅ added
     totalStudents: 0,
     totalCourses: 0,
     academicYear: getCurrentAcademicYear(),
@@ -64,28 +66,25 @@ const AdminEducationStats = () => {
     loadList();
   }, []);
 
+  /* ================= INPUT HANDLING ================= */
   const blockInvalidNumberKeys = (e) => {
-    if (
-      e.key === "-" ||
-      e.key === "+" ||
-      e.key === "e" ||
-      e.key === "E" ||
-      e.key === "."
-    ) {
+    if (["-", "+", "e", "E", "."].includes(e.key)) {
       e.preventDefault();
     }
   };
-  const handleNumberInput = (e, key, setForm, form) => {
+
+  const handleNumberInput = (e, key) => {
     const value = e.target.value;
 
     if (value === "") {
       setForm({ ...form, [key]: 0 });
       return;
     }
+
     if (!/^\d+$/.test(value)) return;
+
     setForm({ ...form, [key]: Number(value) });
   };
-
 
   /* ================= RESET ================= */
   const resetForm = () => {
@@ -96,6 +95,7 @@ const AdminEducationStats = () => {
       totalCentralUniversities: 0,
       governmentColleges: 0,
       privateColleges: 0,
+      aidedColleges: 0, // ✅ added
       totalStudents: 0,
       totalCourses: 0,
       academicYear: getCurrentAcademicYear(),
@@ -113,7 +113,6 @@ const AdminEducationStats = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    /* DUPLICATE ACADEMIC YEAR CHECK (FRONTEND) */
     if (
       !editingId &&
       list.some(item => item.academicYear === form.academicYear)
@@ -162,6 +161,7 @@ const AdminEducationStats = () => {
       totalCentralUniversities: item.totalCentralUniversities,
       governmentColleges: item.governmentColleges,
       privateColleges: item.privateColleges,
+      aidedColleges: item.aidedColleges || 0, // ✅ FIXED
       totalStudents: item.totalStudents,
       totalCourses: item.totalCourses,
       academicYear: item.academicYear,
@@ -171,7 +171,7 @@ const AdminEducationStats = () => {
     setModal(true);
   };
 
-  /* ================= DELETE (SOFT) ================= */
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
       title: "Delete Statistics?",
@@ -185,11 +185,13 @@ const AdminEducationStats = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/education-stats/delete/${id}`);
+      const res = await axios.delete(
+        `${API_URL}/api/education-stats/delete/${id}`
+      );
       Swal.fire("Success", res.data.message, "success");
       loadList();
     } catch (err) {
-      Swal.fire("Error", "Failed to deactivate", "error");
+      Swal.fire("Error", "Failed to delete", "error");
     }
   };
 
@@ -205,7 +207,7 @@ const AdminEducationStats = () => {
           </Button>
         </div>
 
-        {/* LIST TABLE */}
+        {/* TABLE */}
         <Table responsive striped hover>
           <thead>
             <tr>
@@ -239,19 +241,10 @@ const AdminEducationStats = () => {
                     </Badge>
                   </td>
                   <td>
-                    <Button
-                      size="sm"
-                      color="warning"
-                      className="me-2"
-                      onClick={() => handleEdit(item)}
-                    >
+                    <Button size="sm" color="warning" className="me-2" onClick={() => handleEdit(item)}>
                       <FaEdit />
                     </Button>
-                    <Button
-                      size="sm"
-                      color="danger"
-                      onClick={() => handleDelete(item._id)}
-                    >
+                    <Button size="sm" color="danger" onClick={() => handleDelete(item._id)}>
                       <FaTrash />
                     </Button>
                   </td>
@@ -261,7 +254,7 @@ const AdminEducationStats = () => {
           </tbody>
         </Table>
 
-        {/* ADD / EDIT MODAL */}
+        {/* MODAL */}
         <Modal isOpen={modal} toggle={toggleModal} size="lg">
           <ModalHeader toggle={toggleModal}>
             {editingId ? "Edit Education Statistics" : "Add Education Statistics"}
@@ -276,6 +269,7 @@ const AdminEducationStats = () => {
                   ["totalCentralUniversities", "Central Universities"],
                   ["governmentColleges", "Government Colleges"],
                   ["privateColleges", "Private Colleges"],
+                  ["aidedColleges", "Aided Colleges"],
                   ["totalStudents", "Total Students"],
                   ["totalCourses", "Total Courses"]
                 ].map(([key, label]) => (
@@ -285,11 +279,9 @@ const AdminEducationStats = () => {
                       <Input
                         type="text"
                         inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={13}
                         value={form[key]}
                         onKeyDown={blockInvalidNumberKeys}
-                        onChange={e => handleNumberInput(e, key, setForm, form)}
+                        onChange={(e) => handleNumberInput(e, key)}
                       />
                     </FormGroup>
                   </Col>
@@ -301,7 +293,7 @@ const AdminEducationStats = () => {
                     <Input
                       value={form.academicYear}
                       disabled={!!editingId}
-                      onChange={e =>
+                      onChange={(e) =>
                         setForm({ ...form, academicYear: e.target.value })
                       }
                     />
@@ -313,7 +305,7 @@ const AdminEducationStats = () => {
                     <Label>Last Updated By</Label>
                     <Input
                       value={form.lastUpdatedBy}
-                      onChange={e =>
+                      onChange={(e) =>
                         setForm({ ...form, lastUpdatedBy: e.target.value })
                       }
                     />
@@ -326,7 +318,7 @@ const AdminEducationStats = () => {
                     <Input
                       type="select"
                       value={form.isActive}
-                      onChange={e =>
+                      onChange={(e) =>
                         setForm({
                           ...form,
                           isActive: e.target.value === "true"

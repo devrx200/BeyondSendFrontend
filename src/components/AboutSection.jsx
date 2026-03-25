@@ -16,9 +16,8 @@ const AboutSection = () => {
         setLoading(true);
         const res = await axios.get(`${API_URL}/api/get-about-sections`);
 
-        // ✅ sort (optional: latest first)
         const sorted = (res.data || []).sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          (a, b) => (a.order || 0) - (b.order || 0)
         );
 
         setProfiles(sorted);
@@ -108,30 +107,30 @@ const AboutSection = () => {
                         borderRadius: "30%",
                         objectFit: "cover",
                         marginRight: "15px",
-                        padding:"3px",
+                        padding: "3px",
                         border: "2px solid #afccf8",
                       }}
                     />
 
                     {/* TEXT */}
                     <div>
-                      <h6
-                        className="mb-1 fw-bold text-dark"
+                      <h6 className="m-0 text-dark fw-bold d-block"
                         style={{ fontSize: "0.9rem" }}
-                      >
-                        {isHindi
-                          ? profile.designationHin
-                          : profile.designationEng}
-                      </h6>
-
-                      <small
-                        className="text-muted d-block"
-                        style={{ fontSize: "0.85rem" }}
                       >
                         {isHindi
                           ? profile.imgNameHin
                           : profile.imgNameEng}
+                      </h6>
+                      <small
+                        className=" text-muted"
+                        style={{ fontSize: "0.7rem" }}
+                      >
+                        {isHindi
+                          ? profile.designationHin
+                          : profile.designationEng}
                       </small>
+
+
                     </div>
 
                   </div>

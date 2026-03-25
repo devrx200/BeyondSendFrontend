@@ -37,10 +37,10 @@ const AboutSectionMangement = () => {
     designationHin: "",
     aboutContentEn: "",
     aboutContentHi: "",
+    order: "",
     image: null
   });
 
-  /* ================= LOAD LIST ================= */
   const loadList = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/get-about-sections`, {
@@ -53,7 +53,10 @@ const AboutSectionMangement = () => {
   };
 
   useEffect(() => {
-    loadList();
+    const timeoutId = setTimeout(() => {
+      loadList();
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const resetForm = () => {
@@ -65,6 +68,7 @@ const AboutSectionMangement = () => {
       designationHin: "",
       aboutContentEn: "",
       aboutContentHi: "",
+      order: "",
       image: null
     });
     setImagePreview(null);
@@ -80,16 +84,21 @@ const AboutSectionMangement = () => {
 
     const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
     const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
-
     const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
     const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-\n\r]+$/;
 
-    if (!value || !value.trim()) {
+    if (!value || !value.toString().trim()) {
       return isHindi ? "यह फ़ील्ड आवश्यक है" : "This field is required";
     }
 
-    const isTextarea = TEXTAREA_FIELDS.includes(name);
+    if (name === "order") {
+      if (!/^\d+$/.test(value.toString().trim())) {
+        return isHindi ? "कृपया एक वैध आदेश संख्या दर्ज करें" : "Please enter a valid order number";
+      }
+      return "";
+    }
 
+    const isTextarea = TEXTAREA_FIELDS.includes(name);
     if (isHindi) {
       const regex = isTextarea ? HINDI_WITH_NUMBERS : HINDI_TEXT_ONLY;
       if (!regex.test(value)) {
@@ -114,17 +123,14 @@ const AboutSectionMangement = () => {
 
     newErrors.imgNameEng = validateField("imgNameEng", form.imgNameEng, false);
     newErrors.imgNameHin = validateField("imgNameHin", form.imgNameHin, true);
-
     newErrors.designationEng = validateField("designationEng", form.designationEng, false);
     newErrors.designationHin = validateField("designationHin", form.designationHin, true);
-
     newErrors.aboutContentEn = validateField("aboutContentEn", form.aboutContentEn, false);
     newErrors.aboutContentHi = validateField("aboutContentHi", form.aboutContentHi, true);
+    newErrors.order = validateField("order", form.order, false);
 
     if (!editingId && !form.image) {
-      newErrors.image = isHindi
-        ? "छवि आवश्यक है"
-        : "Image is required";
+      newErrors.image = isHindi ? "छवि आवश्यक है" : "Image is required";
     }
 
     Object.keys(newErrors).forEach(
@@ -132,21 +138,14 @@ const AboutSectionMangement = () => {
     );
 
     setErrors(newErrors);
-
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e, langType) => {
     const { name, value } = e.target;
-
     setForm(prev => ({ ...prev, [name]: value }));
-
     const error = validateField(name, value, langType === "hi");
-
-    setErrors(prev => ({
-      ...prev,
-      [name]: error,
-    }));
+    setErrors(prev => ({ ...prev, [name]: error }));
   };
 
   const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
@@ -154,70 +153,43 @@ const AboutSectionMangement = () => {
   const REQUIRED_WIDTH = 250;
   const REQUIRED_HEIGHT = 300;
 
-
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setErrors(prev => ({
-        ...prev,
-        image: "Only JPG or PNG images are allowed",
-      }));
+      setErrors(prev => ({ ...prev, image: "Only JPG or PNG images are allowed" }));
       return;
     }
-
     if (file.size > MAX_FILE_SIZE) {
-      setErrors(prev => ({
-        ...prev,
-        image: "Image size must be less than 520 KB",
-      }));
+      setErrors(prev => ({ ...prev, image: "Image size must be less than 520 KB" }));
       return;
     }
 
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
-
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = REQUIRED_WIDTH;
       canvas.height = REQUIRED_HEIGHT;
-
       const ctx = canvas.getContext("2d");
 
-      // 🔥 CENTER CROP LOGIC (PORTRAIT)
       const imgRatio = img.width / img.height;
       const targetRatio = REQUIRED_WIDTH / REQUIRED_HEIGHT;
-
       let sx, sy, sw, sh;
-
       if (imgRatio > targetRatio) {
-        // image too wide → crop sides
         sh = img.height;
         sw = sh * targetRatio;
         sx = (img.width - sw) / 2;
         sy = 0;
       } else {
-        // image too tall → crop top/bottom
         sw = img.width;
         sh = sw / targetRatio;
         sx = 0;
         sy = (img.height - sh) / 2;
       }
 
-      ctx.drawImage(
-        img,
-        sx,
-        sy,
-        sw,
-        sh,
-        0,
-        0,
-        REQUIRED_WIDTH,
-        REQUIRED_HEIGHT
-      );
-
-      // 🎯 CONVERT TO FILE
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, REQUIRED_WIDTH, REQUIRED_HEIGHT);
       canvas.toBlob(
         (blob) => {
           const resizedFile = new File(
@@ -225,7 +197,6 @@ const AboutSectionMangement = () => {
             file.name.replace(/\.\w+$/, "_photo.jpg"),
             { type: "image/jpeg", lastModified: Date.now() }
           );
-
           setForm(prev => ({ ...prev, image: resizedFile }));
           setErrors(prev => ({ ...prev, image: "" }));
           setImagePreview(URL.createObjectURL(blob));
@@ -233,38 +204,29 @@ const AboutSectionMangement = () => {
         "image/jpeg",
         0.9
       );
-
       URL.revokeObjectURL(objectUrl);
     };
 
     img.onerror = () => {
-      setErrors(prev => ({
-        ...prev,
-        image: "Invalid image file",
-      }));
+      setErrors(prev => ({ ...prev, image: "Invalid image file" }));
     };
-
     img.src = objectUrl;
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       Swal.fire(
         isHindi ? "त्रुटि" : "Validation Error",
-        isHindi
-          ? "कृपया सभी आवश्यक फ़ील्ड सही भरें"
-          : "Please fill all required fields correctly",
+        isHindi ? "कृपया सभी आवश्यक फ़ील्ड सही भरें" : "Please fill all required fields correctly",
         "error"
       );
       return;
     }
+
     const newErrors = { ...errors };
     if (!editingId && !form.image) {
-      newErrors.image = isHindi
-        ? "छवि आवश्यक है"
-        : "Image is required";
+      newErrors.image = isHindi ? "छवि आवश्यक है" : "Image is required";
     }
 
     if (form.image) {
@@ -283,10 +245,13 @@ const AboutSectionMangement = () => {
       setErrors(newErrors);
       return;
     }
+
     try {
       const payload = new FormData();
       Object.entries(form).forEach(([key, value]) => {
-        if (value) payload.append(key, value);
+        if (value !== null && value !== undefined && value !== "") {
+          payload.append(key, value);
+        }
       });
 
       let res;
@@ -310,7 +275,6 @@ const AboutSectionMangement = () => {
     }
   };
 
-  /* ================= EDIT ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
     setForm({
@@ -320,13 +284,13 @@ const AboutSectionMangement = () => {
       designationHin: item.designationHin,
       aboutContentEn: item.aboutContentEn,
       aboutContentHi: item.aboutContentHi,
+      order: item.order ?? "",
       image: null
     });
     setImagePreview(item.image ? `${API_URL}${item.image}` : null);
     setModal(true);
   };
 
-  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
       title: "Delete Record?",
@@ -338,7 +302,6 @@ const AboutSectionMangement = () => {
     });
 
     if (!confirm.isConfirmed) return;
-
     try {
       const res = await axios.delete(
         `${API_URL}/api/delete-about-section/${id}`,
@@ -354,8 +317,6 @@ const AboutSectionMangement = () => {
   return (
     <Card className="shadow-sm border-0">
       <CardBody>
-
-        {/* HEADER */}
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4 className="mb-0">
             <FaImage className="me-2" /> About Section
@@ -365,7 +326,6 @@ const AboutSectionMangement = () => {
           </Button>
         </div>
 
-        {/* TABLE */}
         <Table responsive bordered striped hover>
           <thead>
             <tr>
@@ -374,22 +334,21 @@ const AboutSectionMangement = () => {
               <th>Name</th>
               <th>Designation</th>
               <th>About</th>
+              <th>Order</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center text-muted">
-                  No records found
-                </td>
+                <td colSpan="7" className="text-center text-muted">No records found</td>
               </tr>
             ) : (
               list.map((item, i) => (
                 <tr key={item._id}>
                   <td>{i + 1}</td>
                   <td>
-                    <img src={`${API_URL}${item.image}`} width={60} />
+                    <img src={`${API_URL}${item.image}`} width={60} alt="" />
                   </td>
                   <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
                   <td>{isHindi ? item.designationHin : item.designationEng}</td>
@@ -398,12 +357,10 @@ const AboutSectionMangement = () => {
                       ?.split("\n")
                       .filter(line => line.trim() !== "")
                       .map((line, index) => (
-                        <p key={index} className="mb-1">
-                          {line}
-                        </p>
+                        <p key={index} className="mb-1">{line}</p>
                       ))}
                   </td>
-
+                  <td>{item.order}</td>
                   <td>
                     <Button
                       color="warning"
@@ -414,7 +371,6 @@ const AboutSectionMangement = () => {
                     >
                       <FaEdit size={10} />
                     </Button>
-
                     <Button
                       color="danger"
                       size="sm"
@@ -424,7 +380,6 @@ const AboutSectionMangement = () => {
                     >
                       <FaTrash size={10} />
                     </Button>
-
                   </td>
                 </tr>
               ))
@@ -432,7 +387,6 @@ const AboutSectionMangement = () => {
           </tbody>
         </Table>
 
-        {/* MODAL */}
         <Modal isOpen={modal} toggle={toggleModal} size="lg">
           <ModalHeader toggle={toggleModal}>
             {editingId ? "Edit About Section" : "Add About Section"}
@@ -445,40 +399,30 @@ const AboutSectionMangement = () => {
                   <FormGroup>
                     <Label>Name (English)</Label>
                     <Input name="imgNameEng" value={form.imgNameEng} invalid={!!errors.imgNameEng} onChange={(e) => handleChange(e, "en")} />
-                    {errors.imgNameEng && (
-                      <small className="text-danger">{errors.imgNameEng}</small>
-                    )}
+                    {errors.imgNameEng && <small className="text-danger">{errors.imgNameEng}</small>}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Name (Hindi)</Label>
                     <Input name="imgNameHin" value={form.imgNameHin} invalid={!!errors.imgNameHin} onChange={(e) => handleChange(e, "hi")} />
-                    {errors.imgNameHin && (
-                      <small className="text-danger">{errors.imgNameHin}</small>
-                    )}
+                    {errors.imgNameHin && <small className="text-danger">{errors.imgNameHin}</small>}
                   </FormGroup>
                 </Col>
-
                 <Col md={6}>
                   <FormGroup>
                     <Label>Designation (English)</Label>
                     <Input name="designationEng" value={form.designationEng} invalid={!!errors.designationEng} onChange={(e) => handleChange(e, "en")} />
-                    {errors.designationEng && (
-                      <small className="text-danger">{errors.designationEng}</small>
-                    )}
+                    {errors.designationEng && <small className="text-danger">{errors.designationEng}</small>}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
                   <FormGroup>
                     <Label>Designation (Hindi)</Label>
                     <Input name="designationHin" value={form.designationHin} invalid={!!errors.designationHin} onChange={(e) => handleChange(e, "hi")} />
-                    {errors.designationHin && (
-                      <small className="text-danger">{errors.designationHin}</small>
-                    )}
+                    {errors.designationHin && <small className="text-danger">{errors.designationHin}</small>}
                   </FormGroup>
                 </Col>
-
                 <Col md={6}>
                   <FormGroup>
                     <Label>About (English)</Label>
@@ -490,9 +434,7 @@ const AboutSectionMangement = () => {
                       invalid={!!errors.aboutContentEn}
                       onChange={(e) => handleChange(e, "en")}
                     />
-                    {errors.aboutContentEn && (
-                      <small className="text-danger">{errors.aboutContentEn}</small>
-                    )}
+                    {errors.aboutContentEn && <small className="text-danger">{errors.aboutContentEn}</small>}
                   </FormGroup>
                 </Col>
                 <Col md={6}>
@@ -506,19 +448,29 @@ const AboutSectionMangement = () => {
                       invalid={!!errors.aboutContentHi}
                       onChange={(e) => handleChange(e, "hi")}
                     />
-                    {errors.aboutContentHi && (
-                      <small className="text-danger">{errors.aboutContentHi}</small>
-                    )}
+                    {errors.aboutContentHi && <small className="text-danger">{errors.aboutContentHi}</small>}
+                  </FormGroup>
+                </Col>
+                <Col md={4}>
+                  <FormGroup>
+                    <Label>Order</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      name="order"
+                      value={form.order}
+                      invalid={!!errors.order}
+                      onChange={(e) => handleChange(e, "en")}
+                    />
+                    {errors.order && <small className="text-danger">{errors.order}</small>}
                   </FormGroup>
                 </Col>
 
-                <Col md={12}>
+                <Col md={8}>
                   <FormGroup>
                     <Label>Image</Label>
                     <Input type="file" onChange={handleImageChange} accept="image/jpeg,image/png,image/jpg" />
-                    {errors.image && (
-                      <small className="text-danger">{errors.image}</small>
-                    )}
+                    {errors.image && <small className="text-danger">{errors.image}</small>}
                     {imagePreview && (
                       <div className="mt-2">
                         <img
@@ -537,7 +489,6 @@ const AboutSectionMangement = () => {
                         </small>
                       </div>
                     )}
-
                   </FormGroup>
                 </Col>
               </Row>
@@ -554,7 +505,6 @@ const AboutSectionMangement = () => {
             </ModalFooter>
           </Form>
         </Modal>
-
       </CardBody>
     </Card>
   );

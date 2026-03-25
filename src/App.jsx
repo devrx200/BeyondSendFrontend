@@ -7,7 +7,7 @@ import AppRoutes from './routes/routes';
 import './App.css';
 function App() {
   return (
-    <Router basename="/hrmis">
+    <Router basename="/hesite">
       <LanguageProvider>
         <AccessibilityProvider>
           <AppRoutes  />
