@@ -44,6 +44,16 @@ const Header = () => {
     useAccessibility();
 
   const t = (key) => translations[language][key] || key;
+  const [headerData, setHeaderData] = useState(null);
+
+  const fetchHeader = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/get-active-header`);
+      setHeaderData(res.data.data);
+    } catch (err) {
+      console.error("Header fetch error", err);
+    }
+  };
 
 
 
@@ -82,6 +92,7 @@ const Header = () => {
 
   useEffect(() => {
     fetchMenus();
+    fetchHeader();   // 👈 add this
   }, []);
 
 
@@ -111,21 +122,17 @@ const Header = () => {
             <div className="d-flex align-items-center gap-4 small fw-semibold">
               <span className="d-flex align-items-center">
                 <FaPhone className="me-2" />
-                <a
-                  href="tel:+91-771-2221234"
-                  className="text-white text-decoration-none"
-                >
-                  +91-771-2221234
+
+                <a href={`tel:${headerData?.phone}`} className="text-white text-decoration-none">
+                  {headerData?.phone}
                 </a>
               </span>
 
               <span className="d-flex align-items-center">
                 <FaEnvelope className="me-2" />
-                <a
-                  href="mailto:wim.higheredu-cg@gov.in"
-                  className="text-white text-decoration-none"
-                >
-                  wim.higheredu-cg@gov.in
+
+                <a href={`mailto:${headerData?.email}`} className="text-white text-decoration-none">
+                  {headerData?.email}
                 </a>
               </span>
             </div>
@@ -133,7 +140,7 @@ const Header = () => {
             {/* RIGHT CONTROLS */}
             <div className="d-none d-lg-flex align-items-center gap-3">
 
-              {/* FONT SIZE */}
+
               <div className="d-flex gap-1">
                 <Badge color="light" className="p-1 text-dark fw-bold" onClick={decreaseFontSize}>
                   A-
@@ -177,19 +184,51 @@ const Header = () => {
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap">
 
-            <div className="d-flex align-items-center gap-3">
+            {/* <div className="d-flex align-items-center gap-3">
               <img src="/Chhattisgarh.svg" alt="CG Logo" height="70" />
               <div>
                 <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
                 <p className="mb-0">{t("stateName")}</p>
               </div>
+            </div> */}
+            <div className="d-flex align-items-center gap-3">
+              {headerData?.logo && (
+                <img
+                  src={`${API_URL}${headerData.logo}`}
+                  alt="logo"
+                  className="main-logo" height="70"
+                />
+              )}
+
+              <div>
+                <h4 className="mb-0 fw-bold">
+                  {isHindi ? headerData?.titleHin : headerData?.titleEng}
+                </h4>
+                <p className="mb-0">
+                  {isHindi ? headerData?.subtitleHin : headerData?.subtitleEng}
+                </p>
+              </div>
             </div>
 
-            <div className="d-flex gap-3">
+            {/* <div className="d-flex gap-3">
               <img src="/Digital_India_logo.svg" alt="Digital India" height="60" />
               <img src="/Emblem_of_India.svg" alt="India Emblem" height="60" />
-            </div>
+            </div> */}
+            <div className="d-flex gap-3">
+              {headerData?.digitalLogo && (
+                <img
+                  src={`${API_URL}${headerData.digitalLogo}`}
+                  className="right-logo" height="60"
+                />
+              )}
 
+              {headerData?.emblem && (
+                <img
+                  src={`${API_URL}${headerData.emblem}`}
+                  className="right-logo" height="60"
+                />
+              )}
+            </div>
           </div>
         </Container>
       </div>
