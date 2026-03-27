@@ -97,10 +97,6 @@ const Header = () => {
 
   return (
     <>
-      {/* ================= SKIP LINK ================= */}
-      <a href="#main-content" className="skip-link">
-        {t("skipToMain")}
-      </a>
 
       {/* ================= TOP BAR ================= */}
       <div className="top-bar py-1 text-white">

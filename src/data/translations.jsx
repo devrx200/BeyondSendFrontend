@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     // Header
-    skipToMain: 'Skip to Main Content',
+
     screenReader: 'Screen Reader Access',
     sitemap: 'Sitemap',
     accessibility: 'Accessibility',
@@ -92,7 +92,7 @@ export const translations = {
   },
   hi: {
     // Header
-    skipToMain: 'मुख्य सामग्री पर जाएं',
+
     screenReader: 'स्क्रीन रीडर एक्सेस',
     sitemap: 'साइट मानचित्र',
     accessibility: 'अभिगम्यता',
