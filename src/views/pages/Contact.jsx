@@ -24,7 +24,16 @@ const Contact = () => {
 
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cards, setCards] = useState([]);
 
+  useEffect(() => {
+    fetchCards();
+  }, []);
+
+  const fetchCards = async () => {
+    const res = await axios.get(`${API}/api/contact-card/get`);
+    setCards(res.data.data);
+  };
   /* ================= LOAD CONTACT ================= */
   const loadContact = async () => {
     try {
@@ -245,12 +254,204 @@ const Contact = () => {
           </Card>
         </Col>
       </Row>
+      <Row>
 
-      <Row className="mt-5 g-4">
+      </Row>
+     
 
-        {/* ── Department of Higher Education ── */}
-        <Col xs={12} lg={6}>
-          <Card className="h-100 border-0 shadow rounded-4 overflow-hidden">
+        {/* /////////////// */}
+
+        <Row className="mt-4">
+
+  {/* ================= DEPARTMENT ================= */}
+  {cards.filter(c => c.type === "department").length > 0 ? (
+    cards
+      .filter(c => c.type === "department")
+      .map((item, i) => {
+        const isPrimary = item.color === "primary";
+
+        const theme = {
+          bg: isPrimary ? "#e8f0fe" : "#d1fae5",
+          iconBg: isPrimary ? "#e8f0fe" : "#d1fae5",
+          iconColor: isPrimary ? "#1a56db" : "#057a55",
+          textColor: isPrimary ? "#1a56db" : "#057a55",
+          border: isPrimary
+            ? "rgba(13,110,253,0.1)"
+            : "rgba(25,135,84,0.1)",
+          dot1: isPrimary ? "bg-primary" : "bg-success",
+          dot2: isPrimary ? "#4f83e7" : "#0e9f6e",
+          dot3: isPrimary ? "#c7d8fc" : "#bbf7d0"
+        };
+
+        return (
+          <Col xs={12} lg={6} key={i}>
+              <Card className="h-100 border-0 shadow rounded-4 overflow-hidden mt-4 ">
+
+                {/* top bar */}
+                <div className={`bg-${item.color}`} style={{ height: 5 }} />
+
+                {/* header */}
+                <div
+                  className="px-4 pt-4 pb-3"
+                  style={{
+                    background: `linear-gradient(135deg,${theme.bg} 0%,#fff 70%)`,
+                    borderBottom: `1px solid ${theme.border}`,
+                  }}
+                >
+
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className={`d-flex align-items-center justify-content-center rounded-3 bg-${item.color} text-white shadow-sm`}
+                      style={{ width: 54, height: 54, fontSize: 22 }}
+                    >
+                      {item.icon}
+                      <FaBuilding />
+                    </div>
+
+                    <div>
+                      <Badge
+                        color={item.color}
+                        pill
+                        className="mb-1 fw-semibold"
+                        style={{
+                          fontSize: "0.6rem",
+                          letterSpacing: "0.08em",
+                          opacity: 0.85
+                        }}
+                      >
+                        {item.badge}
+                      </Badge>
+
+                      <h5 className="fw-bold mb-0 lh-sm">
+                        {item.title}
+                      </h5>
+                      <small className="text-muted">{item.subtitle}</small>
+                    </div>
+                  </div>
+                </div>
+
+                <CardBody className="px-4 py-3">
+
+                  {/* Address */}
+                  <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
+                    style={{ background: "#f8f9fa" }}>
+                    <div
+                      className="d-flex align-items-center justify-content-center rounded-2"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: theme.iconBg,
+                        color: theme.iconColor
+                      }}
+                    >
+                      <FaMapMarkerAlt />
+                    </div>
+                    <div>
+                      <div className="text-uppercase fw-bold text-secondary mb-1"
+                        style={{ fontSize: "0.6rem" }}>
+                        Office Address
+                      </div>
+                      <div className="small">{item.address}</div>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  {item.phone && (
+                    <a href={`tel:${item.phone}`} className="text-decoration-none d-block mb-2">
+                      <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                        style={{ background: "#f8f9fa" }}>
+                        <div
+                          className="d-flex align-items-center justify-content-center rounded-2"
+                          style={{
+                            width: 36,
+                            height: 36,
+                            background: theme.iconBg,
+                            color: theme.iconColor
+                          }}
+                        >
+                          <FaPhone />
+                        </div>
+                        <div>
+                          <div className="text-uppercase fw-bold text-secondary mb-1"
+                            style={{ fontSize: "0.6rem" }}>
+                            Phone
+                          </div>
+                          <div className="small fw-semibold" style={{ color: theme.textColor }}>
+                            {item.phone}
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  )}
+
+                  {/* Fax */}
+                  {item.fax && (
+                    <div className="d-flex gap-3 align-items-center p-3 rounded-3 mb-2"
+                      style={{ background: "#f8f9fa" }}>
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-2"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          background: theme.iconBg,
+                          color: theme.iconColor
+                        }}
+                      >
+                        <FaFax />
+                      </div>
+                      <div>
+                        <div className="text-uppercase fw-bold text-secondary mb-1"
+                          style={{ fontSize: "0.6rem" }}>
+                          Fax
+                        </div>
+                        <div className="small fw-semibold">{item.fax}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  <a href={`mailto:${item.email}`} className="text-decoration-none d-block">
+                    <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                      style={{ background: "#f8f9fa" }}>
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-2"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          background: theme.iconBg,
+                          color: theme.iconColor
+                        }}
+                      >
+                        <FaEnvelope />
+                      </div>
+                      <div>
+                        <div className="text-uppercase fw-bold text-secondary mb-1"
+                          style={{ fontSize: "0.6rem" }}>
+                          Email
+                        </div>
+                        <div className="small fw-semibold" style={{ color: theme.textColor }}>
+                          {item.email}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+
+                </CardBody>
+
+                {/* bottom dots */}
+                <div className="px-4 pb-3 d-flex gap-1 align-items-center">
+                  <div className={`${theme.dot1} rounded-pill`} style={{ width: 28, height: 4 }} />
+                  <div className="rounded-pill" style={{ width: 14, height: 4, background: theme.dot2 }} />
+                  <div className="rounded-pill" style={{ width: 7, height: 4, background: theme.dot3 }} />
+                </div>
+
+              </Card>
+            </Col>
+        );
+      })
+  ) : (
+    <Col xs={12} lg={6}>
+     <Card className="h-100 border-0 shadow rounded-4 overflow-hidden mt-4">
 
             {/* top colour bar */}
             <div className="bg-primary" style={{ height: 5 }} />
@@ -289,64 +490,222 @@ const Contact = () => {
               </div>
             </div>
 
-            <CardBody className="px-4 py-3">
+            <CardBody className="px-4 py-5 text-center">
 
-              {/* Address */}
-              <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
-                style={{ background: "#f8f9fa" }}>
+  <div className="d-flex flex-column align-items-center justify-content-center">
+
+    {/* Icon */}
+    <div
+      className="d-flex align-items-center justify-content-center rounded-circle mb-3"
+      style={{
+        width: 60,
+        height: 60,
+        background: "#e8f0fe",
+        color: "#1a56db",
+        fontSize: 24
+      }}
+    >
+      <FaBuilding />
+    </div>
+
+    {/* Title */}
+    <h6 className="fw-bold mb-1">No Department Records</h6>
+
+    {/* Subtitle */}
+    <small className="text-muted">
+      No data available for this section right now
+    </small>
+
+  </div>
+
+</CardBody>
+      </Card>
+    </Col>
+  )}
+
+  {/* ================= DIRECTORATE ================= */}
+  {cards.filter(c => c.type === "directorate").length > 0 ? (
+    cards
+      .filter(c => c.type === "directorate")
+      .map((item, i) => {
+        const isPrimary = item.color === "primary";
+
+        const theme = {
+          bg: isPrimary ? "#e8f0fe" : "#d1fae5",
+          iconBg: isPrimary ? "#e8f0fe" : "#d1fae5",
+          iconColor: isPrimary ? "#1a56db" : "#057a55",
+          textColor: isPrimary ? "#1a56db" : "#057a55",
+        };
+
+        return (
+          <Col xs={12} lg={6} key={i}>
+              <Card className="h-100 border-0 shadow rounded-4 overflow-hidden mt-4 ">
+
+                {/* top bar */}
+                <div className={`bg-${item.color}`} style={{ height: 5 }} />
+
+                {/* header */}
                 <div
-                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                  style={{ width: 36, height: 36, background: "#e8f0fe", color: "#1a56db", marginTop: 1 }}
+                  className="px-4 pt-4 pb-3"
+                  style={{
+                    background: `linear-gradient(135deg,${theme.bg} 0%,#fff 70%)`,
+                    borderBottom: `1px solid ${theme.border}`,
+                  }}
                 >
-                  <FaMapMarkerAlt />
-                </div>
-                <div>
-                  <div className="text-uppercase fw-bold text-secondary mb-1"
-                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                    Office Address
-                  </div>
-                  <div className="small text-dark lh-sm">
-                    First Floor, Mahanadi Bhawan, Nava Raipur Atal Nagar, Chhattisgarh – 492002
-                  </div>
-                </div>
-              </div>
 
-              {/* Email */}
-              <a href="mailto:higher-education@cg.gov.in" className="text-decoration-none d-block">
-                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
-                  style={{ background: "#f8f9fa" }}>
-                  <div
-                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                    style={{ width: 36, height: 36, background: "#e8f0fe", color: "#1a56db" }}
-                  >
-                    <FaEnvelope />
-                  </div>
-                  <div>
-                    <div className="text-uppercase fw-bold text-secondary mb-1"
-                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                      Email
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className={`d-flex align-items-center justify-content-center rounded-3 bg-${item.color} text-white shadow-sm`}
+                      style={{ width: 54, height: 54, fontSize: 22 }}
+                    >
+                      {item.icon}
+                      <FaBuilding />
                     </div>
-                    <div className="small fw-semibold" style={{ color: "#1a56db" }}>
-                      higher-education@cg.gov.in
+
+                    <div>
+                      <Badge
+                        color={item.color}
+                        pill
+                        className="mb-1 fw-semibold"
+                        style={{
+                          fontSize: "0.6rem",
+                          letterSpacing: "0.08em",
+                          opacity: 0.85
+                        }}
+                      >
+                        {item.badge}
+                      </Badge>
+
+                      <h5 className="fw-bold mb-0 lh-sm">
+                        {item.title}
+                      </h5>
+                      <small className="text-muted">{item.subtitle}</small>
                     </div>
                   </div>
                 </div>
-              </a>
 
-            </CardBody>
+                <CardBody className="px-4 py-3">
 
-            {/* bottom dots */}
-            <div className="px-4 pb-3 d-flex gap-1 align-items-center">
-              <div className="bg-primary rounded-pill" style={{ width: 28, height: 4 }} />
-              <div className="rounded-pill" style={{ width: 14, height: 4, background: "#4f83e7" }} />
-              <div className="rounded-pill" style={{ width: 7, height: 4, background: "#c7d8fc" }} />
-            </div>
-          </Card>
-        </Col>
+                  {/* Address */}
+                  <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
+                    style={{ background: "#f8f9fa" }}>
+                    <div
+                      className="d-flex align-items-center justify-content-center rounded-2"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: theme.iconBg,
+                        color: theme.iconColor
+                      }}
+                    >
+                      <FaMapMarkerAlt />
+                    </div>
+                    <div>
+                      <div className="text-uppercase fw-bold text-secondary mb-1"
+                        style={{ fontSize: "0.6rem" }}>
+                        Office Address
+                      </div>
+                      <div className="small">{item.address}</div>
+                    </div>
+                  </div>
 
-        {/* ── Directorate of Higher Education ── */}
-        <Col xs={12} lg={6}>
-          <Card className="h-100 border-0 shadow rounded-4 overflow-hidden">
+                  {/* Phone */}
+                  {item.phone && (
+                    <a href={`tel:${item.phone}`} className="text-decoration-none d-block mb-2">
+                      <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                        style={{ background: "#f8f9fa" }}>
+                        <div
+                          className="d-flex align-items-center justify-content-center rounded-2"
+                          style={{
+                            width: 36,
+                            height: 36,
+                            background: theme.iconBg,
+                            color: theme.iconColor
+                          }}
+                        >
+                          <FaPhone />
+                        </div>
+                        <div>
+                          <div className="text-uppercase fw-bold text-secondary mb-1"
+                            style={{ fontSize: "0.6rem" }}>
+                            Phone
+                          </div>
+                          <div className="small fw-semibold" style={{ color: theme.textColor }}>
+                            {item.phone}
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  )}
+
+                  {/* Fax */}
+                  {item.fax && (
+                    <div className="d-flex gap-3 align-items-center p-3 rounded-3 mb-2"
+                      style={{ background: "#f8f9fa" }}>
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-2"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          background: theme.iconBg,
+                          color: theme.iconColor
+                        }}
+                      >
+                        <FaFax />
+                      </div>
+                      <div>
+                        <div className="text-uppercase fw-bold text-secondary mb-1"
+                          style={{ fontSize: "0.6rem" }}>
+                          Fax
+                        </div>
+                        <div className="small fw-semibold">{item.fax}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  <a href={`mailto:${item.email}`} className="text-decoration-none d-block">
+                    <div className="d-flex gap-3 align-items-center p-3 rounded-3"
+                      style={{ background: "#f8f9fa" }}>
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-2"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          background: theme.iconBg,
+                          color: theme.iconColor
+                        }}
+                      >
+                        <FaEnvelope />
+                      </div>
+                      <div>
+                        <div className="text-uppercase fw-bold text-secondary mb-1"
+                          style={{ fontSize: "0.6rem" }}>
+                          Email
+                        </div>
+                        <div className="small fw-semibold" style={{ color: theme.textColor }}>
+                          {item.email}
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+
+                </CardBody>
+
+                {/* bottom dots */}
+                <div className="px-4 pb-3 d-flex gap-1 align-items-center">
+                  <div className={`${theme.dot1} rounded-pill`} style={{ width: 28, height: 4 }} />
+                  <div className="rounded-pill" style={{ width: 14, height: 4, background: theme.dot2 }} />
+                  <div className="rounded-pill" style={{ width: 7, height: 4, background: theme.dot3 }} />
+                </div>
+
+              </Card>
+            </Col>
+        );
+      })
+  ) : (
+    <Col xs={12} lg={6}>
+    <Card className="h-100 border-0 shadow rounded-4 overflow-hidden mt-4">
 
             {/* top colour bar */}
             <div className="bg-success" style={{ height: 5 }} />
@@ -385,105 +744,43 @@ const Contact = () => {
               </div>
             </div>
 
-            <CardBody className="px-4 py-3">
+           <CardBody className="px-4 py-5 text-center">
 
-              {/* Address */}
-              <div className="d-flex gap-3 align-items-start p-3 rounded-3 mb-2"
-                style={{ background: "#f8f9fa" }}>
-                <div
-                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                  style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55", marginTop: 1 }}
-                >
-                  <FaMapMarkerAlt />
-                </div>
-                <div>
-                  <div className="text-uppercase fw-bold text-secondary mb-1"
-                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                    Office Address
-                  </div>
-                  <div className="small text-dark lh-sm">
-                    Block-03, Second / Third Floor, Indravati Bhawan, Nava Raipur Atal Nagar, Chhattisgarh – 492002
-                  </div>
-                </div>
-              </div>
+  <div className="d-flex flex-column align-items-center justify-content-center">
 
-              {/* Phone */}
-              <a href="tel:07712263411" className="text-decoration-none d-block mb-2">
-                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
-                  style={{ background: "#f8f9fa" }}>
-                  <div
-                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                    style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
-                  >
-                    <FaPhone />
-                  </div>
-                  <div>
-                    <div className="text-uppercase fw-bold text-secondary mb-1"
-                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                      Phone
-                    </div>
-                    <div className="small fw-semibold" style={{ color: "#057a55" }}>
-                      0771-2263411
-                    </div>
-                  </div>
-                </div>
-              </a>
+    {/* Icon */}
+    <div
+      className="d-flex align-items-center justify-content-center rounded-circle mb-3"
+      style={{
+        width: 60,
+        height: 60,
+        background: "#e8f0fe",
+        color: "#0e9f6e",
+        fontSize: 24
+      }}
+    >
+      <FaBuilding />
+    </div>
 
-              {/* Fax */}
-              <div className="d-flex gap-3 align-items-center p-3 rounded-3 mb-2"
-                style={{ background: "#f8f9fa" }}>
-                <div
-                  className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                  style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
-                >
-                  <FaFax />
-                </div>
-                <div>
-                  <div className="text-uppercase fw-bold text-secondary mb-1"
-                    style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                    Fax
-                  </div>
-                  <div className="small text-dark fw-semibold">0771-2263412</div>
-                </div>
-              </div>
+    {/* Title */}
+    <h6 className="fw-bold mb-1">No Directorate Records</h6>
 
-              {/* Email */}
-              <a href="mailto:che-higheredu.cg@gov.in" className="text-decoration-none d-block">
-                <div className="d-flex gap-3 align-items-center p-3 rounded-3"
-                  style={{ background: "#f8f9fa" }}>
-                  <div
-                    className="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
-                    style={{ width: 36, height: 36, background: "#d1fae5", color: "#057a55" }}
-                  >
-                    <FaEnvelope />
-                  </div>
-                  <div>
-                    <div className="text-uppercase fw-bold text-secondary mb-1"
-                      style={{ fontSize: "0.6rem", letterSpacing: "0.1em" }}>
-                      Email
-                    </div>
-                    <div className="small fw-semibold" style={{ color: "#057a55" }}>
-                      che-higheredu.cg@gov.in
-                    </div>
-                  </div>
-                </div>
-              </a>
+    {/* Subtitle */}
+    <small className="text-muted">
+      No data available for this section right now
+    </small>
 
-            </CardBody>
+  </div>
 
-            {/* bottom dots */}
-            <div className="px-4 pb-3 d-flex gap-1 align-items-center">
-              <div className="bg-success rounded-pill" style={{ width: 28, height: 4 }} />
-              <div className="rounded-pill" style={{ width: 14, height: 4, background: "#0e9f6e" }} />
-              <div className="rounded-pill" style={{ width: 7, height: 4, background: "#bbf7d0" }} />
-            </div>
+</CardBody>
+      </Card>
+    </Col>
+  )}
 
-          </Card>
-        </Col>
-
-      </Row>
-
+</Row>
+      
       {/* CONTACT IMAGE */}
+      <br/>
       <Row className="mt-4">
         <Col>
           <img

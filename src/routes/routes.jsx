@@ -64,7 +64,8 @@ import CollegeManagement from "../views/Admin/CollegeManagement";
 import FooterSection from "../views/Admin/footerSectionManager";
 import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagement";
 import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement"
-
+import HeaderManagement from "../views/Admin/HeaderManagement";
+import ContactCardCMS from "../views/Admin/contactCardForm";
 
 
 /* MAIN LAYOUT */
@@ -196,6 +197,9 @@ const AppRoutes = () => {
           <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
           <Route path="important-page-management" element={<ImportantPageManagement />} />
           <Route path="help-guidance" element={<HelpGuidance />} />
+          <Route path="header-management" element={<HeaderManagement />} />
+          <Route path="contact-card-management" element={<ContactCardCMS />} />
+
         </Route>
       </Route>
       <Route path="*" element={<MainLayout><Home /></MainLayout>} />

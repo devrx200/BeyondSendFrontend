@@ -29,11 +29,13 @@ import {
   FaLink, FaDownload, FaSchool,
   FaComment,
   FaUsers,
-  FaCog
+  FaCog,
+  FaHeadset
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
 import { jwtDecode } from "jwt-decode";
+import { FaH } from "react-icons/fa6";
 const API_URL = import.meta.env.VITE_API_URL;
 
 
@@ -56,6 +58,12 @@ const adminMenu = [
     icon: FaListAlt,
     path: "/admin/page-creator-management",
     label: { en: "Simple Page Creator", hi: "पृष्ठ निर्माण" }
+  },
+  {
+    id: "header-management",
+    icon: FaHeadset,
+    path: "/admin/header-management",
+    label: { en: "Header Management", hi: "हेडर प्रबंधन" }
   },
   {
     id: "important-page-management",
@@ -117,6 +125,12 @@ const adminMenu = [
     icon: FaPhone,
     path: "/admin/contact-management",
     label: { en: "Contact Management", hi: "संपर्क प्रबंधन" }
+  },
+   {
+    id: "contact-card-management",
+    icon: FaPhone,
+    path: "/admin/contact-card-management",
+    label: { en: "Contact Card Management", hi: "संपर्क कार्ड प्रबंधन" }
   },
   {
     id: "education-stats",
