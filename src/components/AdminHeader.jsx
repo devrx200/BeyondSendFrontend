@@ -17,7 +17,8 @@ import {
   FaBars,
   FaSignOutAlt,
   FaClock,
-  FaLanguage
+  FaLanguage,
+  FaBookOpen
 } from "react-icons/fa";
 import { FaDashcube } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
@@ -150,6 +151,11 @@ const AdminHeader = ({ toggleSidebar }) => {
           <Button color="danger" size="sm" className=" border border-white" onClick={logout}>
             <FaSignOutAlt className="me-1" />
           </Button>
+
+          <Button color="primary"  size="sm" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
+            <FaBookOpen className="me-1" />
+          </Button>
+
         </div>
       </Navbar>
       {/* ================= PROFILE MODAL (VIEW ONLY) ================= */}

@@ -66,7 +66,7 @@ import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagemen
 import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement"
 import HeaderManagement from "../views/Admin/HeaderManagement";
 import ContactCardCMS from "../views/Admin/contactCardForm";
-
+import HelpTutorials from "../views/Admin/HelpTutorials";
 
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
@@ -199,6 +199,8 @@ const AppRoutes = () => {
           <Route path="help-guidance" element={<HelpGuidance />} />
           <Route path="header-management" element={<HeaderManagement />} />
           <Route path="contact-card-management" element={<ContactCardCMS />} />
+          <Route path="tutorials" element={<HelpTutorials />} />
+
 
         </Route>
       </Route>
