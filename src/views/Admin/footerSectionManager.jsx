@@ -437,7 +437,7 @@ const FooterSection = () => {
     };
 
     return (
-        <Container fluid className="footer-admin-page">
+        <Container  className="footer-admin-page">
             <h3 className="page-title">Footer Section Manager</h3>
 
             <Card className="admin-card">
@@ -582,7 +582,7 @@ const FooterSection = () => {
                         <Col md="4">
                             <FormGroup>
                                 <Label>
-                                    <FaUser /> Organizer Name (English)
+                                    <FaUser /> Organizer Name (Web Info Manager) (English)
                                 </Label>
                                 <Input
                                     name="organizerNameEn"
@@ -610,7 +610,7 @@ const FooterSection = () => {
                         <Col md="4">
                             <FormGroup>
                                 <Label>
-                                    <FaUser /> Organizer Name (Hindi)
+                                    <FaUser /> Organizer Name (Web Info Manager) (Hindi)
                                 </Label>
                                 <Input
                                     name="organizerNameHi"
@@ -638,7 +638,7 @@ const FooterSection = () => {
                         <Col md="4">
                             <FormGroup>
                                 <Label>
-                                    <FaUser /> Organizer Logo (upload)
+                                    <FaUser /> Organizer NIC Logo (upload)
                                 </Label>
 
                                 <Input

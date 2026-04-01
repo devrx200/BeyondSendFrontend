@@ -92,7 +92,7 @@ const Header = () => {
 
   useEffect(() => {
     fetchMenus();
-    fetchHeader();   // 👈 add this
+    fetchHeader();
   }, []);
 
 
@@ -181,50 +181,69 @@ const Header = () => {
           <div className="d-flex justify-content-between align-items-center flex-wrap">
 
             {/* <div className="d-flex align-items-center gap-3">
-              <img src="/Chhattisgarh.svg" alt="CG Logo" height="70" />
-              <div>
-                <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
-                <p className="mb-0">{t("stateName")}</p>
-              </div>
-            </div> */}
+        <img src="/Chhattisgarh.svg" alt="CG Logo" height="70" />
+        <div>
+          <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
+          <p className="mb-0">{t("stateName")}</p>
+        </div>
+      </div> */}
+
             <div className="d-flex align-items-center gap-3">
-              {headerData?.logo && (
-                <img
-                  src={`${API_URL}${headerData.logo}`}
-                  alt="logo"
-                  className="main-logo" height="70"
-                />
-              )}
+              <img
+                src={
+                  headerData?.logo
+                    ? `${API_URL}${headerData.logo}`
+                    : "/Chhattisgarh.svg"   // fallback
+                }
+                alt="logo"
+                className="main-logo"
+                height="70"
+                onError={(e) => (e.target.src = "/Chhattisgarh.svg")}
+              />
 
               <div>
                 <h4 className="mb-0 fw-bold">
-                  {isHindi ? headerData?.titleHin : headerData?.titleEng}
+                  {isHindi
+                    ? (headerData?.titleHin || "उच्च शिक्षा विभाग")
+                    : (headerData?.titleEng || "Department of Higher Education")}
                 </h4>
                 <p className="mb-0">
-                  {isHindi ? headerData?.subtitleHin : headerData?.subtitleEng}
+                  {isHindi
+                    ? (headerData?.subtitleHin || "छत्तीसगढ़")
+                    : (headerData?.subtitleEng || "Chhattisgarh")}
                 </p>
               </div>
             </div>
 
             {/* <div className="d-flex gap-3">
-              <img src="/Digital_India_logo.svg" alt="Digital India" height="60" />
-              <img src="/Emblem_of_India.svg" alt="India Emblem" height="60" />
-            </div> */}
-            <div className="d-flex gap-3">
-              {headerData?.digitalLogo && (
-                <img
-                  src={`${API_URL}${headerData.digitalLogo}`}
-                  className="right-logo" height="60"
-                />
-              )}
+        <img src="/Digital_India_logo.svg" alt="Digital India" height="60" />
+        <img src="/Emblem_of_India.svg" alt="India Emblem" height="60" />
+      </div> */}
 
-              {headerData?.emblem && (
-                <img
-                  src={`${API_URL}${headerData.emblem}`}
-                  className="right-logo" height="60"
-                />
-              )}
+            <div className="d-flex gap-3">
+              <img
+                src={
+                  headerData?.digitalLogo
+                    ? `${API_URL}${headerData.digitalLogo}`
+                    : "/Digital_India_logo.svg"
+                }
+                className="right-logo"
+                height="60"
+                onError={(e) => (e.target.src = "/Digital_India_logo.svg")}
+              />
+
+              <img
+                src={
+                  headerData?.emblem
+                    ? `${API_URL}${headerData.emblem}`
+                    : "/Emblem_of_India.svg"
+                }
+                className="right-logo"
+                height="60"
+                onError={(e) => (e.target.src = "/Emblem_of_India.svg")}
+              />
             </div>
+
           </div>
         </Container>
       </div>
