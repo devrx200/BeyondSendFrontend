@@ -192,13 +192,19 @@ const Footer = () => {
             <Col md={12} className="text-center">
               <small>
                 {isHindi
-                  ? "वेब सूचना प्रबंधक: श्री आनंद चरपे"
-                  : "Web Information Manager: Mr. Anand Charpe"}
+                  ? `वेब सूचना प्रबंधक: ${contactInfo.organizerNameHi || ""}`
+                  : `Web Information Manager: ${contactInfo.organizerNameEn || ""}`
+                }
               </small>
               <br />
               <strong>Managed By National Informatics Centre</strong>
               <br />
-              <img src="/public/nic-logo.jpg" height="50" className='mb-2' alt="National Informatics Centre" />
+            <img
+  src={`${API_URL}${contactInfo.organizerLogo}`}
+  height="50"
+  className="mb-2"
+  alt="Organizer Logo"
+/>
             </Col>
             <hr />
             <Col md={6} className="text-center text-md-start">
