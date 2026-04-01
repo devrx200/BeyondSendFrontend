@@ -17,7 +17,8 @@ import {
     FaMapMarkerAlt,
     FaTrash,
     FaPlus,
-    FaLink, FaEdit, FaSave, FaTimes
+    FaLink, FaEdit, FaSave, FaTimes,
+    FaUser
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -42,6 +43,9 @@ const FooterSection = () => {
             addressEn: "",
             phone: "",
             email: "",
+            organizerNameEn: "",
+            organizerNameHi: "",
+            organizerLogo: null,
         },
         quickLinks: [],
         importantLinks: [],
@@ -99,7 +103,7 @@ const FooterSection = () => {
             Swal.fire("Deleted", "Link removed successfully", "success");
         } catch (err) {
             Swal.fire("Error", "Delete failed", "error");
-            fetchFooter(); 
+            fetchFooter();
         }
     };
 
@@ -204,6 +208,10 @@ const FooterSection = () => {
 
         if (!contactInfo.email?.trim())
             errors.email = "Email is required";
+        if (!contactInfo.organizerNameEn?.trim())
+            errors.organizerNameEn = "organizer Name is required";
+        if (!contactInfo.organizerNameHi?.trim())
+            errors.organizerNameHi = "organizer Name is required";
 
         /* ===== LANGUAGE VALIDATION ===== */
         if (
@@ -273,16 +281,32 @@ const FooterSection = () => {
                 didOpen: () => Swal.showLoading(),
             });
 
-            const payload = {
-                contactInfo: footer.contactInfo,
-                quickLinks: footer.quickLinks,
-                importantLinks: footer.importantLinks,
-                socialLinks: footer.socialLinks,
-            };
+            // const payload = {
+            //     contactInfo: footer.contactInfo,
+            //     quickLinks: footer.quickLinks,
+            //     importantLinks: footer.importantLinks,
+            //     socialLinks: footer.socialLinks,
 
+            // };
+            const formData = new FormData();
+
+            // Append normal data (convert to string)
+            formData.append("contactInfo", JSON.stringify(footer.contactInfo));
+            formData.append("quickLinks", JSON.stringify(footer.quickLinks));
+            formData.append("importantLinks", JSON.stringify(footer.importantLinks));
+            formData.append("socialLinks", JSON.stringify(footer.socialLinks));
+
+            if (footer.contactInfo.organizerLogo instanceof File) {
+                formData.append("organizerLogo", footer.contactInfo.organizerLogo);
+            }
             const res = await axios.post(
                 `${API}/api/save-footer`,
-                payload
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
             );
 
             Swal.fire("Success", "Footer saved successfully", "success");
@@ -555,11 +579,120 @@ const FooterSection = () => {
                                 )}
                             </FormGroup>
                         </Col>
+                        <Col md="4">
+                            <FormGroup>
+                                <Label>
+                                    <FaUser /> Organizer Name (English)
+                                </Label>
+                                <Input
+                                    name="organizerNameEn"
+                                    value={footer.contactInfo.organizerNameEn}
+                                    onChange={e => {
+                                        const value = e.target.value;
+                                        setFooter({
+                                            ...footer,
+                                            contactInfo: { ...footer.contactInfo, organizerNameEn: value },
+                                        });
+                                        setErrors(prev => ({
+                                            ...prev,
+                                            organizerNameEn: !value.trim()
+                                                ? "organizer Name is required"
+                                                : "",
+                                        }));
+                                    }}
+                                    invalid={!!errors.organizerNameEn}
+                                />
+                                {errors.organizerNameEn && (
+                                    <FormFeedback>{errors.organizerNameEn}</FormFeedback>
+                                )}
+                            </FormGroup>
+                        </Col>
+                        <Col md="4">
+                            <FormGroup>
+                                <Label>
+                                    <FaUser /> Organizer Name (Hindi)
+                                </Label>
+                                <Input
+                                    name="organizerNameHi"
+                                    value={footer.contactInfo.organizerNameHi}
+                                    onChange={e => {
+                                        const value = e.target.value;
+                                        setFooter({
+                                            ...footer,
+                                            contactInfo: { ...footer.contactInfo, organizerNameHi: value },
+                                        });
+                                        setErrors(prev => ({
+                                            ...prev,
+                                            organizerNameHi: !value.trim()
+                                                ? "organizer Name is required"
+                                                : "",
+                                        }));
+                                    }}
+                                    invalid={!!errors.organizerNameHi}
+                                />
+                                {errors.organizerNameHi && (
+                                    <FormFeedback>{errors.organizerNameHi}</FormFeedback>
+                                )}
+                            </FormGroup>
+                        </Col>
+                        <Col md="4">
+                            <FormGroup>
+                                <Label>
+                                    <FaUser /> Organizer Logo (upload)
+                                </Label>
 
+                                <Input
+                                    name="organizerLogo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+
+                                        setFooter({
+                                            ...footer,
+                                            contactInfo: {
+                                                ...footer.contactInfo,
+                                                organizerLogo: file,
+                                            },
+                                        });
+
+                                        setErrors((prev) => ({
+                                            ...prev,
+                                            organizerLogo: !file
+                                                ? "Organizer Logo is required"
+                                                : "",
+                                        }));
+                                    }}
+                                    invalid={!!errors.organizerLogo}
+                                    
+                                />
+
+                                {errors.organizerLogo && (
+                                    <FormFeedback>{errors.organizerLogo}</FormFeedback>
+                                )}
+                                    {footer?.contactInfo?.organizerLogo && (
+      <div style={{ marginTop: "10px" }}>
+        <img
+          src={
+            footer.contactInfo.organizerLogo instanceof File
+              ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
+              : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
+          }
+          alt="Preview"
+          height="60"
+          style={{
+            border: "1px solid #ddd",
+            padding: "4px",
+            borderRadius: "6px",
+          }}/>
+          </div>
+    )}
+                            </FormGroup>
+                        </Col>
+                        
                     </Row>
                 </CardBody>
             </Card>
-
             {/* ================= LINKS MANAGER ================= */}
             <Card className="admin-card">
                 <CardBody>
@@ -706,20 +839,20 @@ const FooterSection = () => {
                                                 />
                                             </td> */}
                                             <td className="text-center">
-                                                <FaEdit 
+                                                <FaEdit
                                                     className="edit-icon me-2" style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "23px",
-                                                    lineHeight: "1",
-                                                    color: "#198754", 
-                                                }}
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        marginRight: "6px",
+                                                        cursor: "pointer",
+                                                        fontSize: "23px",
+                                                        lineHeight: "1",
+                                                        color: "#198754",
+                                                    }}
                                                     onClick={() => handleEditLink("quick", link, index)}
                                                 />
-                                                <FaTrash  style={{
+                                                <FaTrash style={{
                                                     background: "transparent",
                                                     border: "none",
                                                     padding: "4px",
@@ -727,7 +860,7 @@ const FooterSection = () => {
                                                     cursor: "pointer",
                                                     fontSize: "23px",
                                                     lineHeight: "1",
-                                                    color: "#af2e1d", 
+                                                    color: "#af2e1d",
                                                 }} onClick={() => deleteAnyLink("quick", link, index)} />
 
                                             </td>
@@ -780,27 +913,27 @@ const FooterSection = () => {
                                                 <td className="text-center">
                                                     <FaEdit
                                                         className="edit-icon me-2" style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "23px",
-                                                    lineHeight: "1",
-                                                    color: "#198754", 
-                                                }}
+                                                            background: "transparent",
+                                                            border: "none",
+                                                            padding: "4px",
+                                                            marginRight: "6px",
+                                                            cursor: "pointer",
+                                                            fontSize: "23px",
+                                                            lineHeight: "1",
+                                                            color: "#198754",
+                                                        }}
                                                         onClick={() => handleEditLink("important", link, index)}
                                                     />
                                                     <FaTrash style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "23px",
-                                                    lineHeight: "1",
-                                                    color: "#a71c17", 
-                                                }} onClick={() => deleteAnyLink("important", link, index)} />
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        marginRight: "6px",
+                                                        cursor: "pointer",
+                                                        fontSize: "23px",
+                                                        lineHeight: "1",
+                                                        color: "#a71c17",
+                                                    }} onClick={() => deleteAnyLink("important", link, index)} />
                                                 </td>
 
                                             </tr>
@@ -897,7 +1030,7 @@ const FooterSection = () => {
                                                     cursor: "pointer",
                                                     fontSize: "16px",
                                                     lineHeight: "1",
-                                                    color: "#198754", 
+                                                    color: "#198754",
                                                 }}
                                             >
                                                 <FaEdit />
@@ -915,7 +1048,7 @@ const FooterSection = () => {
                                                     cursor: "pointer",
                                                     fontSize: "16px",
                                                     lineHeight: "1",
-                                                    color: "#ad2937", 
+                                                    color: "#ad2937",
                                                 }}
                                             >
                                                 <FaTrash />
