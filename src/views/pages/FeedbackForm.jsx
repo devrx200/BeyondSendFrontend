@@ -140,7 +140,7 @@ const FeedbackForm = () => {
             lg={6}
             className="d-none d-lg-flex flex-column justify-content-between align-items-center text-center"
             style={{
-              backgroundImage: "url('/public/feedback.png')",
+              backgroundImage: "url('/hesite/feedback.png')",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center top",
               backgroundSize: "contain",

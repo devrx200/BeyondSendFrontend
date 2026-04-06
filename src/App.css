@@ -112,6 +112,14 @@ body {
   overflow-x: hidden;
 }
 
+body {
+  background-image: url('/page-bg.svg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: 100vh;
+}
+
 #root {
   min-height: 100vh;
 }

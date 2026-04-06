@@ -75,12 +75,32 @@ const AdminHeader = ({ toggleSidebar }) => {
       text: "Are you sure you want to logout?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, Logout"
+      confirmButtonText: "Yes, Logout",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      reverseButtons: true,
+      focusCancel: true
     });
-
     if (!result.isConfirmed) return;
-
+    try {
+      const token = sessionStorage.getItem("authToken");
+      //  Axios API Call
+      await axios.post(`${API_URL}/api/logout-user`, { token });
+    } catch (error) {
+      console.error("Logout API error:", error?.response?.data || error.message);
+    }
+    //  Always clear session
     sessionStorage.clear();
+    //  Success Alert
+    await Swal.fire({
+      icon: "success",
+      title: "Logged Out",
+      text: "You Have Been Successfully Logged Out",
+      timer: 1500,
+      showConfirmButton: false
+    });
+    //  Redirect
     navigate("/admin/login", { replace: true });
   };
 
@@ -126,6 +146,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
           <Button
             size="sm"
+            title="Translater"
             color={isHindi ? "warning" : "primary"}
             onClick={toggleLanguage}
           >
@@ -143,16 +164,17 @@ const AdminHeader = ({ toggleSidebar }) => {
             width="45"
             height="45"
             alt="Profile"
+            title="Profile-Image"
             className="rounded border border-2 border-white"
             style={{ cursor: "pointer" }}
             onClick={() => setProfileModal(true)}
           />
 
-          <Button color="danger" size="sm" className=" border border-white" onClick={logout}>
+          <Button color="danger" size="sm" title="Logout" className=" border border-white" onClick={logout}>
             <FaSignOutAlt className="me-1" />
           </Button>
 
-          <Button color="primary"  size="sm" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
+          <Button color="primary" size="sm" title="Tutorials" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
             <FaBookOpen className="me-1" />
           </Button>
 

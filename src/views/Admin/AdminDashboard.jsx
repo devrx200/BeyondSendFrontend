@@ -89,7 +89,7 @@ const AdminDashboard = () => {
 
   return (
     <Container className="mt-4">
-      <Card className="shadow-lg border-0">
+      <Card className="shadow-lg border-0 m-0">
         <CardBody>
 
           {/* ================= HEADER ================= */}

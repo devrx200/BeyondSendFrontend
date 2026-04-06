@@ -1,28 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { Badge, Container } from "reactstrap";
 import {
-  Navbar,
-  NavbarToggler,
-  Collapse,
-  Nav,
-  NavItem,
-  NavLink,
-  UncontrolledDropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
-  Container,
-  Button,
-  Badge,
-} from "reactstrap";
-import {
-  FaPhone,
-  FaEnvelope,
-  FaLanguage,
-  FaUniversalAccess,
-  FaSitemap,
-  FaEllipsisH,
+  FaPhone, FaEnvelope, FaLanguage, FaUniversalAccess,
+  FaSitemap, FaChevronDown, FaChevronRight, FaBars, FaTimes,
 } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -33,338 +15,336 @@ import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+/* ── Minimal scoped CSS ── */
+const styles = `
+  .top-bar { background-color: #1a3a6b; }
+  .top-link { color:#fff; text-decoration:none; font-size:.82rem; display:inline-flex; align-items:center; }
+  .top-link:hover { text-decoration:underline; }
+  .ctrl-badge { cursor:pointer; user-select:none; padding:3px 7px !important; }
+
+  .site-navbar { border-bottom:3px solid #1a3a6b; position:sticky; top:0; z-index:1030; }
+  .nav-link-btn { background:none; border:none; padding:8px 10px; font-size:.88rem; font-weight:600; color:#1a3a6b; cursor:pointer; display:inline-flex; align-items:center; gap:3px; border-radius:4px; white-space:nowrap; }
+  .nav-link-btn:hover, .nav-link-plain:hover { background:#eef2fa; }
+  .nav-link-plain { padding:8px 10px; font-size:.88rem; font-weight:600; color:#1a3a6b; text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-radius:4px; white-space:nowrap; }
+
+  .dd-wrap { position:relative; }
+  .dd-menu { position:absolute; top:100%; left:0; min-width:210px; background:#fff; border:1px solid #dce3f0; border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.12); z-index:2000; padding:4px 0; animation:fadeSlide .15s ease; }
+  .dd-menu.sub-right { top:0; left:100%; }
+  .dd-item { display:flex; width:100%; padding:8px 16px; font-size:.85rem; color:#1a3a6b; background:none; border:none; cursor:pointer; text-align:left; gap:6px; }
+  .dd-item:hover { background:#eef2fa; }
+  @keyframes fadeSlide { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  .mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1040; }
+  .mob-overlay.open { display:block; }
+  .mob-drawer { position:fixed; top:0; left:-100%; width:min(300px,85vw); height:100%; background:#fff; z-index:1050; overflow-y:auto; transition:left .25s ease; display:flex; flex-direction:column; }
+  .mob-drawer.open { left:0; }
+  .mob-drawer-hdr { background:#1a3a6b; color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; font-weight:700; flex-shrink:0; }
+  .mob-close-btn { background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer; }
+  .mob-item { border-bottom:1px solid #eaeef7; }
+  .mob-btn { background:none; border:none; width:100%; text-align:left; padding:12px 16px; font-size:.9rem; font-weight:600; color:#1a3a6b; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .mob-btn:hover { background:#eef2fa; }
+  .mob-sub { background:#f7f9ff; border-top:1px solid #dce3f0; }
+  .mob-sub .mob-btn { padding-left:28px; font-size:.86rem; font-weight:500; }
+  .mob-sub .mob-sub .mob-btn { padding-left:44px; }
+  .chevron { transition:transform .2s; display:inline-flex; font-size:.72rem; }
+  .chevron.open { transform:rotate(180deg); }
+
+  @media (max-width:991.98px) {
+    .desk-nav { display:none !important; }
+    .ham-btn { display:inline-flex !important; }
+    .main-logo { height:48px !important; }
+    .right-logo { height:40px !important; }
+  }
+  @media (min-width:992px) { .ham-btn { display:none !important; } }
+  @media (max-width:575.98px) {
+    .main-logo { height:38px !important; }
+    .right-logo { height:32px !important; }
+    .logo-bar h4 { font-size:.88rem; }
+  }
+`;
+
+/* ── Desktop recursive dropdown ── */
+const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const label = isHindi ? menu.titleHi : menu.titleEng;
+  const hasChildren = menu.submenu?.length > 0;
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  if (!hasChildren) {
+    return (
+      <button className="dd-item"
+        onClick={() => menu.isExternal
+          ? openExternalLink(menu.path, menu.openInNewTab)
+          : handleMenuClick({ menu, navigate })}>
+        {label}
+      </button>
+    );
+  }
+
+  return (
+    <div ref={ref} className="dd-wrap"
+      onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button
+        className={depth === 0 ? "nav-link-btn" : "dd-item d-flex justify-content-between w-100"}
+        onClick={() => setOpen(v => !v)} aria-expanded={open}>
+        {label}
+        {depth === 0
+          ? <FaChevronDown style={{ fontSize: ".65rem" }} className="ms-1" />
+          : <FaChevronRight style={{ fontSize: ".65rem" }} />}
+      </button>
+      {open && (
+        <div className={`dd-menu${depth > 0 ? " sub-right" : ""}`}>
+          {menu.submenu.map(sub => (
+            <DesktopDropdown key={sub._id} menu={sub} isHindi={isHindi}
+              navigate={navigate} openExternalLink={openExternalLink} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Mobile recursive menu item ── */
+const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) => {
+  const [open, setOpen] = useState(false);
+  const hasChildren = menu.submenu?.length > 0;
+  const label = isHindi ? menu.titleHi : menu.titleEng;
+
+  const handleClick = () => {
+    if (hasChildren) setOpen(v => !v);
+    else if (menu.isExternal) { onClose(); openExternalLink(menu.path, menu.openInNewTab); }
+    else { onClose(); navigate(menu.path); }
+  };
+
+  return (
+    <div className="mob-item">
+      <button className="mob-btn" onClick={handleClick} aria-expanded={hasChildren ? open : undefined}>
+        <span>{label}</span>
+        {hasChildren && <span className={`chevron${open ? " open" : ""}`}><FaChevronDown /></span>}
+      </button>
+      {hasChildren && open && (
+        <div className="mob-sub">
+          {menu.submenu.map(sub => (
+            <MobileMenuItem key={sub._id} menu={sub} isHindi={isHindi}
+              navigate={navigate} openExternalLink={openExternalLink} onClose={onClose} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Main Header ── */
 const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [headerData, setHeaderData] = useState(null);
 
   const navigate = useNavigate();
   const { language, toggleLanguage, isHindi } = useLanguage();
-  const { increaseFontSize, decreaseFontSize, resetFontSize } =
-    useAccessibility();
-
+  const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibility();
   const t = (key) => translations[language][key] || key;
-  const [headerData, setHeaderData] = useState(null);
 
   const fetchHeader = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/get-active-header`);
       setHeaderData(res.data.data);
-    } catch (err) {
-      console.error("Header fetch error", err);
-    }
+    } catch (err) { console.error("Header fetch error", err); }
   };
-
-
 
   const openExternalLink = (url, newTab = true) => {
     Swal.fire({
       title: "External Website",
       html: `<b>You are about to leave this website and visit an external site.</b>`,
-      icon: "info",
-      showCancelButton: true,
-      confirmButtonText: "Continue",
-      cancelButtonText: "Cancel",
+      icon: "info", showCancelButton: true,
+      confirmButtonText: "Continue", cancelButtonText: "Cancel",
       confirmButtonColor: "#0d6efd",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        if (newTab) {
-          window.open(url, "_blank", "noopener,noreferrer");
-        } else {
-          window.location.href = url;
-        }
-      }
+    }).then(result => {
+      if (result.isConfirmed)
+        newTab ? window.open(url, "_blank", "noopener,noreferrer") : (window.location.href = url);
     });
   };
 
-  /* ================= FETCH MENU ================= */
   const fetchMenus = async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/api/menu-list`);
       setMenuItems(res?.data?.data || []);
-    } catch (err) {
-      console.error("Menu fetch error", err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error("Menu fetch error", err); }
+    finally { setLoading(false); }
   };
 
+  useEffect(() => { fetchMenus(); fetchHeader(); }, []);
+
   useEffect(() => {
-    fetchMenus();
-    fetchHeader();
+    const onResize = () => { if (window.innerWidth >= 992) setMobileOpen(false); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
-
-
-
-
-  // Menus 
 
   const visibleMenus = menuItems.slice(0, 8);
   const extraMenus = menuItems.slice(8);
-
 
   if (loading) return null;
 
   return (
     <>
+      <style>{styles}</style>
 
-      {/* ================= TOP BAR ================= */}
+      {/* ── TOP BAR ── */}
       <div className="top-bar py-1 text-white">
         <Container>
-          <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-1">
 
-            {/* LEFT CONTACT */}
-            <div className="d-flex align-items-center gap-4 small fw-semibold">
-              <span className="d-flex align-items-center">
-                <FaPhone className="me-2" />
-
-                <a href={`tel:${headerData?.phone}`} className="text-white text-decoration-none">
-                  {headerData?.phone}
-                </a>
-              </span>
-
-              <span className="d-flex align-items-center">
-                <FaEnvelope className="me-2" />
-
-                <a href={`mailto:${headerData?.email}`} className="text-white text-decoration-none">
-                  {headerData?.email}
-                </a>
-              </span>
+            {/* Contact – one row on all devices */}
+            <div className="d-flex align-items-center gap-3 small fw-semibold">
+              <a href={`tel:${headerData?.phone}`} className="top-link">
+                <FaPhone className="me-1 flex-shrink-0" />{headerData?.phone}
+              </a>
+              <a href={`mailto:${headerData?.email}`} className="top-link">
+                <FaEnvelope className="me-1 flex-shrink-0" />{headerData?.email}
+              </a>
             </div>
 
-            {/* RIGHT CONTROLS */}
+            {/* Controls – desktop only, NOT shown on mobile at all */}
             <div className="d-none d-lg-flex align-items-center gap-3">
-
-
               <div className="d-flex gap-1">
-                <Badge color="light" className="p-1 text-dark fw-bold" onClick={decreaseFontSize}>
-                  A-
-                </Badge>
-                <Badge color="light" className="p-1 text-dark fw-bold" onClick={resetFontSize}>
-                  A
-                </Badge>
-                <Badge color="light" className="p-1 text-dark fw-bold" onClick={increaseFontSize}>
-                  A+
-                </Badge>
+                <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={decreaseFontSize}>A-</Badge>
+                <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={resetFontSize}>A</Badge>
+                <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={increaseFontSize}>A+</Badge>
               </div>
-
-              {/* LANGUAGE */}
-              <Badge
-                color="light"
-                className="p-1 text-dark fw-bold d-flex align-items-center gap-1"
-                onClick={toggleLanguage}
-              >
-                <FaLanguage />
-                {isHindi ? "English" : "हिंदी"}
+              <Badge color="light" className="ctrl-badge text-dark fw-bold d-flex align-items-center gap-1"
+                onClick={toggleLanguage}>
+                <FaLanguage />{isHindi ? "English" : "हिंदी"}
               </Badge>
-
-              {/* ACCESSIBILITY */}
-              <Link to="/accessibility-statement" className="top-link text-white">
-                <FaUniversalAccess className="me-1" />
-                {t("accessibility")}
+              <Link to="/accessibility-statement" className="top-link">
+                <FaUniversalAccess className="me-1" />{t("accessibility")}
               </Link>
-
-              {/* SITEMAP */}
-              <Link to="/sitemap" className="top-link text-white">
-                <FaSitemap className="me-1" />
-                {t("sitemap")}
+              <Link to="/sitemap" className="top-link">
+                <FaSitemap className="me-1" />{t("sitemap")}
               </Link>
             </div>
+
           </div>
         </Container>
       </div>
 
-      {/* ================= LOGO BAR ================= */}
+      {/* ── LOGO BAR ── */}
       <div className="logo-bar py-2 border-bottom bg-light">
         <Container>
-          <div className="d-flex justify-content-between align-items-center flex-wrap">
-
-            {/* <div className="d-flex align-items-center gap-3">
-        <img src="/Chhattisgarh.svg" alt="CG Logo" height="70" />
-        <div>
-          <h4 className="mb-0 fw-bold">{t("deptName")}</h4>
-          <p className="mb-0">{t("stateName")}</p>
-        </div>
-      </div> */}
-
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div className="d-flex align-items-center gap-3">
-              <img
-                src={
-                  headerData?.logo
-                    ? `${API_URL}${headerData.logo}`
-                    : "/Chhattisgarh.svg"   // fallback
-                }
-                alt="logo"
-                className="main-logo"
-                height="70"
-                onError={(e) => (e.target.src = "/Chhattisgarh.svg")}
-              />
-
+              <img src={headerData?.logo ? `${API_URL}${headerData.logo}` : "/Chhattisgarh.svg"}
+                alt="logo" className="main-logo" height="70"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+                onError={e => (e.target.src = "/Chhattisgarh.svg")} />
               <div>
                 <h4 className="mb-0 fw-bold">
-                  {isHindi
-                    ? (headerData?.titleHin || "उच्च शिक्षा विभाग")
-                    : (headerData?.titleEng || "Department of Higher Education")}
+                  {isHindi ? (headerData?.titleHin || "उच्च शिक्षा विभाग") : (headerData?.titleEng || "Department of Higher Education")}
                 </h4>
-                <p className="mb-0">
-                  {isHindi
-                    ? (headerData?.subtitleHin || "छत्तीसगढ़")
-                    : (headerData?.subtitleEng || "Chhattisgarh")}
+                <p className="mb-0 text-muted small">
+                  {isHindi ? (headerData?.subtitleHin || "छत्तीसगढ़") : (headerData?.subtitleEng || "Chhattisgarh")}
                 </p>
               </div>
             </div>
 
-            {/* <div className="d-flex gap-3">
-        <img src="/Digital_India_logo.svg" alt="Digital India" height="60" />
-        <img src="/Emblem_of_India.svg" alt="India Emblem" height="60" />
-      </div> */}
-
-            <div className="d-flex gap-3">
-              <img
-                src={
-                  headerData?.digitalLogo
-                    ? `${API_URL}${headerData.digitalLogo}`
-                    : "/Digital_India_logo.svg"
-                }
-                className="right-logo"
-                height="60"
-                onError={(e) => (e.target.src = "/Digital_India_logo.svg")}
-              />
-
-              <img
-                src={
-                  headerData?.emblem
-                    ? `${API_URL}${headerData.emblem}`
-                    : "/Emblem_of_India.svg"
-                }
-                className="right-logo"
-                height="60"
-                onError={(e) => (e.target.src = "/Emblem_of_India.svg")}
-              />
+            <div className="d-flex align-items-center gap-2">
+              <img src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : "/Digital_India_logo.svg"}
+                className="right-logo" height="60" alt="Digital India"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+                onError={e => (e.target.src = "/Digital_India_logo.svg")} />
+              <img src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : "/Emblem_of_India.svg"}
+                className="right-logo" height="60" alt="Emblem"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+                onError={e => (e.target.src = "/Emblem_of_India.svg")} />
             </div>
 
           </div>
         </Container>
       </div>
 
-      {/* ================= NAVBAR ================= */}
-      <Navbar expand="lg" light className="shadow-sm bg-white sticky-top py-1">
-        <Container>
-          <NavbarToggler onClick={() => setIsOpen(!isOpen)} className="border-0" />
+      {/* ── STICKY NAVBAR ── */}
+      <nav className="site-navbar bg-white shadow-sm py-1">
+        <Container className="d-flex align-items-center">
 
-          <Collapse isOpen={isOpen} navbar>
-            <Nav className="me-auto" navbar>
+          {/* Hamburger – mobile only */}
+          <button className="ham-btn btn btn-outline-primary btn-sm me-2 py-1 px-2"
+            onClick={() => setMobileOpen(true)} aria-label="Open menu">
+            <FaBars />
+          </button>
 
-              {/* HOME */}
-              <NavItem>
-                <NavLink tag={Link} to="/" className="fw-semibold">
-                  <FaHouse className="me-1" />
-                  {t("home")}
-                </NavLink>
-              </NavItem>
+          {/* Desktop nav */}
+          <div className="desk-nav d-flex align-items-center flex-wrap">
+            <Link to="/" className="nav-link-plain">
+              <FaHouse className="me-1" />{t("home")}
+            </Link>
 
-              {/* DYNAMIC MENUS */}
-              {visibleMenus.map((menu) =>
-                menu.submenu?.length ? (
-                  <UncontrolledDropdown nav inNavbar key={menu._id}>
-                    <DropdownToggle nav caret className="fw-semibold">
-                      {isHindi ? menu.titleHi : menu.titleEng}
-                    </DropdownToggle>
+            {visibleMenus.map(menu => {
+              if (menu.submenu?.length)
+                return <DesktopDropdown key={menu._id} menu={menu} isHindi={isHindi}
+                  navigate={navigate} openExternalLink={openExternalLink} />;
+              if (menu.isExternal)
+                return (
+                  <button key={menu._id} className="nav-link-btn"
+                    onClick={() => openExternalLink(menu.path, menu.openInNewTab)}>
+                    {isHindi ? menu.titleHi : menu.titleEng}
+                  </button>
+                );
+              return (
+                <Link key={menu._id} to={menu.path} className="nav-link-plain">
+                  {isHindi ? menu.titleHi : menu.titleEng}
+                </Link>
+              );
+            })}
 
-                    <DropdownMenu>
-                      {menu.submenu.map((sub) =>
-                        sub.submenu?.length ? (
-                          <UncontrolledDropdown key={sub._id} direction="end">
-                            <DropdownToggle
-                              tag="div"
-                              className="dropdown-item"
-                              style={{ cursor: "pointer" }}
-                            >
-                              {isHindi ? sub.titleHi : sub.titleEng}
-                              <span className="float-end">›</span>
-                            </DropdownToggle>
+            {extraMenus.length > 0 && (
+              <DesktopDropdown
+                menu={{ _id: "__extra__", titleHi: "अन्य लिंक", titleEng: "Other Links", submenu: extraMenus }}
+                isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} />
+            )}
+          </div>
 
-                            <DropdownMenu>
-                              {sub.submenu.map((child) => (
-                                <DropdownItem
-                                  key={child._id}
-                                  onClick={() =>
-                                    handleMenuClick({ menu: child, navigate })
-                                  }
-                                >
-                                  {isHindi ? child.titleHi : child.titleEng}
-                                </DropdownItem>
-                              ))}
-                            </DropdownMenu>
-                          </UncontrolledDropdown>
-                        ) : (
-                          <DropdownItem
-                            key={sub._id}
-                            onClick={() => handleMenuClick({ menu: sub, navigate })}
-                          >
-                            {isHindi ? sub.titleHi : sub.titleEng}
-                          </DropdownItem>
-                        )
-                      )}
-                    </DropdownMenu>
-                  </UncontrolledDropdown>
-                ) : menu.isExternal ? (
-                  <NavItem key={menu._id}>
-                    <NavLink
-                      href="#"
-                      className="fw-semibold"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openExternalLink(menu.path, menu.openInNewTab);
-                      }}
-                    >
-                      {isHindi ? menu.titleHi : menu.titleEng}
-                    </NavLink>
-                  </NavItem>
-                ) : (
-                  <NavItem key={menu._id}>
-                    <NavLink tag={Link} to={menu.path} className="fw-semibold">
-                      {isHindi ? menu.titleHi : menu.titleEng}
-                    </NavLink>
-                  </NavItem>
-                )
-              )}
-              {/* <Extra></Extra> */}
-
-              {extraMenus.length > 0 && (
-                <UncontrolledDropdown nav inNavbar>
-                  <DropdownToggle nav caret className="fw-semibold">
-                    <b className="text-primary"> {isHindi ? "अन्य लिंक" : "Other Links"}<FaEllipsisH /></b>
-                  </DropdownToggle>
-
-                  <DropdownMenu>
-
-                    {extraMenus.map((menu) =>
-                      menu.isExternal ? (
-                        <DropdownItem
-                          key={menu._id}
-                          onClick={() => openExternalLink(menu.path, menu.openInNewTab)}
-                        >
-                          {isHindi ? menu.titleHi : menu.titleEng}
-                        </DropdownItem>
-                      ) : (
-                        <DropdownItem
-                          key={menu._id}
-                          onClick={() => navigate(menu.path)}
-                        >
-                          {isHindi ? menu.titleHi : menu.titleEng}
-                        </DropdownItem>
-                      )
-                    )}
-
-                  </DropdownMenu>
-                </UncontrolledDropdown>
-              )}
-            </Nav>
-          </Collapse>
         </Container>
-      </Navbar>
+      </nav>
+
+      {/* ── MOBILE OVERLAY ── */}
+      <div className={`mob-overlay${mobileOpen ? " open" : ""}`} onClick={() => setMobileOpen(false)} />
+
+      {/* ── MOBILE DRAWER – menu items ONLY, no font/language/accessibility controls ── */}
+      <div className={`mob-drawer${mobileOpen ? " open" : ""}`}>
+
+        <div className="mob-drawer-hdr">
+          <span>Menu</span>
+          <button className="mob-close-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu">
+            <FaTimes />
+          </button>
+        </div>
+
+        {/* Home */}
+        <div className="mob-item">
+          <button className="mob-btn" onClick={() => { setMobileOpen(false); navigate("/"); }}>
+            <span><FaHouse className="me-2" />{t("home")}</span>
+          </button>
+        </div>
+
+        {/* Dynamic menus with nested accordion */}
+        {menuItems.map(menu => (
+          <MobileMenuItem key={menu._id} menu={menu} isHindi={isHindi}
+            navigate={navigate} openExternalLink={openExternalLink}
+            onClose={() => setMobileOpen(false)} />
+        ))}
+
+      </div>
     </>
   );
 };
