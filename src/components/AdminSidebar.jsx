@@ -30,7 +30,14 @@ import {
   FaComment,
   FaUsers,
   FaCog,
-  FaHeadset
+  FaHeadset,
+  FaHandsHelping,
+  FaIdCard,
+  FaPhoneAlt,
+  FaAddressBook,
+  FaUpload,
+  FaFolderOpen,
+  FaFileAlt
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -74,8 +81,27 @@ const adminMenu = [
   {
     id: "content-uploader",
     icon: FaImages,
-    path: "/admin/content-uploader",
-    label: { en: "Page Content Uploader", hi: "सामग्री अपलोडर" }
+    label: { en: "Content Uploader", hi: "सामग्री अपलोडर" },
+    submenu: [
+      {
+        id: "content-uploader-main",
+        icon: FaFileAlt,
+        path: "/admin/content-uploader",
+        label: { en: "Page Content", hi: "पेज सामग्री" }
+      },
+      {
+        id: "file-manager",
+        icon: FaFolderOpen,
+        path: "/admin/file-manager",
+        label: { en: "File Manager", hi: "फ़ाइल प्रबंधक" }
+      },
+      {
+        id: "file-uploader",
+        icon: FaUpload,
+        path: "/admin/file-uploader",
+        label: { en: "File Uploader", hi: "फ़ाइल अपलोडर" }
+      }
+    ]
   },
   {
     id: "news",
@@ -121,16 +147,23 @@ const adminMenu = [
     label: { en: "Important Links", hi: "महत्वपूर्ण लिंक्स" }
   },
   {
-    id: "contact",
-    icon: FaPhone,
-    path: "/admin/contact-management",
-    label: { en: "Contact Management", hi: "संपर्क प्रबंधन" }
-  },
-   {
-    id: "contact-card-management",
-    icon: FaPhone,
-    path: "/admin/contact-card-management",
-    label: { en: "Contact Card Management", hi: "संपर्क कार्ड प्रबंधन" }
+    id: "contact-management",
+    icon: FaAddressBook,
+    label: { en: "Contact Page", hi: "संपर्क प्रबंधन" },
+    submenu: [
+      {
+        id: "contact-page-form",
+        icon: FaPhoneAlt,
+        path: "/admin/contact-management",
+        label: { en: "Contact Info", hi: "संपर्क " }
+      },
+      {
+        id: "contact-card-management",
+        icon: FaIdCard,
+        path: "/admin/contact-card-management",
+        label: { en: "Contact Card", hi: "संपर्क कार्ड" }
+      }
+    ]
   },
   {
     id: "education-stats",
@@ -179,7 +212,7 @@ const adminMenu = [
   },
   {
     id: "help-guidance",
-    icon: FaComment,
+    icon: FaHandsHelping,
     path: "/admin/help-guidance",
     label: { en: "Help & Guidance", hi: "मदद सुज्हाव" }
   },
@@ -294,7 +327,7 @@ const AdminSidebar = ({ collapsed }) => {
           className="rounded mb-2 border border-2 border-white"
           width={55}
           height={50}
-          
+
           alt="Profile Pic"
         />
 
