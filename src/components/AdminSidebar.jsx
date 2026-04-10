@@ -87,7 +87,7 @@ const adminMenu = [
         id: "content-uploader-main",
         icon: FaFileAlt,
         path: "/admin/content-uploader",
-        label: { en: "Page Content", hi: "पेज सामग्री" }
+        label: { en: "Add Page Content", hi: "पेज सामग्री" }
       },
       {
         id: "file-manager",
