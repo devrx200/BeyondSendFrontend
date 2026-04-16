@@ -4,13 +4,15 @@ import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import LanguageToggleFloating from "./utilies/LanguageToggleFloating";
 import FeedbackToggleFloating from "./utilies/FeedbackToggleFloating";
 import AppRoutes from './routes/routes';
+import GlobalLinkHandler from './utilies/GlobalLinkHandler';
 import './App.css';
 function App() {
   return (
     <Router basename="/hesite">
       <LanguageProvider>
         <AccessibilityProvider>
-          <AppRoutes  />
+          <AppRoutes />
+          <GlobalLinkHandler />
           <LanguageToggleFloating />
           <FeedbackToggleFloating />
         </AccessibilityProvider>

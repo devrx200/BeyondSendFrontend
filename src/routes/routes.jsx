@@ -67,7 +67,7 @@ import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagem
 import HeaderManagement from "../views/Admin/HeaderManagement";
 import ContactCardCMS from "../views/Admin/contactCardForm";
 import HelpTutorials from "../views/Admin/HelpTutorials";
-
+import SessionManager from "../views/Admin/SessionManager"
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
   <div
@@ -200,6 +200,8 @@ const AppRoutes = () => {
           <Route path="header-management" element={<HeaderManagement />} />
           <Route path="contact-card-management" element={<ContactCardCMS />} />
           <Route path="tutorials" element={<HelpTutorials />} />
+          <Route path="session-manager" element={<SessionManager />} />
+
 
 
         </Route>

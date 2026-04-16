@@ -1,9 +1,9 @@
 {
-  "name": "he-edu-site",
+  "name": "Department-of-Higher-Education",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "/hrmis",
+  "homepage": "/hesite",
   "main": "index.html",
   "proxy": "http://164.100.150.78",
   "scripts": {

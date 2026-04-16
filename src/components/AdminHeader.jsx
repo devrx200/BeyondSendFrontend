@@ -18,7 +18,8 @@ import {
   FaSignOutAlt,
   FaClock,
   FaLanguage,
-  FaBookOpen
+  FaBookOpen,
+  FaUserShield
 } from "react-icons/fa";
 import { FaDashcube } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
@@ -170,12 +171,26 @@ const AdminHeader = ({ toggleSidebar }) => {
             onClick={() => setProfileModal(true)}
           />
 
+          <Button
+            color="primary"
+            size="sm"
+            title="Session Manager"
+            className="border border-white"
+            onClick={() => navigate("/admin/session-manager")}
+          >
+            <FaUserShield className="me-1" />
+            Sessions
+          </Button>
+
+
           <Button color="danger" size="sm" title="Logout" className=" border border-white" onClick={logout}>
             <FaSignOutAlt className="me-1" />
+            Logout
           </Button>
 
           <Button color="primary" size="sm" title="Tutorials" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
             <FaBookOpen className="me-1" />
+            Help?
           </Button>
 
         </div>
