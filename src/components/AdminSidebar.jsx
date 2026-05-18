@@ -37,7 +37,8 @@ import {
   FaAddressBook,
   FaUpload,
   FaFolderOpen,
-  FaFileAlt
+  FaFileAlt,
+  FaHistory
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -252,7 +253,17 @@ const adminMenu = [
       en: "Footer Manager",
       hi: "फुटर प्रबंधन"
     }
+  },
+  {
+    id: "activity-log-management",
+    icon: FaHistory, // or FaListAlt, FaClipboardList
+    path: "/admin/activity-logs",
+    label: {
+      en: "Activity Logs",
+      hi: "गतिविधि लॉग"
+    }
   }
+
 ];
 
 const AdminSidebar = ({ collapsed }) => {

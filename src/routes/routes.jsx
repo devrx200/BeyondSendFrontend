@@ -68,6 +68,7 @@ import HeaderManagement from "../views/Admin/HeaderManagement";
 import ContactCardCMS from "../views/Admin/contactCardForm";
 import HelpTutorials from "../views/Admin/HelpTutorials";
 import SessionManager from "../views/Admin/SessionManager"
+import ActivityLogManagement from "../views/Admin/ActivityLogManagement"
 /* MAIN LAYOUT */
 const MainLayout = ({ children }) => (
   <div
@@ -201,6 +202,7 @@ const AppRoutes = () => {
           <Route path="contact-card-management" element={<ContactCardCMS />} />
           <Route path="tutorials" element={<HelpTutorials />} />
           <Route path="session-manager" element={<SessionManager />} />
+          <Route path="activity-logs" element={<ActivityLogManagement />} />
 
 
 
