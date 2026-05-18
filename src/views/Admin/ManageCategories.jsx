@@ -9,7 +9,7 @@ import Swal from "sweetalert2";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const ManageCategories = () => {
 
   /* ---------- CREATE ---------- */
@@ -59,7 +59,11 @@ const ManageCategories = () => {
       setBtnLoading(true);
       const res = await axios.post(`${API_URL}/api/create-category`, {
         categoryNameEn,
-        categoryNameHi
+        categoryNameHi, 
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
 
       Swal.fire("Success", res.data.message, "success");
@@ -97,6 +101,11 @@ const ManageCategories = () => {
           categoryNameEn: editEn,
           categoryNameHi: editHi,
           isActive: editStatus
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 

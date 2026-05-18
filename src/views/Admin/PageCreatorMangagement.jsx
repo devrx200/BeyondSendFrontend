@@ -40,7 +40,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 /* ================= INITIAL FORM STATE ================= */
 const initialFormData = {
   titleEng: "",
@@ -110,7 +110,7 @@ const PageCreatorManagement = () => {
       if (filterMenuId?.trim()) params.append("menuId", filterMenuId.trim());
 
       const response = await axios.get(
-        `${API_URL}/api/get-all-content?${params.toString()}`
+        `${API_URL}/api/get-all-content?${params.toString()}`,{ headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data?.success) {
@@ -146,7 +146,12 @@ const PageCreatorManagement = () => {
 
   const loadMenus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/menu-list`);
+      const response = await axios.get(`${API_URL}/api/menu-list`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.data?.success !== false) {
         setMenuList(response.data?.data || []);
@@ -444,7 +449,13 @@ const PageCreatorManagement = () => {
 
         const response = await axios.put(
           `${API_URL}/api/update-single-document/${editingId}/${docId}`,
-          fd
+          fd,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         // Update local state with the updated document
@@ -466,7 +477,13 @@ const PageCreatorManagement = () => {
         // Add new document via API
         const response = await axios.post(
           `${API_URL}/api/add-document-to-content/${editingId}`,
-          fd
+          fd,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         // Add the new document to local state
@@ -545,7 +562,13 @@ const PageCreatorManagement = () => {
       }
 
       const response = await axios.delete(
-        `${API_URL}/api/delete-document/${editingId}/${docId}`
+        `${API_URL}/api/delete-document/${editingId}/${docId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       // Update local state by removing the deleted document
@@ -610,7 +633,12 @@ const PageCreatorManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/api/delete-content/${id}`);
+      const response = await axios.delete(`${API_URL}/api/delete-content/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const successMessage =
         response.data?.message || "Page deleted successfully";
@@ -661,10 +689,16 @@ const PageCreatorManagement = () => {
 
       const multipart = hasNewFiles();
       const payload = multipart ? buildFormData() : buildJsonPayload();
-
+      const config = {
+        ...getAxiosConfig(multipart),
+        headers: {
+          ...getAxiosConfig(multipart)?.headers,
+          Authorization: `Bearer ${token}`,
+        },
+      };
       const response = editingId
-        ? await axios.put(apiUrl, payload, getAxiosConfig(multipart))
-        : await axios.post(apiUrl, payload, getAxiosConfig(multipart));
+        ? await axios.put(apiUrl, payload, config)
+        : await axios.post(apiUrl, payload, config);
 
       await Swal.fire({
         icon: "success",

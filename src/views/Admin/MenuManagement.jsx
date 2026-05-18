@@ -18,7 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const MenuManagement = () => {
   /* ================= STATE ================= */
   // const [menus, setMenus] = useState([]);
@@ -47,7 +47,12 @@ const MenuManagement = () => {
   const loadMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/api/menu-list`);
+      const res = await axios.get(`${API}/api/menu-list`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setMenuItems(res.data.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);
@@ -65,7 +70,7 @@ const MenuManagement = () => {
     const token = sessionStorage.getItem("authToken");
     
 
-    await axios.post(`${API}/api/menu/reorder`,
+    await axios.post(`${API}/api/menu/reorder`, 
       {
         menus: updatedMenus, // <-- full ordered tree
       },
@@ -156,24 +161,46 @@ const MenuManagement = () => {
 
   /* ================= CREATE ================= */
   const createMenu = async () => {
-    await axios.post(`${API}/api/menu`, form);
+    await axios.post(`${API}/api/menu`, form, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
   };
 
   /* ================= UPDATE ================= */
   const updateMenu = async () => {
     if (editing.type === "MENU") {
-      await axios.put(`${API}/api/menu/${editing.menuId}`, form);
+      await axios.put(`${API}/api/menu/${editing.menuId}`, form ,{
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
     }
     if (editing.type === "SUBMENU") {
       await axios.put(
         `${API}/api/menu/${editing.menuId}/submenu/${editing.submenuId}`,
-        form
+        form,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
     }
     if (editing.type === "CHILD") {
       await axios.put(
         `${API}/api/menu/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
-        form
+        form,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
     }
   };
@@ -183,16 +210,32 @@ const MenuManagement = () => {
     if (!window.confirm("Are you sure?")) return;
 
     if (type === "MENU") {
-      await axios.delete(`${API}/api/menu/${menuId}`);
+      await axios.delete(`${API}/api/menu/${menuId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
     }
 
     if (type === "SUBMENU") {
-      await axios.delete(`${API}/api/menu/${menuId}/submenu/${submenuId}`);
+      await axios.delete(`${API}/api/menu/${menuId}/submenu/${submenuId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
     }
 
     if (type === "CHILD") {
       await axios.delete(
-        `${API}/api/menu/${menuId}/api/submenu/${submenuId}/child/${childId}`
+        `${API}/api/menu/${menuId}/api/submenu/${submenuId}/child/${childId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
     }
 

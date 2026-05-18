@@ -3,7 +3,7 @@ import axios from "axios";
 import { Row, Col, Table, Spinner, Badge, Button } from "reactstrap";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const FileManager = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,12 @@ const FileManager = () => {
     const fetchFiles = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API}/api/files/list`);
+        const res = await axios.get(`${API}/api/files/list`,
+          { headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }}  
+        );
         setFiles(res.data?.data || []);
       } catch (err) {
         setError("Failed to load uploaded files");
