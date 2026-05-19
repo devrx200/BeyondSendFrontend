@@ -23,7 +23,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const initialForm = {
   titleEn: "",
   titleHi: "",
@@ -60,7 +60,12 @@ const ImportantPageManagement = () => {
   const loadPages = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/get-all-important-pages`);
+      const res = await axios.get(`${API}/api/get-all-important-pages`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+      });
       if (res.data?.success) {
         setList(res.data.data || []);
       }
@@ -106,12 +111,22 @@ const ImportantPageManagement = () => {
       if (editingId) {
         res = await axios.put(
           `${API}/api/update-important-page/${editingId}`,
-          fd
+          fd ,{
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            },
+          }
         );
       } else {
         res = await axios.post(
           `${API}/api/create-important-page`,
-          fd
+          fd ,{
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            },
+          }
         );
       }
 
@@ -162,7 +177,12 @@ const ImportantPageManagement = () => {
 
     try {
       const res = await axios.delete(
-        `${API}/api/delete-important-page/${id}`
+        `${API}/api/delete-important-page/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+        }
       );
 
       Swal.fire(

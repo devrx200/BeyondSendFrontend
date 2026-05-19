@@ -32,7 +32,12 @@ const FileUploadModal = ({ isOpen, toggle }) => {
   /* ================= FETCH FILE LIST ================= */
   const fetchFiles = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/files/list`);
+      const res = await axios.get(`${API_URL}/api/files/list`,
+          { headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }}  
+        );
       setFileList(res.data?.data || []);
     } catch {
       setFileList([]);
@@ -129,7 +134,7 @@ const FileUploadModal = ({ isOpen, toggle }) => {
     try {
       setUploading(true);
       await axios.post(`${API_URL}/api/files/upload`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data" , Authorization: `Bearer ${token}`},
         onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total))
       });
 

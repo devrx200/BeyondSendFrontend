@@ -25,6 +25,7 @@ import Swal from "sweetalert2";
 import "../../css/Footer.css";
 
 const API = import.meta.env.VITE_API_URL;
+ const token = sessionStorage.getItem("authToken");
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
 
@@ -92,7 +93,9 @@ const FooterSection = () => {
             }));
 
             if (link?._id) {
-                await axios.delete(`${API}/api/delete-link/${type}/${link._id}`);
+                await axios.delete(`${API}/api/delete-link/${type}/${link._id}`, {
+                    headers: { "Content-Type": "application/json", "web-url": window.location.href, Authorization: `Bearer ${token}` },
+                });
             }
 
             await saveFooterToDB({
@@ -113,7 +116,9 @@ const FooterSection = () => {
     }, []);
 
     const fetchFooter = async () => {
-        const { data } = await axios.get(`${API}/api/get-all-footer`);
+        const { data } = await axios.get(`${API}/api/get-all-footer`, {
+          headers: { "Content-Type": "application/json",  },
+        });
         if (data) setFooter(data);
     };
 
@@ -260,7 +265,9 @@ const FooterSection = () => {
 
     /* ================= SAVE ================= */
     const saveFooterToDB = async (footerPayload) => {
-        await axios.post(`${API}/api/save-footer`, footerPayload);
+        await axios.post(`${API}/api/save-footer`, footerPayload, {
+            headers: { "Content-Type": "application/json", "web-url": window.location.href, Authorization: `Bearer ${token}` },
+        });
     };
 
     const saveFooter = async () => {
@@ -305,6 +312,8 @@ const FooterSection = () => {
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
+                        "web-url": window.location.href,
+                        Authorization: `Bearer ${token}`,
                     },
                 }
             );

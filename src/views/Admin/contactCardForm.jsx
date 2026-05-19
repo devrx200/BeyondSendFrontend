@@ -16,7 +16,7 @@ import Swal from "sweetalert2";
 import { FaBuilding, FaUniversity } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const ContactCardCMS = () => {
   const [cards, setCards] = useState([]);
   const [editId, setEditId] = useState(null);
@@ -51,7 +51,9 @@ const ContactCardCMS = () => {
   // ================= SAVE =================
   const save = async () => {
     try {
-      await axios.post(`${API}/api/contact-card/save`, form);
+      await axios.post(`${API}/api/contact-card/save`, form, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       Swal.fire("Success", "Saved successfully", "success");
 
@@ -90,7 +92,9 @@ const ContactCardCMS = () => {
 
     if (!confirm.isConfirmed) return;
 
-    await axios.delete(`${API}/api/contact-card/delete/${id}`);
+    await axios.delete(`${API}/api/contact-card/delete/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
     Swal.fire("Deleted", "Removed", "success");
     fetchCards();

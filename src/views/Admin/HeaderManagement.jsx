@@ -15,7 +15,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const HeaderManagement = () => {
   const [formData, setFormData] = useState({
     phone: "",
@@ -33,7 +33,11 @@ const HeaderManagement = () => {
 
   // ================= LOAD =================
   const fetchData = async () => {
-    const res = await axios.get(`${API_URL}/api/header/get-all`);
+    const res = await axios.get(`${API_URL}/api/header/get-all`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     if (res.data?.data) {
       const data = res.data.data;
 
@@ -83,7 +87,14 @@ const HeaderManagement = () => {
     });
 
     try {
-      await axios.post(`${API_URL}/api/header/create`, fd);
+      await axios.post(`${API_URL}/api/header/create`, fd,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          },
+        }  
+      );
 
       Swal.fire("Success", "Header saved successfully", "success");
 

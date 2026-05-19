@@ -16,7 +16,7 @@ const URL_REGEX = /^(https?:\/\/|\/)[^\s]+$/;
 
 const ImportantLinksManagement = () => {
     const API = import.meta.env.VITE_API_URL;
-
+    const token = sessionStorage.getItem("authToken");
     const [links, setLinks] = useState([]);
     const [modal, setModal] = useState(false);
     const [iconModal, setIconModal] = useState(false);
@@ -34,7 +34,9 @@ const ImportantLinksManagement = () => {
 
     /* ================= LOAD ================= */
     const loadLinks = async () => {
-        const res = await axios.get(`${API}/api/important-links-for-admin`);
+        const res = await axios.get(`${API}/api/important-links-for-admin`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
         setLinks(res.data.data || []);
     };
 
@@ -122,9 +124,13 @@ const ImportantLinksManagement = () => {
         }
 
         if (editId) {
-            await axios.put(`${API}/api/important-links/${editId}`, form);
+            await axios.put(`${API}/api/important-links/${editId}`, form,
+                { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+            );
         } else {
-            await axios.post(`${API}/api/important-links`, form);
+            await axios.post(`${API}/api/important-links`, form,
+                { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+            );
         }
 
         Swal.fire("Success", "Link saved successfully", "success");
@@ -249,8 +255,8 @@ const ImportantLinksManagement = () => {
                                 <Label>URL *</Label>
                                 <Input
                                     value={form.url}
-                                   invalid={!!errors.url}
-  onChange={e => handleChange("url", e.target.value)}
+                                    invalid={!!errors.url}
+                                    onChange={e => handleChange("url", e.target.value)}
                                 />
                                 {errors.url && <small className="text-danger">{errors.url}</small>}
                             </FormGroup>
@@ -271,15 +277,15 @@ const ImportantLinksManagement = () => {
                                         Search & Choose Icon
                                     </Input>
                                     <IconPicker
-  isOpen={iconModal}
-  toggle={() => setIconModal(false)}
-  onSelect={(icon) => {
-    handleChange("icon", icon);
-    setIconModal(false);
-  }}
-/>
+                                        isOpen={iconModal}
+                                        toggle={() => setIconModal(false)}
+                                        onSelect={(icon) => {
+                                            handleChange("icon", icon);
+                                            setIconModal(false);
+                                        }}
+                                    />
 
-{errors.icon && <small className="text-danger">{errors.icon}</small>}
+                                    {errors.icon && <small className="text-danger">{errors.icon}</small>}
 
                                     {/* Selected Icon Preview */}
                                     {form.icon && ICONS[form.icon] && (() => {

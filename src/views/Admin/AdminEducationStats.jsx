@@ -21,7 +21,7 @@ import Swal from "sweetalert2";
 import { FaPlus, FaEdit, FaTrash, FaSave } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 /* ---------- CURRENT ACADEMIC YEAR ---------- */
 const getCurrentAcademicYear = () => {
   const now = new Date();
@@ -54,7 +54,8 @@ const AdminEducationStats = () => {
   const loadList = async () => {
     try {
       const res = await axios.get(
-        `${API_URL}/api/education-stats/list-for-admin`
+        `${API_URL}/api/education-stats/list-for-admin`, 
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setList(res.data.data || []);
     } catch (err) {
@@ -131,12 +132,18 @@ const AdminEducationStats = () => {
       if (editingId) {
         res = await axios.put(
           `${API_URL}/api/education-stats/update/${editingId}`,
-          form
+          form,
+          {
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+          }
         );
       } else {
         res = await axios.post(
           `${API_URL}/api/education-stats/create`,
-          form
+          form,
+          {
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+          }
         );
       }
 
@@ -186,7 +193,8 @@ const AdminEducationStats = () => {
 
     try {
       const res = await axios.delete(
-        `${API_URL}/api/education-stats/delete/${id}`
+        `${API_URL}/api/education-stats/delete/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       Swal.fire("Success", res.data.message, "success");
       loadList();

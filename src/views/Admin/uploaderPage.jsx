@@ -9,7 +9,7 @@ import { useDropzone } from "react-dropzone";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const FileUploader = () => {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -58,7 +58,7 @@ const FileUploader = () => {
       formData.append("file", file); // ✅ single key only
 
       await axios.post(`${API}/api/files/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data" , Authorization: `Bearer ${token}` },
       });
 
       alert("File uploaded successfully");

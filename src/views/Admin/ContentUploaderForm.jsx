@@ -17,6 +17,7 @@ import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 import "../../css/aboutAndHelp.css";
 
 const API = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
 
 const ContentUploaderForm = () => {
   const [currentView, setCurrentView] = useState("list"); // list | form
@@ -56,7 +57,9 @@ const ContentUploaderForm = () => {
 
   /* ==================== API ==================== */
   const fetchPages = async () => {
-    const res = await axios.get(`${API}/api/menu-list`);
+    const res = await axios.get(`${API}/api/menu-list-all/get-all`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     setPages(extractPagesFromMenu(res.data.data || []));
   };
 
@@ -145,7 +148,7 @@ const ContentUploaderForm = () => {
         : `${API}/api/about-and-help`;
 
       await axios.post(url, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data" , Authorization: `Bearer ${token}`},
       });
 
       setSaveStatus("success");
