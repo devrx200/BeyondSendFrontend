@@ -14,7 +14,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const HelpGuidance = () => {
 
   const [list, setList] = useState([]);
@@ -47,13 +47,32 @@ const HelpGuidance = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-help-guidance`, {
-        params: { page, limit: 6, search, status: statusFilter, accessBy: accessFilter }
-      });
+
+      const res = await axios.get(
+        `${API_URL}/api/get-help-guidance`,
+        {
+          params: {
+            page,
+            limit: 6,
+            search,
+            status: statusFilter,
+            accessBy: accessFilter
+          },
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
       setList(res.data?.data || []);
       setTotalPages(res.data?.totalPages || 1);
+
     } catch (err) {
-      Swal.fire("Error", err?.response?.data?.message || "Failed", "error");
+      Swal.fire(
+        "Error",
+        err?.response?.data?.message || "Failed",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -104,7 +123,7 @@ const HelpGuidance = () => {
         ? `${API_URL}/api/update-help-guidance/${editingId}`
         : `${API_URL}/api/create-help-guidance`;
       const method = editingId ? "put" : "post";
-      const res = await axios({ method, url, data: fd });
+      const res = await axios({ method, url, data: fd }, { headers: { Authorization: `Bearer ${token}` } });
       Swal.fire("Success", res?.data?.message, "success");
       toggleModal();
       loadData();
@@ -137,7 +156,7 @@ const HelpGuidance = () => {
       confirmButtonText: "Yes, delete"
     });
     if (!result.isConfirmed) return;
-    await axios.delete(`${API_URL}/api/delete-help-guidance/${id}`);
+    await axios.delete(`${API_URL}/api/delete-help-guidance/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     loadData();
   };
 
