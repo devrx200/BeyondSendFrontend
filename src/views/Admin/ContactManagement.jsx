@@ -17,7 +17,7 @@ const OFFICE_HOURS_REGEX = /^[A-Za-z0-9 :–\-()]+$/;
 
 const ContactManagement = () => {
   const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
   const [data, setData] = useState({ address: {}, officeHours: {}, officials: [] });
   const [modal, setModal] = useState(false);
   const [official, setOfficial] = useState({});
@@ -32,7 +32,9 @@ const ContactManagement = () => {
 
   /* ================= LOAD DATA ================= */
   const load = async () => {
-    const res = await axios.get(`${API}/api/contact`);
+    const res = await axios.get(`${API}/api/contact`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     setData(res.data.data || {});
   };
 
@@ -158,6 +160,8 @@ const ContactManagement = () => {
       const res = await axios.put(`${API}/api/contact`, {
         address,
         officeHours
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       Swal.fire("Success", res.data.message, "success");
@@ -255,7 +259,9 @@ const ContactManagement = () => {
 
     try {
       const res = await axios.post(`${API}/api/contact/official`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
+         }
       });
 
       Swal.fire("Success", res.data.message, "success");

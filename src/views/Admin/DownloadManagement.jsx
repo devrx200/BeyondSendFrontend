@@ -10,7 +10,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 
 const DownloadManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
-
+  const token = sessionStorage.getItem("authToken");
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [downloads, setDownloads] = useState([]);
@@ -114,12 +114,14 @@ const DownloadManagement = () => {
       if (editing) {
         res = await axios.put(
           `${API_URL}/api/update-downloads/${editing._id}`,
-          payload
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         res = await axios.post(
           `${API_URL}/api/create-downloads`,
-          payload
+          payload,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       }
 
@@ -144,28 +146,28 @@ const DownloadManagement = () => {
 
 
   const handleEdit = (row) => {
-  setEditing(row);
+    setEditing(row);
 
-  setFormData({
-    titleEn: row.titleEn,
-    titleHi: row.titleHi,
-    category: row.category,
-    isActive: row.isActive,
-    file: null, 
-  });
-  if (row.filePath) {
-    setFileInfo({
-      name: row.filePath.split("/").pop(),
-      size: row.fileSize,
-      type: row.fileType,
-      path: row.filePath,
+    setFormData({
+      titleEn: row.titleEn,
+      titleHi: row.titleHi,
+      category: row.category,
+      isActive: row.isActive,
+      file: null,
     });
-  } else {
-    setFileInfo(null);
-  }
+    if (row.filePath) {
+      setFileInfo({
+        name: row.filePath.split("/").pop(),
+        size: row.fileSize,
+        type: row.fileType,
+        path: row.filePath,
+      });
+    } else {
+      setFileInfo(null);
+    }
 
-  setModal(true);
-};
+    setModal(true);
+  };
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
@@ -178,7 +180,9 @@ const DownloadManagement = () => {
 
     if (!confirm.isConfirmed) return;
 
-    await axios.delete(`${API_URL}/api/delete-downloads/${id}`);
+    await axios.delete(`${API_URL}/api/delete-downloads/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     Swal.fire("Removed", "Download deactivated", "success");
     fetchDownloads();
   };

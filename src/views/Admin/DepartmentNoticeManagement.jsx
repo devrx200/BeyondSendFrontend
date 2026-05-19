@@ -24,7 +24,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const DepartmentNoticeManagement = () => {
 
   const [modal, setModal] = useState(false);
@@ -68,7 +68,9 @@ const DepartmentNoticeManagement = () => {
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/get-department-notice-all`);
+      const res = await axios.get(`${API}/api/get-department-notice-all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setList(res.data.data || []);
     } catch (err) {
       Swal.fire("Error", "Failed to load notices", "error");
@@ -143,7 +145,9 @@ const handleOpenCreate = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API}/api/dept-notice/delete/${id}`);
+      const response = await axios.delete(`${API}/api/dept-notice/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       Swal.fire(
         "Deleted!",
@@ -181,13 +185,22 @@ const handleOpenCreate = () => {
       if (editingId) {
         await axios.put(
           `${API}/api/update-dept-notice/${editingId}`,
-          fd
+          fd, 
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",  
+            }}
         );
         Swal.fire("Updated!", "Notice updated successfully", "success");
       } else {
         await axios.post(
           `${API}/api/create-dept-notice`,
-          fd
+          fd,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            }
+          }
         );
         Swal.fire("Created!", "Notice created successfully", "success");
       }

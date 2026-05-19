@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 
 const SliderManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const { isHindi } = useLanguage();
   const [modal, setModal] = useState(false);
   const [editingSlide, setEditingSlide] = useState(null);
@@ -168,7 +169,7 @@ const SliderManagement = () => {
       payload.append("isActive", formData.active); payload.append("linkButtonShow", formData.linkButtonShow);
       if (formData.uploadefile) payload.append("image", formData.uploadefile);
       const url = editingSlide ? `${API_URL}/api/update-hero-slide/${editingSlide._id}` : `${API_URL}/api/create-hero-slide`;
-      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: { "web-url": window.location.href } });
+      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: { "web-url": window.location.href ,  Authorization: `Bearer ${token}` }  });
       if (response.status === 200 || response.status === 201) {
         Swal.fire({ icon: "success", title: response.data.message, timer: 2000, showConfirmButton: false });
         toggleModal(); fetchSlides();

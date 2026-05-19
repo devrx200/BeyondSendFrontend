@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 /* ---------- CALENDAR HELPERS ---------- */
 const today = new Date();
 const currentMonth = today.toLocaleString("default", { month: "long" });

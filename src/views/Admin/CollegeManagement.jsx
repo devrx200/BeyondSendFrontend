@@ -10,7 +10,7 @@ import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const initialForm = {
     nameEn: "",
     nameHi: "",
@@ -79,14 +79,16 @@ const CollegeManagement = () => {
             if (editing) {
                 await axios.put(
                     `${API_URL}/api/update-college/${editing._id}`,
-                    payload
+                    payload,
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
 
                 Swal.fire("Updated", "College updated successfully", "success");
             } else {
                 await axios.post(
                     `${API_URL}/api/create-college`,
-                    payload
+                    payload ,
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
 
                 Swal.fire("Created", "College created successfully", "success");

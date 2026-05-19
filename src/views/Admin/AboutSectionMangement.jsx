@@ -21,7 +21,7 @@ import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const AboutSectionMangement = () => {
   const { isHindi } = useLanguage();
 
@@ -259,11 +259,15 @@ const AboutSectionMangement = () => {
         res = await axios.put(
           `${API_URL}/api/update-about-section/${editingId}`,
           payload,
-          { headers: { "web-url": window.location.href } }
+          { headers: { "web-url": window.location.href,
+             authorization: `Bearer ${token}`
+           } }
         );
       } else {
         res = await axios.post(`${API_URL}/api/create-about-section`, payload, {
-          headers: { "web-url": window.location.href }
+          headers: { "web-url": window.location.href,
+            authorization: `Bearer ${token}`
+           }
         });
       }
 

@@ -24,7 +24,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const DirectorateNoticeManagement = () => {
 
   const [modal, setModal] = useState(false);
@@ -67,7 +67,11 @@ const DirectorateNoticeManagement = () => {
   const fetchList = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/get-directorate-notice-all`);
+      const res = await axios.get(`${API}/api/get-directorate-notice-all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+       setList(res.data.data || []);
+      // const res = await axios.get(`${API}/api/get-directorate-notice-all`); --- IGNORE ---
       setList(res.data.data || []);
     } catch {
       Swal.fire("Error", "Failed to load notices", "error");
@@ -139,7 +143,10 @@ const handleOpenCreate = () => {
 
     try {
       const res = await axios.delete(
-        `${API}/api/directorate-notice/delete/${id}`
+        `${API}/api/directorate-notice/delete/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
       Swal.fire(
@@ -176,13 +183,25 @@ const handleOpenCreate = () => {
       if (editingId) {
         await axios.put(
           `${API}/api/update-directorate-notice/${editingId}`,
-          fd
+          fd, 
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",  
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
         Swal.fire("Updated!", "Notice updated successfully", "success");
       } else {
         await axios.post(
           `${API}/api/create-directorate-notice`,
-          fd
+          fd,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
         Swal.fire("Created!", "Notice created successfully", "success");
       }

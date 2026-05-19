@@ -37,7 +37,6 @@ const AdminLogin = () => {
 
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL;
-
   /* ---------- CAPTCHA GENERATOR ---------- */
   const generateCaptcha = () => {
     const chars =
@@ -124,7 +123,8 @@ const AdminLogin = () => {
       const res = await axios.post(
         `${API_URL}/api/user-login`,
         { identifier, password },
-        { timeout: 10000 }
+        { timeout: 10000 },
+        { headers: { "Content-Type": "application/json" } }
       );
 
       sessionStorage.setItem("authToken", res.data.token);

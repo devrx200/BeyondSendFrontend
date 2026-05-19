@@ -25,7 +25,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 const API = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
 
@@ -109,7 +109,9 @@ const AnnouncementsManagement = () => {
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/get-announcements-list`);
+      const res = await axios.get(`${API}/api/get-announcements-list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       const list = (res.data.data || []).map((item) => ({
         ...item,
@@ -232,7 +234,9 @@ useEffect(() => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API}/api/delete-announcement/${id}`);
+      const res = await axios.delete(`${API}/api/delete-announcement/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       Swal.fire({
         icon: "success",
         title: isHindi ? "हटाया गया!" : "Deleted!",
@@ -297,7 +301,8 @@ useEffect(() => {
         console.log("🔄 Updating announcement with ID:", editingId);
         res = await axios.put(`${API}/api/update-announcement/${editingId}`, fd, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
           }
         });
         Swal.fire({
@@ -311,7 +316,8 @@ useEffect(() => {
         console.log("✨ Creating new announcement");
         res = await axios.post(`${API}/api/create-announcement`, fd, {
           headers: {
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'multipart/form-data',
+             Authorization: `Bearer ${token}`
           }
         });
         Swal.fire({

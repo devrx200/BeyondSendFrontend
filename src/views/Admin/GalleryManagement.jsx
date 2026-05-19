@@ -9,7 +9,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const GalleryManagement = () => {
   const [list, setList] = useState([]);
   const [modal, setModal] = useState(false);
@@ -142,7 +142,7 @@ const GalleryManagement = () => {
 
       const method = editingId ? "put" : "post";
 
-      const res = await axios({ method, url, data: payload });
+      const res = await axios({ method, url, data: payload , headers: { Authorization: `Bearer ${token}` } });
 
       Swal.fire(
         res.data.success ? "Success" : "Error",
@@ -213,7 +213,9 @@ const GalleryManagement = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/delete-gallery/${id}`);
+      const res = await axios.delete(`${API_URL}/api/delete-gallery/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       Swal.fire(
         res.data.success ? "Deleted" : "Error",

@@ -19,7 +19,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const NewUpdates = () => {
   const [list, setList] = useState([]);
   const [modal, setModal] = useState(false);
@@ -38,7 +38,9 @@ const NewUpdates = () => {
   /* ================= LOAD LIST ================= */
   const loadNotices = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/notice-ticker`);
+      const res = await axios.get(`${API_URL}/api/notice-ticker/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setList(res.data.data || []);
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Failed to load notices", "error");
@@ -97,7 +99,9 @@ const NewUpdates = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/notice-ticker/${id}`);
+      const res = await axios.delete(`${API_URL}/api/notice-ticker/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       Swal.fire("Success", res.data.message, "success");
       loadNotices();
     } catch (err) {
@@ -120,12 +124,18 @@ const NewUpdates = () => {
       if (editingId) {
         res = await axios.put(
           `${API_URL}/api/notice-ticker/${editingId}`,
-          formData
+          formData ,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
         );
       } else {
         res = await axios.post(
           `${API_URL}/api/notice-ticker`,
-          formData
+          formData,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
         );
       }
 
