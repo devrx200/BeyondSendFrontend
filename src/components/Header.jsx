@@ -9,7 +9,6 @@ import {
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
-import { translations } from "../data/translations";
 import { handleMenuClick } from "../utilies/handleMenuClick";
 import Swal from "sweetalert2";
 
@@ -148,9 +147,8 @@ const Header = () => {
   const [headerData, setHeaderData] = useState(null);
 
   const navigate = useNavigate();
-  const { language, toggleLanguage, isHindi } = useLanguage();
+  const { t, toggleLanguage, isHindi } = useLanguage();
   const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibility();
-  const t = (key) => translations[language][key] || key;
 
   const fetchHeader = async () => {
     try {
@@ -225,10 +223,10 @@ const Header = () => {
                 <FaLanguage />{isHindi ? "English" : "हिंदी"}
               </Badge>
               <Link to="/accessibility-statement" className="top-link">
-                <FaUniversalAccess className="me-1" />{t("accessibility")}
+                <FaUniversalAccess className="me-1" />{t("Accessibility", "अभिगम्यता")}
               </Link>
               <Link to="/sitemap" className="top-link">
-                <FaSitemap className="me-1" />{t("sitemap")}
+                <FaSitemap className="me-1" />{t("Sitemap", "साइट मानचित्र")}
               </Link>
             </div>
 
@@ -286,7 +284,7 @@ const Header = () => {
           {/* Desktop nav */}
           <div className="desk-nav d-flex align-items-center flex-wrap">
             <Link to="/" className="nav-link-plain">
-              <FaHouse className="me-1" />{t("home")}
+              <FaHouse className="me-1" />{t("Home", "मुख्य पृष्ठ")}
             </Link>
 
             {visibleMenus.map(menu => {
@@ -333,7 +331,7 @@ const Header = () => {
         {/* Home */}
         <div className="mob-item">
           <button className="mob-btn" onClick={() => { setMobileOpen(false); navigate("/"); }}>
-            <span><FaHouse className="me-2" />{t("home")}</span>
+            <span><FaHouse className="me-2" />{t("Home", "मुख्य पृष्ठ")}</span>
           </button>
         </div>
 

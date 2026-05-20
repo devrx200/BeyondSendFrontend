@@ -12,7 +12,12 @@ export const useLanguage = () => {
 
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('preferredLanguage') || 'en';
+    const savedLang = localStorage.getItem('preferredLanguage');
+    // If no saved preference, default to Hindi
+    const defaultLang = savedLang || 'hi';
+    // Set HTML lang attribute immediately
+    document.documentElement.lang = defaultLang;
+    return defaultLang;
   });
 
   useEffect(() => {
@@ -21,15 +26,19 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'hi' : 'en');
+    setLanguage(prev => prev === 'hi' ? 'en' :'hi' );
   };
+
+  // Helper function: show Hindi first when isHindi is true
+  const t = (en, hi) => (language === 'hi' ? hi : en);
 
   const value = {
     language,
     setLanguage,
     toggleLanguage,
     isHindi: language === 'hi',
-    isEnglish: language === 'en'
+    isEnglish: language === 'en',
+    t  // Export the helper function
   };
 
   return (
