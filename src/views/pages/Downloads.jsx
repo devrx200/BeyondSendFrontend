@@ -45,9 +45,7 @@ const Downloads = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/get-categories`, {
-          headers: { "web-url": window.location.href },
-        });
+        const res = await axios.get(`${API_URL}/api/get-categories`);
 
         const cats = res.data?.data || [];
         setCategories(cats);

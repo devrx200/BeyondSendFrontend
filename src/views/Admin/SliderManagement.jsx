@@ -71,7 +71,7 @@ const SliderManagement = () => {
   const fetchSlides = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-hero-slides`, { headers: { "web-url": window.location.href } });
+      const res = await axios.get(`${API_URL}/api/get-hero-slides`);
       if (res.status === 200) setSlides(res.data.data || []);
     } catch { Swal.fire({ icon: "error", title: "Error", text: "Failed to load hero slides" }); }
     finally { setLoading(false); }
@@ -169,7 +169,7 @@ const SliderManagement = () => {
       payload.append("isActive", formData.active); payload.append("linkButtonShow", formData.linkButtonShow);
       if (formData.uploadefile) payload.append("image", formData.uploadefile);
       const url = editingSlide ? `${API_URL}/api/update-hero-slide/${editingSlide._id}` : `${API_URL}/api/create-hero-slide`;
-      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: { "web-url": window.location.href ,  Authorization: `Bearer ${token}` }  });
+      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: {   Authorization: `Bearer ${token}` }  });
       if (response.status === 200 || response.status === 201) {
         Swal.fire({ icon: "success", title: response.data.message, timer: 2000, showConfirmButton: false });
         toggleModal(); fetchSlides();
@@ -181,7 +181,7 @@ const SliderManagement = () => {
     const confirm = await Swal.fire({ title: "Are you sure?", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", confirmButtonText: "Yes, delete it!" });
     if (!confirm.isConfirmed) return;
     try {
-      const res = await axios.delete(`${API_URL}/api/deactivate-hero-slide/${id}`, { headers: { "web-url": window.location.href } });
+      const res = await axios.delete(`${API_URL}/api/deactivate-hero-slide/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 200) { Swal.fire({ icon: "success", title: res.data.message, timer: 2000, showConfirmButton: false }); fetchSlides(); }
     } catch (error) { Swal.fire({ icon: "error", title: "Delete Failed", text: error?.response?.data?.message || "Unable to delete slide" }); }
   };
@@ -190,7 +190,7 @@ const SliderManagement = () => {
     const confirm = await Swal.fire({ title: "Permanent Delete?", text: "This action cannot be undone!", icon: "warning", showCancelButton: true, confirmButtonColor: "#d33", confirmButtonText: "Yes, delete permanently" });
     if (!confirm.isConfirmed) return;
     try {
-      const res = await axios.delete(`${API_URL}/api/permanent-delete-hero-slide/${id}`, { headers: { "web-url": window.location.href } });
+      const res = await axios.delete(`${API_URL}/api/permanent-delete-hero-slide/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 200) { Swal.fire({ icon: "success", title: res.data.message, timer: 2000, showConfirmButton: false }); fetchSlides(); }
     } catch (error) { Swal.fire({ icon: "error", title: "Delete Failed", text: error?.response?.data?.message || "Unable to permanently delete slide" }); }
   };

@@ -27,11 +27,10 @@ const ActivityLogManagement = () => {
 
   // Helper: Get auth headers (adjust token key as per your project)
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+   const token = sessionStorage.getItem("authToken");
     return {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
-      "web-url": window.location.href
     };
   };
 

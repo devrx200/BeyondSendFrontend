@@ -44,7 +44,6 @@ const AboutSectionMangement = () => {
   const loadList = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/get-about-sections`, {
-        headers: { "web-url": window.location.href }
       });
       setList(res.data || []);
     } catch {
@@ -259,13 +258,13 @@ const AboutSectionMangement = () => {
         res = await axios.put(
           `${API_URL}/api/update-about-section/${editingId}`,
           payload,
-          { headers: { "web-url": window.location.href,
+          { headers: {
              authorization: `Bearer ${token}`
            } }
         );
       } else {
         res = await axios.post(`${API_URL}/api/create-about-section`, payload, {
-          headers: { "web-url": window.location.href,
+          headers: { 
             authorization: `Bearer ${token}`
            }
         });
@@ -308,8 +307,7 @@ const AboutSectionMangement = () => {
     if (!confirm.isConfirmed) return;
     try {
       const res = await axios.delete(
-        `${API_URL}/api/delete-about-section/${id}`,
-        { headers: { "web-url": window.location.href } }
+        `${API_URL}/api/delete-about-section/${id}`
       );
       Swal.fire("Deleted", res.data.msg, "success");
       loadList();
