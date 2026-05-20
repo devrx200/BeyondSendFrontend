@@ -4,7 +4,6 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
 /* ------------------ Initial State ------------------ */
 const initialState = {
   fullName: "",
@@ -102,7 +101,7 @@ const FeedbackForm = () => {
         {
           headers: {
             "Content-Type": "application/json",
-            "web-url": window.location.href
+         
           }
         }
       );

@@ -266,7 +266,7 @@ const FooterSection = () => {
     /* ================= SAVE ================= */
     const saveFooterToDB = async (footerPayload) => {
         await axios.post(`${API}/api/save-footer`, footerPayload, {
-            headers: { "Content-Type": "application/json", "web-url": window.location.href, Authorization: `Bearer ${token}` },
+            headers: {   Authorization: `Bearer ${token}` },
         });
     };
 
@@ -295,6 +295,9 @@ const FooterSection = () => {
             //     socialLinks: footer.socialLinks,
 
             // };
+             Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const tokenString = token?.token || token?.access || token;
             const formData = new FormData();
 
             // Append normal data (convert to string)
@@ -306,14 +309,14 @@ const FooterSection = () => {
             if (footer.contactInfo.organizerLogo instanceof File) {
                 formData.append("organizerLogo", footer.contactInfo.organizerLogo);
             }
+          
             const res = await axios.post(
                 `${API}/api/save-footer`,
                 formData,
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
-                        "web-url": window.location.href,
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${tokenString}`,
                     },
                 }
             );

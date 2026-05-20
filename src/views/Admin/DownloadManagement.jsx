@@ -45,7 +45,9 @@ const DownloadManagement = () => {
 
   /* ================= FETCH ================= */
   const fetchDownloads = async () => {
-    const res = await axios.get(`${API_URL}/api/get-all-downloads`);
+    const res = await axios.get(`${API_URL}/api/get-all-downloads`,{
+      headers: { Authorization: `Bearer ${token}` }
+    });
     setDownloads(res.data || []);
   };
 
@@ -72,9 +74,6 @@ const DownloadManagement = () => {
 
       const res = await axios.get(
         `${API_URL}/api/get-categories`,   //  category API
-        {
-          headers: { "web-url": window.location.href },
-        }
       );
 
       if (res.status === 200) {

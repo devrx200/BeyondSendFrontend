@@ -4,7 +4,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
-
+const token = sessionStorage.getItem("authToken");
 const AdminFeedbackList = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,13 @@ const AdminFeedbackList = () => {
   const fetchFeedbacks = async () => {
     try {
       const res = await axios.get(
-        `${API_URL}/api/admin/feedbacks`
+        `${API_URL}/api/admin/feedbacks`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       setFeedbacks(res.data.data || []);
     } catch (error) {
@@ -35,7 +41,13 @@ const AdminFeedbackList = () => {
   const viewFeedback = async (id) => {
     try {
       const res = await axios.get(
-        `${API_URL}/api/admin/feedbacks/${id}`
+        `${API_URL}/api/admin/feedbacks/${id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       setSelectedFeedback(res.data.data);
       setModalOpen(true);
@@ -60,7 +72,12 @@ const AdminFeedbackList = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await axios.delete(`${API_URL}/api/admin/feedbacks/${id}`);
+      await axios.delete(`${API_URL}/api/admin/feedbacks/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
 
       // Update UI
       setFeedbacks((prev) =>
