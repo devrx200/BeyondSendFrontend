@@ -144,7 +144,7 @@ const AppRoutes = () => {
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
-      <Route path="/help-and-support" element={<MainLayout><HelpSupport/></MainLayout>}/>
+      <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
 
 
       {/* DYNAMIC CMS PAGES From Content Uploader */}
@@ -168,43 +168,104 @@ const AppRoutes = () => {
       {/* ADMIN  All Routes */}
       <Route element={<PublicAdminRoute />}>  <Route path="/admin/login" element={<MainLayout><AdminLogin /></MainLayout>} /> </Route>
       {/* Protected Admin Routes After Login its Work */}
-      <Route path="/admin" element={<AuthMiddleware allowedRoles={["OFFICER", "ADMIN"]} />}>
+      <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE", "NIC"]} />}>
         <Route element={<AdminLayout />}>
+
           <Route index element={<Navigate to="dashboard" replace />} />
+
           <Route path="dashboard" element={<AdminDashboard />} />
+
           <Route path="announcements" element={<AnnouncementsManagement />} />
-          <Route path="content-uploader" element={<ContentUploaderForm />} />
+
+          <Route path="content-uploader" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
+            <Route index element={<ContentUploaderForm />} />
+          </Route>
+
           <Route path="notifications" element={<NotificationsManagement />} />
+
           <Route path="gallery" element={<GalleryManagement />} />
+
           <Route path="image-master" element={<AboutSectionMangement />} />
-          <Route path="menu" element={<MenuManagement />} />
+
+          <Route path="menu" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<MenuManagement />} />
+          </Route>
+
           <Route path="slider" element={<SliderManagement />} />
+
           <Route path="categories" element={<ManageCategories />} />
+
           <Route path="brands" element={<ManageBrands />} />
-          <Route path="universities" element={<ManageUniversities />} />
+
+          <Route path="universities" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<ManageUniversities />} />
+          </Route>
+
           <Route path="new-updates" element={<NewUpdatesManagement />} />
+
           <Route path="admin-education-stats" element={<AdminEducationStats />} />
+
           <Route path="contact-management" element={<ContactManagement />} />
+
           <Route path="important-links" element={<ImportantLinksManagement />} />
-          <Route path="file-manager" element={<FileManager />} />
-          <Route path="file-uploader" element={<FileUploader />} />
-          <Route path="download-management" element={<DownloadManagement />} />
+
+          <Route path="file-manager" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
+            <Route index element={<FileManager />} />
+          </Route>
+
+          <Route path="file-uploader" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
+            <Route index element={<FileUploader />} />
+          </Route>
+
+          <Route path="download-management" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
+            <Route index element={<DownloadManagement />} />
+          </Route>
+
           <Route path="college-management" element={<CollegeManagement />} />
+
           <Route path="feedbacks" element={<AdminFeedbackList />} />
-          <Route path="users-management" element={<AdminUserManagement />} />
-          <Route path="footer-section-manager" element={<FooterSection />} />
-          <Route path="page-creator-management" element={<PageCreatorManagement />} />
-          <Route path="department-notices" element={<DepartmentNoticeManagement />} />
-          <Route path="directorate-notices" element={< DirectorateNoticeManagement />} />
-          <Route path="important-page-management" element={<ImportantPageManagement />} />
+
+          <Route path="users-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<AdminUserManagement />} />
+          </Route>
+
+          <Route path="footer-section-manager" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<FooterSection />} />
+          </Route>
+
+          <Route path="page-creator-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<PageCreatorManagement />} />
+          </Route>
+
+          <Route path="department-notices" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DEPARTMATE"]} />}>
+            <Route index element={<DepartmentNoticeManagement />} />
+          </Route>
+
+          <Route path="directorate-notices" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<DirectorateNoticeManagement />} />
+          </Route>
+
+          <Route path="important-page-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<ImportantPageManagement />} />
+          </Route>
+
           <Route path="help-guidance" element={<HelpGuidance />} />
-          <Route path="header-management" element={<HeaderManagement />} />
-          <Route path="contact-card-management" element={<ContactCardCMS />} />
+
+          <Route path="header-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<HeaderManagement />} />
+          </Route>
+
+          <Route path="contact-card-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+            <Route index element={<ContactCardCMS />} />
+          </Route>
+
           <Route path="tutorials" element={<HelpTutorials />} />
+
           <Route path="session-manager" element={<SessionManager />} />
-          <Route path="activity-logs" element={<ActivityLogManagement />} />
 
-
+          <Route path="activity-logs" element={<AuthMiddleware allowedRoles={["NIC"]} allowedEmployeeTypes={["NIC"]} />}>
+            <Route index element={<ActivityLogManagement />} />
+          </Route>
 
         </Route>
       </Route>

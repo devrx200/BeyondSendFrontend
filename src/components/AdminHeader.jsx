@@ -1,17 +1,8 @@
 import { useEffect, useState } from "react";
 import {
-  Navbar,
-  Button,
   Modal,
   ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  Row,
-  Col
+  ModalBody
 } from "reactstrap";
 import {
   FaBars,
@@ -21,7 +12,6 @@ import {
   FaBookOpen,
   FaUserShield
 } from "react-icons/fa";
-import { FaDashcube } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import Swal from "sweetalert2";
@@ -125,35 +115,70 @@ const AdminHeader = ({ toggleSidebar }) => {
 
   return (
     <>
-      <Navbar color="primary" dark className="px-3 d-flex justify-content-between">
+      <header className="adm-header">
         {/* LEFT */}
-        <div className="d-flex align-items-center gap-2">
-          <Button color="primary" onClick={toggleSidebar}>
+        <div className="adm-header-left">
+          <button
+            type="button"
+            className="adm-toggle-btn"
+            onClick={toggleSidebar}
+            title="Toggle Sidebar"
+            aria-label="Toggle Sidebar"
+          >
             <FaBars />
-          </Button>
+          </button>
 
-          <strong className="fw-bold text-dark d-flex align-items-center gap-1">
-            <FaDashcube />
-            H!..
-          </strong>
+          <div className="adm-header-title d-none d-sm-block">
+            Department of Higher Education
+          </div>
         </div>
 
         {/* RIGHT */}
-        <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1">
-          <div className="d-none d-md-flex align-items-center text-white fw-bold">
-            <FaClock className="me-2 text-warning" />
-            {dayName}, {formattedDate} | {formattedTime}
+        <div className="adm-header-right">
+          <div className="adm-header-clock d-none d-lg-inline-flex">
+            <FaClock />
+            <span>{dayName}, {formattedDate} | {formattedTime}</span>
           </div>
 
-          <Button
-            size="sm"
-            title="Translater"
-            color={isHindi ? "warning" : "primary"}
+          <button
+            type="button"
+            className="adm-header-chip is-warning"
+            title="Translate"
             onClick={toggleLanguage}
           >
-            <FaLanguage className="me-1" />
-            {isHindi ? "English" : "हिंदी"}
-          </Button>
+            <FaLanguage />
+            <span>{isHindi ? "English" : "हिंदी"}</span>
+          </button>
+
+          <button
+            type="button"
+            className="adm-header-chip"
+            title="Session Manager"
+            onClick={() => navigate("/admin/session-manager")}
+          >
+            <FaUserShield />
+            <span>Sessions</span>
+          </button>
+
+          <button
+            type="button"
+            className="adm-header-chip"
+            title="Tutorials"
+            onClick={() => navigate("/admin/tutorials")}
+          >
+            <FaBookOpen />
+            <span>Help</span>
+          </button>
+
+          <button
+            type="button"
+            className="adm-header-chip is-danger"
+            title="Logout"
+            onClick={logout}
+          >
+            <FaSignOutAlt />
+            <span>Logout</span>
+          </button>
 
           {/* PROFILE IMAGE */}
           <img
@@ -162,39 +187,13 @@ const AdminHeader = ({ toggleSidebar }) => {
                 ? `${API_URL}${profile.profileImage}`
                 : "/default-avatar.png"
             }
-            width="45"
-            height="45"
             alt="Profile"
-            title="Profile-Image"
-            className="rounded border border-2 border-white"
-            style={{ cursor: "pointer" }}
+            title="Profile"
+            className="adm-header-avatar"
             onClick={() => setProfileModal(true)}
           />
-
-          <Button
-            color="primary"
-            size="sm"
-            title="Session Manager"
-            className="border border-white"
-            onClick={() => navigate("/admin/session-manager")}
-          >
-            <FaUserShield className="me-1" />
-            Sessions
-          </Button>
-
-
-          <Button color="danger" size="sm" title="Logout" className=" border border-white" onClick={logout}>
-            <FaSignOutAlt className="me-1" />
-            Logout
-          </Button>
-
-          <Button color="primary" size="sm" title="Tutorials" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
-            <FaBookOpen className="me-1" />
-            Help?
-          </Button>
-
         </div>
-      </Navbar>
+      </header>
       {/* ================= PROFILE MODAL (VIEW ONLY) ================= */}
       <Modal
         isOpen={profileModal}

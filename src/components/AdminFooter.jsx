@@ -1,8 +1,32 @@
+import { FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
+
 const AdminFooter = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const dateLabel = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata"
+  });
+
   return (
-    <div className="text-center py-2 bg-dark border-top text-white fw-bold">
-      © {new Date().getFullYear()} Department of Higher Education, Government of Chhattisgarh
-    </div>
+    <footer className="adm-footer">
+      <div className="adm-footer-left">
+        © {year} Department of Higher Education, Government of Chhattisgarh.
+      </div>
+      <div className="adm-footer-center">
+        <span className="adm-footer-pill is-accent">
+          <FaShieldAlt /> Secure Admin Panel
+        </span>
+      </div>
+      <div className="adm-footer-right">
+        <span className="adm-footer-pill">
+          <FaCalendarAlt /> {dateLabel}
+        </span>
+      </div>
+    </footer>
   );
 };
 

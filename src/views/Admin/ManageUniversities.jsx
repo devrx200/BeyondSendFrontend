@@ -5,9 +5,12 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter, Label, FormGroup
 } from "reactstrap";
 import axios from "axios";
-import Swal from "sweetalert2";
 import { ENGLISH_TEXT_ONLY, URL_REGEX, PHONE_REGEX, HINDI_TEXT_ONLY, ENGLISH_WITH_NUMBERS, EMAIL_REGEX, NUMBERS_ONLY } from "../../data/validation.jsx";
-import { FaPlus, FaList, FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import {
+  FaPlus, FaList, FaEdit, FaTrash, FaEye, FaBolt, FaUniversity,
+  FaTimes, FaCheck, FaSearch
+} from "react-icons/fa";
+import { confirmDelete, swalSuccess, swalError, swalWarn } from "../../utilies/swalHelper";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const MAX_LOGO_SIZE = 500 * 1024; // 500 KB
@@ -136,7 +139,7 @@ const ManageUniversities = () => {
       const res = await axios.get(`${API_URL}/api/get-universities`, authHeaders);
       setUniversities(res.data.data || []);
     } catch {
-      Swal.fire("Error", "Failed to load universities", "error");
+      swalError("Error", "Failed to load universities");
     } finally {
       setLoading(false);
     }
@@ -335,9 +338,8 @@ const ManageUniversities = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // 1️⃣ Frontend validation
   if (!validateCreateForm()) {
-    Swal.fire("Validation Error", "Please fix form errors", "warning");
+    swalWarn("Validation Error", "Please fix form errors");
     return;
   }
 
@@ -361,23 +363,18 @@ const handleSubmit = async (e) => {
       multipartHeaders
     );
 
-    // ✅ IMPORTANT FIX
     if (res.data?.success) {
-      Swal.fire("Success", res.data.message || "University created", "success");
+      swalSuccess("Success", res.data.message || "University created");
       setForm(initialForm);
       setLogo(null);
       setErrors({});
       fetchUniversities();
     } else {
-      Swal.fire("Error", res.data?.message || "Create failed", "error");
+      swalError("Error", res.data?.message || "Create failed");
     }
 
   } catch (err) {
-    Swal.fire(
-      "Error",
-      err.response?.data?.message || "Server error",
-      "error"
-    );
+    swalError("Error", err.response?.data?.message || "Server error");
   } finally {
     setBtnLoading(false);
   }
@@ -430,12 +427,12 @@ const handleSubmit = async (e) => {
 
   const handleUpdate = async () => {
     // if (!validateEditForm()) {
-    //   Swal.fire("Validation Error", "Please fix form errors", "warning");
+    //   swalWarn("Validation Error", "Please fix form errors");
     //   return;
     // }
 
     if (!editForm.universityNameEng || !editForm.universityCode || !editForm.universityShortName || !editForm.universityNameHindi) {
-      Swal.fire("Required", "Name (English), Name (Hindi), Code & Short Name are required", "warning");
+      swalWarn("Required", "Name (English), Name (Hindi), Code & Short Name are required");
       return;
     }
 
@@ -454,12 +451,12 @@ const handleSubmit = async (e) => {
         fd,
         multipartHeaders
       );
-      Swal.fire("Updated", res.data.message, "success");
+      swalSuccess("Updated", res.data.message || "Updated successfully");
       setEditModal(false);
       setEditLogo(null);
       fetchUniversities();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Update failed", "error");
+      swalError("Error", err.response?.data?.message || "Update failed");
     } finally {
       setUpdateLoading(false);
     }
@@ -467,41 +464,46 @@ const handleSubmit = async (e) => {
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
-    const ok = await Swal.fire({
+    const ok = await confirmDelete({
       title: "Delete University?",
-      text: "This action cannot be undone!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Yes, delete it!"
+      text: "This action cannot be undone!"
     });
-    if (!ok.isConfirmed) return;
+    if (!ok) return;
 
     try {
       await axios.delete(`${API_URL}/api/delete-university/${id}`, authHeaders);
-      Swal.fire("Deleted", "University removed successfully", "success");
+      swalSuccess("Deleted", "University removed successfully");
       fetchUniversities();
     } catch (err) {
-      Swal.fire("Error", "Failed to delete university", "error");
+      swalError("Error", "Failed to delete university");
     }
   };
 
   /* ================= UI ================= */
   return (
-    <div className="shadow">
-      {/* CREATE FORM */}
-      <Row>
-        {/* ADD UNIVERSITY */}
-        <Col md={12}>
-          <Card className="shadow-sm mb-5">
+    <>
+      {/* PAGE HEADER */}
+      <div className="adm-page-head">
+        <div>
+          <h3 className="adm-page-title"><FaUniversity /> Manage Universities</h3>
+          <p className="adm-page-subtitle">Create, edit and manage all universities registered with the department.</p>
+        </div>
+      </div>
 
-            <CardHeader className="bg-primary text-white">
-              <FaPlus className="me-2" /> Add University
-            </CardHeader>
+      {/* CREATE FORM (inline form-card) */}
+      <div className="adm-form-card">
+        <div className="adm-form-card-header">
+          <div className="adm-form-card-icon"><FaPlus /></div>
+          <div className="adm-form-card-titles">
+            <h4 className="adm-form-card-title">Add New University</h4>
+            <p className="adm-form-card-subtitle">
+              <FaBolt /> Fill in the details below and click Create to register
+            </p>
+          </div>
+        </div>
 
-            <CardBody>
-
-              <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit}>
+        <div className="adm-form-card-body">
 
                 {/* BASIC INFO */}
                 <Row>
@@ -978,63 +980,57 @@ const handleSubmit = async (e) => {
 
                 </Row>
 
-                <Row className="justify-content-center mt-4">
-                  <Col className="text-center">
-                    <Button
-                      color="primary"
-                      block
-                      disabled={btnLoading}
-                      className="px-5 py-2 fw-semibold shadow-sm rounded-pill"
-                      style={{
-                        background: "linear-gradient(135deg, #0dcdfd, #06493b)",
-                        border: "none",
-                        minWidth: "160px",
-                      }}
-                    >
-                      {btnLoading ? (
-                        <>
-                          <Spinner size="sm" className="me-2" />
-                          Processing...
-                        </>
-                      ) : (
-                        "Create"
-                      )}
-                    </Button>
-                  </Col>
-                </Row>
+        </div>
+
+        <div className="adm-form-card-footer">
+          <div className="adm-actions-left">
+            <Button
+              outline
+              color="secondary"
+              type="button"
+              onClick={() => { setForm(initialForm); setLogo(null); setErrors({}); }}
+            >
+              <FaTimes className="me-1" /> Reset
+            </Button>
+          </div>
+          <div className="adm-actions-right">
+            <Button color="primary" type="submit" disabled={btnLoading}>
+              {btnLoading ? (
+                <>
+                  <Spinner size="sm" className="me-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FaCheck className="me-1" /> Create University
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        </Form>
+      </div>
 
 
-              </Form>
-            </CardBody>
-          </Card>
-        </Col>
-
-      </Row>
-
-
-
-
-
-      <Row>
-        {/* LIST TABLE */}
-        <Col lg={12}>
-          <Card className="shadow-lg border-0">
-            <CardHeader className="bg-primary  ">
-              <h5 className="mb-0 text-white">
-                <FaList className="me-2" /> Universities List
-              </h5>
-            </CardHeader>
-            <CardBody className="">
-              <Row className="mb-3">
-                <Col lg={12}>
-                  <Input
-                    placeholder="🔍 Search by name, code or short name..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="form-control-lg"
-                  />
-                </Col>
-              </Row>
+      {/* LIST TABLE */}
+      <Card className="adm-card mt-4">
+        <div className="adm-card-header">
+          <h4 className="adm-card-title"><FaList /> Universities List</h4>
+        </div>
+        <CardBody>
+          <Row className="mb-3">
+            <Col lg={12}>
+              <div className="position-relative">
+                <FaSearch className="position-absolute" style={{ top: 14, left: 14, color: "#94a3b8" }} />
+                <Input
+                  placeholder="Search by name, code or short name..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="form-control-lg ps-5"
+                />
+              </div>
+            </Col>
+          </Row>
 
               {loading ? (
                 <div className="text-center py-5">
@@ -1133,9 +1129,8 @@ const handleSubmit = async (e) => {
                   </Table>
                 </div>
               )}
-            </CardBody>
-          </Card>
-        </Col>
+        </CardBody>
+      </Card>
 
 
         {/* VIEW MODAL */}
@@ -1247,8 +1242,8 @@ const handleSubmit = async (e) => {
         </Modal>
 
         {/* EDIT MODAL */}
-        <Modal isOpen={editModal} toggle={() => setEditModal(false)} size="xl">
-          <ModalHeader toggle={() => setEditModal(false)} className="bg-warning text-dark">
+        <Modal isOpen={editModal} toggle={() => setEditModal(false)} size="xl" scrollable>
+          <ModalHeader toggle={() => setEditModal(false)}>
             <FaEdit className="me-2" /> Edit University
           </ModalHeader>
           <ModalBody className="p-4">
@@ -1470,8 +1465,7 @@ const handleSubmit = async (e) => {
             </Button>
           </ModalFooter>
         </Modal>
-      </Row>
-    </div>
+    </>
   );
 
 };
