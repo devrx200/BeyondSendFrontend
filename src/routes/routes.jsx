@@ -143,7 +143,7 @@ const AppRoutes = () => {
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
-      <Route path="/file" element={} />
+   
 
 
       {/* DYNAMIC CMS PAGES From Content Uploader */}
