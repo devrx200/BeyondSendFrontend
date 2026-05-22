@@ -264,74 +264,113 @@ const FooterSection = () => {
 
 
     /* ================= SAVE ================= */
-    const saveFooterToDB = async (footerPayload) => {
-        await axios.post(`${API}/api/save-footer`, footerPayload, {
-            headers: {   Authorization: `Bearer ${token}` },
-        });
-    };
+    // const saveFooterToDB = async (footerPayload) => {
+    //     await axios.post(`${API}/api/save-footer`, footerPayload, {
+    //         headers: {   Authorization: `Bearer ${token}` },
+    //     });
+    // };
+const saveFooterToDB = async (footerPayload) => {
+    const formData = new FormData();
+    formData.append("contactInfo", JSON.stringify(footerPayload.contactInfo));
+    formData.append("quickLinks", JSON.stringify(footerPayload.quickLinks));
+    formData.append("importantLinks", JSON.stringify(footerPayload.importantLinks));
+    formData.append("socialLinks", JSON.stringify(footerPayload.socialLinks));
 
-    const saveFooter = async () => {
-        const validationErrors = validateFooter();
-        setErrors(validationErrors);
+    // Only attach file if it's a new upload
+    if (footerPayload.contactInfo?.organizerLogo instanceof File) {
+        formData.append("organizerLogo", footerPayload.contactInfo.organizerLogo);
+    }
 
-        if (Object.keys(validationErrors).length > 0) {
-            return Swal.fire(
-                "Validation Error",
-                "Please fix the highlighted errors",
-                "warning"
-            );
-        }
-        try {
-            Swal.fire({
-                title: "Saving...",
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading(),
-            });
+    await axios.post(`${API}/api/save-footer`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+        },
+    });
+};
 
-            // const payload = {
-            //     contactInfo: footer.contactInfo,
-            //     quickLinks: footer.quickLinks,
-            //     importantLinks: footer.importantLinks,
-            //     socialLinks: footer.socialLinks,
+const saveFooter = async () => {
+    const validationErrors = validateFooter();
+    setErrors(validationErrors);
 
-            // };
-             Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    if (Object.keys(validationErrors).length > 0) {
+        return Swal.fire("Validation Error", "Please fix the highlighted errors", "warning");
+    }
 
-        const tokenString = token?.token || token?.access || token;
-            const formData = new FormData();
+    try {
+        Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        // ❌ REMOVE the second Swal.fire and tokenString lines that were here
 
-            // Append normal data (convert to string)
-            formData.append("contactInfo", JSON.stringify(footer.contactInfo));
-            formData.append("quickLinks", JSON.stringify(footer.quickLinks));
-            formData.append("importantLinks", JSON.stringify(footer.importantLinks));
-            formData.append("socialLinks", JSON.stringify(footer.socialLinks));
+        await saveFooterToDB(footer); // ✅ reuse the fixed helper
 
-            if (footer.contactInfo.organizerLogo instanceof File) {
-                formData.append("organizerLogo", footer.contactInfo.organizerLogo);
-            }
+        Swal.fire("Success", "Footer saved successfully", "success");
+        fetchFooter();
+    } catch (error) {
+        Swal.fire("Error", error?.response?.data?.message || "Footer save failed", "error");
+    }
+};
+    // const saveFooter = async () => {
+    //     const validationErrors = validateFooter();
+    //     setErrors(validationErrors);
+
+    //     if (Object.keys(validationErrors).length > 0) {
+    //         return Swal.fire(
+    //             "Validation Error",
+    //             "Please fix the highlighted errors",
+    //             "warning"
+    //         );
+    //     }
+    //     try {
+    //         Swal.fire({
+    //             title: "Saving...",
+    //             allowOutsideClick: false,
+    //             didOpen: () => Swal.showLoading(),
+    //         });
+
+    //         // const payload = {
+    //         //     contactInfo: footer.contactInfo,
+    //         //     quickLinks: footer.quickLinks,
+    //         //     importantLinks: footer.importantLinks,
+    //         //     socialLinks: footer.socialLinks,
+
+    //         // };
+    //          Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    //     const tokenString = token?.token || token?.access || token;
+    //         const formData = new FormData();
+
+    //         // Append normal data (convert to string)
+    //         formData.append("contactInfo", JSON.stringify(footer.contactInfo));
+    //         formData.append("quickLinks", JSON.stringify(footer.quickLinks));
+    //         formData.append("importantLinks", JSON.stringify(footer.importantLinks));
+    //         formData.append("socialLinks", JSON.stringify(footer.socialLinks));
+
+    //         if (footer.contactInfo.organizerLogo instanceof File) {
+    //             formData.append("organizerLogo", footer.contactInfo.organizerLogo);
+    //         }
           
-            const res = await axios.post(
-                `${API}/api/save-footer`,
-                formData,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        Authorization: `Bearer ${tokenString}`,
-                    },
-                }
-            );
+    //         const res = await axios.post(
+    //             `${API}/api/save-footer`,
+    //             formData,
+    //             {
+    //                 headers: {
+    //                     "Content-Type": "multipart/form-data",
+    //                     Authorization: `Bearer ${tokenString}`,
+    //                 },
+    //             }
+    //         );
 
-            Swal.fire("Success", "Footer saved successfully", "success");
+    //         Swal.fire("Success", "Footer saved successfully", "success");
 
-            fetchFooter();
-        } catch (error) {
-            Swal.fire(
-                "Error",
-                error?.response?.data?.message || "Footer save failed",
-                "error"
-            );
-        }
-    };
+    //         fetchFooter();
+    //     } catch (error) {
+    //         Swal.fire(
+    //             "Error",
+    //             error?.response?.data?.message || "Footer save failed",
+    //             "error"
+    //         );
+    //     }
+    // };
 
     const handleEditLink = (type, link, index) => {
         if (!link) return;

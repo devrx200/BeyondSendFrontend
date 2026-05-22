@@ -41,7 +41,7 @@ const Universities = () => {
   const fetchUniversities = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-universities`);
+      const res = await axios.get(`http://localhost:3001/lmsbackend/api/university/get-all-university-form-main-hrmis`);
       setUniversities(res.data.data || []);
     } catch (err) {
       console.error("University fetch error", err);
@@ -55,98 +55,113 @@ const Universities = () => {
   }, []);
 
 
-  const filtered = universities.filter(
-    (u) =>
-      u.universityType === activeTab &&
-      u.universityStatus === "ACTIVE" &&
-      !u.isDeleted
-  );
+const filtered = universities.filter((u) => {
+  if (activeTab === "STATE") {
+    return String(u.universityType) === "1";
+  }
+
+  if (activeTab === "PRIVATE") {
+    return String(u.universityType) === "0";
+  }
+
+  if (activeTab === "CENTRAL") {
+    return String(u.universityType) === "2";
+  }
+
+  return false;
+});
 
   const renderTable = (data) => (
-    <Table responsive hover className="mt-4 align-middle">
-      <thead className="table-light">
-        <tr>
-          <th>S.No</th>
-          <th>{isHindi ? "विश्वविद्यालय" : "University"}</th>
-          <th>{isHindi ? "स्थान" : "Location"}</th>
-          <th>{isHindi ? "स्थापना" : "Established"}</th>
-          <th>{isHindi ? "संपर्क" : "Contact"}</th>
-          <th>{isHindi ? "वेबसाइट" : "Website"}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((uni, index) => (
-          <tr key={uni._id}>
-            <td>{index + 1}</td>
 
-            <td>
-              <div className="d-flex align-items-center gap-3">
-                <img
-                  src={uni.universityLogo || DEFAULT_LOGO}
-                  alt={uni.universityNameEng}
-                  style={{
-                    width: 50,
-                    height: 50,
-                    objectFit: "contain",
-                    borderRadius: 8,
-                    background: "#f8f9fa",
-                    padding: 5
-                  }}
-                />
-                <div>
-                  <div className="fw-bold">
-                    {isHindi
-                      ? uni.universityNameHindi
-                      : uni.universityNameEng}
-                  </div>
-                  <small className="text-muted">
-                    {uni.universityShortName}
-                  </small>
-                </div>
-              </div>
-            </td>
+<div style={{
+  display: "flex", flexDirection: "column", gap: 16,
+  padding: 20, borderRadius: 16,
+  background: "linear-gradient(135deg, #e8f4fd 0%, #f0e8ff 50%, #e8fff4 100%)"
+}}>
+  {data.map((university) => (
+    <div
+      key={university._id}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "80px 1fr 1fr",
+        gap: 20, alignItems: "start",
+        background: "#fff",
+        borderRadius: 16, padding: "20px 24px",
+        boxShadow: "0 2px 12px rgba(99,102,241,0.08), 0 1px 3px rgba(0,0,0,0.06)",
+        transition: "box-shadow 0.2s, transform 0.2s",
+      }}
+    >
+      {/* Logo */}
+      <div style={{
+        width: 80, height: 80, borderRadius: 14, flexShrink: 0,
+        background: "linear-gradient(135deg, #f0e8ff, #e8f4fd)",
+        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"
+      }}>
+        <img src={university.universityLogo || DEFAULT_LOGO} alt={university.name}
+          style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
+      </div>
 
-            <td>
-              <FaMapMarkerAlt className="me-1 text-danger" />
-              {uni.universityAddress || "-"}
-            </td>
-
-            <td>
-              <Badge color="info">
-                {uni.establishYear || "-"}
-              </Badge>
-            </td>
-
-            <td>
-              <div className="small">
-                <div>
-                  <FaPhone className="me-1" />
-                  {uni.contactNumber || "-"}
-                </div>
-                <div>
-                  <FaEnvelope className="me-1" />
-                  {uni.universityEmail || "-"}
-                </div>
-              </div>
-            </td>
-
-            <td>
-              {uni.universityWebsiteUrl ? (
-                <a
-                  href={uni.universityWebsiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm btn-outline-primary"
-                >
-                  <FaGlobe className="me-1" />
-                  {isHindi ? "वेबसाइट" : "Visit"}
-                </a>
-              ) : "-"}
-            </td>
-          </tr>
+      {/* Left Info */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+        <p style={{ fontSize: 16, fontWeight: 700, color: "#1e1b4b", margin: "0 0 10px", lineHeight: 1.4 }}>
+          {university.name}
+        </p>
+        {/* rows */}
+        {[
+          { icon: "🎓", label: "Education Mode", value: university.educationMode },
+          { icon: "📍", label: "Location", value: university.address },
+        ].map(({ icon, label, value }) => (
+          <div key={label} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5 }}>
+            <span style={{ color: "#6b7280", minWidth: 80, fontSize: 13 }}>{icon} {label}</span>
+            <span style={{ color: "#1f2937", fontWeight: 500 }}>{value || "—"}</span>
+          </div>
         ))}
-      </tbody>
-    </Table>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ color: "#6b7280", minWidth: 80, fontSize: 13 }}>📅 Establishment Year</span>
+          <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>
+            {university.establishYear || "—"}
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ color: "#6b7280", minWidth: 80, fontSize: 13 }}>⭐ NAAC</span>
+          <span style={{ background: "#dcfce7", color: "#15803d", fontSize: 12, fontWeight: 600, padding: "3px 10px", borderRadius: 20 }}>
+            {university.naacGrade || "N/A"}
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+          {university.googleLocation && (
+            <a href={university.googleLocation} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 12.5, padding: "6px 14px", borderRadius: 20, border: "1.5px solid #e5e7eb", background: "#f9fafb", color: "#374151", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              📍 View Map
+            </a>
+          )}
+          {university.universityUrl && (
+            <a href={university.universityUrl} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 12.5, padding: "6px 14px", borderRadius: 20, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>
+              🌐 Visit Website
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Right Info */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, paddingLeft: 16, borderLeft: "2px solid #f3f4f6" }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", textTransform: "uppercase", margin: "0 0 4px" }}>
+          Contact & Affiliation
+        </p>
+        {[
+          { icon: "✉️", label: "Email", value: university.universityEmail },
+          { icon: "📞", label: "Contact", value: university.contactNumber },
+        ].map(({ icon, label, value }) => (
+          <div key={label} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5 }}>
+            <span style={{ color: "#6b7280", minWidth: 80, fontSize: 13 }}>{icon} {label}</span>
+            <span style={{ color: "#1f2937", fontWeight: 500 }}>{value || "—"}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
   );
 
   return (
