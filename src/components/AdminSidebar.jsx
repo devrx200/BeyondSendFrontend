@@ -244,26 +244,6 @@ const adminMenu = [
           hi: "शिक्षा सांख्यिकी"
         }
       },
-      {
-        id: "universities",
-        icon: FaUniversity,
-        path: "/admin/universities",
-        label: {
-          en: "Universities",
-          hi: "विश्वविद्यालय"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "college-management",
-        icon: FaSchool,
-        path: "/admin/college-management",
-        label: {
-          en: "College Management",
-          hi: "महाविद्यालय प्रबंधन"
-        }
-      }
     ]
   },
 

@@ -41,7 +41,6 @@ import GalleryManagement from "../views/Admin/GalleryManagement";
 import AboutSectionMangement from "../views/Admin/AboutSectionMangement";
 import ManageCategories from "../views/Admin/ManageCategories";
 import ManageBrands from "../views/Admin/ManageBrands";
-import ManageUniversities from "../views/Admin/ManageUniversities";
 import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
 import AdminEducationStats from "../views/Admin/AdminEducationStats";
 import AdminUserManagement from "../views/Admin/AdminUserManagement";
@@ -60,7 +59,6 @@ import ContentUploaderForm from "../views/Admin/ContentUploaderForm";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
-import CollegeManagement from "../views/Admin/CollegeManagement";
 import FooterSection from "../views/Admin/footerSectionManager";
 import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagement";
 import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement"
@@ -145,6 +143,7 @@ const AppRoutes = () => {
       <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
       <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
       <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
+      <Route path="/file" element={} />
 
 
       {/* DYNAMIC CMS PAGES From Content Uploader */}
@@ -197,10 +196,6 @@ const AppRoutes = () => {
 
           <Route path="brands" element={<ManageBrands />} />
 
-          <Route path="universities" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
-            <Route index element={<ManageUniversities />} />
-          </Route>
-
           <Route path="new-updates" element={<NewUpdatesManagement />} />
 
           <Route path="admin-education-stats" element={<AdminEducationStats />} />
@@ -220,8 +215,6 @@ const AppRoutes = () => {
           <Route path="download-management" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
             <Route index element={<DownloadManagement />} />
           </Route>
-
-          <Route path="college-management" element={<CollegeManagement />} />
 
           <Route path="feedbacks" element={<AdminFeedbackList />} />
 
