@@ -51,6 +51,7 @@
   --adm-transition: 220ms cubic-bezier(.2,.7,.3,1);
 }
 
+
 /* ============================================================
    LAYOUT
    ============================================================ */
@@ -548,76 +549,141 @@
   transform: scale(1.05);
 }
 
-/* ============================================================
-   BREADCRUMB
-   ============================================================ */
-.adm-breadcrumb-bar {
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-  border-bottom: 1px solid var(--adm-border);
-  padding: 12px 24px;
-  display: flex;
+/* Pill-shaped Profile Button */
+.adm-profile-btn-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: inline-block;
+  outline: none;
+}
+
+.adm-profile-btn-pill:focus,
+.adm-profile-btn-pill:active {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.adm-profile-pill {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #14b8a6;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all var(--adm-transition);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+  border: 1px solid transparent;
+}
+
+.adm-profile-pill:hover {
+  background: #14b8a6;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
+}
+
+.adm-profile-pill-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 20%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  object-fit: cover;
+  background: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
 }
 
-.adm-breadcrumb {
-  background: transparent !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  font-size: 0.88rem;
+.adm-profile-pill-info {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  min-width: fit-content;
 }
 
-
-.adm-breadcrumb .breadcrumb-item a {
-  color: var(--adm-primary);
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.adm-profile-pill-name {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
 }
 
-.adm-breadcrumb .breadcrumb-item a:hover {
-  color: var(--adm-primary-dark);
-  text-decoration: underline;
-}
-
-.adm-breadcrumb .breadcrumb-item.active {
-  color: var(--adm-text);
-  font-weight: 600;
-}
-
-.adm-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
-  content: "›";
-  color: var(--adm-text-soft);
-  padding: 0 6px;
-  font-size: 1rem;
-}
-
-.adm-breadcrumb-meta {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.adm-meta-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--adm-primary-50);
-  color: var(--adm-primary-dark);
+.adm-profile-pill-subtitle {
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--adm-primary-100);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  line-height: 1;
 }
+
+.adm-profile-pill-chevron {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.75rem;
+  transition: transform var(--adm-transition);
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+/* Simplified Profile Avatar for Dropdown */
+.adm-header-avatar-simple {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  object-fit: cover;
+  background: #fff;
+  transition: all var(--adm-transition);
+  display: block;
+}
+
+.adm-header-avatar-simple:hover {
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.adm-profile-menu-simple {
+  min-width: 180px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  background: #0d9488;
+  border: none;
+  overflow: hidden;
+}
+
+.adm-profile-menu-simple .adm-profile-item {
+  padding: 14px 16px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all var(--adm-transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adm-profile-menu-simple .adm-profile-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.adm-profile-menu-simple .adm-profile-item:hover {
+  background: #14b8a6;
+  color: #ffffff;
+  padding-left: 18px;
+}
+
+.adm-profile-menu-simple .adm-profile-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fecaca;
+}
+
+.adm-profile-menu-simple .dropdown-divider {
+  margin: 0;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+
 
 /* ============================================================
    ADMIN PAGE PRIMITIVES (used inside Admin pages)
@@ -1145,6 +1211,20 @@
 
   .adm-breadcrumb-bar {
     padding: 8px 14px;
+  }
+
+  .adm-breadcrumb-wrapper {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .adm-breadcrumb {
+    flex: 1;
+  }
+
+  .adm-weather-widget {
+    flex-shrink: 0;
+    padding: 8px 10px;
   }
 
   .adm-breadcrumb-meta {

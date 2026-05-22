@@ -38,7 +38,9 @@ import {
   FaHistory,
   FaChevronRight,
   FaClock,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaExclamationCircle,
+  FaUserShield
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -116,20 +118,33 @@ const adminMenu = [
       hi: "पेज प्रबंधन"
     },
     submenu: [
+
       {
-        id: "simple-page-creator",
-        icon: FaFileAlt,
-        path: "/admin/page-creator-management",
+        id: "multi-section-pages-management",
+        icon: FaLayerGroup,
+        path: "/admin/multi-section-pages-management",
         label: {
-          en: "Simple Page Creator",
-          hi: "पेज निर्माण"
+          en: "Multi Section Pages",
+          hi: "बहु-खंड पृष्ठ"
         },
         allowedRoles: ["ADMIN"],
         allowedEmployeeTypes: ["DIRECTORATE"]
       },
+
+      {
+        id: "rich-content-pages",
+        icon: FaPager,
+        path: "/admin/rich-content-pages",
+        label: {
+          en: "Rich Content Pages",
+          hi: "समृद्ध सामग्री पृष्ठ"
+        },
+        allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+      },
       {
         id: "important-page-management",
-        icon: FaListAlt,
+        icon: FaExclamationCircle,
         path: "/admin/important-page-management",
         label: {
           en: "Important Pages",
@@ -137,7 +152,7 @@ const adminMenu = [
         },
         allowedRoles: ["ADMIN"],
         allowedEmployeeTypes: ["DIRECTORATE"]
-      }
+      },
     ]
   },
 
@@ -149,17 +164,7 @@ const adminMenu = [
       hi: "सामग्री प्रबंधन"
     },
     submenu: [
-      {
-        id: "content-uploader",
-        icon: FaUpload,
-        path: "/admin/content-uploader",
-        label: {
-          en: "Page Content",
-          hi: "पेज सामग्री"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
-      },
+
       {
         id: "file-manager",
         icon: FaFolder,
@@ -190,26 +195,29 @@ const adminMenu = [
     id: "media-and-download-management",
     icon: FaPhotoVideo,
     label: {
-      en: "Media & Download Page",
-      hi: "मीडिया एवं डाउनलोड प्रबंधन"
+      en: "Media & Resources",
+      hi: "मीडिया एवं संसाधन"
     },
     submenu: [
       {
         id: "gallery-page",
-        icon: FaPhotoVideo,
+        icon: FaImages,
         path: "/admin/gallery",
         label: {
-          en: "Photo Gallery Page",
-          hi: "फोटो गैलरी पेज"
-        }
+          en: "Photo Galleries",
+          hi: "फोटो गैलरी"
+        },
+        allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       },
+
       {
         id: "downloads-management",
         icon: FaDownload,
         path: "/admin/download-management",
         label: {
-          en: "Downloads Page",
-          hi: "डाउनलोड पेज"
+          en: "Download Resources",
+          hi: "डाउनलोड संसाधन"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
@@ -320,7 +328,7 @@ const adminMenu = [
       {
         id: "about-content",
         icon: FaImage,
-        path: "/admin/image-master",
+        path: "/admin/about-section",
         label: {
           en: "About Section",
           hi: "परिचय अनुभाग"
@@ -400,8 +408,8 @@ const adminMenu = [
     id: "support",
     icon: FaHeadset,
     label: {
-      en: "Support",
-      hi: "सहायता"
+      en: "Support & Assistance",
+      hi: "सहायता एवं समर्थन"
     },
     submenu: [
       {
@@ -411,16 +419,21 @@ const adminMenu = [
         label: {
           en: "Help & Guidance",
           hi: "सहायता एवं मार्गदर्शन"
-        }
+        },
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
+
       {
         id: "feedbacks",
         icon: FaCommentDots,
         path: "/admin/feedbacks",
         label: {
-          en: "Feedbacks",
-          hi: "प्रतिक्रिया"
-        }
+          en: "User Feedback",
+          hi: "उपयोगकर्ता प्रतिक्रिया"
+        },
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       }
     ]
   },
@@ -436,7 +449,7 @@ const adminMenu = [
     allowedRoles: ["ADMIN", "NIC"],
     allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
   },
-
+  // NIC
   {
     id: "system-logs",
     icon: FaHistory,
@@ -447,7 +460,19 @@ const adminMenu = [
     },
     allowedRoles: ["NIC"],
     allowedEmployeeTypes: ["NIC"]
-  }
+  },
+  {
+    id: "session-management",
+    icon: FaUserShield,
+    path: "/admin/session-manager",
+    label: {
+      en: "User Sessions",
+      hi: "उपयोगकर्ता सत्र"
+    },
+    allowedRoles: ["NIC"],
+    allowedEmployeeTypes: ["NIC"]
+  },
+
 ];
 // ─────────────────────────────────────────────────────────
 const isAllowed = (item, userRole, userEmployeeType) => {

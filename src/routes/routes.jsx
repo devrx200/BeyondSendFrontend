@@ -177,7 +177,7 @@ const AppRoutes = () => {
 
           <Route path="announcements" element={<AnnouncementsManagement />} />
 
-          <Route path="content-uploader" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
+          <Route path="rich-content-pages" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route index element={<ContentUploaderForm />} />
           </Route>
 
@@ -185,7 +185,7 @@ const AppRoutes = () => {
 
           <Route path="gallery" element={<GalleryManagement />} />
 
-          <Route path="image-master" element={<AboutSectionMangement />} />
+          <Route path="about-section" element={<AboutSectionMangement />} />
 
           <Route path="menu" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route index element={<MenuManagement />} />
@@ -225,15 +225,11 @@ const AppRoutes = () => {
 
           <Route path="feedbacks" element={<AdminFeedbackList />} />
 
-          <Route path="users-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
-            <Route index element={<AdminUserManagement />} />
-          </Route>
-
           <Route path="footer-section-manager" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route index element={<FooterSection />} />
           </Route>
 
-          <Route path="page-creator-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+          <Route path="multi-section-pages-management" element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route index element={<PageCreatorManagement />} />
           </Route>
 
@@ -261,7 +257,14 @@ const AppRoutes = () => {
 
           <Route path="tutorials" element={<HelpTutorials />} />
 
-          <Route path="session-manager" element={<SessionManager />} />
+          <Route path="session-manager" element={<AuthMiddleware allowedRoles={["NIC"]} allowedEmployeeTypes={["NIC"]} />}>
+            <Route index element={<SessionManager />} />
+          </Route>
+
+
+          <Route path="users-management" element={<AuthMiddleware allowedRoles={["ADMIN","NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE","NIC"]} />}>
+            <Route index element={<AdminUserManagement />} />
+          </Route>
 
           <Route path="activity-logs" element={<AuthMiddleware allowedRoles={["NIC"]} allowedEmployeeTypes={["NIC"]} />}>
             <Route index element={<ActivityLogManagement />} />
