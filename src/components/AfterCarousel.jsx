@@ -24,7 +24,7 @@ const AfterCarousel = () => {
     ? [
       { value: stats.totalGovernmentUniversities, labelEn: "Govt Universities", labelHi: "शासकीय विश्वविद्यालय", icon: "bi-bank", color: "primary" },
       { value: stats.totalPrivateUniversities, labelEn: "Private Universities", labelHi: "निजी विश्वविद्यालय", icon: "bi-bank2", color: "danger" },
-      { value: stats.governmentColleges, labelEn: "Govt Colleges", labelHi: "सरकारी महाविद्यालय", icon: "bi-building", color: "success" },
+      { value: stats.governmentColleges, labelEn: "Govt Colleges", labelHi: "शासकीय महाविद्यालय", icon: "bi-building", color: "success" },
       { value: stats.privateColleges, labelEn: "Private Colleges", labelHi: "निजी महाविद्यालय", icon: "bi-buildings", color: "warning" },
       { value: stats.aidedColleges, labelEn: "Aided Colleges", labelHi: "अनुदान प्राप्त महाविद्यालय", icon: "bi-journal-bookmark", color: "info" },
     ]

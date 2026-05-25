@@ -1,440 +1,428 @@
-// AboutAndHelp.jsx — List + Single Page Editor with Preview + Update
+// AboutAndHelp.jsx — Content Uploader with Reactstrap Bootstrap UI
 import React, { useEffect, useState } from "react";
 import {
-  Card,
-  CardBody,
-  Row,
-  Col,
-  FormGroup,
-  Label,
-  Input,
-  Button,
-  Alert,
-  Table,
+  Card, CardBody, CardHeader,
+  Row, Col, FormGroup, Label, Input,
+  Button, Alert, Table, Badge, Spinner,
+  Nav, NavItem, NavLink,
 } from "reactstrap";
 import axios from "axios";
 import DynamicContentEditor from "../../utilies/DynamicContentEditor";
-import "../../css/aboutAndHelp.css";
 
-const API = import.meta.env.VITE_API_URL;
+const API   = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
+const authH = { Authorization: `Bearer ${token}` };
 
+/* ─── small reusable field wrapper ──────────────────────── */
+const Field = ({ label, children, required }) => (
+  <FormGroup>
+    <Label className="fw-semibold text-secondary small text-uppercase mb-1">
+      {label}{required && <span className="text-danger ms-1">*</span>}
+    </Label>
+    {children}
+  </FormGroup>
+);
+
+/* ══════════════════════════════════════════════════════════
+   Main Component
+═══════════════════════════════════════════════════════════ */
 const ContentUploaderForm = () => {
-  const [currentView, setCurrentView] = useState("list"); // list | form
-  const [editingId, setEditingId] = useState(null);
+  const [currentView, setCurrentView] = useState("list");
+  const [editingId, setEditingId]     = useState(null);
+  const [loading, setLoading]         = useState(false);
+  const [saveStatus, setSaveStatus]   = useState(null); // "success" | "error"
+  const [viewMode, setViewMode]       = useState(false);
 
   const [form, setForm] = useState({
-    titleEn: "",
-    titleHi: "",
-    shortDescriptionEn: "",
-    shortDescriptionHi: "",
-    descriptionEn: "",
-    descriptionHi: "",
-    categoryId: "",
-    fromDate: "",
-    expirydate: "",
-    link: "",
-    isActive: true,
+    titleEn: "", titleHi: "",
+    shortDescriptionEn: "", shortDescriptionHi: "",
+    descriptionEn: "", descriptionHi: "",
+    categoryId: "", fromDate: "", expirydate: "",
+    link: "", isActive: true,
   });
 
-  const [pages, setPages] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedPage, setSelectedPage] = useState("");
-  const [contents, setContents] = useState([]);
+  const [pages, setPages]                   = useState([]);
+  const [categories, setCategories]         = useState([]);
+  const [selectedPage, setSelectedPage]     = useState("");
+  const [contents, setContents]             = useState([]);
+  const [savedContentList, setSavedContent] = useState([]);
 
-  const [viewMode, setViewMode] = useState(false); // 👈 preview toggle only
-  const [loading, setLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-
-  const [savedContentList, setSavedContentList] = useState([]);
-
-  /* ==================== LIFECYCLE ==================== */
+  /* ── lifecycle ── */
   useEffect(() => {
     fetchPages();
     fetchCategories();
     fetchSavedContent();
   }, []);
 
-  /* ==================== API ==================== */
+  /* ── API helpers ── */
   const fetchPages = async () => {
-    const res = await axios.get(`${API}/api/menu-list-all/get-all`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setPages(extractPagesFromMenu(res.data.data || []));
+    try {
+      const res = await axios.get(`${API}/api/menu-list-all/get-all`, { headers: authH });
+      setPages(extractPagesFromMenu(res.data.data || []));
+    } catch (e) { console.error(e); }
   };
 
-  const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
-    menus.forEach((item) => {
-      pages.push({
-        _id: item._id,
-        titleEn: item.titleEng,
-        titleHi: item.titleHi,
-        parentId,
-      });
-      if (Array.isArray(item.submenu) && item.submenu.length > 0) {
-        extractPagesFromMenu(item.submenu, pages, item._id);
-      }
+  const extractPagesFromMenu = (menus, acc = [], parentId = null) => {
+    menus.forEach(item => {
+      acc.push({ _id: item._id, titleEn: item.titleEng, titleHi: item.titleHi, parentId });
+      if (Array.isArray(item.submenu) && item.submenu.length)
+        extractPagesFromMenu(item.submenu, acc, item._id);
     });
-    return pages;
+    return acc;
   };
 
   const fetchCategories = async () => {
-    const res = await axios.get(`${API}/api/get-categories`);
-
-    console.log(res.data, "Getting Categories");
-
-    setCategories(res.data || []);
+    try {
+      const res = await axios.get(`${API}/api/get-categories`);
+      setCategories(res.data || []);
+    } catch (e) { console.error(e); }
   };
 
   const fetchSavedContent = async () => {
-    const res = await axios.get(`${API}/api/get-about-and-help`);
-    setSavedContentList(res.data);
-
-    // console.log(res.data,"res.data?.data res.data?.data");
-
+    try {
+      const res = await axios.get(`${API}/api/get-about-and-help`);
+      setSavedContent(res.data || []);
+    } catch (e) { console.error(e); }
   };
 
-  /* ==================== FORM ==================== */
-  const handleChange = (e) => {
+  const handleChange = e => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    setForm(f => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
   const resetForm = () => {
-    setForm({
-      titleEn: "",
-      titleHi: "",
-      shortDescriptionEn: "",
-      shortDescriptionHi: "",
-      descriptionEn: "",
-      descriptionHi: "",
-      categoryId: "",
-      fromDate: "",
-      expirydate: "",
-      link: "",
-      isActive: true,
-    });
-    setSelectedPage("");
-    setContents([]);
-    setEditingId(null);
-    setViewMode(false);
+    setForm({ titleEn:"", titleHi:"", shortDescriptionEn:"", shortDescriptionHi:"",
+              descriptionEn:"", descriptionHi:"", categoryId:"", fromDate:"",
+              expirydate:"", link:"", isActive: true });
+    setSelectedPage(""); setContents([]); setEditingId(null);
+    setViewMode(false); setSaveStatus(null);
   };
 
-  /* ==================== CREATE / UPDATE ==================== */
   const handleSubmit = async () => {
-    setLoading(true);
-    setSaveStatus(null);
-
+    setLoading(true); setSaveStatus(null);
     try {
-      const formData = new FormData();
-
-      Object.entries(form).forEach(([k, v]) => {
-        if (v !== null && v !== undefined) formData.append(k, v);
-      });
-
-      formData.append("selectedPage", selectedPage);
-
-      const contentsPayload = contents.map((item) => {
-        const clean = { ...item };
-        delete clean.file;
-        delete clean.imageFile;
-        return clean;
-      });
-
-      formData.append("contents", JSON.stringify(contentsPayload));
-
-      const url = editingId
-        ? `${API}/api/about-and-help/${editingId}`
-        : `${API}/api/about-and-help`;
-
-      await axios.post(url, formData, {
-        headers: { "Content-Type": "multipart/form-data" , Authorization: `Bearer ${token}`},
-      });
-
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => v !== null && v !== undefined && fd.append(k, v));
+      fd.append("selectedPage", selectedPage);
+      fd.append("contents", JSON.stringify(
+        contents.map(c => { const x = { ...c }; delete x.file; delete x.imageFile; return x; })
+      ));
+      const url = editingId ? `${API}/api/about-and-help/${editingId}` : `${API}/api/about-and-help`;
+      await axios.post(url, fd, { headers: { "Content-Type": "multipart/form-data", ...authH } });
       setSaveStatus("success");
       fetchSavedContent();
-
-      setTimeout(() => {
-        setSaveStatus(null);
-        resetForm();
-        setCurrentView("list");
-      }, 1200);
+      setTimeout(() => { setSaveStatus(null); resetForm(); setCurrentView("list"); }, 1400);
     } catch (err) {
-      console.error(err);
-      setSaveStatus("error");
-    } finally {
-      setLoading(false);
-    }
+      console.error(err); setSaveStatus("error");
+    } finally { setLoading(false); }
   };
 
-  /* ==================== EDIT ==================== */
-  const handleEdit = async (item) => {
-    const res = await axios.get(`${API}/api/get-about-and-help/${item._id}`);
-    const data = res.data;
-
-    setEditingId(item._id);
-
-    setForm({
-      titleEn: data.titleEn || "",
-      titleHi: data.titleHi || "",
-      shortDescriptionEn: data.shortDescriptionEn || "",
-      shortDescriptionHi: data.shortDescriptionHi || "",
-      descriptionEn: data.descriptionEn || "",
-      descriptionHi: data.descriptionHi || "",
-      categoryId: data.categoryId || "",
-      fromDate: data.fromDate || "",
-      expirydate: data.expirydate || "",
-      link: data.link || "",
-      isActive: data.isActive ?? true,
-    });
-
-    setSelectedPage(data.selectedPage || "");
-    setContents(data.contents || []);
-
-    setViewMode(false);
-    setCurrentView("form");
+  const handleEdit = async item => {
+    try {
+      const res  = await axios.get(`${API}/api/get-about-and-help/${item._id}`);
+      const data = res.data;
+      setEditingId(item._id);
+      setForm({
+        titleEn: data.titleEn || "", titleHi: data.titleHi || "",
+        shortDescriptionEn: data.shortDescriptionEn || "", shortDescriptionHi: data.shortDescriptionHi || "",
+        descriptionEn: data.descriptionEn || "", descriptionHi: data.descriptionHi || "",
+        categoryId: data.categoryId || "", fromDate: data.fromDate || "",
+        expirydate: data.expirydate || "", link: data.link || "",
+        isActive: data.isActive ?? true,
+      });
+      setSelectedPage(data.selectedPage || "");
+      setContents(data.contents || []);
+      setViewMode(false); setCurrentView("form");
+    } catch (e) { console.error(e); }
   };
 
-  /* ==================== LIST VIEW ==================== */
+  /* ════════════════════════════════════════════════════
+     LIST VIEW
+  ═══════════════════════════════════════════════════ */
   const renderListView = () => (
-    <div className="cms-container">
-      <div className="cms-wrapper">
-        <Row className="mb-3">
-          <Col md={6}>
-            <h4 className="text-white">New Content Uploader</h4>
-          </Col>
-          <Col md={6} className="text-end">
-            <Button
-              color="success"
-              onClick={() => {
-                resetForm();
-                setCurrentView("form");
-              }}
-            >
-              + Create New
-            </Button>
-          </Col>
-        </Row>
+    <>
+      {/* Page header */}
+      <div className="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h4 className="mb-0 fw-bold text-white">Content Manager</h4>
+          <p className="mb-0 text-white-50 small mt-1">Manage About & Help page content</p>
+        </div>
+        <Button color="success" className="fw-semibold px-4 d-flex align-items-center gap-2"
+          onClick={() => { resetForm(); setCurrentView("form"); }}>
+          <span>+</span> Create New
+        </Button>
+      </div>
 
-        <Card>
-          <CardBody>
-            <Table hover>
-              <thead>
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+          <div className="d-flex align-items-center gap-2">
+            <span className="fw-bold text-dark">All Content</span>
+            <Badge color="secondary" pill className="px-2">
+              {savedContentList.length}
+            </Badge>
+          </div>
+          <small className="text-muted">{savedContentList.filter(i => i.isActive).length} active</small>
+        </CardHeader>
+        <CardBody className="p-0">
+          <Table hover responsive className="mb-0 align-middle">
+            <thead>
+              <tr className="table-light border-bottom">
+                <th className="ps-4 py-3 fw-semibold text-secondary small text-uppercase">#</th>
+                <th className="py-3 fw-semibold text-secondary small text-uppercase">Title</th>
+                <th className="py-3 fw-semibold text-secondary small text-uppercase">Page</th>
+                <th className="py-3 fw-semibold text-secondary small text-uppercase">Category</th>
+                <th className="py-3 fw-semibold text-secondary small text-uppercase">Status</th>
+                <th className="py-3 fw-semibold text-secondary small text-uppercase pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {savedContentList.length === 0 ? (
                 <tr>
-                  <th>Title (EN)</th>
-                  <th>Page</th>
-                  <th>Status</th>
-                  <th width="140">Actions</th>
+                  <td colSpan={6} className="text-center text-muted py-5">
+                    <div className="fs-1 mb-2 opacity-25">📄</div>
+                    <p className="mb-0">No content found. Create your first entry.</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {savedContentList.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center text-muted py-4">
-                      No content found
+              ) : savedContentList.map((item, idx) => {
+                const page = pages.find(p => p._id === item.selectedPage);
+                // const cat  = categories.find(c => c._id === item.categoryId);
+                let cat
+                return (
+                  <tr key={item._id}>
+                    <td className="ps-4 text-muted small">{idx + 1}</td>
+                    <td>
+                      <div className="fw-semibold text-dark">{item.titleEn || "—"}</div>
+                      {item.titleHi && <div className="small text-muted">{item.titleHi}</div>}
+                    </td>
+                    <td className="small text-muted">{page?.titleEn || "—"}</td>
+                    <td className="small text-muted">{cat?.name || cat?.title || "—"}</td>
+                    <td>
+                      <Badge
+                        color={item.isActive ? "success" : "secondary"}
+                        pill className="px-3 py-1 fw-semibold"
+                      >
+                        {item.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="pe-4">
+                      <Button size="sm" color="primary" outline
+                        className="fw-semibold px-3"
+                        onClick={() => handleEdit(item)}>
+                        ✏️ Edit
+                      </Button>
                     </td>
                   </tr>
-                ) : (
-                  savedContentList.map((item) => {
-                    const page = pages.find(
-                      (p) => p._id === item.selectedPage
-                    );
-                    return (
-                      <tr key={item._id}>
-                        <td>{item.titleEn}</td>
-                        <td>{page?.titleEn || "-"}</td>
-                        <td>
-                          <span
-                            className={`badge ${item.isActive ? "bg-success" : "bg-secondary"
-                              }`}
-                          >
-                            {item.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td>
-                          <Button
-                            size="sm"
-                            color="primary"
-                            onClick={() => handleEdit(item)}
-                          >
-                            Edit
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </Table>
-          </CardBody>
-        </Card>
-      </div>
-    </div>
+                );
+              })}
+            </tbody>
+          </Table>
+        </CardBody>
+      </Card>
+    </>
   );
 
-  /* ==================== FORM VIEW ==================== */
+  /* ════════════════════════════════════════════════════
+     FORM VIEW
+  ═══════════════════════════════════════════════════ */
   const renderFormView = () => (
-    <div className="cms-container">
-      <div className="cms-wrapper">
-        <Row className="mb-3 align-items-center">
-          <Col md={6}>
-            <h4 className="text-white">{editingId ? "Update Content" : "Create Content"}</h4>
-          </Col>
+    <>
+      {/* Page header */}
+      <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+          <h4 className="mb-0 fw-bold text-white">
+            {editingId ? "✏️ Update Content" : "➕ Create Content"}
+          </h4>
+          <p className="mb-0 text-white-50 small mt-1">
+            {editingId ? "Edit and update existing content" : "Fill in the details to publish new content"}
+          </p>
+        </div>
 
-          <Col md={6} className="text-end d-flex justify-content-end gap-2">
-            <Button
-              size="sm"
-              color={viewMode ? "warning" : "success"}
-              className="fw-semibold px-3"
-              onClick={() => setViewMode(!viewMode)}
-            >
-              {viewMode ? "✏️ Edit Mode" : "👁️ Preview Mode"}
-            </Button>
-
-            <Button
-              size="sm"
-              color="danger"
-              className="fw-semibold px-3"
-              onClick={() => {
-                resetForm();
-                setCurrentView("list");
-              }}
-            >
-              🔙 Back to List
-            </Button>
-          </Col>
-
-
-        </Row>
-
-        {saveStatus && (
-          <Alert
-            color={saveStatus === "success" ? "success" : "danger"}
+        <div className="d-flex gap-2">
+          <Button
+            size="sm" outline
+            color={viewMode ? "warning" : "info"}
+            className="fw-semibold px-3"
+            onClick={() => setViewMode(!viewMode)}
           >
-            {saveStatus === "success"
-              ? "✅ Content saved successfully"
-              : "❌ Error saving content"}
-          </Alert>
-        )}
+            {viewMode ? "✏️ Edit Mode" : "👁 Preview"}
+          </Button>
+          <Button
+            size="sm" color="light"
+            className="fw-semibold px-3 text-dark"
+            onClick={() => { resetForm(); setCurrentView("list"); }}
+          >
+            ← Back
+          </Button>
+        </div>
+      </div>
 
-        <Card>
-          <CardBody>
-            {/* BASIC INFO */}
-            <Row>
-              <Col md="6">
-                <Label>Title (EN)</Label>
-                <Input
-                  name="titleEn"
-                  value={form.titleEn}
-                  onChange={handleChange}
-                  disabled={viewMode}
-                />
-              </Col>
-              <Col md="6">
-                <Label>Title (HI)</Label>
-                <Input
-                  name="titleHi"
-                  value={form.titleHi}
-                  onChange={handleChange}
-                  disabled={viewMode}
-                />
-              </Col>
-            </Row>
+      {/* Alert */}
+      {saveStatus && (
+        <Alert color={saveStatus === "success" ? "success" : "danger"} className="mb-4">
+          {saveStatus === "success" ? "✅ Content saved successfully!" : "❌ Error saving content. Please try again."}
+        </Alert>
+      )}
 
-            <Row className="mt-3">
-              <Col md="6">
-                <Label>Category</Label>
-                <Input
-                  type="select"
-                  name="categoryId"
-                  value={form.categoryId}
-                  onChange={handleChange}
-                  disabled={viewMode}
-                >
-                  <option value="">-- Select Category --</option>
-                  {categories && categories.length > 0 && categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name || c.title}
-                    </option>
+      {/* ── Section 1: Basic Info ── */}
+      <Card className="border-0 shadow-sm mb-4">
+        <CardHeader className="bg-white border-bottom py-3">
+          <div className="d-flex align-items-center gap-2">
+            <span className="badge bg-primary rounded-circle p-2" style={{ width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>1</span>
+            <span className="fw-bold text-dark">Basic Information</span>
+          </div>
+        </CardHeader>
+        <CardBody className="p-4">
+          <Row>
+            <Col md={6}>
+              <Field label="Title (English)" required>
+                <Input name="titleEn" value={form.titleEn} onChange={handleChange}
+                  disabled={viewMode} placeholder="Enter English title" bsSize="sm" />
+              </Field>
+            </Col>
+            <Col md={6}>
+              <Field label="Title (Hindi)">
+                <Input name="titleHi" value={form.titleHi} onChange={handleChange}
+                  disabled={viewMode} placeholder="हिंदी शीर्षक" bsSize="sm" />
+              </Field>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={6}>
+              <Field label="Category">
+                <Input type="select" name="categoryId" value={form.categoryId}
+                  onChange={handleChange} disabled={viewMode} bsSize="sm">
+                  <option value="">— Select Category —</option>
+                  {/* {categories.map(c => (
+                    <option key={c._id} value={c._id}>{c.name || c.title}</option>
+                  ))} */}
+                </Input>
+              </Field>
+            </Col>
+            <Col md={6}>
+              <Field label="Page">
+                <Input type="select" value={selectedPage}
+                  onChange={e => setSelectedPage(e.target.value)}
+                  disabled={viewMode} bsSize="sm">
+                  <option value="">— Select Page —</option>
+                  {pages.map(p => (
+                    <option key={p._id} value={p._id}>{p.titleHi} / {p.titleEn}</option>
                   ))}
                 </Input>
-              </Col>
+              </Field>
+            </Col>
+          </Row>
 
-              <Col md="6">
-                <Label>Selected Page</Label>
-                <Input
-                  type="select"
-                  value={selectedPage}
-                  onChange={(e) => setSelectedPage(e.target.value)}
-                  disabled={viewMode}
-                >
-                  <option value="">-- Select Page --</option>
-                  {pages.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.titleHi} / {p.titleEn}
-                    </option>
-                  ))}
-                </Input>
-              </Col>
-            </Row>
+          <Row>
+            
+            <Col md={4}>
+              <Field label="External Link">
+                <Input name="link" value={form.link} onChange={handleChange}
+                  disabled={viewMode} placeholder="https://..." bsSize="sm" />
+              </Field>
+            </Col>
+          </Row>
 
-            {/* RICH TEXT */}
-            <div className="mt-4">
-              <h6>Content</h6>
-              <DynamicContentEditor
-                contents={contents}
-                setContents={setContents}
-                viewMode={viewMode}
-              />
-            </div>
+          <Row>
+            <Col md={12}>
+              <FormGroup check>
+                <Input type="checkbox" name="isActive"
+                  checked={form.isActive} onChange={handleChange} disabled={viewMode} />
+                <Label check className="fw-semibold ms-2 text-secondary small">
+                  Mark as Active
+                </Label>
+              </FormGroup>
+            </Col>
+          </Row>
+        </CardBody>
+      </Card>
 
-            {/* DESCRIPTIONS */}
-            <Row className="mt-4">
-              <Col md="6">
-                <Label>Short Description (EN)</Label>
-                <Input
-                  type="textarea"
-                  name="shortDescriptionEn"
-                  value={form.shortDescriptionEn}
-                  onChange={handleChange}
-                  disabled={viewMode}
-                />
-              </Col>
-              <Col md="6">
-                <Label>Short Description (HI)</Label>
-                <Input
-                  type="textarea"
-                  name="shortDescriptionHi"
-                  value={form.shortDescriptionHi}
-                  onChange={handleChange}
-                  disabled={viewMode}
-                />
-              </Col>
-            </Row>
+      {/* ── Section 2: Rich Text Content ── */}
+      <Card className="border-0 shadow-sm mb-4">
+        <CardHeader className="bg-white border-bottom py-3">
+          <div className="d-flex align-items-center gap-2">
+            <span className="badge bg-success rounded-circle p-2" style={{ width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>2</span>
+            <span className="fw-bold text-dark">Main Content</span>
+            {viewMode && (
+              <Badge color="warning" pill className="ms-2 px-2 small">Preview Mode</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardBody className="p-4">
+          <DynamicContentEditor
+            contents={contents}
+            setContents={setContents}
+            viewMode={viewMode}
+          />
+        </CardBody>
+      </Card>
 
-            {/* FOOTER */}
-            {!viewMode && (
-              <div className="text-end mt-4">
-                <Button
-                  color="success"
-                  onClick={handleSubmit}
-                  disabled={loading}
-                >
+      {/* ── Section 3: Descriptions ── */}
+      <Card className="border-0 shadow-sm mb-4">
+        <CardHeader className="bg-white border-bottom py-3">
+          <div className="d-flex align-items-center gap-2">
+            <span className="badge bg-info rounded-circle p-2" style={{ width:30, height:30, display:"flex", alignItems:"center", justifyContent:"center", fontSize:12 }}>3</span>
+            <span className="fw-bold text-dark">Short Descriptions</span>
+          </div>
+        </CardHeader>
+        <CardBody className="p-4">
+          <Row>
+            <Col md={6}>
+              <Field label="Short Description (English)">
+                <Input type="textarea" name="shortDescriptionEn" rows={4}
+                  value={form.shortDescriptionEn} onChange={handleChange}
+                  disabled={viewMode} placeholder="Brief summary in English…"
+                  style={{ resize:"vertical" }} />
+              </Field>
+            </Col>
+            <Col md={6}>
+              <Field label="Short Description (Hindi)">
+                <Input type="textarea" name="shortDescriptionHi" rows={4}
+                  value={form.shortDescriptionHi} onChange={handleChange}
+                  disabled={viewMode} placeholder="संक्षिप्त विवरण…"
+                  style={{ resize:"vertical" }} />
+              </Field>
+            </Col>
+          </Row>
+        </CardBody>
+      </Card>
+
+      {/* ── Submit bar ── */}
+      {!viewMode && (
+        <Card className="border-0 shadow-sm">
+          <CardBody className="py-3 px-4">
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div className="text-muted small">
+                {editingId
+                  ? "Changes will overwrite the existing record."
+                  : "Content will be published after saving."}
+              </div>
+              <div className="d-flex gap-2">
+                <Button color="light" className="fw-semibold text-dark px-4"
+                  onClick={() => { resetForm(); setCurrentView("list"); }}>
+                  Cancel
+                </Button>
+                <Button color="success" className="fw-semibold px-5"
+                  onClick={handleSubmit} disabled={loading}>
                   {loading
-                    ? "Saving..."
-                    : editingId
-                      ? "Update Content"
-                      : "Save Content"}
+                    ? <><Spinner size="sm" className="me-2" />Saving…</>
+                    : editingId ? "💾 Update Content" : "🚀 Save Content"
+                  }
                 </Button>
               </div>
-            )}
+            </div>
           </CardBody>
         </Card>
-      </div>
-    </div>
+      )}
+    </>
   );
 
-  return currentView === "list" ? renderListView() : renderFormView();
+  /* ─── Shell ──────────────────────────────────────────── */
+  return (
+    <div className="px-3 pb-5" style={{ marginTop: -20 }}>
+      {currentView === "list" ? renderListView() : renderFormView()}
+    </div>
+  );
 };
 
 export default ContentUploaderForm;

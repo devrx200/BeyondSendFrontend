@@ -41,7 +41,7 @@ const AboutSection = () => {
           <Row className="align-items-start">
 
             {/* ================= LEFT CONTENT ================= */}
-            <Col lg="8" md="12">
+            <Col lg="9" md="12">
               <h4 className="mb-3 text-dark fw-bold">
                 {isHindi ? "हमारे विभाग के बारे में" : "About Department"}
               </h4>
@@ -79,21 +79,20 @@ const AboutSection = () => {
             </Col>
 
             {/* ================= RIGHT PROFILE LIST ================= */}
-            <Col lg="4" md="12" className="mt-4 mt-lg-0">
+            <Col  lg="3" md="12" className="mt-4   mt-lg-0">
 
               {profiles.map((profile) => (
                 <Card
                   key={profile._id}
-                  className="mb-3 p-3 shadow-sm"
+                  className="mb-3 p-3  shadow-sm"
                   style={{
                     borderRadius: "10px",
-                    background: "#fafafa",
-                    border: "1px solid #eee",
+                    background: "#f4fffd",
+                    border: "2px solid #d8d8d8",
                   }}
                 >
-                  <div className="d-flex align-items-center">
+                  <div className="d-flex  align-items-center">
 
-                    {/* IMAGE */}
                     <img
                       src={
                         profile.image
@@ -102,28 +101,28 @@ const AboutSection = () => {
                       }
                       alt={profile.imgNameEng}
                       style={{
-                        width: "70px",
-                        height: "70px",
+                        width: "100px",
+                        height: "110px",
                         borderRadius: "30%",
                         objectFit: "cover",
                         marginRight: "15px",
                         padding: "3px",
-                        border: "2px solid #afccf8",
+                        border: "2px solid #18181a",
                       }}
                     />
 
                     {/* TEXT */}
                     <div>
                       <h6 className="m-0 text-dark fw-bold d-block"
-                        style={{ fontSize: "0.9rem" }}
+                        style={{ fontSize: "1.2rem" }}
                       >
                         {isHindi
                           ? profile.imgNameHin
                           : profile.imgNameEng}
                       </h6>
                       <small
-                        className=" text-muted"
-                        style={{ fontSize: "0.7rem" }}
+                        className=" text-muted fw-bold"
+                        style={{ fontSize: "0.9rem" }}
                       >
                         {isHindi
                           ? profile.designationHin
