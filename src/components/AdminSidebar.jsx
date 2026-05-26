@@ -454,6 +454,17 @@ const adminMenu = [
     allowedRoles: ["NIC"],
     allowedEmployeeTypes: ["NIC"]
   },
+  {
+    id: "database-backup",
+    icon: FaDatabase, 
+    path: "/admin/database-backup-managments", 
+    label: {
+      en: "Database Backup",
+      hi: "डेटाबेस बैकअप"
+    },
+    allowedRoles: ["NIC"],
+    allowedEmployeeTypes: ["NIC"]
+  },
 
 ];
 // ─────────────────────────────────────────────────────────

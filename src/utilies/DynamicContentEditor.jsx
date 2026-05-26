@@ -872,41 +872,6 @@ const DynamicContentEditor = ({ contents, setContents, viewMode = false }) => {
           }}
         >
           <ContentStats html={item.richTextContent} />
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Saved indicator */}
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: 5,
-                fontSize: 11, color: T.inkLight, fontWeight: 600,
-              }}
-            >
-              <div
-                style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: "#10b981", boxShadow: "0 0 0 2px #d1fae5",
-                }}
-              />
-              Auto-saved
-            </div>
-
-            {/* Clear */}
-            <button
-              onClick={() => {
-                if (window.confirm("Clear all content?"))
-                  updateContent(item.id, { richTextContent: "" });
-              }}
-              style={{
-                padding: "5px 12px", borderRadius: 7,
-                border: `1px solid ${T.dangerBd}`,
-                background: T.dangerBg, color: T.danger,
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              🗑 Clear
-            </button>
-          </div>
         </div>
       </div>
 

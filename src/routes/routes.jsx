@@ -61,6 +61,7 @@ import HelpGuidance from "../views/Admin/HelpGuidance";
 import HelpTutorials from "../views/Admin/HelpTutorials";
 import SessionManager from "../views/Admin/SessionManager";
 import ActivityLogManagement from "../views/Admin/ActivityLogManagement";
+import DbBackupManagement from "../views/Admin/DbBackupManagement"
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
 const API_URL = import.meta.env.VITE_API_URL;
@@ -208,6 +209,7 @@ const AppRoutes = () => {
           <Route element={<AuthMiddleware allowedRoles={["NIC"]} allowedEmployeeTypes={["NIC"]} />}>
             <Route path="session-manager" element={<SessionManager />} />
             <Route path="activity-logs" element={<ActivityLogManagement />} />
+            <Route path="database-backup-managments" element={<DbBackupManagement />} />
           </Route>
 
         </Route>
