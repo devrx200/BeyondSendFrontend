@@ -303,7 +303,9 @@ const adminMenu = [
         label: {
           en: "Home Slider",
           hi: "होम स्लाइडर"
-        }
+        },
+         allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "about-content",

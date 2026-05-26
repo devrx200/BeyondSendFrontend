@@ -41,6 +41,10 @@ const AuthMiddleware = ({ allowedRoles = [],
       const role = user?.role?.toUpperCase();
       const employeeType = user?.employeeType?.toUpperCase();
       sessionStorage.setItem("userData", JSON.stringify(user));
+
+      window.userRole = user?.role?.toUpperCase();
+      window.employeeType = user?.employeeType?.toUpperCase();
+      
       if (
         allowedRoles.length > 0 &&
         !allowedRoles.includes(role)
@@ -97,7 +101,7 @@ const AuthMiddleware = ({ allowedRoles = [],
       allowEscapeKey: false
     });
     sessionStorage.clear();
-    navigate("/admin/login", { replace: true });
+    navigate("/auth/login", { replace: true });
   };
 
   const unauthorizedAccess = async (

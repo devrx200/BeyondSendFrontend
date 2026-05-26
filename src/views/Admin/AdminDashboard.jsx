@@ -202,105 +202,348 @@ const AdminDashboard = () => {
               </Card>
             </Col>
 
+
+
             {/* ---------- QUICK ACTIONS ---------- */}
+
             <Col lg={8} md={12} className="mb-4">
+
               <Card className="shadow-sm border-0 h-100">
+
                 <CardBody>
-                  <h5 className="fw-bold mb-3">Quick Actions</h5>
+
+                  <h5 className="fw-bold mb-3">
+                    Quick Actions
+                  </h5>
 
                   <Row className="g-3">
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="primary"
-                        className="w-100 py-3 fw-semibold"
-                        onClick={() => navigate("/admin/universities")}
-                      >
-                        <FaPlus />
-                        <div>Add University</div>
-                      </Button>
-                    </Col>
+                    {/* ================= ADMIN + DIRECTORATE ================= */}
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="success"
-                        className="w-100 py-3 fw-semibold"
-                        onClick={() => navigate("/admin/menu")}
-                      >
-                        <FaBars />
-                        <div>Add Menu</div>
-                      </Button>
-                    </Col>
+                    {
+                      userRole === "ADMIN" &&
+                      employeeType === "DIRECTORATE" && (
+                        <>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="info"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/gallery")}
-                      >
-                        <FaNewspaper />
-                        <div>Add Gallery</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="success"
+                              className="w-100 py-3 fw-semibold"
+                              onClick={() =>
+                                navigate("/admin/menu")
+                              }
+                            >
+                              <FaBars />
+                              <div>Add Menu</div>
+                            </Button>
+                          </Col>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="danger"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/new-updates")}
-                      >
-                        <FaBullhorn />
-                        <div>New Updates</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="warning"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/slider")
+                              }
+                            >
+                              <FaImages />
+                              <div>Home Slider</div>
+                            </Button>
+                          </Col>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="warning"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/slider")}
-                      >
-                        <FaImages />
-                        <div>Slider</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="primary"
+                              className="w-100 py-3 fw-semibold"
+                              onClick={() =>
+                                navigate("/admin/header-management")
+                              }
+                            >
+                              <FaBars />
+                              <div>
+                                Header Management
+                              </div>
+                            </Button>
+                          </Col>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="info"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/download-management")}
-                      >
-                        <FaDownload />
-                        <div>Downloads</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="dark"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/footer-section-manager")
+                              }
+                            >
+                              <FaBars />
+                              <div>
+                                Footer Management
+                              </div>
+                            </Button>
+                          </Col>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="success"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/important-links")}
-                      >
-                        <FaLink />
-                        <div>Important Links</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="info"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/about-section")
+                              }
+                            >
+                              <FaInfoCircle />
+                              <div>About Section</div>
+                            </Button>
+                          </Col>
 
-                    <Col md={3} sm={6}>
-                      <Button
-                        color="dark"
-                        className="w-100 py-3 fw-semibold text-white"
-                        onClick={() => navigate("/admin/about-and-help")}
-                      >
-                        <FaInfoCircle />
-                        <div>About & Help</div>
-                      </Button>
-                    </Col>
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="success"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/important-links")
+                              }
+                            >
+                              <FaLink />
+                              <div>
+                                Important Links
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="secondary"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/brands")
+                              }
+                            >
+                              <FaTags />
+                              <div>
+                                Footer Brands
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="dark"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/users-management")
+                              }
+                            >
+                              <FaAddressBook />
+                              <div>
+                                Users Management
+                              </div>
+                            </Button>
+                          </Col>
+
+                        </>
+                      )
+                    }
+
+                    {/* ================= ADMIN + OFFICER ================= */}
+
+                    {
+                      (
+                        userRole === "ADMIN" ||
+                        userRole === "OFFICER"
+                      ) && (
+                        <>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="danger"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/new-updates")
+                              }
+                            >
+                              <FaBullhorn />
+                              <div>
+                                Latest Updates
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="primary"
+                              className="w-100 py-3 fw-semibold"
+                              onClick={() =>
+                                navigate("/admin/announcements")
+                              }
+                            >
+                              <FaBullhorn />
+                              <div>
+                                Announcements
+                              </div>
+                            </Button>
+                          </Col>
+
+                          {
+                            employeeType === "DIRECTORATE" && (
+                              <Col md={3} sm={6}>
+                                <Button
+                                  color="warning"
+                                  className="w-100 py-3 fw-semibold text-white"
+                                  onClick={() =>
+                                    navigate("/admin/directorate-notices")
+                                  }
+                                >
+                                  <FaBullhorn />
+                                  <div>
+                                    Directorate Notices
+                                  </div>
+                                </Button>
+                              </Col>
+                            )
+                          }
+
+                          {
+                            employeeType === "DEPARTMATE" && (
+                              <Col md={3} sm={6}>
+                                <Button
+                                  color="warning"
+                                  className="w-100 py-3 fw-semibold text-white"
+                                  onClick={() =>
+                                    navigate("/admin/department-notices")
+                                  }
+                                >
+                                  <FaBullhorn />
+                                  <div>
+                                    Department Notices
+                                  </div>
+                                </Button>
+                              </Col>
+                            )
+                          }
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="info"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/gallery")
+                              }
+                            >
+                              <FaNewspaper />
+                              <div>
+                                Photo Galleries
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="success"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/download-management")
+                              }
+                            >
+                              <FaDownload />
+                              <div>
+                                Downloads
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="primary"
+                              className="w-100 py-3 fw-semibold"
+                              onClick={() =>
+                                navigate("/admin/file-manager")
+                              }
+                            >
+                              <FaListAlt />
+                              <div>
+                                File Manager
+                              </div>
+                            </Button>
+                          </Col>
+
+                          <Col md={3} sm={6}>
+                            <Button
+                              color="secondary"
+                              className="w-100 py-3 fw-semibold text-white"
+                              onClick={() =>
+                                navigate("/admin/file-uploader")
+                              }
+                            >
+                              <FaDownload />
+                              <div>
+                                File Uploader
+                              </div>
+                            </Button>
+                          </Col>
+
+                        </>
+                      )
+                    }
+
+                    {/* ================= NIC ================= */}
+
+                    {userRole === "NIC" && employeeType === "NIC" && (
+                      <>
+
+                        <Col md={3} sm={6}>
+                          <Button
+                            color="dark"
+                            className="w-100 py-3 fw-semibold text-white"
+                            onClick={() =>
+                              navigate("/admin/activity-logs")
+                            }
+                          >
+                            <FaListAlt />
+                            <div>
+                              Activity Logs
+                            </div>
+                          </Button>
+                        </Col>
+
+                        <Col md={3} sm={6}>
+                          <Button
+                            color="secondary"
+                            className="w-100 py-3 fw-semibold text-white"
+                            onClick={() =>
+                              navigate("/admin/session-manager")
+                            }
+                          >
+                            <FaAddressBook />
+                            <div>
+                              User Sessions
+                            </div>
+                          </Button>
+                        </Col>
+
+                        <Col md={3} sm={6}>
+                          <Button
+                            color="info"
+                            className="w-100 py-3 fw-semibold text-white"
+                            onClick={() =>
+                              navigate("/admin/help-guidance")
+                            }
+                          >
+                            <FaInfoCircle />
+                            <div>
+                              Help Guidance
+                            </div>
+                          </Button>
+                        </Col>
+
+                      </>
+                    )
+                    }
 
                   </Row>
+
                 </CardBody>
+
               </Card>
+
             </Col>
 
           </Row>
