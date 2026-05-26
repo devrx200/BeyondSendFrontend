@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-    Card, CardBody, Button, Table,
-    Modal, ModalHeader, ModalBody, ModalFooter,
+    Card, CardBody, Button, Table, Form,
     FormGroup, Label, Input, Row, Col, Badge
 } from "reactstrap";
 import axios from "axios";
-import Swal from "sweetalert2";
 import IconPicker from "../../components/IconPicker";
 import { ICONS } from "../../utilies/icons";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import {
+    FaEdit, FaTrash, FaLink, FaBolt, FaPlus, FaTimes, FaCheck,
+    FaGlobe, FaToggleOn, FaImage, FaLanguage, FaFont
+} from "react-icons/fa";
+import { confirmDelete, swalSuccess, swalWarn, swalError } from "../../utilies/swalHelper";
 
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
@@ -118,236 +120,265 @@ const ImportantLinksManagement = () => {
     };
 
     /* ================= SAVE ================= */
-    const saveLink = async () => {
+    const saveLink = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+
         if (!form.titleEng || !form.url) {
-            return Swal.fire("Validation", "English title & URL required", "warning");
+            return swalWarn("Validation", "English title & URL required");
         }
 
-        if (editId) {
-            await axios.put(`${API}/api/important-links/${editId}`, form,
-                { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
-            );
-        } else {
-            await axios.post(`${API}/api/important-links`, form,
-                { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
-            );
-        }
+        try {
+            if (editId) {
+                await axios.put(`${API}/api/important-links/${editId}`, form,
+                    { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+                );
+            } else {
+                await axios.post(`${API}/api/important-links`, form,
+                    { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+                );
+            }
 
-        Swal.fire("Success", "Link saved successfully", "success");
-        setModal(false);
-        loadLinks();
+            swalSuccess("Saved", "Link saved successfully");
+            setModal(false);
+            loadLinks();
+        } catch (err) {
+            swalError("Error", err?.response?.data?.message || "Could not save link");
+        }
     };
 
     /* ================= DELETE ================= */
     const deleteLink = async (id) => {
-        const confirm = await Swal.fire({
+        const ok = await confirmDelete({
             title: "Delete this link?",
-            text: "This action cannot be undone",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33"
+            text: "This action cannot be undone."
         });
+        if (!ok) return;
 
-        if (!confirm.isConfirmed) return;
-
-        await axios.delete(`${API}/api/important-links/${id}`);
-        Swal.fire("Deleted", "Link removed", "success");
-        loadLinks();
+        try {
+            await axios.delete(`${API}/api/important-links/${id}`);
+            swalSuccess("Deleted", "Link removed successfully");
+            loadLinks();
+        } catch (err) {
+            swalError("Error", err?.response?.data?.message || "Delete failed");
+        }
     };
 
     return (
-        <Card className="border-0 shadow-sm">
-            <CardBody>
-                <div className="d-flex justify-content-between mb-3">
-                    <h5 className="mb-0">Important Links Management</h5>
-                    <Button color="primary" size="sm" onClick={openAdd}>
-                        + Add Link
-                    </Button>
+        <>
+            {/* PAGE HEADER */}
+            <div className="adm-page-head">
+                <div>
+                    <h3 className="adm-page-title"><FaLink /> Important Links Management</h3>
+                    <p className="adm-page-subtitle">Manage quick-access links shown on the public site.</p>
                 </div>
+                {!modal && (
+                    <Button color="primary" onClick={openAdd}>
+                        <FaPlus className="me-1" /> Add Link
+                    </Button>
+                )}
+            </div>
 
-                <Table bordered responsive>
-                    <thead className="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Icon</th>
-                            <th>Title (EN)</th>
-                            <th>Title (HI)</th>
-                            <th>URL</th>
-                            <th>External</th>
-                            <th>Status</th>
-                            <th width="160">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {links.map((l, i) => {
-                            const Icon = ICONS[l.icon];
-                            return (
-                                <tr key={l._id}>
-                                    <td>{i + 1}</td>
-                                    <td>{Icon && <Icon size={18} />}</td>
-                                    <td>{l.titleEng}</td>
-                                    <td>{l.titleHin || "-"}</td>
-                                    <td className="text-truncate" style={{ maxWidth: 180 }}>
-                                        {l.url}
-                                    </td>
-                                    <td>
-                                        <Badge color={l.isExternal ? "info" : "secondary"}>
-                                            {l.isExternal ? "Yes" : "No"}
-                                        </Badge>
-                                    </td>
-                                    <td>
-                                        <Badge color={l.isActive ? "success" : "secondary"}>
-                                            {l.isActive ? "Active" : "Inactive"}
-                                        </Badge>
-                                    </td>
-                                    <td>
-                                        <Button size="sm" color="info" onClick={() => openEdit(l)}>
-                                            <FaEdit />
-                                        </Button>{" "}
-                                        <Button size="sm" color="danger" onClick={() => deleteLink(l._id)}>
-                                            <FaTrash />
-                                        </Button>
+            {/* INLINE FORM CARD (replaces modal) */}
+            {modal && (
+                <div className="adm-form-card">
+                    <div className="adm-form-card-header">
+                        <div className="adm-form-card-icon"><FaLink /></div>
+                        <div className="adm-form-card-titles">
+                            <h4 className="adm-form-card-title">
+                                {editId ? "Edit Important Link" : "Add New Important Link"}
+                            </h4>
+                            <p className="adm-form-card-subtitle">
+                                <FaBolt /> Fill the details below and save to publish on the site
+                            </p>
+                        </div>
+                    </div>
+
+                    <Form onSubmit={saveLink}>
+                        <div className="adm-form-card-body">
+                            <Row>
+                                <Col md={6}>
+                                    <FormGroup>
+                                        <Label><FaFont /> Title (English) <span className="text-danger">*</span></Label>
+                                        <Input
+                                            name="titleEng"
+                                            placeholder="e.g. Department of Higher Education"
+                                            value={form.titleEng}
+                                            invalid={!!errors.titleEng}
+                                            onChange={e => handleChange("titleEng", e.target.value)}
+                                        />
+                                        {errors.titleEng && <small className="text-danger">{errors.titleEng}</small>}
+                                    </FormGroup>
+                                </Col>
+
+                                <Col md={6}>
+                                    <FormGroup>
+                                        <Label><FaLanguage /> Title (Hindi)</Label>
+                                        <Input
+                                            name="titleHin"
+                                            placeholder="जैसे - उच्च शिक्षा विभाग"
+                                            value={form.titleHin}
+                                            invalid={!!errors.titleHin}
+                                            onChange={e => handleChange("titleHin", e.target.value)}
+                                        />
+                                        {errors.titleHin && <small className="text-danger">{errors.titleHin}</small>}
+                                    </FormGroup>
+                                </Col>
+
+                                <Col md={12}>
+                                    <FormGroup>
+                                        <Label><FaGlobe /> URL <span className="text-danger">*</span></Label>
+                                        <Input
+                                            placeholder="https://example.com or /internal-page"
+                                            value={form.url}
+                                            invalid={!!errors.url}
+                                            onChange={e => handleChange("url", e.target.value)}
+                                        />
+                                        {errors.url && <small className="text-danger">{errors.url}</small>}
+                                    </FormGroup>
+                                </Col>
+
+                                <Col md={12}>
+                                    <FormGroup>
+                                        <Label><FaImage /> Search &amp; Select Icon <span className="text-danger">*</span></Label>
+                                        <div className="d-flex align-items-center gap-3 mt-1 flex-wrap">
+                                            <Input
+                                                size="sm"
+                                                placeholder="Click to search and select an icon"
+                                                readOnly
+                                                onClick={() => setIconModal(true)}
+                                                style={{ cursor: "pointer", maxWidth: 360 }}
+                                            />
+                                            {form.icon && ICONS[form.icon] && (() => {
+                                                const IconComponent = ICONS[form.icon];
+                                                return (
+                                                    <Badge
+                                                        color="dark"
+                                                        pill
+                                                        className="d-inline-flex align-items-center gap-2 px-3 py-2 shadow-sm"
+                                                        style={{ fontSize: "12px" }}
+                                                    >
+                                                        <IconComponent size={14} />
+                                                        {form.icon}
+                                                    </Badge>
+                                                );
+                                            })()}
+                                        </div>
+                                        {errors.icon && <small className="text-danger d-block mt-1">{errors.icon}</small>}
+                                    </FormGroup>
+                                </Col>
+
+                                <Col md={3}>
+                                    <FormGroup check className="mt-4">
+                                        <Input
+                                            type="checkbox"
+                                            checked={form.isExternal}
+                                            onChange={e => setForm({ ...form, isExternal: e.target.checked })}
+                                        />{" "}
+                                        <Label check><FaGlobe className="me-1" /> External</Label>
+                                    </FormGroup>
+                                </Col>
+
+                                <Col md={3}>
+                                    <FormGroup check className="mt-4">
+                                        <Input
+                                            type="checkbox"
+                                            checked={form.isActive}
+                                            onChange={e => setForm({ ...form, isActive: e.target.checked })}
+                                        />{" "}
+                                        <Label check><FaToggleOn className="me-1" /> Active</Label>
+                                    </FormGroup>
+                                </Col>
+                            </Row>
+                        </div>
+
+                        <div className="adm-form-card-footer">
+                            <div className="adm-actions-left">
+                                <Button outline color="secondary" type="button" onClick={() => setModal(false)}>
+                                    <FaTimes className="me-1" /> Cancel
+                                </Button>
+                            </div>
+                            <div className="adm-actions-right">
+                                <Button color="primary" type="submit">
+                                    <FaCheck className="me-1" /> {editId ? "Update Link" : "Save Link"}
+                                </Button>
+                            </div>
+                        </div>
+                    </Form>
+                </div>
+            )}
+
+            {/* DATA TABLE */}
+            <Card className="adm-card">
+                <CardBody className="p-0">
+                    <Table bordered responsive className="mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Icon</th>
+                                <th>Title (EN)</th>
+                                <th>Title (HI)</th>
+                                <th>URL</th>
+                                <th>External</th>
+                                <th>Status</th>
+                                <th width="160">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {links.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="text-center py-4 text-muted">
+                                        No links found.
                                     </td>
                                 </tr>
-                            );
-                        })}
-                    </tbody>
-                </Table>
-            </CardBody>
+                            ) : (
+                                links.map((l, i) => {
+                                    const Icon = ICONS[l.icon];
+                                    return (
+                                        <tr key={l._id}>
+                                            <td>{i + 1}</td>
+                                            <td>{Icon && <Icon size={18} />}</td>
+                                            <td>{l.titleEng}</td>
+                                            <td>{l.titleHin || "-"}</td>
+                                            <td className="text-truncate" style={{ maxWidth: 180 }}>
+                                                {l.url}
+                                            </td>
+                                            <td>
+                                                <Badge color={l.isExternal ? "info" : "secondary"}>
+                                                    {l.isExternal ? "Yes" : "No"}
+                                                </Badge>
+                                            </td>
+                                            <td>
+                                                <Badge color={l.isActive ? "success" : "secondary"}>
+                                                    {l.isActive ? "Active" : "Inactive"}
+                                                </Badge>
+                                            </td>
+                                            <td>
+                                                <Button size="sm" color="info" className="me-1" onClick={() => openEdit(l)}>
+                                                    <FaEdit />
+                                                </Button>
+                                                <Button size="sm" color="danger" onClick={() => deleteLink(l._id)}>
+                                                    <FaTrash />
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </Table>
+                </CardBody>
+            </Card>
 
-            {/* ================= MODAL ================= */}
-            <Modal isOpen={modal} toggle={() => setModal(false)} size="lg">
-                <ModalHeader toggle={() => setModal(false)}>
-                    {editId ? "Edit Link" : "Add Link"}
-                </ModalHeader>
-
-                <ModalBody>
-                    <Row>
-                        <Col md={6}>
-                            <FormGroup>
-                                <Label>Title (English) *</Label>
-                                <Input
-                                    name="titleEng"
-                                    value={form.titleEng}
-                                    invalid={!!errors.titleEng}
-                                    onChange={e => handleChange("titleEng", e.target.value)}
-                                />
-                                {errors.titleEng && <small className="text-danger">{errors.titleEng}</small>}
-                            </FormGroup>
-                        </Col>
-
-                        <Col md={6}>
-                            <FormGroup>
-                                <Label>Title (Hindi)</Label>
-                                <Input
-                                    name="titleHin"
-                                    value={form.titleHin}
-                                    invalid={!!errors.titleHin}
-                                    onChange={e => handleChange("titleHin", e.target.value)}
-                                />
-                                {errors.titleHin && <small className="text-danger">{errors.titleHin}</small>}
-
-                            </FormGroup>
-                        </Col>
-
-                        <Col md={12}>
-                            <FormGroup>
-                                <Label>URL *</Label>
-                                <Input
-                                    value={form.url}
-                                    invalid={!!errors.url}
-                                    onChange={e => handleChange("url", e.target.value)}
-                                />
-                                {errors.url && <small className="text-danger">{errors.url}</small>}
-                            </FormGroup>
-                        </Col>
-
-                        <Col md={12}>
-                            <FormGroup>
-                                <Label className="fw-semibold">Search & Select Icon *</Label>
-
-                                <div className="d-flex align-items-center gap-3 mt-1">
-                                    {/* Select Button */}
-                                    <Input
-                                        size="sm"
-                                        placeholder="Search And Select Icon"
-                                        color="secondary"
-                                        onClick={() => setIconModal(true)}
-                                    >
-                                        Search & Choose Icon
-                                    </Input>
-                                    <IconPicker
-                                        isOpen={iconModal}
-                                        toggle={() => setIconModal(false)}
-                                        onSelect={(icon) => {
-                                            handleChange("icon", icon);
-                                            setIconModal(false);
-                                        }}
-                                    />
-
-                                    {errors.icon && <small className="text-danger">{errors.icon}</small>}
-
-                                    {/* Selected Icon Preview */}
-                                    {form.icon && ICONS[form.icon] && (() => {
-                                        const IconComponent = ICONS[form.icon];
-                                        return (
-                                            <Badge
-                                                color="dark"
-                                                pill
-                                                className="d-flex align-items-center gap-2 px-3 py-2 shadow-sm"
-                                                style={{ fontSize: "12px" }}
-                                            >
-                                                <IconComponent size={14} />
-                                                {form.icon}
-                                            </Badge>
-                                        );
-                                    })()}
-                                </div>
-                            </FormGroup>
-                        </Col>
-
-
-                        <Col md={3}>
-                            <FormGroup check className="mt-4">
-                                <Input
-                                    type="checkbox"
-                                    checked={form.isExternal}
-                                    onChange={e => setForm({ ...form, isExternal: e.target.checked })}
-                                />{" "}
-                                External
-                            </FormGroup>
-                        </Col>
-
-                        <Col md={3}>
-                            <FormGroup check className="mt-4">
-                                <Input
-                                    type="checkbox"
-                                    checked={form.isActive}
-                                    onChange={e => setForm({ ...form, isActive: e.target.checked })}
-                                />{" "}
-                                Active
-                            </FormGroup>
-                        </Col>
-                    </Row>
-                </ModalBody>
-
-                <ModalFooter className="d-flex justify-content-between">
-                    <Button color="secondary" onClick={() => setModal(false)}>
-                        Cancel
-                    </Button>
-                    <Button color="primary" onClick={saveLink}>
-                        Save
-                    </Button>
-                </ModalFooter>
-            </Modal>
-
-            {/* ICON PICKER */}
+            {/* ICON PICKER (kept as popup) */}
             <IconPicker
                 isOpen={iconModal}
                 toggle={() => setIconModal(false)}
-                onSelect={(icon) => setForm({ ...form, icon })}
+                onSelect={(icon) => {
+                    handleChange("icon", icon);
+                    setIconModal(false);
+                }}
             />
-        </Card>
+        </>
     );
 };
 

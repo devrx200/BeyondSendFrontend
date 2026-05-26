@@ -4,23 +4,25 @@ import {
   CardBody,
   Button,
   Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Form,
   FormGroup,
   Label,
   Input,
   Row,
   Col,
-  Spinner
+  Spinner,
+  Badge
 } from "reactstrap";
-import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaEye } from "react-icons/fa";
+import {
+  FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaEye,
+  FaFileAlt, FaBolt, FaFont, FaLanguage, FaLink, FaFileUpload, FaToggleOn
+} from "react-icons/fa";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import Swal from "sweetalert2";
 import axios from "axios";
+import {
+  confirmDelete, confirmAction, swalSuccess, swalError
+} from "../../utilies/swalHelper";
 
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -70,7 +72,7 @@ const ImportantPageManagement = () => {
         setList(res.data.data || []);
       }
     } catch (err) {
-      Swal.fire("Error", "Failed to load pages", "error");
+      swalError("Error", "Failed to load pages");
     } finally {
       setLoading(false);
     }
@@ -130,20 +132,12 @@ const ImportantPageManagement = () => {
         );
       }
 
-      Swal.fire(
-        "Success",
-        res.data?.message || "Operation successful",
-        "success"
-      );
+      swalSuccess("Saved", res.data?.message || "Operation successful");
 
       toggleModal();
       loadPages();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Something went wrong",
-        "error"
-      );
+      swalError("Error", err.response?.data?.message || "Something went wrong");
     } finally {
       setSubmitting(false);
     }
@@ -167,13 +161,11 @@ const ImportantPageManagement = () => {
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
-    const confirm = await Swal.fire({
-      title: "Delete Page?",
-      icon: "warning",
-      showCancelButton: true
+    const ok = await confirmDelete({
+      title: "Delete this page?",
+      text: "This page will be permanently removed."
     });
-
-    if (!confirm.isConfirmed) return;
+    if (!ok) return;
 
     try {
       const res = await axios.delete(
@@ -185,60 +177,201 @@ const ImportantPageManagement = () => {
         }
       );
 
-      Swal.fire(
-        "Success",
-        res.data?.message || "Deleted successfully",
-        "success"
-      );
-
+      swalSuccess("Deleted", res.data?.message || "Deleted successfully");
       loadPages();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Delete failed",
-        "error"
-      );
+      swalError("Error", err.response?.data?.message || "Delete failed");
     }
   };
 
 
 
-  const viewPage = (slug) => {
-    Swal.fire({
-      title: "Are you sure?",
-      text: "Do you want to open this page?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
+  const viewPage = async (slug) => {
+    const ok = await confirmAction({
+      title: "Open this page?",
+      text: "The page will open in a new tab.",
       confirmButtonText: "Yes, Open it",
-      cancelButtonText: "Cancel"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.open(`/${slug}`, "_blank");
-      }
+      icon: "question"
     });
+    if (ok) window.open(`/${slug}`, "_blank");
   };
 
 
   return (
-    <div className="container-fluid mt-4">
-      <Card>
-        <CardBody>
-          <div className="d-flex justify-content-between mb-3">
-            <h4>📄 Important Page Management</h4>
-            <Button color="primary" onClick={toggleModal}>
-              <FaPlus className="me-1" /> Add Page
-            </Button>
+    <>
+      {/* PAGE HEADER */}
+      <div className="adm-page-head">
+        <div>
+          <h3 className="adm-page-title"><FaFileAlt /> Important Page Management</h3>
+          <p className="adm-page-subtitle">Create and manage informational pages shown on the public site.</p>
+        </div>
+        {!modal && (
+          <Button color="primary" onClick={toggleModal}>
+            <FaPlus className="me-1" /> Add Page
+          </Button>
+        )}
+      </div>
+
+      {/* INLINE FORM CARD (replaces modal) */}
+      {modal && (
+        <div className="adm-form-card">
+          <div className="adm-form-card-header">
+            <div className="adm-form-card-icon"><FaFileAlt /></div>
+            <div className="adm-form-card-titles">
+              <h4 className="adm-form-card-title">
+                {editingId ? "Edit Page" : "Create New Page"}
+              </h4>
+              <p className="adm-form-card-subtitle">
+                <FaBolt /> Fill in the bilingual content and publish it on the site
+              </p>
+            </div>
           </div>
 
+          <Form onSubmit={handleSubmit}>
+            <div className="adm-form-card-body">
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label><FaFont /> Title (English) <span className="text-danger">*</span></Label>
+                    <Input
+                      required
+                      placeholder="e.g. About the Department"
+                      value={formData.titleEn}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          titleEn: value,
+                          slug: slugManuallyEdited
+                            ? prev.slug
+                            : generateSlug(value)
+                        }));
+                      }}
+                    />
+                  </FormGroup>
+                </Col>
+
+                <Col md={6}>
+                  <FormGroup>
+                    <Label><FaLanguage /> Title (Hindi) <span className="text-danger">*</span></Label>
+                    <Input
+                      required
+                      placeholder="जैसे - विभाग के बारे में"
+                      value={formData.titleHi}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          titleHi: e.target.value
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+
+              <FormGroup>
+                <Label><FaLink /> Slug (Editable – Used in URL)</Label>
+                <Input
+                  placeholder="auto-generated-from-title"
+                  value={formData.slug}
+                  onChange={(e) => {
+                    setSlugManuallyEdited(true);
+                    setFormData({
+                      ...formData,
+                      slug: generateSlug(e.target.value)
+                    });
+                  }}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label><FaFont /> Page Content (English)</Label>
+                <ReactQuill
+                  theme="snow"
+                  value={formData.descriptionEn}
+                  onChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      descriptionEn: value
+                    })
+                  }
+                  style={{ height: "200px", marginBottom: "50px" }}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label><FaLanguage /> Page Content (Hindi)</Label>
+                <ReactQuill
+                  theme="snow"
+                  value={formData.descriptionHi}
+                  onChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      descriptionHi: value
+                    })
+                  }
+                  style={{ height: "200px", marginBottom: "50px" }}
+                />
+              </FormGroup>
+
+              <Row>
+                <Col md={8}>
+                  <FormGroup>
+                    <Label><FaFileUpload /> Upload File (PDF / Image)</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        setFile(e.target.files[0])
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={4} className="d-flex align-items-end">
+                  <FormGroup check className="mb-3">
+                    <Input
+                      type="checkbox"
+                      checked={formData.isActive}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isActive: e.target.checked
+                        })
+                      }
+                    />
+                    <Label check><FaToggleOn className="me-1" /> Is Active</Label>
+                  </FormGroup>
+                </Col>
+              </Row>
+            </div>
+
+            <div className="adm-form-card-footer">
+              <div className="adm-actions-left">
+                <Button outline color="secondary" type="button" onClick={toggleModal}>
+                  <FaTimes className="me-1" /> Cancel
+                </Button>
+              </div>
+              <div className="adm-actions-right">
+                <Button color="primary" type="submit" disabled={submitting}>
+                  <FaSave className="me-1" />
+                  {submitting ? "Saving..." : editingId ? "Update Page" : "Save Page"}
+                </Button>
+              </div>
+            </div>
+          </Form>
+        </div>
+      )}
+
+      {/* DATA TABLE */}
+      <Card className="adm-card">
+        <CardBody className="p-0">
           {loading ? (
-            <div className="text-center py-4">
+            <div className="text-center py-5">
               <Spinner color="primary" />
             </div>
           ) : (
-            <Table bordered hover responsive>
-              <thead className="table-light">
+            <Table bordered hover responsive className="mb-0">
+              <thead>
                 <tr className="align-middle text-center">
                   <th>SN.</th>
                   <th>Title (EN)</th>
@@ -252,24 +385,21 @@ const ImportantPageManagement = () => {
               <tbody>
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center">
+                    <td colSpan="7" className="text-center py-4 text-muted">
                       No Pages Found
                     </td>
                   </tr>
                 ) : (
                   list.map((item, i) => (
-                    <tr key={item._id}>
+                    <tr key={item._id} className="align-middle text-center">
                       <td>{i + 1}</td>
-                      <td>{item.titleEn}</td>
+                      <td className="text-start">{item.titleEn}</td>
                       <td><code>{item.slug}</code></td>
                       <td>
-                        {item.isActive ? (
-                          <span className="badge bg-success">Active</span>
-                        ) : (
-                          <span className="badge bg-danger">Inactive</span>
-                        )}
+                        <Badge color={item.isActive ? "success" : "secondary"}>
+                          {item.isActive ? "Active" : "Inactive"}
+                        </Badge>
                       </td>
-            
                       <td>
                         <Button
                           size="sm"
@@ -282,12 +412,12 @@ const ImportantPageManagement = () => {
                         <Button
                           size="sm"
                           color="danger"
+                          className="me-1"
                           onClick={() => handleDelete(item._id)}
                         >
                           <FaTrash />
                         </Button>
                         <Button
-                          className="ms-1"
                           size="sm"
                           color="primary"
                           onClick={() => viewPage(item.slug)}
@@ -300,8 +430,10 @@ const ImportantPageManagement = () => {
                           {new Date(item.createdAt).toLocaleDateString()}
                         </small>
                       </td>
-                                <td>
-                        {new Date(item.updatedAt).toLocaleDateString()}
+                      <td>
+                        <small className="text-muted">
+                          {new Date(item.updatedAt).toLocaleDateString()}
+                        </small>
                       </td>
                     </tr>
                   ))
@@ -311,135 +443,7 @@ const ImportantPageManagement = () => {
           )}
         </CardBody>
       </Card>
-
-      <Modal isOpen={modal} toggle={toggleModal} size="xl" backdrop="static">
-        <ModalHeader toggle={toggleModal}>
-          {editingId ? "Edit Page" : "Create Page"}
-        </ModalHeader>
-
-        <Form onSubmit={handleSubmit}>
-          <ModalBody>
-            <Row>
-              <Col md={6}>
-                <FormGroup>
-                  <Label>Title (English)</Label>
-                  <Input
-                    required
-                    value={formData.titleEn}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        titleEn: value,
-                        slug: slugManuallyEdited
-                          ? prev.slug
-                          : generateSlug(value)
-                      }));
-                    }}
-                  />
-                </FormGroup>
-              </Col>
-
-              <Col md={6}>
-                <FormGroup>
-                  <Label>Title (Hindi)</Label>
-                  <Input
-                    required
-                    value={formData.titleHi}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        titleHi: e.target.value
-                      })
-                    }
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-
-            <FormGroup>
-              <Label>Slug (Editable – Used in URL)</Label>
-              <Input
-                value={formData.slug}
-                onChange={(e) => {
-                  setSlugManuallyEdited(true);
-                  setFormData({
-                    ...formData,
-                    slug: generateSlug(e.target.value)
-                  });
-                }}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Page Content (English)</Label>
-              <ReactQuill
-                theme="snow"
-                value={formData.descriptionEn}
-                onChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    descriptionEn: value
-                  })
-                }
-                style={{ height: "200px", marginBottom: "50px" }}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Page Content (Hindi)</Label>
-              <ReactQuill
-                theme="snow"
-                value={formData.descriptionHi}
-                onChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    descriptionHi: value
-                  })
-                }
-                style={{ height: "200px", marginBottom: "50px" }}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Upload File</Label>
-              <Input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) =>
-                  setFile(e.target.files[0])
-                }
-              />
-            </FormGroup>
-
-            <FormGroup check>
-              <Input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    isActive: e.target.checked
-                  })
-                }
-              />
-              <Label check>Is Active</Label>
-            </FormGroup>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button color="primary" type="submit" disabled={submitting}>
-              <FaSave className="me-1" />
-              {submitting ? "Saving..." : "Save"}
-            </Button>
-            <Button color="secondary" onClick={toggleModal}>
-              <FaTimes className="me-1" />
-              Cancel
-            </Button>
-          </ModalFooter>
-        </Form>
-      </Modal>
-    </div>
+    </>
   );
 };
 

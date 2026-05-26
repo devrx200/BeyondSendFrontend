@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
 import {
-  Navbar,
-  Button,
   Modal,
   ModalHeader,
   ModalBody,
-  ModalFooter,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  Row,
-  Col
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
 } from "reactstrap";
+
 import {
   FaBars,
   FaSignOutAlt,
   FaClock,
   FaLanguage,
   FaBookOpen,
-  FaUserShield
+  FaChevronDown,
+  FaUserCircle
 } from "react-icons/fa";
-import { FaDashcube } from "react-icons/fa6";
+
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import Swal from "sweetalert2";
@@ -31,69 +28,95 @@ import { jwtDecode } from "jwt-decode";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminHeader = ({ toggleSidebar }) => {
+
   const navigate = useNavigate();
   const { toggleLanguage, isHindi } = useLanguage();
 
   const [dateTime, setDateTime] = useState(new Date());
   const [profile, setProfile] = useState(null);
   const [profileModal, setProfileModal] = useState(false);
+  const [profileDropdown, setProfileDropdown] = useState(false);
 
   /* ================= LIVE CLOCK ================= */
+
   useEffect(() => {
-    const timer = setInterval(() => setDateTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      setDateTime(new Date());
+    }, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
   /* ================= LOAD PROFILE ================= */
+
   useEffect(() => {
+
     const token = sessionStorage.getItem("authToken");
+
     if (!token) return;
 
     let decoded;
+
     try {
       decoded = jwtDecode(token);
     } catch {
       return;
     }
 
-    const userId = decoded.id || decoded._id || decoded.userId;
+    const userId =
+      decoded.id ||
+      decoded._id ||
+      decoded.userId;
+
     if (!userId) return;
 
     axios
       .get(`${API_URL}/api/get-user-profile/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
-      .then(res => {
-        if (res.data?.success) setProfile(res.data.data);
+      .then((res) => {
+        if (res.data?.success) {
+          setProfile(res.data.data);
+        }
       })
       .catch(() => { });
+
   }, []);
 
   /* ================= LOGOUT ================= */
+
   const logout = async () => {
+
     const result = await Swal.fire({
       title: "Confirm Logout",
       text: "Are you sure you want to logout?",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, Logout",
+      confirmButtonText: "Yes Logout",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      reverseButtons: true,
-      focusCancel: true
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#0d6efd",
+      reverseButtons: true
     });
+
     if (!result.isConfirmed) return;
+
     try {
+
       const token = sessionStorage.getItem("authToken");
-      //  Axios API Call
-      await axios.post(`${API_URL}/api/logout-user`, { token });
+
+      await axios.post(`${API_URL}/api/logout-user`, {
+        token
+      });
+
     } catch (error) {
-      console.error("Logout API error:", error?.response?.data || error.message);
+      console.log(error);
     }
-    //  Always clear session
+
     sessionStorage.clear();
-    //  Success Alert
+
     await Swal.fire({
       icon: "success",
       title: "Logged Out",
@@ -101,11 +124,15 @@ const AdminHeader = ({ toggleSidebar }) => {
       timer: 1500,
       showConfirmButton: false
     });
-    //  Redirect
-    navigate("/admin/login", { replace: true });
+
+    navigate("/admin/login", {
+      replace: true
+    });
+
   };
 
   /* ================= DATE TIME ================= */
+
   const formattedDate = dateTime.toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata"
   });
@@ -125,215 +152,344 @@ const AdminHeader = ({ toggleSidebar }) => {
 
   return (
     <>
-      <Navbar color="primary" dark className="px-3 d-flex justify-content-between">
-        {/* LEFT */}
-        <div className="d-flex align-items-center gap-2">
-          <Button color="primary" onClick={toggleSidebar}>
-            <FaBars />
-          </Button>
 
-          <strong className="fw-bold text-dark d-flex align-items-center gap-1">
-            <FaDashcube />
-            H!..
-          </strong>
+      {/* ================= HEADER ================= */}
+
+      <header className="adm-header">
+
+        {/* LEFT */}
+
+        <div className="adm-header-left">
+
+          <button
+            type="button"
+            className="adm-toggle-btn"
+            onClick={toggleSidebar}
+          >
+            <FaBars />
+          </button>
+
+          <div className="adm-header-title d-none d-md-block">
+            Department of Higher Education
+          </div>
+
         </div>
 
         {/* RIGHT */}
-        <div className="d-flex align-items-center gap-2 bg-black rounded border border-white px-2 py-1">
-          <div className="d-none d-md-flex align-items-center text-white fw-bold">
-            <FaClock className="me-2 text-warning" />
-            {dayName}, {formattedDate} | {formattedTime}
+
+        <div className="adm-header-right">
+
+          {/* CLOCK */}
+
+          <div className="adm-header-clock d-none d-lg-flex">
+
+            <FaClock className="me-2" />
+
+            <span>
+              {dayName}, {formattedDate} | {formattedTime}
+            </span>
+
           </div>
 
-          <Button
-            size="sm"
-            title="Translater"
-            color={isHindi ? "warning" : "primary"}
+          {/* LANGUAGE */}
+
+          <button
+            type="button"
+            className="adm-header-chip is-warning"
             onClick={toggleLanguage}
           >
-            <FaLanguage className="me-1" />
-            {isHindi ? "English" : "हिंदी"}
-          </Button>
+            <FaLanguage />
+            <span className="ms-2">
+              {isHindi ? "English" : "हिंदी"}
+            </span>
+          </button>
 
-          {/* PROFILE IMAGE */}
-          <img
-            src={
-              profile?.profileImage
-                ? `${API_URL}${profile.profileImage}`
-                : "/default-avatar.png"
-            }
-            width="45"
-            height="45"
-            alt="Profile"
-            title="Profile-Image"
-            className="rounded border border-2 border-white"
-            style={{ cursor: "pointer" }}
-            onClick={() => setProfileModal(true)}
-          />
+          {/* HELP */}
 
-          <Button
-            color="primary"
-            size="sm"
-            title="Session Manager"
-            className="border border-white"
-            onClick={() => navigate("/admin/session-manager")}
+          <button
+            type="button"
+            className="adm-header-chip"
+            onClick={() => navigate("/admin/tutorials")}
           >
-            <FaUserShield className="me-1" />
-            Sessions
-          </Button>
+            <FaBookOpen />
+            <span className="ms-2">Help</span>
+          </button>
 
+          {/* PROFILE DROPDOWN */}
 
-          <Button color="danger" size="sm" title="Logout" className=" border border-white" onClick={logout}>
-            <FaSignOutAlt className="me-1" />
-            Logout
-          </Button>
+          <Dropdown
+            isOpen={profileDropdown}
+            toggle={() => setProfileDropdown(!profileDropdown)}
+            className="adm-profile-dropdown"
+          >
 
-          <Button color="primary" size="sm" title="Tutorials" className="border border-white" onClick={() => navigate("/admin/tutorials")} >
-            <FaBookOpen className="me-1" />
-            Help?
-          </Button>
+            <DropdownToggle
+              caret={false}
+              className="adm-profile-btn-pill border-0 p-0"
+            >
+
+              <div className="adm-profile-pill">
+                <img
+                  src={
+                    profile?.profileImage
+                      ? `${API_URL}${profile.profileImage}`
+                      : "/default-avatar.png"
+                  }
+                  alt="Profile"
+                  className="adm-profile-pill-avatar"
+                />
+                <div className="adm-profile-pill-info">
+                  <div className="adm-profile-pill-name">
+                    {profile?.name || "NicAdmin"}
+                  </div>
+                  <div className="adm-profile-pill-subtitle">
+                    {profile?.userDeginations || profile?.role || "Administrator"}
+                  </div>
+                </div>
+                <FaChevronDown className="adm-profile-pill-chevron" />
+              </div>
+
+            </DropdownToggle>
+
+            <DropdownMenu
+              end
+              className="adm-profile-menu-simple border-0 shadow-lg mt-2"
+            >
+
+              {/* MY PROFILE */}
+
+              <DropdownItem
+                className="adm-profile-item"
+                onClick={() => {
+                  setProfileModal(true);
+                  setProfileDropdown(false);
+                }}
+              >
+                <FaUserCircle className="me-2" />
+                My Profile
+              </DropdownItem>
+
+              <DropdownItem divider className="my-1" />
+
+              {/* LOGOUT */}
+
+              <DropdownItem
+                className="adm-profile-item text-danger"
+                onClick={logout}
+              >
+                <FaSignOutAlt className="me-2" />
+                Logout
+              </DropdownItem>
+
+            </DropdownMenu>
+
+          </Dropdown>
 
         </div>
-      </Navbar>
-      {/* ================= PROFILE MODAL (VIEW ONLY) ================= */}
+
+      </header>
+
+      {/* ================= PROFILE MODAL ================= */}
+
       <Modal
         isOpen={profileModal}
         toggle={() => setProfileModal(false)}
         size="lg"
         centered
       >
+
         <ModalHeader toggle={() => setProfileModal(false)}>
           User Profile
         </ModalHeader>
 
         <ModalBody>
+
           {profile && (
-            <div className="container-fluid p-0">
 
-              {/* PROFILE HEADER */}
-              <div className="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div className="container-fluid">
 
-                {/* LEFT : IMAGE + BASIC INFO */}
-                <div className="d-flex align-items-center">
+              {/* PROFILE TOP */}
+
+              <div className="row align-items-center mb-4">
+
+                {/* IMAGE */}
+
+                <div className="col-md-3 text-center mb-3 mb-md-0">
+
                   <img
                     src={
-                      profile.profileImage
+                      profile?.profileImage
                         ? `${API_URL}${profile.profileImage}`
                         : "/default-avatar.png"
                     }
                     alt="Profile"
-                    className="rounded border border-3 shadow-sm"
-                    width="110"
-                    height="110"
-                    style={{ objectFit: "cover" }}
+                    className="img-fluid rounded-circle shadow border"
+                    style={{
+                      width: "140px",
+                      height: "140px",
+                      objectFit: "cover"
+                    }}
                   />
 
-                  <div className="ms-4">
-                    <h5 className="fw-bold mb-1">{profile.name}</h5>
-                    <small className="text-muted d-block mb-2">
-                      {profile.userDeginations}
-                    </small>
-
-                    <span className="badge bg-info me-2">{profile.role}</span>
-                    <span
-                      className={`badge ${profile.isActive ? "bg-success" : "bg-secondary"
-                        }`}
-                    >
-                      {profile.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </div>
                 </div>
 
-                {/* RIGHT : META INFO */}
-                <div className="text-muted small text-end mt-3 mt-md-0">
-                  <div>
-                    <strong>Created:</strong>{" "}
-                    {new Date(profile.createdAt).toLocaleString("en-IN")}
-                  </div>
-                  <div>
-                    <strong>Updated:</strong>{" "}
-                    {new Date(profile.updatedAt).toLocaleString("en-IN")}
-                  </div>
+                {/* INFO */}
+
+                <div className="col-md-9">
+
+                  <h4 className="fw-bold mb-1">
+                    {profile?.name}
+                  </h4>
+
+                  <p className="text-muted mb-2">
+                    {profile?.userDeginations}
+                  </p>
+
+                  <span className="badge bg-primary me-2">
+                    {profile?.role}
+                  </span>
+
+                  <span
+                    className={`badge ${profile?.isActive
+                      ? "bg-success"
+                      : "bg-secondary"
+                      }`}
+                  >
+                    {profile?.isActive
+                      ? "Active"
+                      : "Inactive"}
+                  </span>
+
                 </div>
 
               </div>
 
+              {/* CONTACT */}
 
-              {/* BASIC INFO */}
               <div className="card border-0 shadow-sm mb-3">
-                <div className="card-body py-3">
-                  <h6 className="fw-bold mb-3">Contact Information</h6>
 
-                  <p className="mb-1">
-                    <strong>Email:</strong> {profile.email}
-                  </p>
-                  <p className="mb-0">
-                    <strong>Mobile:</strong> {profile.mobile}
-                  </p>
+                <div className="card-body">
+
+                  <h5 className="fw-bold mb-3">
+                    Contact Information
+                  </h5>
+
+                  <div className="row">
+
+                    <div className="col-md-6 mb-3">
+                      <label className="fw-semibold">
+                        Email
+                      </label>
+
+                      <div className="text-muted">
+                        {profile?.email || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="col-md-6 mb-3">
+                      <label className="fw-semibold">
+                        Mobile
+                      </label>
+
+                      <div className="text-muted">
+                        {profile?.mobile || "N/A"}
+                      </div>
+                    </div>
+
+                  </div>
+
                 </div>
+
               </div>
 
               {/* STATUS */}
+
               <div className="card border-0 shadow-sm mb-3">
-                <div className="card-body py-3">
-                  <h6 className="fw-bold mb-3">Account Status</h6>
+
+                <div className="card-body">
+
+                  <h5 className="fw-bold mb-3">
+                    Account Status
+                  </h5>
 
                   <span
-                    className={`badge ${profile.status === "APPROVED"
+                    className={`badge ${profile?.status === "APPROVED"
                       ? "bg-success"
-                      : profile.status === "REJECTED"
+                      : profile?.status === "REJECTED"
                         ? "bg-danger"
                         : "bg-warning text-dark"
                       }`}
                   >
-                    {profile.status}
+                    {profile?.status}
                   </span>
+
                 </div>
+
               </div>
 
               {/* PERMISSIONS */}
-              <div className="card border-0 shadow-sm mb-3">
-                <div className="card-body py-3">
-                  <h6 className="fw-bold mb-3">Access</h6>
 
-                  <div className="mb-2">
-                    <small className="text-muted">Permissions</small>
-                    <div className="mt-1">
-                      {profile.permissions?.length
-                        ? profile.permissions.map((p, i) => (
-                          <span key={i} className="badge bg-primary me-1 mb-1">
-                            {p}
-                          </span>
-                        ))
-                        : <span className="text-muted">N/A</span>}
-                    </div>
+              <div className="card border-0 shadow-sm">
+
+                <div className="card-body">
+
+                  <h5 className="fw-bold mb-3">
+                    Permissions
+                  </h5>
+
+                  <div className="mb-3">
+
+                    {profile?.permissions?.length ? (
+                      profile.permissions.map((item, index) => (
+                        <span
+                          key={index}
+                          className="badge bg-primary me-2 mb-2"
+                        >
+                          {item}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-muted">
+                        No Permissions
+                      </span>
+                    )}
+
                   </div>
+
+                  <h6 className="fw-bold mb-3">
+                    Controls
+                  </h6>
 
                   <div>
-                    <small className="text-muted">Controls</small>
-                    <div className="mt-1">
-                      {profile.controls?.length
-                        ? profile.controls.map((c, i) => (
-                          <span key={i} className="badge bg-dark me-1 mb-1">
-                            {c}
-                          </span>
-                        ))
-                        : <span className="text-muted">N/A</span>}
-                    </div>
+
+                    {profile?.controls?.length ? (
+                      profile.controls.map((item, index) => (
+                        <span
+                          key={index}
+                          className="badge bg-dark me-2 mb-2"
+                        >
+                          {item}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-muted">
+                        No Controls
+                      </span>
+                    )}
+
                   </div>
+
                 </div>
+
               </div>
 
-              {/* META */}
-
-
             </div>
+
           )}
+
         </ModalBody>
 
-
       </Modal>
-
 
     </>
   );

@@ -1,89 +1,52 @@
-import { useState } from "react";
-import { Outlet, useLocation, Link } from "react-router-dom";
-import { Breadcrumb, BreadcrumbItem } from "reactstrap";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
+import BreadcrumbBar from "./AdminBreadcrumbBar";
+import "../css/AdminTheme.css";
 
-const formatLabel = (segment) => {
-  return segment
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-};
 const AdminLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed,  setCollapsed]  = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const pathnames = location.pathname.split("/").filter(Boolean);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  const handleToggle = () => {
+    if (window.innerWidth <= 991) {
+      setMobileOpen((v) => !v);
+    } else {
+      setCollapsed((v) => !v);
+    }
+  };
+
   return (
+    <div className="adm-shell">
+      <AdminSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
 
-    <div
-      className="d-flex"
-      style={{
-        height: "100vh",
-        overflow: "hidden"
-      }}
-    >
-      <AdminSidebar collapsed={collapsed} />
       <div
-        className="flex-grow-1 d-flex flex-column bg-light"
-        style={{ overflow: "hidden" }}
-      >
+        className={`adm-backdrop ${mobileOpen ? "is-visible" : ""}`}
+        onClick={() => setMobileOpen(false)}
+      />
 
-        <AdminHeader toggleSidebar={() => setCollapsed(!collapsed)} />
+      <div className="adm-main">
+        <AdminHeader toggleSidebar={handleToggle} />
 
-        <div
-          className="px-4 py-2 flex-shrink-0"
-          style={{
-            background: "linear-gradient(90deg, #4e73df, #1cc88a)"
-          }}
-        >
-          <Breadcrumb className="mb-0 bg-transparent">
-            {pathnames.map((segment, index) => {
-              const isLast = index === pathnames.length - 1;
-              const routeTo = "/" + pathnames.slice(0, index + 1).join("/");
-              if (segment === "admin") {
-                return (
-                  <BreadcrumbItem key="admin">
-                    <Link
-                      to="/admin/dashboard"
-                      className="text-white fw-bold text-decoration-none"
-                    >
-                      Admin
-                    </Link>
-                  </BreadcrumbItem>
-                );
-              }
-              return (
-                <BreadcrumbItem key={routeTo} active={isLast}>
-                  {isLast ? (
-                    <span className="fw-bold text-white">
-                      {formatLabel(segment)}
-                    </span>
-                  ) : (
-                    <Link
-                      to={routeTo}
-                      className="text-white text-decoration-none"
-                    >
-                      {formatLabel(segment)}
-                    </Link>
-                  )}
-                </BreadcrumbItem>
-              );
-            })}
-          </Breadcrumb>
-        </div>
+        <BreadcrumbBar />
 
-        <div
-          className="flex-grow-1"
-          style={{
-            overflowY: "auto",
-            padding: "1.5rem"
-          }}
-        >
-          <div className="bg-white p-4 rounded shadow-sm">
+        <div className="adm-content-scroll">
+          <div className="adm-content-card">
             <Outlet />
           </div>
         </div>
+
         <AdminFooter />
       </div>
     </div>
