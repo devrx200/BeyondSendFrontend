@@ -180,10 +180,10 @@ const HeroSlider = () => {
     if (!slide.link) return;
     const { isConfirmed } = await Swal.fire({
       title: isHindi ? "क्या आप आगे बढ़ना चाहते हैं?" : "Do you want to continue?",
-      text:  isHindi ? "आप लिंक पर जा रहे हैं" : "You are about to visit this link",
+      text: isHindi ? "आप लिंक पर जा रहे हैं" : "You are about to visit this link",
       icon: "question", showCancelButton: true,
       confirmButtonText: isHindi ? "हाँ, जाएँ" : "Yes, Visit",
-      cancelButtonText:  isHindi ? "रद्द करें" : "Cancel",
+      cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
     });
     if (!isConfirmed) return;
     if (slide.isExternal && slide.openInNewTab) window.open(slide.link, "_blank");
@@ -209,10 +209,11 @@ const HeroSlider = () => {
       >
         {slides.map(slide => {
           const showBtn = slide.linkButtonShow === true || slide.linkButtonShow === "true";
-          const title   = isHindi ? slide.titleHin       : slide.titleEng;
-          const sub     = isHindi ? slide.subtitleHin    : slide.subtitleEng;
-          const desc    = isHindi ? slide.descriptionHin : slide.descriptionEng;
-          const btnText = isHindi ? slide.linkTextHi     : slide.linkTextEn;
+          const titelDesShow = slide.titelDesShow === true || slide.linkButtonShow === "true";
+          const title = isHindi ? slide.titleHin : slide.titleEng;
+          const sub = isHindi ? slide.subtitleHin : slide.subtitleEng;
+          const desc = isHindi ? slide.descriptionHin : slide.descriptionEng;
+          const btnText = isHindi ? slide.linkTextHi : slide.linkTextEn;
 
           return (
             <SwiperSlide key={slide._id}>
@@ -230,11 +231,14 @@ const HeroSlider = () => {
 
                 {/* Centered content — always fully visible */}
                 <div className="hero-slide-content">
-                  {sub && <span className="hero-badge">{sub}</span>}
+                  {titelDesShow && (
+                    <>
+                      {sub && <span className="hero-badge">{sub}</span>}
+                      <h1 className="hero-title">{title}</h1>
+                      {desc && <p className="hero-desc">{desc}</p>}
+                    </>
+                  )}
 
-                  <h1 className="hero-title">{title}</h1>
-
-                  {desc && <p className="hero-desc">{desc}</p>}
 
                   {showBtn && slide.link && (
                     <Button

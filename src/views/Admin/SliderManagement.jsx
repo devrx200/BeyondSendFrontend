@@ -23,6 +23,8 @@ const SliderManagement = () => {
     linkTextEn: '', linkTextHi: '',
     order: 1, active: true,
     uploadefile: null, linkButtonShow: true,
+    titelDesShow: true,
+
   });
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -85,7 +87,7 @@ const SliderManagement = () => {
   };
 
   const resetForm = () => {
-    setFormData({ smallTitleEn: '', smallTitleHi: '', mainTitleEn: '', mainTitleHi: '', descriptionEn: '', descriptionHi: '', image: '', link: '', linkTextEn: '', linkTextHi: '', order: 1, active: true, uploadefile: null, linkButtonShow: true });
+    setFormData({ smallTitleEn: '', smallTitleHi: '', mainTitleEn: '', mainTitleHi: '', descriptionEn: '', descriptionHi: '', image: '', link: '', linkTextEn: '', linkTextHi: '', order: 1, active: true, uploadefile: null, linkButtonShow: true, titelDesShow: true, });
     setErrors({});
   };
 
@@ -146,6 +148,9 @@ const SliderManagement = () => {
       link: slide.link || "", linkTextEn: slide.linkTextEn, linkTextHi: slide.linkTextHi,
       order: slide.displayOrder || 1, active: slide.isActive ?? true,
       image: slide.image || "", uploadefile: null, linkButtonShow: slide.linkButtonShow ?? true,
+      titelDesShow: slide.titelDesShow ?? true,
+
+
     });
     setImagePreview(null);
     setModal(true);
@@ -167,9 +172,10 @@ const SliderManagement = () => {
       payload.append("linkTextEn", formData.linkTextEn); payload.append("linkTextHi", formData.linkTextHi);
       payload.append("link", formData.link); payload.append("displayOrder", formData.order);
       payload.append("isActive", formData.active); payload.append("linkButtonShow", formData.linkButtonShow);
+      payload.append("titelDesShow", formData.titelDesShow);
       if (formData.uploadefile) payload.append("image", formData.uploadefile);
       const url = editingSlide ? `${API_URL}/api/update-hero-slide/${editingSlide._id}` : `${API_URL}/api/create-hero-slide`;
-      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: {   Authorization: `Bearer ${token}` }  });
+      const response = await (editingSlide ? axios.put : axios.post)(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       if (response.status === 200 || response.status === 201) {
         Swal.fire({ icon: "success", title: response.data.message, timer: 2000, showConfirmButton: false });
         toggleModal(); fetchSlides();
@@ -446,20 +452,70 @@ const SliderManagement = () => {
                     {errors.order && <small className="text-danger">{errors.order}</small>}
                   </FormGroup>
                 </Col>
-                <Col md={3}>
+                <Col md={2}>
                   <FormGroup className="mb-0">
-                    <Label className="small fw-bold">{isHindi ? 'बटन दिखाएँ' : 'Show Button'}</Label>
-                    <Input type="select" name="linkButtonShow" bsSize="sm" value={formData.linkButtonShow}
-                      onChange={(e) => setFormData({ ...formData, linkButtonShow: e.target.value === "true" })}>
+                    <Label className="small fw-bold">
+                      {isHindi ? 'बटन दिखाएँ' : 'Show Button'}
+                    </Label>
+
+                    <Input
+                      type="select"
+                      name="linkButtonShow"
+                      bsSize="sm"
+                      value={formData.linkButtonShow}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          linkButtonShow: e.target.value === "true"
+                        })
+                      }
+                    >
                       <option value={true}>Yes</option>
                       <option value={false}>No</option>
                     </Input>
                   </FormGroup>
                 </Col>
-                <Col md={3} className="d-flex align-items-end">
+
+                <Col md={2}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-bold">
+                      {isHindi
+                        ? 'टाइटल/विवरण दिखाएँ'
+                        : 'Show Title & Description'}
+                    </Label>
+
+                    <Input
+                      type="select"
+                      name="titelDesShow"
+                      bsSize="sm"
+                      value={formData.titelDesShow}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          titelDesShow: e.target.value === "true"
+                        })
+                      }
+                    >
+                      <option value={true}>Yes</option>
+                      <option value={false}>No</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+
+                <Col md={2} className="d-flex align-items-end">
                   <FormGroup check className="mb-1">
-                    <Input type="checkbox" name="active" checked={formData.active}
-                      onChange={(e) => setFormData({ ...formData, active: e.target.checked })} />
+                    <Input
+                      type="checkbox"
+                      name="active"
+                      checked={formData.active}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          active: e.target.checked
+                        })
+                      }
+                    />
+
                     <Label check className="small fw-bold ms-1">
                       {isHindi ? 'सक्रिय रखें' : 'Set Active'}
                     </Label>
