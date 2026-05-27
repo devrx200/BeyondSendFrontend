@@ -16,6 +16,8 @@ import {
   Badge,
 } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from "../../contexts/LanguageContext";
+import Swal from "sweetalert2";
 
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -29,7 +31,7 @@ const MenuManagement = () => {
 
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null); // { type, menuId, submenuId, childId }
-
+  const { isHindi } = useLanguage();
   const [form, setForm] = useState({
     titleEng: "",
     titleHi: "",
@@ -207,8 +209,39 @@ const MenuManagement = () => {
 
   /* ================= DELETE ================= */
   const deleteMenu = async ({ type, menuId, submenuId, childId }) => {
-    if (!window.confirm("Are you sure?")) return;
+   const confirmText = isHindi
+    ? "क्या आप वाकई इसे डिलीट करना चाहते हैं?"
+    : "Are you sure you want to delete this?";
 
+  const successText = isHindi
+    ? "सफलतापूर्वक डिलीट किया गया"
+    : "Deleted successfully";
+
+  const cancelText = isHindi
+    ? "डिलीट प्रक्रिया रद्द कर दी गई"
+    : "Delete cancelled";
+
+  const result = await Swal.fire({
+    title: isHindi ? "क्या आप सुनिश्चित हैं?" : "Are you sure?",
+    text: confirmText,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: isHindi ? "हाँ, डिलीट करें" : "Yes, Delete",
+    cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
+  });
+
+  if (!result.isConfirmed) {
+    Swal.fire({
+      icon: "info",
+      title: cancelText,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+    return;
+  }
+try {
     if (type === "MENU") {
       await axios.delete(`${API}/api/menu/${menuId}`, {
         headers: {
@@ -239,7 +272,20 @@ const MenuManagement = () => {
       );
     }
 
+    Swal.fire({
+      icon: "success",
+      title: successText,
+      timer: 1500,
+      showConfirmButton: false,
+    });
     loadMenus();
+     } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
+      text: error?.response?.data?.message || error.message,
+    });
+  }
   };
 
   /* ================= EDIT ================= */
@@ -270,14 +316,35 @@ const MenuManagement = () => {
     try {
       if (editing) {
         await updateMenu();
+         Swal.fire({
+        icon: "success",
+        title: isHindi
+          ? "मेनू सफलतापूर्वक अपडेट किया गया"
+          : "Menu updated successfully",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       } else {
         await createMenu();
+         Swal.fire({
+        icon: "success",
+        title: isHindi
+          ? "मेनू सफलतापूर्वक जोड़ा गया"
+          : "Menu added successfully",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       }
 
       toggleModal();
       loadMenus();
     } catch (err) {
       console.error("Save error", err);
+       Swal.fire({
+      icon: "error",
+      title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
+      text: err?.response?.data?.message || err.message,
+    });
     }
   };
 

@@ -12,7 +12,7 @@ import {
   FormGroup,
   Label,
   Input,
-  Badge
+  Badge, Col , Row
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBullhorn } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -32,7 +32,8 @@ const NewUpdates = () => {
     isExternal: false,
     openInNewTab: false,
     displayOrder: "",
-    isNew: true
+    isNew: true,
+    isActive: false,
   });
 
   /* ================= LOAD LIST ================= */
@@ -80,7 +81,8 @@ const NewUpdates = () => {
       isExternal: item.isExternal,
       openInNewTab: item.openInNewTab,
       displayOrder: item.displayOrder,
-      isNew: item.isNew
+      isNew: item.isNew,
+      isActive: item.isActive ? true : false
     });
     setModal(true);
   };
@@ -124,7 +126,7 @@ const NewUpdates = () => {
       if (editingId) {
         res = await axios.put(
           `${API_URL}/api/notice-ticker/${editingId}`,
-          formData ,
+          formData,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -156,7 +158,7 @@ const NewUpdates = () => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4 className="mb-0">
             <FaBullhorn className="me-2 text-danger" />
-            Notice Ticker Management – New Update Slider On Home Page 
+            Notice Ticker Management – New Update Slider On Home Page
           </h4>
 
           <Button color="primary" onClick={toggleModal}>
@@ -275,8 +277,16 @@ const NewUpdates = () => {
                   <option value="true">Yes</option>
                 </Input>
               </FormGroup>
-
-              <FormGroup>
+              <Row>
+              <Col xs={6}>
+                <Label className="fw-semibold small">Status</Label>
+                <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
+                  <option value="true">✅ Active</option>
+                  <option value="false">⛔ Inactive</option>
+                </Input>
+              </Col>
+               <Col xs={6}>
+               <FormGroup>
                 <Label>Open in New Tab</Label>
                 <Input
                   type="select"
@@ -293,6 +303,8 @@ const NewUpdates = () => {
                   <option value="true">Yes</option>
                 </Input>
               </FormGroup>
+               </Col>
+              </Row>
 
               <FormGroup>
                 <Label>Display Order</Label>
