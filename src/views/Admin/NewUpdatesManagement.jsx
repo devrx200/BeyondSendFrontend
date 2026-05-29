@@ -50,7 +50,7 @@ const NewUpdates = () => {
 
   useEffect(() => {
     loadNotices();
-  }, []);
+  }, [token]);
 
   /* ================= MODAL ================= */
   const toggleModal = () => {

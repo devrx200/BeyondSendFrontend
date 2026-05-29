@@ -305,6 +305,13 @@ const DownloadManagement = () => {
                   )}
                 </FormGroup>
               </Col>
+                <Col xs={6}>
+                <Label className="fw-semibold small">Status</Label>
+                <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
+                  <option value="true">✅ Active</option>
+                  <option value="false">⛔ Inactive</option>
+                </Input>
+              </Col>
             </Row>
           </Form>
         </ModalBody>

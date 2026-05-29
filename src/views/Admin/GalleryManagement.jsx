@@ -167,7 +167,9 @@ const GalleryManagement = () => {
   /* ================= EDIT ================= */
   const handleEdit = async (id) => {
     try {
-      const res = await axios.get(`${API_URL}/api/get-gallery-by-id/${id}`);
+      const res = await axios.get(`${API_URL}/api/get-gallery-by-id/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (!res.data.success) {
         return Swal.fire("Error", res.data.message, "error");
