@@ -24,8 +24,8 @@ import FeedbackForm from "../views/pages/FeedbackForm";
 import HelpSupport from "../views/pages/HelpSupport";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 import SchemesDetails from "../views/pages/SchemesDetails";
-import DynamicPage from "../views/pages/DynamicPage";
-import CreatedDynamicPage from "../views/pages/CreatedDynamicPage";
+import RichContentPages from "../views/pages/RichContentPages";
+import MultiSectionPages from "../views/pages/MultiSectionPages";
 import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
 
@@ -41,7 +41,6 @@ import SliderManagement from "../views/Admin/SliderManagement";
 import FooterSection from "../views/Admin/footerSectionManager";
 import AboutSectionMangement from "../views/Admin/AboutSectionMangement";
 import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
-import NotificationsManagement from "../views/Admin/NotificationsManagement";
 import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
 import GalleryManagement from "../views/Admin/GalleryManagement";
 import ManageCategories from "../views/Admin/ManageCategories";
@@ -136,12 +135,12 @@ const AppRoutes = () => {
 
       {/* CMS Rich-Text Pages (dynamic menu) */}
       {pages.filter((p) => !p.isExternal).map((p) => (
-        <Route key={p._id} path={p.path} element={<MainLayout><DynamicPage /></MainLayout>} />
+        <Route key={p._id} path={p.path} element={<MainLayout><RichContentPages /></MainLayout>} />
       ))}
 
       {/* Multi-Section Pages (/:mainslug/:slug) */}
       {staticPages.filter((p) => !p.isExternal).map((p) => (
-        <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><CreatedDynamicPage /></MainLayout>} />
+        <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><MultiSectionPages /></MainLayout>} />
       ))}
 
       {/* Important  Pages */}
@@ -158,7 +157,6 @@ const AppRoutes = () => {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
-          <Route path="notifications" element={<NotificationsManagement />} />
           <Route path="new-updates" element={<NewUpdatesManagement />} />
           <Route path="gallery" element={<GalleryManagement />} />
           <Route path="admin-education-stats" element={<AdminEducationStats />} />

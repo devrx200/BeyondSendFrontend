@@ -34,11 +34,10 @@ import {
   FaChevronLeft,
 } from "react-icons/fa";
 import { useLanguage } from "../../contexts/LanguageContext";
-// import "./CreatedDynamicPage.css"; // Optional: for additional custom styles
 
 const API = import.meta.env.VITE_API_URL;
 
-const CreatedDynamicPage = () => {
+const MultiSectionPages = () => {
   const { slug } = useParams();
   const location = useLocation();
   const { isHindi } = useLanguage();
@@ -608,4 +607,4 @@ const CreatedDynamicPage = () => {
   );
 };
 
-export default CreatedDynamicPage;
+export default MultiSectionPages;

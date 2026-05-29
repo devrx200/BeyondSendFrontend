@@ -6,7 +6,6 @@ import ImportantLinksSection from "../../components/ImportantLinksSection";
 import AnnouncementsAndSchemes from "../../components/AnnouncementsAndSchemes";
 import NoticeDepAndDirectorate from "../../components/NoticeDepAndDirectorate";
 import QuickAccess from "../../components/QuickAccess";
-
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const Home = () => {
@@ -18,10 +17,7 @@ const Home = () => {
       <NoticeTicker />
       <AfterCarousel />
       <AboutSection />
-
-      {/* ✅ Now self-managed */}
       <QuickAccess isHindi={isHindi} />
-
       <NoticeDepAndDirectorate />
       <AnnouncementsAndSchemes />
       <ImportantLinksSection />

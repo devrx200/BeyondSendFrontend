@@ -23,7 +23,7 @@ import { FaHome, FaNewspaper } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
 
-const DynamicPage = () => {
+const RichContentPages = () => {
   const location = useLocation();
   const { isHindi } = useLanguage();
 
@@ -212,4 +212,4 @@ const DynamicPage = () => {
   );
 };
 
-export default DynamicPage;
+export default RichContentPages;

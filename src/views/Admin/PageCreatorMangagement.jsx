@@ -838,7 +838,7 @@ const PageCreatorManagement = () => {
         <CardBody>
           {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">📄 Page Creator Management</h4>
+            <h4 className="mb-0">📄 Multi Section Pages Management</h4>
             <Button color="primary" onClick={toggleModal} disabled={loading}>
               <FaPlus className="me-1" /> Add Page
             </Button>

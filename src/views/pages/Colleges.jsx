@@ -1,296 +1,438 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
+import {
+  Container, Row, Col, Card, CardBody, CardHeader, Badge,
+  Button, ButtonGroup, Input, InputGroup, InputGroupText,
+  Spinner, Pagination, PaginationItem, PaginationLink,
+} from "reactstrap";
 import PageLayout from "../../components/PageLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API_URL = import.meta.env.VITE_EXTERNAL_API_URL;
+const PAGE_SIZE = 10;
 
-const AV_COLORS = [
-  { bg: "#E6F1FB", color: "#1a56db" },
-  { bg: "#E1F5EE", color: "#085041" },
-  { bg: "#EEEDFE", color: "#3C3489" },
-  { bg: "#FAEEDA", color: "#633806" },
-  { bg: "#FAECE7", color: "#712B13" },
-  { bg: "#FBEAF0", color: "#72243E" },
+/* ── College type config  (0=Private, 1=Govt, 2=Aided/Central) ─── */
+const COLLEGE_TYPES = [
+  { key: "all", en: "All",          hi: "सभी",              color: "dark",    icon: "🏛️" },
+  { key: "1",   en: "Govt",         hi: "सरकारी",            color: "primary", icon: "🏢" },
+  { key: "0",   en: "Private",      hi: "निजी",              color: "success", icon: "🏫" },
+  { key: "2",   en: "Aided/Central",hi: "अनुदानित/केंद्रीय", color: "warning", icon: "🏦" },
 ];
 
-const TABS = [
-  { key: "all",      en: "All Colleges",  hi: "सभी" },
-  { key: "active",   en: "Active",        hi: "सक्रिय" },
-  { key: "inactive", en: "Inactive",      hi: "निष्क्रिय" },
-  { key: "tribal",   en: "Tribal",        hi: "जनजातीय" },
-  { key: "lead",     en: "Lead",          hi: "अग्रणी" },
-];
+/* colour palette for type-filter buttons (avoids bootstrap "light" outline hover bug) */
+const TYPE_BTN_COLORS = {
+  all:     { active: "#1e293b", hover: "#334155", text: "#fff" },
+  "1":     { active: "#1e3a8a", hover: "#2d4fad", text: "#fff" },
+  "0":     { active: "#166534", hover: "#15803d", text: "#fff" },
+  "2":     { active: "#92400e", hover: "#b45309", text: "#fff" },
+};
 
-function initials(name) {
-  if (!name) return "??";
-  return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+/* ── NAAC badge colour ───────────────────────────────────────────── */
+function naacColor(g) {
+  if (!g || g === "N/A" || g === "Not Available") return "secondary";
+  if (g.startsWith("A++")) return "success";
+  if (g.startsWith("A"))   return "success";
+  if (g.startsWith("B++")) return "primary";
+  if (g.startsWith("B"))   return "warning";
+  return "danger";
 }
 
-function naacBadgeStyle(grade) {
-  if (!grade) return null;
-  if (grade.startsWith("A")) return { background: "#d1fae5", color: "#065f46" };
-  if (grade.startsWith("B")) return { background: "#fef9c3", color: "#854d0e" };
-  return { background: "#fee2e2", color: "#991b1b" };
-}
+/* ── Confirm before opening external URL ────────────────────────── */
+const openExternalUrl = (url, name, isHindi) => {
+  Swal.fire({
+    title: isHindi ? "बाहरी वेबसाइट" : "External Website",
+    html: isHindi
+      ? `आप <b>${name}</b> की आधिकारिक वेबसाइट पर जा रहे हैं।<br/><small class="text-muted">${url}</small>`
+      : `You are about to visit the official website of<br/><b>${name}</b><br/><small class="text-muted">${url}</small>`,
+    icon: "info",
+    showCancelButton: true,
+    confirmButtonColor: "#1e3a8a",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: isHindi ? "🌐 जाएं" : "🌐 Proceed",
+    cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
+    customClass: { popup: "rounded-4" },
+  }).then((result) => {
+    if (result.isConfirmed) window.open(url, "_blank", "noopener,noreferrer");
+  });
+};
 
-/* ─── Skeleton ─── */
-function SkeletonCard() {
+/* ── Stat Badge ──────────────────────────────────────────────────── */
+const STAT_BADGE_STYLES = {
+  primary: { bg: "#e8edff", color: "#1e3a8a" },
+  success: { bg: "#dcfce7", color: "#166534" },
+  warning: { bg: "#fef9c3", color: "#92400e" },
+  dark:    { bg: "#f1f5f9", color: "#1e293b" },
+};
+
+function StatBadge({ icon, label, value, color = "primary" }) {
+  const s = STAT_BADGE_STYLES[color] || STAT_BADGE_STYLES.primary;
   return (
-    <div style={{
-      display: "grid", gridTemplateColumns: "110px 1fr 1fr",
-      gap: 0, padding: "20px 24px",
-      borderBottom: "1px solid #e9ecef",
-      alignItems: "center",
-    }}>
-      <div style={{ paddingRight: 20, display: "flex", justifyContent: "center" }}>
-        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#e2e8f0", animation: "pulse 1.5s infinite" }} />
-      </div>
-      <div style={{ paddingRight: 32, borderRight: "1px solid #e9ecef" }}>
-        <div style={{ height: 15, background: "#e2e8f0", borderRadius: 8, marginBottom: 10, width: "70%", animation: "pulse 1.5s infinite" }} />
-        {[80, 60, 40, 50].map((w, i) => (
-          <div key={i} style={{ height: 12, background: "#e2e8f0", borderRadius: 6, marginBottom: 7, width: `${w}%`, animation: "pulse 1.5s infinite" }} />
-        ))}
-      </div>
-      <div style={{ paddingLeft: 32 }}>
-        {[60, 80, 70, 55].map((w, i) => (
-          <div key={i} style={{ height: 12, background: "#e2e8f0", borderRadius: 6, marginBottom: 8, width: `${w}%`, animation: "pulse 1.5s infinite" }} />
-        ))}
-      </div>
+    <div
+      className="d-flex flex-column align-items-center justify-content-center p-2 rounded-3"
+      style={{ background: s.bg, minWidth: 72 }}
+    >
+      <span style={{ fontSize: 18 }}>{icon}</span>
+      <span className="fw-bold" style={{ fontSize: 13, color: s.color }}>{value}</span>
+      <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: s.color, opacity: 0.7 }}>
+        {label}
+      </span>
     </div>
   );
 }
 
-/* ─── College Row Card ─── */
-function CollegeCard({ college, index, isHindi }) {
-  const [hovered, setHovered] = useState(false);
-  const av      = AV_COLORS[index % AV_COLORS.length];
-  const isActive = college.status === true || college.status === "true";
+/* ── College Card — LIST VIEW ────────────────────────────────────── */
+function CollegeCardList({ college, isHindi }) {
   const isTribal = college.isTribal === true;
   const isLead   = college.isLead === 1 || college.isLead === true;
-  const naacStyle = naacBadgeStyle(college.naacGrade);
+  const nc       = naacColor(college.naacGrade);
+  const uni      = college.universityDetails || {};
+  const imgBase  = API_URL?.replace("/lmsbackend", "").replace(/\/$/, "");
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "110px 1fr 1fr",
-        gap: 0,
-        alignItems: "center",
-        padding: "20px 24px",
-        borderBottom: "1px solid #e9ecef",
-        position: "relative",
-        background: hovered ? "#fafbff" : "#fff",
-        transition: "background 0.18s",
+    <Card
+      className="mb-3 border-0 shadow-sm overflow-hidden p-0"
+      style={{ borderRadius: 14, transition: "box-shadow 0.2s", borderLeft: "4px solid #1e3a8a" }}
+      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 6px 24px rgba(30,58,138,.15)")}
+      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "")}
+    >
+      <CardBody className="p-0">
+        <Row className="g-0 align-items-stretch">
+
+          {/* Logo */}
+          <Col
+            xs="auto"
+            className="d-flex align-items-center justify-content-center p-3"
+            style={{ minWidth: 88, background: "linear-gradient(145deg,#eef2ff,#dbe4ff)", borderRight: "1px solid #e9ecef" }}
+          >
+            {college.profileImgUrl ? (
+              <img
+                src={`${imgBase}/${college.profileImgUrl.replace("../", "").replace(/^\/+/, "")}`}
+                alt={college.name}
+                style={{ width: 52, height: 52, objectFit: "contain", borderRadius: 8 }}
+              />
+            ) : (
+              <div
+                className="d-flex align-items-center justify-content-center rounded-3"
+                style={{ width: 52, height: 52, background: "#c5d3ff", fontSize: 26 }}
+              >
+                🏛️
+              </div>
+            )}
+          </Col>
+
+          {/* Main Info */}
+          <Col className="p-3" style={{ borderRight: "1px solid #f0f0f0" }}>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span className="fw-bold text-dark" style={{ fontSize: 14.5, lineHeight: 1.3 }}>
+                {college.name}
+              </span>
+              <Badge color={nc} pill style={{ fontSize: 10 }}>
+                ⭐ NAAC {college.naacGrade || "N/A"}
+              </Badge>
+              {isTribal && (
+                <Badge color="warning" pill style={{ fontSize: 10, background: "#fd7e14" }}>
+                  🏔️ {isHindi ? "जनजातीय" : "Tribal"}
+                </Badge>
+              )}
+              {isLead && (
+                <Badge color="info" pill style={{ fontSize: 10 }}>
+                  ✅ {isHindi ? "अग्रणी" : "Lead"}
+                </Badge>
+              )}
+            </div>
+            <div className="d-flex flex-column gap-1">
+              {college.educationMode && (
+                <span className="text-muted small">
+                  🎓 <strong>{isHindi ? "शिक्षा मोड:" : "Mode:"}</strong>{" "}
+                  <span className="text-dark">{college.educationMode}</span>
+                </span>
+              )}
+              {college.address && (
+                <span className="text-muted small">
+                  📍 <strong>{isHindi ? "पता:" : "Addr:"}</strong>{" "}
+                  <span className="text-dark">{college.address}</span>
+                </span>
+              )}
+              {college.districtName && (
+                <span className="text-muted small">
+                  🏙️ <strong>{isHindi ? "जिला:" : "Dist:"}</strong>{" "}
+                  <span className="text-dark">{college.districtName}</span>
+                </span>
+              )}
+              {college.establishYear && (
+                <span className="text-muted small">
+                  📅 <strong>{isHindi ? "स्थापना:" : "Est:"}</strong>{" "}
+                  <Badge color="primary" pill style={{ fontSize: 10, marginLeft: 4 }}>
+                    {college.establishYear}
+                  </Badge>
+                </span>
+              )}
+            </div>
+          </Col>
+
+          {/* University Info */}
+          {uni.universityName && (
+            <Col xs={12} md={3} className="p-3" style={{ borderRight: "1px solid #f0f0f0", background: "#fafbff" }}>
+              <p className="text-uppercase fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: "0.09em", color: "#6c757d" }}>
+                🏫 {isHindi ? "संबद्ध विश्वविद्यालय" : "Affiliated University"}
+              </p>
+              <p className="fw-semibold mb-1 text-dark" style={{ fontSize: 12, lineHeight: 1.3 }}>
+                {uni.universityName}
+              </p>
+              {uni.universityType && (
+                <Badge color="light" className="text-dark border mb-1" style={{ fontSize: 10 }}>
+                  {uni.universityType}
+                </Badge>
+              )}
+              {uni.contactNumber && (
+                <div>
+                  <a href={`tel:${uni.contactNumber}`} className="text-muted small d-block text-decoration-none">
+                    📞 {uni.contactNumber}
+                  </a>
+                </div>
+              )}
+              {uni.universityUrl && (
+                <button
+                  onClick={() => openExternalUrl(uni.universityUrl, uni.universityName, isHindi)}
+                  className="btn btn-link p-0 text-primary small text-decoration-none mt-1"
+                  style={{ fontSize: 11 }}
+                >
+                  🌐 {isHindi ? "वेबसाइट" : "Website"}
+                </button>
+              )}
+            </Col>
+          )}
+
+          {/* Contact + Actions */}
+          <Col xs={12} md="auto" className="p-3 d-flex flex-column justify-content-between" style={{ minWidth: 160 }}>
+            <div>
+              <p className="text-uppercase fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: "0.09em", color: "#6c757d" }}>
+                {isHindi ? "संपर्क" : "Contact"}
+              </p>
+              {college.collegeEmail && (
+                <a href={`mailto:${college.collegeEmail}`} className="d-block text-truncate text-dark text-decoration-none small mb-1" style={{ maxWidth: 155 }}>
+                  ✉️ {college.collegeEmail}
+                </a>
+              )}
+              {college.contactNumber && (
+                <a href={`tel:${college.contactNumber}`} className="d-block text-dark text-decoration-none small mb-2">
+                  📞 {college.contactNumber}
+                </a>
+              )}
+            </div>
+            {college.collegeUrl && (
+              <Button
+                color="primary"
+                size="sm"
+                onClick={() => openExternalUrl(college.collegeUrl, college.name, isHindi)}
+                style={{ borderRadius: 20, fontSize: 12, whiteSpace: "nowrap", background: "linear-gradient(135deg,#1e3a8a,#3b5bdb)", border: "none" }}
+              >
+                🌐 {isHindi ? "वेबसाइट" : "Website"}
+              </Button>
+            )}
+          </Col>
+
+        </Row>
+      </CardBody>
+    </Card>
+  );
+}
+
+/* ── College Card — GRID VIEW ────────────────────────────────────── */
+function CollegeCardGrid({ college, isHindi }) {
+  const isTribal = college.isTribal === true;
+  const isLead   = college.isLead === 1 || college.isLead === true;
+  const nc       = naacColor(college.naacGrade);
+  const uni      = college.universityDetails || {};
+  const imgBase  = API_URL?.replace("/lmsbackend", "").replace(/\/$/, "");
+
+  return (
+    <Card
+      className="h-100 border-0 shadow-sm overflow-hidden"
+      style={{ borderRadius: 14, transition: "transform 0.2s, box-shadow 0.2s" }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-3px)";
+        e.currentTarget.style.boxShadow = "0 8px 28px rgba(30,58,138,.18)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "";
+        e.currentTarget.style.boxShadow = "";
       }}
     >
-      {/* ── Status pill ── */}
-      <div style={{ position: "absolute", top: 16, right: 18, display: "flex", gap: 7, alignItems: "center" }}>
-        <span style={{
-          fontSize: 10.5, fontWeight: 700, padding: "3px 11px",
-          borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.05em",
-          background: isActive ? "#d1fae5" : "#fee2e2",
-          color: isActive ? "#065f46" : "#991b1b",
-        }}>
-          {isActive
-            ? (isHindi ? "● सक्रिय" : "● Active")
-            : (isHindi ? "● निष्क्रिय" : "● Inactive")}
-        </span>
-      </div>
-
-      {/* ── Logo ── */}
-      <div style={{ paddingRight: 20, display: "flex", justifyContent: "center" }}>
-        <div style={{
-          width: 82, height: 82, borderRadius: "50%",
-          border: "1.5px solid #dee2e6",
-          background: av.bg, overflow: "hidden",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          {college.universityLogo
-            ? <img src={college.universityLogo} alt={college.name}
-                style={{ width: "100%", height: "100%", objectFit: "contain", padding: 7 }} />
-            : <span style={{ fontSize: 20, fontWeight: 800, color: av.color }}>
-                {initials(college.name)}
-              </span>
-          }
-        </div>
-      </div>
-
-      {/* ── Left info ── */}
-      <div style={{ paddingRight: 32, borderRight: "1px solid #e9ecef" }}>
-        {/* Name */}
-        <p style={{
-          fontSize: 15, fontWeight: 700, color: "#1a56db",
-          margin: "0 0 10px", lineHeight: 1.35, paddingRight: 110,
-        }}>
-          {college.name || "—"}
-        </p>
-
-        {/* Education Mode */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, marginBottom: 6 }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "शिक्षा मोड:" : "Education Mode:"}
-          </b>
-          <span style={{ color: "#4a5568" }}>{college.educationMode || "—"}</span>
-        </div>
-
-        {/* Location */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, marginBottom: 6 }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "स्थान:" : "Location:"}
-          </b>
-          <span style={{ color: "#4a5568" }}>{college.address || "—"}</span>
-        </div>
-
-        {/* Establishment Year */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, marginBottom: 6 }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "स्थापना वर्ष:" : "Establishment Year:"}
-          </b>
-          <span style={{
-            background: "#dbeafe", color: "#1d4ed8",
-            fontSize: 12, fontWeight: 600, padding: "2px 9px", borderRadius: 20,
-          }}>
-            {college.establishYear || "—"}
-          </span>
-        </div>
-
-        {/* NAAC Grade */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, marginBottom: 8 }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "NAAC ग्रेड:" : "NAAC Grade:"}
-          </b>
-          {naacStyle
-            ? <span style={{ ...naacStyle, fontSize: 12, fontWeight: 700, padding: "2px 9px", borderRadius: 20 }}>
-                {college.naacGrade}
-              </span>
-            : <span style={{ color: "#9ca3af" }}>—</span>
-          }
-        </div>
-
-        {/* Tags */}
-        {(isTribal || isLead) && (
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-            {isTribal && (
-              <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "#fef3c7", color: "#d97706" }}>
-                🏔️ {isHindi ? "जनजातीय" : "Tribal"}
-              </span>
-            )}
-            {isLead && (
-              <span style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "#ede9fe", color: "#7c3aed" }}>
-                ⭐ {isHindi ? "अग्रणी" : "Lead"}
-              </span>
-            )}
+      <div style={{ height: 5, background: "linear-gradient(90deg,#1e3a8a,#3b5bdb)" }} />
+      <div
+        className="d-flex align-items-center justify-content-center p-3"
+        style={{ background: "linear-gradient(145deg,#eef2ff,#dbe4ff)", borderBottom: "1px solid #e9ecef", minHeight: 80 }}
+      >
+        {college.profileImgUrl ? (
+          <img
+            src={`${imgBase}/${college.profileImgUrl.replace("../", "").replace(/^\/+/, "")}`}
+            alt={college.name}
+            style={{ width: 54, height: 54, objectFit: "contain", borderRadius: 10, boxShadow: "0 2px 8px rgba(0,0,0,.1)" }}
+          />
+        ) : (
+          <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: 54, height: 54, background: "#c5d3ff", fontSize: 28 }}>
+            🏛️
           </div>
         )}
       </div>
 
-      {/* ── Right info ── */}
-      <div style={{ paddingLeft: 32 }}>
-        <p style={{
-          fontSize: 10.5, fontWeight: 700, color: "#b0b7c3",
-          letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px",
-        }}>
-          {isHindi ? "संबद्धता और संपर्क" : "Affiliation & Contact"}
-        </p>
-
-        {/* Affiliated University */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, marginBottom: 6, alignItems: "baseline" }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "संबद्ध विश्वविद्यालय:" : "Affiliated University:"}
-          </b>
-          <span style={{ color: "#4a5568" }}>{college.university || "—"}</span>
+      <CardBody className="p-3 d-flex flex-column">
+        <h6 className="fw-bold text-dark mb-2" style={{ fontSize: 13, lineHeight: 1.35 }}>
+          {college.name}
+        </h6>
+        <div className="d-flex flex-wrap gap-1 mb-2">
+          <Badge color={nc} pill style={{ fontSize: 10 }}>⭐ {college.naacGrade || "N/A"}</Badge>
+          {isTribal && <Badge color="warning" pill style={{ fontSize: 10 }}>🏔️ {isHindi ? "जनजातीय" : "Tribal"}</Badge>}
+          {isLead   && <Badge color="info"    pill style={{ fontSize: 10 }}>✅ {isHindi ? "अग्रणी"   : "Lead"}</Badge>}
         </div>
-
-        {/* Website */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, marginBottom: 6, alignItems: "baseline" }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "वेबसाइट:" : "Website:"}
-          </b>
-          {college.collegeUrl
-            ? <a href={college.collegeUrl} target="_blank" rel="noopener noreferrer"
-                style={{ color: "#1a56db", textDecoration: "none", fontSize: 13 }}
-                onMouseEnter={(e) => e.target.style.textDecoration = "underline"}
-                onMouseLeave={(e) => e.target.style.textDecoration = "none"}>
-                {college.collegeUrl}
-              </a>
-            : <span style={{ color: "#9ca3af" }}>—</span>
-          }
+        <div className="flex-grow-1">
+          {college.districtName  && <div className="text-muted small mb-1">🏙️ {college.districtName}</div>}
+          {college.educationMode && <div className="text-muted small mb-1">🎓 {college.educationMode}</div>}
+          {college.establishYear && (
+            <div className="text-muted small mb-2">
+              📅 <Badge color="primary" pill style={{ fontSize: 10 }}>{college.establishYear}</Badge>
+            </div>
+          )}
+          {uni.universityName && (
+            <div className="p-2 rounded-2 mb-2" style={{ background: "#f0f4ff", borderLeft: "3px solid #3b5bdb" }}>
+              <div className="text-uppercase fw-bold mb-1" style={{ fontSize: 9, letterSpacing: "0.07em", color: "#6c757d" }}>
+                {isHindi ? "विश्वविद्यालय" : "University"}
+              </div>
+              <div className="text-dark fw-semibold" style={{ fontSize: 11, lineHeight: 1.3 }}>
+                {uni.universityName}
+              </div>
+              {uni.universityType && (
+                <Badge color="light" className="text-dark border mt-1" style={{ fontSize: 9 }}>
+                  {uni.universityType}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Email */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, marginBottom: 6, alignItems: "baseline" }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "ईमेल:" : "Email:"}
-          </b>
-          {college.collegeEmail
-            ? <a href={`mailto:${college.collegeEmail}`}
-                style={{ color: "#e53e3e", textDecoration: "none", fontSize: 13 }}>
-                {college.collegeEmail}
-              </a>
-            : <span style={{ color: "#9ca3af" }}>—</span>
-          }
+        <div className="border-top pt-2 mt-1">
+          {college.collegeEmail && (
+            <a href={`mailto:${college.collegeEmail}`} className="d-block text-truncate text-muted text-decoration-none" style={{ fontSize: 11, maxWidth: "100%" }}>
+              ✉️ {college.collegeEmail}
+            </a>
+          )}
+          {college.contactNumber && (
+            <a href={`tel:${college.contactNumber}`} className="d-block text-muted text-decoration-none" style={{ fontSize: 11 }}>
+              📞 {college.contactNumber}
+            </a>
+          )}
         </div>
-
-        {/* Address */}
-        <div style={{ display: "flex", gap: 5, fontSize: 13, alignItems: "baseline" }}>
-          <b style={{ color: "#1a202c", whiteSpace: "nowrap" }}>
-            {isHindi ? "पता:" : "Address:"}
-          </b>
-          <span style={{ color: "#4a5568" }}>{college.address || "—"}</span>
-        </div>
-      </div>
-    </div>
+        {college.collegeUrl ? (
+          <Button
+            color="primary"
+            size="sm"
+            onClick={() => openExternalUrl(college.collegeUrl, college.name, isHindi)}
+            className="mt-2 w-100"
+            style={{ borderRadius: 20, fontSize: 12, background: "linear-gradient(135deg,#1e3a8a,#3b5bdb)", border: "none" }}
+          >
+            🌐 {isHindi ? "वेबसाइट देखें" : "Visit Website"}
+          </Button>
+        ) : (
+          <div className="mt-2 text-center text-muted small">—</div>
+        )}
+      </CardBody>
+    </Card>
   );
 }
 
-/* ─── Stat Card ─── */
-function StatCard({ label, value, loading, color }) {
+/* ── Pagination ──────────────────────────────────────────────────── */
+function PaginationBar({ current, total, onChange }) {
+  if (total <= 1) return null;
+  const delta = 2;
+  const range = [];
+  for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) range.push(i);
   return (
-    <div style={{
-      background: "#fff", borderRadius: 12, padding: "16px 20px",
-      border: "1px solid #e9ecef",
-      boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
-      position: "relative", overflow: "hidden",
-    }}>
-      <div style={{
-        position: "absolute", top: 0, right: 0,
-        width: 70, height: 70,
-        background: color,
-        opacity: 0.1, borderRadius: "0 0 0 70px",
-      }} />
-      <div style={{ fontSize: "1.9rem", fontWeight: 700, color: "#1a202c" }}>
-        {loading ? "—" : value}
-      </div>
-      <div style={{ fontSize: "0.7rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>
-        {label}
-      </div>
-    </div>
+    <Pagination size="sm" className="mb-0 flex-wrap">
+      <PaginationItem disabled={current === 1}><PaginationLink first    onClick={() => onChange(1)} /></PaginationItem>
+      <PaginationItem disabled={current === 1}><PaginationLink previous onClick={() => onChange(current - 1)} /></PaginationItem>
+      {range[0] > 1 && (
+        <>
+          <PaginationItem><PaginationLink onClick={() => onChange(1)}>1</PaginationLink></PaginationItem>
+          {range[0] > 2 && <PaginationItem disabled><PaginationLink>…</PaginationLink></PaginationItem>}
+        </>
+      )}
+      {range.map((p) => (
+        <PaginationItem key={p} active={p === current}>
+          <PaginationLink onClick={() => onChange(p)}>{p}</PaginationLink>
+        </PaginationItem>
+      ))}
+      {range[range.length - 1] < total && (
+        <>
+          {range[range.length - 1] < total - 1 && <PaginationItem disabled><PaginationLink>…</PaginationLink></PaginationItem>}
+          <PaginationItem><PaginationLink onClick={() => onChange(total)}>{total}</PaginationLink></PaginationItem>
+        </>
+      )}
+      <PaginationItem disabled={current === total}><PaginationLink next onClick={() => onChange(current + 1)} /></PaginationItem>
+      <PaginationItem disabled={current === total}><PaginationLink last onClick={() => onChange(total)} /></PaginationItem>
+    </Pagination>
   );
 }
 
-/* ─── Main ─── */
+/* ── Type Filter Button ──────────────────────────────────────────── */
+function TypeButton({ t, active, isHindi, onClick }) {
+  const c = TYPE_BTN_COLORS[t.key];
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "5px 12px",
+        fontSize: 12,
+        border: `1.5px solid ${c.active}`,
+        borderRadius: 0,
+        cursor: "pointer",
+        fontWeight: active ? 700 : 500,
+        background: active ? c.active : "#fff",
+        color:      active ? "#fff"    : c.active,
+        transition: "background 0.15s, color 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = c.active;
+          e.currentTarget.style.color = "#fff";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.background = "#fff";
+          e.currentTarget.style.color = c.active;
+        }
+      }}
+    >
+      {t.icon} {isHindi ? t.hi : t.en}
+    </button>
+  );
+}
+
+/* ── Main Page ───────────────────────────────────────────────────── */
 const Colleges = () => {
   const { isHindi } = useLanguage();
-  const [colleges, setColleges] = useState([]);
-  const [tab, setTab]           = useState("all");
-  const [search, setSearch]     = useState("");
-  const [loading, setLoading]   = useState(true);
+
+  const [colleges,      setColleges]      = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [viewMode,      setViewMode]      = useState("list");
+  const [typeFilter,    setTypeFilter]    = useState("all");
+  const [search,        setSearch]        = useState("");
+  const [districtFilter,setDistrictFilter]= useState("all");
+  const [page,          setPage]          = useState(1);
 
   const breadcrumb = [
     { label: isHindi ? "मुख्य पृष्ठ" : "Home", path: "/" },
     { label: isHindi ? "महाविद्यालय" : "Colleges", active: true },
   ];
 
+  /* Fetch */
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/college/get-all-college-for-HRMIS`);
+        const res = await axios.get(`${API_URL}/api/college/get-all-college-for-hesite`);
         const d = res.data;
-        setColleges(Array.isArray(d) ? d : d?.data || d?.colleges || []);
+        setColleges(Array.isArray(d) ? d : d?.data || []);
       } catch (e) {
         console.error(e);
       } finally {
@@ -299,30 +441,38 @@ const Colleges = () => {
     })();
   }, []);
 
-  const isActive = (c) => c.status === true || c.status === "true";
+  const districts = useMemo(() => {
+    const set = new Set(colleges.map((c) => c.districtName).filter(Boolean));
+    return Array.from(set).sort();
+  }, [colleges]);
 
-  const stats = [
-    { label: isHindi ? "कुल"       : "Total",    value: colleges.length,                                                   color: "linear-gradient(135deg,#6366f1,#8b5cf6)" },
-    { label: isHindi ? "सक्रिय"   : "Active",   value: colleges.filter(isActive).length,                                  color: "linear-gradient(135deg,#10b981,#059669)" },
-    { label: isHindi ? "निष्क्रिय" : "Inactive", value: colleges.filter((c) => !isActive(c)).length,                       color: "linear-gradient(135deg,#ef4444,#dc2626)" },
-    { label: isHindi ? "जनजातीय"  : "Tribal",   value: colleges.filter((c) => c.isTribal === true).length,                color: "linear-gradient(135deg,#f59e0b,#d97706)" },
-    { label: isHindi ? "अग्रणी"   : "Lead",     value: colleges.filter((c) => c.isLead === 1 || c.isLead === true).length, color: "linear-gradient(135deg,#8b5cf6,#7c3aed)" },
-  ];
-
-  const visible = colleges
-    .filter((c) => {
-      if (tab === "active")   return isActive(c);
-      if (tab === "inactive") return !isActive(c);
-      if (tab === "tribal")   return c.isTribal === true;
-      if (tab === "lead")     return c.isLead === 1 || c.isLead === true;
+  const filtered = useMemo(() => {
+    return colleges.filter((c) => {
+      if (typeFilter !== "all" && String(c.collegeType) !== typeFilter) return false;
+      if (districtFilter !== "all" && c.districtName !== districtFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return [c.name, c.districtName, c.aisheCode, c.collegeEmail]
+          .some((f) => (f || "").toLowerCase().includes(q));
+      }
       return true;
-    })
-    .filter((c) => {
-      if (!search) return true;
-      const q = search.toLowerCase();
-      return [c.name, c.districtName, c.aisheCode, c.collegeEmail, c.contactPerson]
-        .some((f) => (f || "").toLowerCase().includes(q));
     });
+  }, [colleges, typeFilter, districtFilter, search]);
+
+  useEffect(() => { setPage(1); }, [typeFilter, districtFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageSlice  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handlePage = (p) => {
+    setPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* Counts — corrected: 1=Govt, 0=Private, 2=Aided/Central */
+  const countGovt    = colleges.filter((c) => String(c.collegeType) === "1").length;
+  const countPrivate = colleges.filter((c) => String(c.collegeType) === "0").length;
+  const countCentral = colleges.filter((c) => String(c.collegeType) === "2").length;
 
   return (
     <PageLayout
@@ -330,122 +480,207 @@ const Colleges = () => {
       titleHi="महाविद्यालय"
       breadcrumb={breadcrumb}
     >
-      <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes slideIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-        .college-card { animation: slideIn 0.3s ease-out; }
-      `}</style>
+      <Container fluid className="bg-white rounded">
 
-      <div style={{ padding: "1.5rem 0" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 1rem" }}>
-
-          {/* ── Header ── */}
-          <div style={{
-            background: "#fff", borderRadius: 16, padding: "18px 24px",
-            marginBottom: 18, border: "1px solid #e9ecef",
-            boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
-            display: "flex", justifyContent: "space-between",
-            alignItems: "center", flexWrap: "wrap", gap: 14,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <span style={{ fontSize: "2.4rem" }}>🎓</span>
-              <div>
-                <h1 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1a202c", margin: 0 }}>
-                  {isHindi ? "छत्तीसगढ़ के महाविद्यालय" : "Chhattisgarh Colleges"}
-                </h1>
-                <p style={{ fontSize: "0.83rem", color: "#9ca3af", margin: "3px 0 0" }}>
-                  {isHindi ? "सभी पंजीकृत महाविद्यालय" : "All Registered Institutions"}
-                </p>
-              </div>
-            </div>
-            {/* Search */}
-            <div style={{
-              display: "flex", alignItems: "center",
-              background: "#f7fafc", borderRadius: 50,
-              padding: "8px 16px", minWidth: 280,
-              border: "1.5px solid #e2e8f0", gap: 8,
-            }}>
-              <span style={{ color: "#a0aec0" }}>🔍</span>
-              <input
-                type="text"
-                placeholder={isHindi ? "खोजें..." : "Search colleges..."}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ border: "none", background: "transparent", outline: "none", flex: 1, fontSize: 13.5 }}
-              />
-              {search && (
-                <button onClick={() => setSearch("")}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#a0aec0" }}>
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* ── Stats ── */}
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: 10, marginBottom: 18,
-          }}>
-            {stats.map((s, i) => <StatCard key={i} {...s} loading={loading} />)}
-          </div>
-
-          {/* ── Tabs ── */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                style={{
-                  padding: "7px 18px", borderRadius: 50,
-                  border: "none", cursor: "pointer",
-                  fontWeight: 600, fontSize: 13,
-                  transition: "all 0.18s",
-                  background: tab === t.key
-                    ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                    : "#fff",
-                  color: tab === t.key ? "#fff" : "#4a5568",
-                  boxShadow: tab === t.key
-                    ? "0 4px 12px rgba(99,102,241,0.3)"
-                    : "0 1px 4px rgba(0,0,0,0.06)",
-                }}
-              >
-                {isHindi ? t.hi : t.en}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Count ── */}
-          {!loading && (
-            <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 10 }}>
-              {visible.length} {isHindi ? "महाविद्यालय मिले" : `college${visible.length === 1 ? "" : "s"} found`}
-            </p>
-          )}
-
-          {/* ── Card list ── */}
-          <div style={{
-            border: "1px solid #e9ecef", borderRadius: 14,
-            overflow: "hidden", background: "#fff",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-          }}>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
-            ) : visible.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "3rem", color: "#9ca3af", fontSize: 15 }}>
-                <div style={{ fontSize: "2.5rem", marginBottom: 10 }}>🔍</div>
-                {isHindi ? "कोई महाविद्यालय नहीं मिला" : "No colleges found"}
-              </div>
-            ) : (
-              visible.map((college, idx) => (
-                <div key={college._id || idx} className="college-card">
-                  <CollegeCard college={college} index={idx} isHindi={isHindi} />
+        {/* ── GRADIENT HEADER ─────────────────────────────────── */}
+        <Card className="border-0 shadow-lg mb-4 overflow-hidden" style={{ borderRadius: 16 }}>
+          <CardHeader
+            className="text-white border-0 p-4"
+            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+          >
+            <Row className="align-items-center g-3">
+              <Col xs="auto">
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-3"
+                  style={{ width: 60, height: 60, background: "rgba(255,255,255,0.15)", fontSize: 32, backdropFilter: "blur(4px)" }}
+                >
+                  🏛️
                 </div>
-              ))
-            )}
-          </div>
+              </Col>
+              <Col>
+                <h4 className="fw-bold mb-1 text-white" style={{ letterSpacing: "-0.01em" }}>
+                  {isHindi ? "छत्तीसगढ़ के महाविद्यालय" : "Colleges of Chhattisgarh"}
+                </h4>
+                <p className="mb-0 small" style={{ color: "rgba(255,255,255,0.75)" }}>
+                  {isHindi
+                    ? "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन द्वारा पंजीकृत महाविद्यालय"
+                    : "Registered institutions under Department of Higher Education, Govt. of Chhattisgarh"}
+                </p>
+              </Col>
+              {!loading && (
+                <Col xs={12} md="auto">
+                  <Row className="g-2 justify-content-end">
+                    <Col xs="auto">
+                      <StatBadge icon="🏢" label={isHindi ? "सरकारी"  : "Govt"}    value={countGovt}       color="primary" />
+                    </Col>
+                    <Col xs="auto">
+                      <StatBadge icon="🏫" label={isHindi ? "निजी"    : "Private"} value={countPrivate}    color="success" />
+                    </Col>
+                    <Col xs="auto">
+                      <StatBadge icon="🏦" label={isHindi ? "अनुदानित": "Aided"}   value={countCentral}    color="warning" />
+                    </Col>
+                    <Col xs="auto">
+                      <StatBadge icon="🏛️" label={isHindi ? "कुल"     : "Total"}   value={colleges.length} color="dark"    />
+                    </Col>
+                  </Row>
+                </Col>
+              )}
+            </Row>
+          </CardHeader>
 
-        </div>
-      </div>
+          {/* ── Filter Bar ─────────────────────────────────────── */}
+          <CardBody className="p-3 bg-white">
+            <Row className="align-items-center g-2">
+
+              {/* Type buttons — custom to avoid Bootstrap light-outline hover bug */}
+              <Col xs={12} sm="auto">
+                <div style={{ display: "flex", border: "1.5px solid #dee2e6", borderRadius: 8, overflow: "hidden" }}>
+                  {COLLEGE_TYPES.map((t, i) => (
+                    <TypeButton
+                      key={t.key}
+                      t={t}
+                      active={typeFilter === t.key}
+                      isHindi={isHindi}
+                      onClick={() => setTypeFilter(t.key)}
+                      style={i === 0 ? { borderLeft: "none" } : {}}
+                    />
+                  ))}
+                </div>
+              </Col>
+
+              {/* District */}
+              <Col xs={12} sm="auto">
+                <Input
+                  type="select" bsSize="sm" value={districtFilter}
+                  onChange={(e) => setDistrictFilter(e.target.value)}
+                  style={{ minWidth: 160, fontSize: 13, borderRadius: 8 }}
+                >
+                  <option value="all">{isHindi ? "📍 सभी जिले" : "📍 All Districts"}</option>
+                  {districts.map((d) => <option key={d} value={d}>{d}</option>)}
+                </Input>
+              </Col>
+
+              {/* Search */}
+              <Col xs={12} sm>
+                <InputGroup size="sm">
+                  <InputGroupText style={{ background: "#fff", borderRight: 0 }}>🔍</InputGroupText>
+                  <Input
+                    type="text"
+                    placeholder={isHindi ? "नाम, कोड, ईमेल से खोजें..." : "Search by name, code, email..."}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ borderLeft: 0, fontSize: 13 }}
+                  />
+                  {search && (
+                    <Button color="secondary" outline size="sm" onClick={() => setSearch("")}>✕</Button>
+                  )}
+                </InputGroup>
+              </Col>
+
+              {/* View toggle + count */}
+              <Col xs="auto" className="d-flex align-items-center gap-2 ms-auto">
+                <Badge color="dark" style={{ fontSize: 12, padding: "6px 14px", borderRadius: 20 }}>
+                  {loading ? "…" : filtered.length} {isHindi ? "महाविद्यालय" : "Colleges"}
+                </Badge>
+                {/* View mode buttons — explicit styles to avoid white-on-white hover */}
+                <div style={{ display: "flex", border: "1.5px solid #dee2e6", borderRadius: 8, overflow: "hidden" }}>
+                  {[{ mode: "list", icon: "☰" }, { mode: "grid", icon: "⊞" }].map(({ mode, icon }) => {
+                    const isActive = viewMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} View`}
+                        onClick={() => setViewMode(mode)}
+                        style={{
+                          padding: "5px 12px",
+                          fontSize: 14,
+                          border: "none",
+                          cursor: "pointer",
+                          background: isActive ? "#1e3a8a" : "#fff",
+                          color:      isActive ? "#fff"    : "#1e3a8a",
+                          transition: "background 0.15s, color 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.background = "#eef2ff";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.background = "#fff";
+                          }
+                        }}
+                      >
+                        {icon}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Col>
+
+            </Row>
+          </CardBody>
+        </Card>
+
+        {/* ── Top Pagination ───────────────────────────────────── */}
+        {!loading && filtered.length > 0 && (
+          <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <small className="text-muted">
+              {isHindi
+                ? `पृष्ठ ${page} / ${totalPages} — ${filtered.length} परिणाम`
+                : `Page ${page} of ${totalPages} — ${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
+            </small>
+            <PaginationBar current={page} total={totalPages} onChange={handlePage} />
+          </div>
+        )}
+
+        {/* ── Content ──────────────────────────────────────────── */}
+        {loading ? (
+          <div className="text-center py-5">
+            <Spinner color="primary" style={{ width: 40, height: 40 }} />
+            <div className="text-muted mt-3 small">
+              {isHindi ? "महाविद्यालय की जानकारी लोड हो रही है..." : "Loading college data..."}
+            </div>
+          </div>
+        ) : pageSlice.length === 0 ? (
+          <Card className="border-0 shadow-sm text-center" style={{ borderRadius: 14 }}>
+            <CardBody className="py-5">
+              <div style={{ fontSize: 48 }}>🔍</div>
+              <h6 className="text-muted mt-3 mb-1">
+                {isHindi ? "कोई महाविद्यालय नहीं मिला" : "No colleges found"}
+              </h6>
+              <small className="text-muted">
+                {isHindi ? "कृपया अपना खोज फ़िल्टर बदलें" : "Try adjusting your search or filters"}
+              </small>
+            </CardBody>
+          </Card>
+        ) : viewMode === "list" ? (
+          pageSlice.map((college, idx) => (
+            <CollegeCardList key={college._id || idx} college={college} isHindi={isHindi} />
+          ))
+        ) : (
+          <Row className="g-3">
+            {pageSlice.map((college, idx) => (
+              <Col key={college._id || idx} xs={12} sm={6} md={4} lg={3}>
+                <CollegeCardGrid college={college} isHindi={isHindi} />
+              </Col>
+            ))}
+          </Row>
+        )}
+
+        {/* ── Bottom Pagination ─────────────────────────────────── */}
+        {!loading && filtered.length > 0 && (
+          <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+            <small className="text-muted">
+              {isHindi
+                ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} / ${filtered.length}`
+                : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length}`}
+            </small>
+            <PaginationBar current={page} total={totalPages} onChange={handlePage} />
+          </div>
+        )}
+
+      </Container>
     </PageLayout>
   );
 };
