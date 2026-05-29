@@ -49,7 +49,7 @@ import ContactManagement from "../views/Admin/ContactManagement";
 import ContactCardCMS from "../views/Admin/contactCardForm";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
-import PageCreatorManagement from "../views/Admin/PageCreatorMangagement";
+import PageCreatorManagement from "../views/Admin/MultiSectionPagesMangagement";
 import ContentUploaderForm from "../views/Admin/ContentUploaderForm";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";

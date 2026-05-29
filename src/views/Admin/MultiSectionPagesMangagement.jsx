@@ -67,7 +67,7 @@ const initialDocumentData = {
   shortDescriptionHin: "",
 };
 
-const PageCreatorManagement = () => {
+const MultiSectionPagesMangagement = () => {
 
   const { isHindi } = useLanguage();
 
@@ -1509,4 +1509,4 @@ const PageCreatorManagement = () => {
   );
 };
 
-export default PageCreatorManagement;
+export default MultiSectionPagesMangagement;
