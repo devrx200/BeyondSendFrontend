@@ -50,7 +50,7 @@ import ContactCardCMS from "../views/Admin/contactCardForm";
 import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
 import PageCreatorManagement from "../views/Admin/MultiSectionPagesMangagement";
-import ContentUploaderForm from "../views/Admin/ContentUploaderForm";
+import RichContentPageManagements from "../views/Admin/RichContentPageManagements";
 import FileUploader from "../views/Admin/uploaderPage";
 import FileManager from "../views/Admin/fileManager";
 import DownloadManagement from "../views/Admin/DownloadManagement";
@@ -165,7 +165,7 @@ const AppRoutes = () => {
           <Route path="tutorials" element={<HelpTutorials />} />
 
           {/* ADMIN */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN",]} allowedEmployeeTypes={["DIRECTORATE" ]} />}>
             <Route path="slider" element={<SliderManagement />} />
             <Route path="about-section" element={<AboutSectionMangement />} />
             <Route path="brands" element={<ManageBrands />} />
@@ -189,7 +189,7 @@ const AppRoutes = () => {
 
           {/* ADMIN + OFFICER (DIRECTORATE) */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
-            <Route path="rich-content-pages" element={<ContentUploaderForm />} />
+            <Route path="rich-content-pages" element={<RichContentPageManagements />} />
             <Route path="directorate-notices" element={<DirectorateNoticeManagement />} />
           </Route>
 
