@@ -722,7 +722,7 @@ const AdminUserManagement = () => {
                   )}
                 </FormGroup>
               </Col>
-
+ 
               {/* PASSWORD — only on create */}
               {!editing && (
                 <Col md={6}>
@@ -944,7 +944,34 @@ const AdminUserManagement = () => {
                 </Col>
               )}
             </Row>
-
+<Row>
+  <Col md={6}>
+              <FormGroup>
+                <Label className="fw-bold mb-2">Status</Label>
+                <Input
+                  type="select"
+                  name="isActive"
+                  value={formData.isActive}
+                  onChange={handleChange}
+                  className={`shadow-sm border-2 ${formData.isActive === "true"
+                    ? "border-success text-success"
+                    : formData.isActive === "false"
+                      ? "border-danger text-danger"
+                      : "border-secondary"
+                    }`}
+                  style={{
+                    borderRadius: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">🟡 Select Status</option>
+                  <option value="true">🟢 Active</option>
+                  <option value="false">🔴 Inactive</option>
+                </Input>
+              </FormGroup>
+            </Col>
+</Row>
           </ModalBody>
 
           <ModalFooter className="bg-light border-top">

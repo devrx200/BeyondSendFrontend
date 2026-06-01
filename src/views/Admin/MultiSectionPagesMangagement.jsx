@@ -947,6 +947,7 @@ const MultiSectionPagesMangagement = () => {
                       <th>Main Slug</th>
                       <th>Slug</th>
                       <th>Department</th>
+                       <th>Status</th>
                       <th style={{ width: "100px" }}>Documents</th>
                       <th style={{ width: "120px" }}>Actions</th>
                     </tr>
@@ -981,7 +982,11 @@ const MultiSectionPagesMangagement = () => {
                             </code>
                           </td>
                           <td>{item.department || "N/A"}</td>
-
+                          <td>
+                            <span className={`badge ${item.isActive === true ? "bg-success" : "bg-danger"}`}>
+                              {item.isActive === true ? "Active" : "Inactive"}
+                            </span>
+                          </td>
 
                           <td className="text-center">
                             <span className="badge bg-info">

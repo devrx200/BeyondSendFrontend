@@ -8,6 +8,8 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import DynamicContentEditor from "../../utilies/DynamicContentEditor";
+import Swal from "sweetalert2";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const API   = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -32,7 +34,6 @@ const ContentUploaderForm = () => {
   const [loading, setLoading]         = useState(false);
   const [saveStatus, setSaveStatus]   = useState(null); // "success" | "error"
   const [viewMode, setViewMode]       = useState(false);
-
   const [form, setForm] = useState({
     titleEn: "", titleHi: "",
     shortDescriptionEn: "", shortDescriptionHi: "",
@@ -46,6 +47,7 @@ const ContentUploaderForm = () => {
   const [selectedPage, setSelectedPage]     = useState("");
   const [contents, setContents]             = useState([]);
   const [savedContentList, setSavedContent] = useState([]);
+ const { isHindi } = useLanguage();
 
   /* ── lifecycle ── */
   useEffect(() => {
@@ -74,7 +76,7 @@ const ContentUploaderForm = () => {
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/api/get-categories`);
-      setCategories(res.data || []);
+      setCategories(res.data.data || []);
     } catch (e) { console.error(e); }
   };
 
@@ -136,6 +138,54 @@ const ContentUploaderForm = () => {
     } catch (e) { console.error(e); }
   };
 
+  const handleDelete = async (id) => {
+  const result = await Swal.fire({
+    title: isHindi ? "क्या आप सुनिश्चित हैं?" : "Are you sure?",
+    text: isHindi
+      ? "क्या आप इस रिकॉर्ड को डिलीट करना चाहते हैं?"
+      : "Do you want to delete this record?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: isHindi
+      ? "हाँ, डिलीट करें"
+      : "Yes, Delete",
+    cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await axios.put(
+      `${API}/api/delete-about-and-help/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: response.data.message,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+
+    // Reload data
+    fetchSavedContent(); // replace with your actual API load function
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
+      text:
+        error?.response?.data?.message ||
+        error.message,
+    });
+  }
+};
   /* ════════════════════════════════════════════════════
      LIST VIEW
   ═══════════════════════════════════════════════════ */
@@ -210,6 +260,16 @@ const ContentUploaderForm = () => {
                         onClick={() => handleEdit(item)}>
                         ✏️ Edit
                       </Button>
+                       <Button
+  size="sm"
+  color="danger"
+  outline
+  className="fw-semibold px-3"
+  onClick={() => handleDelete(item._id)}
+>
+  Delete
+</Button>
+                      
                     </td>
                   </tr>
                 );
@@ -293,9 +353,9 @@ const ContentUploaderForm = () => {
                 <Input type="select" name="categoryId" value={form.categoryId}
                   onChange={handleChange} disabled={viewMode} bsSize="sm">
                   <option value="">— Select Category —</option>
-                  {/* {categories.map(c => (
-                    <option key={c._id} value={c._id}>{c.name || c.title}</option>
-                  ))} */}
+                  {categories.map(c => (
+                    <option key={c._id} value={c._id}>{c.categoryNameEn || c.categoryNameHi}</option>
+                  ))}
                 </Input>
               </Field>
             </Col>

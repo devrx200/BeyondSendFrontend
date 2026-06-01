@@ -92,7 +92,7 @@ const DirectorateNoticeManagement = () => {
   useEffect(() => {
     fetchList();
     fetchCategories();
-  }, []);
+  }, [token]);
 
   /* ================= MODAL ================= */
 

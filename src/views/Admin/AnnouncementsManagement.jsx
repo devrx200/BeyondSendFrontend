@@ -147,7 +147,7 @@ const AnnouncementsManagement = () => {
   useEffect(() => {
     fetchAnnouncements();
     fetchCategories();
-  }, []);
+  }, [token]);
 
  const getNextAvailableOrder = (requested, usedOrders) => {
   let order = requested;
