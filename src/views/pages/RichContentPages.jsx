@@ -1,17 +1,14 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { useState, useEffect } from "react";
-import ContentPreview from "../../utilies/ContentPreview";
 import {
   Card,
   CardBody,
   CardHeader,
   CardFooter,
-  CardText,
   Row,
   Col,
   Button,
-  Alert,
   Container,
   Breadcrumb,
   BreadcrumbItem,
@@ -19,65 +16,68 @@ import {
   Badge,
 } from "reactstrap";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { FaHome, FaNewspaper } from "react-icons/fa";
+import { FaHome, FaNewspaper, FaExclamationTriangle } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
 
 const RichContentPages = () => {
-  const location = useLocation();
+  const { slug } = useParams();
   const { isHindi } = useLanguage();
 
-  const [pageData2, setPageData2] = useState([]);
-
-  const menu = location.state?.menu;
-  const data = location.state?.pageData;
-  const dataFromState = location.state?.pageData;
-  const pageDataByprops = data && data[0];
-  const path = location.pathname;
-  const pageData = pageDataByprops ? pageDataByprops : pageData2;
+  const [pageData, setPageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!pageDataByprops) {
-      fetchPageData();
+    if (!slug) {
+      setError("This URL does not exist on this site");
+      setLoading(false);
+      return;
     }
-  }, [path]);
 
-  const fetchPageData = async () => {
-    try {
-      const res = await axios.get(`${API}/api/menu-page-data-by-path`, {
-        params: { path },
-      });
-      setPageData2(res?.data[0]);
-    } catch (error) {
-      console.error("Failed to load page data", error);
-    }
-  };
+    const fetchPageData = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API}/api/rich-content-page/get-by-slug/${slug}`);
+        if (res.data?.success && res.data?.data) {
+          setPageData(res.data.data);
+        } else {
+          setError("Page not found");
+        }
+      } catch (err) {
+        console.error("Failed to load page data", err);
+        setError(err.response?.data?.message || "Failed to load page");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  /* ===== DATE FORMAT DD-MM-YYYY HH:MM AM ===== */
+    fetchPageData();
+  }, [slug]);
+
   const formatDateTime = (date) => {
     if (!date) return "—";
     const d = new Date(date);
-
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
-
     let hours = d.getHours();
     const minutes = String(d.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    hours = String(hours).padStart(2, "0");
-
-    return `${day}-${month}-${year} ${hours}:${minutes} ${ampm}`;
+    hours = hours % 12 || 12;
+    const hoursStr = String(hours).padStart(2, "0");
+    return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
   };
 
-  const publishDate = formatDateTime(pageData?.createdAt);
+  // Safely access fields
+  const title = isHindi ? pageData?.titleHi : pageData?.titleEn;
+  const shortDesc = isHindi ? pageData?.shortDescriptionHi : pageData?.shortDescriptionEn;
+  const description = isHindi ? pageData?.descriptionHi : pageData?.descriptionEn;
+  const publishDate = formatDateTime(pageData?.publishDate);
   const updateDate = formatDateTime(pageData?.updatedAt);
 
-  /* ===== LOADING ===== */
-  if (!pageData) {
+  // Loading spinner
+  if (loading) {
     return (
       <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-light">
         <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
@@ -88,126 +88,115 @@ const RichContentPages = () => {
     );
   }
 
+  // 404 / Error card (replaces simple Alert)
+  if (error || !pageData) {
+    const errorTitle = isHindi ? "पृष्ठ नहीं मिला" : "Page Not Found";
+    const errorMessage = error || (isHindi ? "यह पृष्ठ मौजूद नहीं है या हटा दिया गया है।" : "The page you are looking for does not exist or has been removed.");
+    return (
+      <Container className="py-5">
+        <Card className="border-0 shadow-lg rounded-4 overflow-hidden text-center">
+          <CardHeader
+            className="text-white border-0 py-5"
+            style={{ background: "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)" }}
+          >
+            <FaExclamationTriangle size={64} className="mb-3" />
+            <h2 className="fw-bold mb-0">{errorTitle}</h2>
+          </CardHeader>
+          <CardBody className="p-5">
+            <p className="fs-5 text-muted mb-4">{errorMessage}</p>
+            <Button
+              tag={Link}
+              to="/"
+              color="primary"
+              size="lg"
+              className="px-4 py-2 fw-semibold"
+            >
+              <FaHome className="me-2" /> {isHindi ? "होम पेज पर जाएं" : "Go to Homepage"}
+            </Button>
+          </CardBody>
+          <CardFooter className="bg-light text-muted py-3">
+            {isHindi
+              ? "उच्च शिक्षा विभाग, छत्तीसगढ़ सरकार, भारत"
+              : "Higher Education Department, Government of Chhattisgarh, India"}
+          </CardFooter>
+        </Card>
+      </Container>
+    );
+  }
+
+  // Normal page view
   return (
     <Container className="py-4">
-
-        {/* Breadcrumb */}
-        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
-          <BreadcrumbItem>
-            <Link
-              to="/"
-              className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
-            >
-              <FaHome size={13} />
-              {isHindi ? "होम" : "Home"}
-            </Link>
-          </BreadcrumbItem>
-          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
-            <FaNewspaper size={13} />
-           {isHindi ? pageData.titleHi : pageData.titleEn}
-          </BreadcrumbItem>
-        </Breadcrumb>
+      {/* Breadcrumb */}
+      <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+        <BreadcrumbItem>
+          <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+            <FaHome size={13} />
+            {isHindi ? "होम" : "Home"}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
+          <FaNewspaper size={13} />
+          {title}
+        </BreadcrumbItem>
+      </Breadcrumb>
 
       {/* Main Card */}
       <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
-
-        {/* ===== GRADIENT HEADER ===== */}
         <CardHeader
           className="text-white border-0 p-4"
-          style={{
-            background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
         >
-          <h4 className="fw-bold mb-3 text-white">
-            {isHindi ? pageData.titleHi : pageData.titleEn}
-          </h4>
-
+          <h4 className="fw-bold mb-3 text-white">{title}</h4>
           <hr className="border-white opacity-25 my-3" />
-
           <Row className="g-2 align-items-center">
-
             <Col xs="auto">
-              <Badge
-                color="light"
-                className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2"
-              >
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2">
                 📅 <strong>Published:</strong> {publishDate}
               </Badge>
             </Col>
-
             <Col xs="auto">
-              <Badge
-                color="light"
-                className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2"
-              >
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2">
                 🔄 <strong>Updated:</strong> {updateDate}
               </Badge>
             </Col>
-
             <Col xs="auto" className="ms-auto text-end">
-              <Button
-                tag={Link}
-                to="/"
-                color="dark"
-                size="sm"
-                className="fw-semibold px-3"
-              >
+              <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold px-3">
                 ← Back To Home
               </Button>
             </Col>
-
-
           </Row>
         </CardHeader>
 
-        {/* ===== CONTENT BODY ===== */}
         <CardBody className="p-4">
-
           {/* Short Description */}
-          {pageData.shortDescriptionEn && (
-            <Alert
-              color="light"
-              className="border-start border-4 border-primary rounded-3 mb-4"
-            >
-              <p className="mb-0 fst-italic text-secondary">
-                {pageData.shortDescriptionEn}
-              </p>
-            </Alert>
+          {shortDesc && (
+            <div className="bg-light border-start border-4 border-primary rounded-3 mb-4 p-3">
+              <p className="mb-0 fst-italic text-secondary">{shortDesc}</p>
+            </div>
           )}
 
-          {/* Content Blocks */}
-          {pageData.contents?.length > 0 && (
+          {/* Main HTML Content */}
+          {description && (
             <>
               <h5 className="fw-bold border-bottom pb-2 mb-3">
-                Content
+                {isHindi ? "विवरण" : "Details"}
               </h5>
-              <ContentPreview contents={pageData.contents} />
+              <div
+                className="text-secondary lh-lg"
+                dangerouslySetInnerHTML={{ __html: description }}
+                style={{ wordBreak: "break-word" }}
+              />
             </>
           )}
-
-          {/* Description */}
-          {pageData.descriptionEn && (
-            <>
-              <h5 className="fw-bold border-bottom pb-2 mt-4 mb-3">
-                Details
-              </h5>
-              <CardText className="text-secondary lh-lg">
-                {pageData.descriptionEn}
-              </CardText>
-            </>
-          )}
-
         </CardBody>
 
-        {/* Footer */}
         <CardFooter className="bg-light text-center fw-semibold text-muted py-3">
           {isHindi
             ? "उच्च शिक्षा विभाग, छत्तीसगढ़ सरकार, भारत"
             : "Higher Education Department, Government of Chhattisgarh, India"}
         </CardFooter>
-
       </Card>
-
     </Container>
   );
 };

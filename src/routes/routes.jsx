@@ -145,6 +145,7 @@ const AppRoutes = () => {
 
       {/* Important  Pages */}
       <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} />
+      <Route path="/:slug" element={<MainLayout><RichContentPages /></MainLayout>} />
 
       {/* ── Admin: Login (Public) ──────────────────────────────────────────── */}
       <Route element={<PublicAdminRoute />}>
@@ -152,7 +153,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* ── Admin Protected Routes ───────────────────────── */}
-      <Route path="/admin" element={ <AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE", "NIC"]} />}>
+      <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE", "NIC"]} />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
@@ -165,7 +166,7 @@ const AppRoutes = () => {
           <Route path="tutorials" element={<HelpTutorials />} />
 
           {/* ADMIN */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN",]} allowedEmployeeTypes={["DIRECTORATE" ]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN",]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route path="slider" element={<SliderManagement />} />
             <Route path="about-section" element={<AboutSectionMangement />} />
             <Route path="brands" element={<ManageBrands />} />
