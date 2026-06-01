@@ -155,7 +155,9 @@ const ImportantLinksManagement = () => {
         if (!ok) return;
 
         try {
-            await axios.delete(`${API}/api/important-links/${id}`);
+            await axios.delete(`${API}/api/important-links/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             swalSuccess("Deleted", "Link removed successfully");
             loadLinks();
         } catch (err) {

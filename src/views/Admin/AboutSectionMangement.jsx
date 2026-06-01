@@ -13,7 +13,7 @@ import {
   Label,
   Input,
   Row,
-  Col
+  Col, Badge
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaImage } from "react-icons/fa";
 import axios from "axios";
@@ -38,7 +38,8 @@ const AboutSectionMangement = () => {
     aboutContentEn: "",
     aboutContentHi: "",
     order: "",
-    image: null
+    image: null,
+    isActive: true
   });
 
   const loadList = async () => {
@@ -68,7 +69,8 @@ const AboutSectionMangement = () => {
       aboutContentEn: "",
       aboutContentHi: "",
       order: "",
-      image: null
+      image: null,
+      isActive: true
     });
     setImagePreview(null);
   };
@@ -127,6 +129,7 @@ const AboutSectionMangement = () => {
     newErrors.aboutContentEn = validateField("aboutContentEn", form.aboutContentEn, false);
     newErrors.aboutContentHi = validateField("aboutContentHi", form.aboutContentHi, true);
     newErrors.order = validateField("order", form.order, false);
+    // newErrors.isActive = validateField("isActive", form.isActive, false);
 
     if (!editingId && !form.image) {
       newErrors.image = isHindi ? "छवि आवश्यक है" : "Image is required";
@@ -288,7 +291,8 @@ const AboutSectionMangement = () => {
       aboutContentEn: item.aboutContentEn,
       aboutContentHi: item.aboutContentHi,
       order: item.order ?? "",
-      image: null
+      image: null,
+      isActive: item.isActive
     });
     setImagePreview(item.image ? `${API_URL}${item.image}` : null);
     setModal(true);
@@ -307,11 +311,12 @@ const AboutSectionMangement = () => {
     if (!confirm.isConfirmed) return;
     try {
       const res = await axios.delete(
-        `${API_URL}/api/delete-about-section/${id}`
+        `${API_URL}/api/delete-about-section/${id}`,
+        { headers: { authorization: `Bearer ${token}` } }
       );
       Swal.fire("Deleted", res.data.msg, "success");
       loadList();
-    } catch {
+    } catch (err) {
       Swal.fire("Error", "Delete failed", "error");
     }
   };
@@ -337,6 +342,7 @@ const AboutSectionMangement = () => {
               <th>Designation</th>
               <th>About</th>
               <th>Order</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -363,6 +369,14 @@ const AboutSectionMangement = () => {
                       ))}
                   </td>
                   <td>{item.order}</td>
+                  <td>
+                    <Badge color={item.isActive ? "success" : "danger"}>
+                      {isHindi
+                        ? (item.isActive ? "सक्रिय" : "निष्क्रिय")
+                        : (item.isActive ? "Active" : "Inactive")
+                      }
+                    </Badge>
+                  </td>
                   <td>
                     <Button
                       color="warning"
@@ -493,6 +507,13 @@ const AboutSectionMangement = () => {
                     )}
                   </FormGroup>
                 </Col>
+                <Col xs={6}>
+                <Label className="fw-semibold small">Status</Label>
+                <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })}>
+                  <option value="true">✅ Active</option>
+                  <option value="false">⛔ Inactive</option>
+                </Input>
+              </Col>
               </Row>
             </ModalBody>
 

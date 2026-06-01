@@ -16,11 +16,13 @@ const AboutSection = () => {
         setLoading(true);
         const res = await axios.get(`${API_URL}/api/get-about-sections`);
 
-        const sorted = (res.data || []).sort(
-          (a, b) => (a.order || 0) - (b.order || 0)
-        );
+            const filteredAndSorted = (res.data || [])
+        .filter(
+          (item) => item.isActive === true && item.isDeleted === false
+        )
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-        setProfiles(sorted);
+      setProfiles(filteredAndSorted);
       } catch (err) {
         console.error("Failed to fetch profiles", err);
       } finally {

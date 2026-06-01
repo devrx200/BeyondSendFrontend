@@ -201,8 +201,8 @@ const SliderManagement = () => {
     } catch (error) { Swal.fire({ icon: "error", title: "Delete Failed", text: error?.response?.data?.message || "Unable to permanently delete slide" }); }
   };
 
-  const activeSlides = slides.filter(s => s.isActive);
-  const inactiveSlides = slides.filter(s => !s.isActive);
+  const Slides = slides.filter(s => s.isDeleted !== true);
+  // const inactiveSlides = slides.filter(s => !s.isActive);
 
   return (
     <Container className="py-3">
@@ -235,7 +235,7 @@ const SliderManagement = () => {
           {/* Active Table */}
           {loading ? (
             <div className="text-center py-4"><Spinner color="primary" /></div>
-          ) : activeSlides.length === 0 ? (
+          ) : Slides.length === 0 ? (
             <div className="text-center text-muted py-4">
               {isHindi ? 'कोई सक्रिय स्लाइड नहीं' : 'No active slides found'}
             </div>
@@ -254,7 +254,7 @@ const SliderManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {activeSlides.map((slide, index) => (
+                {Slides.map((slide, index) => (
                   <tr key={slide._id}>
                     <td className="text-center fw-bold">{index + 1}</td>
                     <td>{isHindi ? slide.subtitleHin : slide.subtitleEng}</td>
@@ -264,8 +264,13 @@ const SliderManagement = () => {
                     </td>
                     <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
                     <td className="text-center">{slide.displayOrder}</td>
-                    <td className="text-center">
-                      <Badge color="success" pill>{isHindi ? 'सक्रिय' : 'Active'}</Badge>
+                    <td>
+                      <Badge color={slide.isActive ? "success" : "danger"}>
+                        {isHindi
+                          ? (slide.isActive ? "सक्रिय" : "निष्क्रिय")
+                          : (slide.isActive ? "Active" : "Inactive")
+                        }
+                      </Badge>
                     </td>
                     <td className="text-center text-nowrap">
                       <Button color="info" size="sm" className="me-1 px-2 py-1" title="Edit" onClick={() => handleEdit(slide)}>
@@ -284,60 +289,7 @@ const SliderManagement = () => {
       </Card>
 
       {/* ── Inactive Slides Card ── */}
-      {inactiveSlides.length > 0 && (
-        <Card className="border-0 shadow-sm">
-          <CardBody className="p-4">
-            <Row className="align-items-center mb-3">
-              <Col>
-                <h5 className="fw-bold text-danger mb-0">
-                  {isHindi ? 'निष्क्रिय स्लाइडर सूची' : 'Inactive Slider List'}
-                </h5>
-              </Col>
-              <Col xs="auto">
-                <Badge color="danger" pill>{inactiveSlides.length}</Badge>
-              </Col>
-            </Row>
-            <hr className="mb-3" />
-            <Table responsive bordered hover size="sm" className="mb-0 align-middle">
-              <thead className="table-danger">
-                <tr>
-                  <th style={{ width: 50 }}>S.No.</th>
-                  <th>{isHindi ? 'छोटा शीर्षक' : 'Small Title'}</th>
-                  <th>{isHindi ? 'मुख्य शीर्षक' : 'Main Title'}</th>
-                  <th style={{ maxWidth: 180 }}>{isHindi ? 'विवरण' : 'Description'}</th>
-                  <th>{isHindi ? 'लिंक टेक्स्ट' : 'Link Text'}</th>
-                  <th style={{ width: 60 }}>{isHindi ? 'क्रम' : 'Order'}</th>
-                  <th style={{ width: 90 }}>{isHindi ? 'स्थिति' : 'Status'}</th>
-                  <th style={{ width: 110 }}>{isHindi ? 'कार्य' : 'Actions'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inactiveSlides.map((slide, index) => (
-                  <tr key={slide._id}>
-                    <td className="text-center fw-bold">{index + 1}</td>
-                    <td>{isHindi ? slide.subtitleHin : slide.subtitleEng}</td>
-                    <td>{isHindi ? slide.titleHin : slide.titleEng}</td>
-                    <td className="text-truncate" style={{ maxWidth: 180 }}>
-                      {isHindi ? slide.descriptionHin : slide.descriptionEng}
-                    </td>
-                    <td>{isHindi ? slide.linkTextHi : slide.linkTextEn}</td>
-                    <td className="text-center">{slide.displayOrder}</td>
-                    <td className="text-center">
-                      <Badge color="secondary" pill>{isHindi ? 'निष्क्रिय' : 'Inactive'}</Badge>
-                    </td>
-                    <td className="text-center">
-                      <Button color="danger" size="sm" onClick={() => handlePermanentDelete(slide._id)}>
-                        <FaTrash className="me-1" size={11} />
-                        {isHindi ? 'हटाएँ' : 'Delete'}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </CardBody>
-        </Card>
-      )}
+
 
       {/* ── Modal ── */}
       <Modal isOpen={modal} toggle={toggleModal} size="lg" scrollable>

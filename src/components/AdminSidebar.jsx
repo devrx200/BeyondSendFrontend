@@ -74,7 +74,9 @@ const adminMenu = [
         label: {
           en: "Latest Updates Tiker",
           hi: "नवीन अपडेट स्लाइडर"
-        }
+        },
+          allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       },
       {
         id: "announcements",
@@ -83,7 +85,9 @@ const adminMenu = [
         label: {
           en: "Announcements",
           hi: "घोषणाएं"
-        }
+        },
+          allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       },
       {
         id: "directorate-notices",
@@ -242,8 +246,11 @@ const adminMenu = [
         label: {
           en: "Education Statistics",
           hi: "शिक्षा सांख्यिकी"
-        }
+        },
+         allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
+      
     ]
   },
 
@@ -262,7 +269,9 @@ const adminMenu = [
         label: {
           en: "Categories",
           hi: "श्रेणियाँ"
-        }
+        },
+         allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       }
     ]
   },
@@ -282,8 +291,8 @@ const adminMenu = [
           en: "Header Management",
           hi: "हेडर प्रबंधन"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "menu-management",
@@ -293,8 +302,8 @@ const adminMenu = [
           en: "Menu Management",
           hi: "मेनू प्रबंधन"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "slider",
@@ -304,8 +313,8 @@ const adminMenu = [
           en: "Home Slider",
           hi: "होम स्लाइडर"
         },
-         allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+         allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "about-content",
@@ -315,8 +324,8 @@ const adminMenu = [
           en: "About Section",
           hi: "परिचय अनुभाग"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "important-links",
@@ -326,8 +335,8 @@ const adminMenu = [
           en: "Important Links",
           hi: "महत्वपूर्ण लिंक"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "brands",
@@ -337,8 +346,8 @@ const adminMenu = [
           en: "Footer Brands",
           hi: "फुटर ब्रांड्स"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       },
       {
         id: "footer-management",
@@ -348,8 +357,8 @@ const adminMenu = [
           en: "Footer Management",
           hi: "फुटर प्रबंधन"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
       }
     ]
   },

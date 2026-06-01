@@ -133,7 +133,11 @@ const ManageCategories = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/delete-category/${id}`);
+      const res = await axios.delete(`${API_URL}/api/delete-category/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       Swal.fire("Deleted", res.data.message, "success");
       fetchCategories();
     } catch (err) {

@@ -30,12 +30,13 @@ const ContactCardCMS = () => {
     phone: "",
     fax: "",
     email: "",
-    color: "primary"
+    color: "primary",
+    isActive: true,
   });
 
   // ================= FETCH =================
   const fetchCards = async () => {
-    const res = await axios.get(`${API}/api/contact-card/get`);
+    const res = await axios.get(`${API}/api/contact-card/get-all`);
     setCards(res.data.data || []);
   };
 
@@ -66,7 +67,8 @@ const ContactCardCMS = () => {
         phone: "",
         fax: "",
         email: "",
-        color: "primary"
+        color: "primary",
+        isActive: true,
       });
 
       setEditId(null);
@@ -160,7 +162,33 @@ const ContactCardCMS = () => {
               <Label>Email</Label>
               <Input name="email" value={form.email} onChange={handleChange} />
             </Col>
-
+            <br />
+            <Col md={4}>
+              <FormGroup>
+                <Label className="fw-bold mb-2">Status</Label>
+                <Input
+                  type="select"
+                  name="isActive"
+                  value={form.isActive}
+                  onChange={handleChange}
+                  className={`shadow-sm border-2 ${form.isActive === "true"
+                    ? "border-success text-success"
+                    : form.isActive === "false"
+                      ? "border-danger text-danger"
+                      : "border-secondary"
+                    }`}
+                  style={{
+                    borderRadius: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">🟡 Select Status</option>
+                  <option value="true">🟢 Active</option>
+                  <option value="false">🔴 Inactive</option>
+                </Input>
+              </FormGroup>
+            </Col>
           </Row>
 
           <div className="text-end mt-3">
@@ -181,6 +209,7 @@ const ContactCardCMS = () => {
                 <th>Title</th>
                 <th>Type</th>
                 <th>Phone</th>
+                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -191,7 +220,14 @@ const ContactCardCMS = () => {
                   <td>{item.title}</td>
                   <td>{item.type}</td>
                   <td>{item.phone}</td>
-
+                  <td>
+                    <span
+                      className={`badge rounded-pill px-3 py-2 ${item.isActive ? "bg-success" : "bg-danger"
+                        }`}
+                    >
+                      {item.isActive ? "🟢 Active" : "🔴 Inactive"}
+                    </span>
+                  </td>
                   <td>
                     <Button size="sm" color="warning" onClick={() => handleEdit(item)}>
                       Edit

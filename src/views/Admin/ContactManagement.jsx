@@ -32,7 +32,7 @@ const token = sessionStorage.getItem("authToken");
 
   /* ================= LOAD DATA ================= */
   const load = async () => {
-    const res = await axios.get(`${API}/api/contact`, {
+    const res = await axios.get(`${API}/api/contact-list-officials`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     setData(res.data.data || {});
@@ -280,7 +280,27 @@ const token = sessionStorage.getItem("authToken");
     setEditId(o._id);
     setModal(true);
   };
-
+const handleDelete = (o) => {
+  Swal.fire({
+    title: "Are you sure?",
+    text: `Do you want to delete ${o.name}?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete it!"
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${API}/api/contact/official/${o._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        Swal.fire("Deleted!", `${o.name} has been deleted.`, "success");
+        load();
+      } catch (err) {
+        Swal.fire("Error", err?.response?.data?.message || "Unable to delete official", "error");
+      }
+    }
+  });
+};
   return (
     <Container>
 
@@ -507,6 +527,9 @@ const token = sessionStorage.getItem("authToken");
                       <Button size="sm" color="warning" onClick={() => handleEdit(o)}>
                         Edit
                       </Button>
+                       <Button size="sm" color="danger" onClick={() => handleDelete(o)}>
+                        Delete
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -668,6 +691,19 @@ const token = sessionStorage.getItem("authToken");
                 )}
               </FormGroup>
             </Col>
+             <Col md={4}>
+                  <FormGroup check className="mb-3">
+                    <Input
+                      type="checkbox"
+                      id="isActive"
+                      checked={official.isActive}
+                      onChange={(e) => setOfficial({ ...official, isActive: e.target.checked })}
+                    />
+                    <Label check for="isActive" className="fw-semibold">
+                      Is Active
+                    </Label>
+                  </FormGroup>
+                  </Col>
           </Row>
         </ModalBody>
 
