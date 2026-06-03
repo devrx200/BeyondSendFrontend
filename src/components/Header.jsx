@@ -9,12 +9,10 @@ import {
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
-import { handleMenuClick } from "../utilies/handleMenuClick";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-/* ── Minimal scoped CSS ── */
 const styles = `
   .top-bar { background-color: #1a3a6b; }
   .top-link { color:#fff; text-decoration:none; font-size:.82rem; display:inline-flex; align-items:center; }
@@ -62,7 +60,6 @@ const styles = `
   }
 `;
 
-/* ── Desktop recursive dropdown ── */
 const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -77,18 +74,20 @@ const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 
 
   if (!hasChildren) {
     return (
-      <button className="dd-item"
-        onClick={() => menu.isExternal
-          ? openExternalLink(menu.path, menu.openInNewTab)
-          : handleMenuClick({ menu, navigate })}>
+      <button className="dd-item" onClick={() => {
+        if (menu.isExternal) {
+          openExternalLink(menu.path, menu.openInNewTab);
+        } else {
+          navigate(menu.path);
+        }
+      }}>
         {label}
       </button>
     );
   }
 
   return (
-    <div ref={ref} className="dd-wrap"
-      onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div ref={ref} className="dd-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         className={depth === 0 ? "nav-link-btn" : "dd-item d-flex justify-content-between w-100"}
         onClick={() => setOpen(v => !v)} aria-expanded={open}>
@@ -100,8 +99,7 @@ const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 
       {open && (
         <div className={`dd-menu${depth > 0 ? " sub-right" : ""}`}>
           {menu.submenu.map(sub => (
-            <DesktopDropdown key={sub._id} menu={sub} isHindi={isHindi}
-              navigate={navigate} openExternalLink={openExternalLink} depth={depth + 1} />
+            <DesktopDropdown key={sub._id} menu={sub} isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -109,7 +107,6 @@ const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 
   );
 };
 
-/* ── Mobile recursive menu item ── */
 const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) => {
   const [open, setOpen] = useState(false);
   const hasChildren = menu.submenu?.length > 0;
@@ -130,8 +127,7 @@ const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) 
       {hasChildren && open && (
         <div className="mob-sub">
           {menu.submenu.map(sub => (
-            <MobileMenuItem key={sub._id} menu={sub} isHindi={isHindi}
-              navigate={navigate} openExternalLink={openExternalLink} onClose={onClose} />
+            <MobileMenuItem key={sub._id} menu={sub} isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} onClose={onClose} />
           ))}
         </div>
       )}
@@ -139,7 +135,6 @@ const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) 
   );
 };
 
-/* ── Main Header ── */
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
@@ -196,12 +191,9 @@ const Header = () => {
     <>
       <style>{styles}</style>
 
-      {/* ── TOP BAR ── */}
       <div className="top-bar py-1 text-white">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-1">
-
-            {/* Contact – one row on all devices */}
             <div className="d-flex align-items-center gap-3 small fw-semibold">
               <a href={`tel:${headerData?.phone}`} className="top-link">
                 <FaPhone className="me-1 flex-shrink-0" />{headerData?.phone}
@@ -210,16 +202,13 @@ const Header = () => {
                 <FaEnvelope className="me-1 flex-shrink-0" />{headerData?.email}
               </a>
             </div>
-
-            {/* Controls – desktop only, NOT shown on mobile at all */}
             <div className="d-none d-lg-flex align-items-center gap-3">
               <div className="d-flex gap-1">
                 <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={decreaseFontSize}>A-</Badge>
                 <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={resetFontSize}>A</Badge>
                 <Badge color="light" className="ctrl-badge text-dark fw-bold" onClick={increaseFontSize}>A+</Badge>
               </div>
-              <Badge color="light" className="ctrl-badge text-dark fw-bold d-flex align-items-center gap-1"
-                onClick={toggleLanguage}>
+              <Badge color="light" className="ctrl-badge text-dark fw-bold d-flex align-items-center gap-1" onClick={toggleLanguage}>
                 <FaLanguage />{isHindi ? "English" : "हिंदी"}
               </Badge>
               <Link to="/accessibility-statement" className="top-link">
@@ -229,21 +218,15 @@ const Header = () => {
                 <FaSitemap className="me-1" />{t("Sitemap", "साइट मानचित्र")}
               </Link>
             </div>
-
           </div>
         </Container>
       </div>
 
-      {/* ── LOGO BAR ── */}
       <div className="logo-bar py-2 border-bottom bg-light">
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div className="d-flex align-items-center gap-3">
-              <img src={headerData?.logo ? `${API_URL}${headerData.logo}` : "/Chhattisgarh.svg"}
-                alt="logo" className="main-logo" height="70"
-                style={{ cursor: "pointer" }}
-                onClick={() => navigate("/")}
-                onError={e => (e.target.src = "/Chhattisgarh.svg")} />
+              <img src={headerData?.logo ? `${API_URL}${headerData.logo}` : "/Chhattisgarh.svg"} alt="logo" className="main-logo" height="70" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Chhattisgarh.svg")} />
               <div>
                 <h4 className="mb-0 fw-bold">
                   {isHindi ? (headerData?.titleHin || "उच्च शिक्षा विभाग") : (headerData?.titleEng || "Department of Higher Education")}
@@ -253,48 +236,29 @@ const Header = () => {
                 </p>
               </div>
             </div>
-
             <div className="d-flex align-items-center gap-2">
-              <img src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : "/Digital_India_logo.svg"}
-                className="right-logo" height="60" alt="Digital India"
-                style={{ cursor: "pointer" }}
-                onClick={() => navigate("/")}
-                onError={e => (e.target.src = "/Digital_India_logo.svg")} />
-              <img src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : "/Emblem_of_India.svg"}
-                className="right-logo" height="60" alt="Emblem"
-                style={{ cursor: "pointer" }}
-                onClick={() => navigate("/")}
-                onError={e => (e.target.src = "/Emblem_of_India.svg")} />
+              <img src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : "/Digital_India_logo.svg"} className="right-logo" height="60" alt="Digital India" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Digital_India_logo.svg")} />
+              <img src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : "/Emblem_of_India.svg"} className="right-logo" height="60" alt="Emblem" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Emblem_of_India.svg")} />
             </div>
-
           </div>
         </Container>
       </div>
 
-      {/* ── STICKY NAVBAR ── */}
       <nav className="site-navbar bg-white shadow-sm py-1">
         <Container className="d-flex align-items-center">
-
-          {/* Hamburger – mobile only */}
-          <button className="ham-btn btn btn-outline-primary btn-sm me-2 py-1 px-2"
-            onClick={() => setMobileOpen(true)} aria-label="Open menu">
+          <button className="ham-btn btn btn-outline-primary btn-sm me-2 py-1 px-2" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <FaBars />
           </button>
-
-          {/* Desktop nav */}
           <div className="desk-nav d-flex align-items-center flex-wrap">
             <Link to="/" className="nav-link-plain">
               <FaHouse className="me-1" />{t("Home", "मुख्य पृष्ठ")}
             </Link>
-
             {visibleMenus.map(menu => {
               if (menu.submenu?.length)
-                return <DesktopDropdown key={menu._id} menu={menu} isHindi={isHindi}
-                  navigate={navigate} openExternalLink={openExternalLink} />;
+                return <DesktopDropdown key={menu._id} menu={menu} isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} />;
               if (menu.isExternal)
                 return (
-                  <button key={menu._id} className="nav-link-btn"
-                    onClick={() => openExternalLink(menu.path, menu.openInNewTab)}>
+                  <button key={menu._id} className="nav-link-btn" onClick={() => openExternalLink(menu.path, menu.openInNewTab)}>
                     {isHindi ? menu.titleHi : menu.titleEng}
                   </button>
                 );
@@ -304,44 +268,29 @@ const Header = () => {
                 </Link>
               );
             })}
-
             {extraMenus.length > 0 && (
-              <DesktopDropdown
-                menu={{ _id: "__extra__", titleHi: "अन्य लिंक", titleEng: "Other Links", submenu: extraMenus }}
-                isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} />
+              <DesktopDropdown menu={{ _id: "__extra__", titleHi: "अन्य लिंक", titleEng: "Other Links", submenu: extraMenus }} isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} />
             )}
           </div>
-
         </Container>
       </nav>
 
-      {/* ── MOBILE OVERLAY ── */}
       <div className={`mob-overlay${mobileOpen ? " open" : ""}`} onClick={() => setMobileOpen(false)} />
-
-      {/* ── MOBILE DRAWER – menu items ONLY, no font/language/accessibility controls ── */}
       <div className={`mob-drawer${mobileOpen ? " open" : ""}`}>
-
         <div className="mob-drawer-hdr">
           <span>Menu</span>
           <button className="mob-close-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu">
             <FaTimes />
           </button>
         </div>
-
-        {/* Home */}
         <div className="mob-item">
           <button className="mob-btn" onClick={() => { setMobileOpen(false); navigate("/"); }}>
             <span><FaHouse className="me-2" />{t("Home", "मुख्य पृष्ठ")}</span>
           </button>
         </div>
-
-        {/* Dynamic menus with nested accordion */}
         {menuItems.map(menu => (
-          <MobileMenuItem key={menu._id} menu={menu} isHindi={isHindi}
-            navigate={navigate} openExternalLink={openExternalLink}
-            onClose={() => setMobileOpen(false)} />
+          <MobileMenuItem key={menu._id} menu={menu} isHindi={isHindi} navigate={navigate} openExternalLink={openExternalLink} onClose={() => setMobileOpen(false)} />
         ))}
-
       </div>
     </>
   );

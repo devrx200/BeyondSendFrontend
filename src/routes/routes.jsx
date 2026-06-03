@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -24,9 +24,8 @@ import FeedbackForm from "../views/pages/FeedbackForm";
 import HelpSupport from "../views/pages/HelpSupport";
 import AnnouncementDetails from "../views/pages/AnnouncementDetails";
 import SchemesDetails from "../views/pages/SchemesDetails";
-import RichContentPages from "../views/pages/RichContentPages";
 import MultiSectionPages from "../views/pages/MultiSectionPages";
-import ImportantPageDetail from "../views/pages/ImportantPageDetail";
+import SlugResolver from "../utilies/SlugResolver";
 import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
 
 /* ─── Admin Pages ─────────────────────────────────────────────────────────── */
@@ -79,7 +78,7 @@ const MainLayout = ({ children }) => (
 const AppRoutes = () => {
   const [pages, setPages] = useState([]);
   const [staticPages, setStaticPages] = useState([]);
-
+  const location = useLocation();
   useEffect(() => {
     fetchPages();
   }, []);
@@ -89,11 +88,8 @@ const AppRoutes = () => {
       const res = await axios.get(`${API_URL}/api/menu-list`);
       const allItems = res.data.data || [];
 
-      const menuItems = allItems.filter((item) => item.isDynamic !== false);
-      const menuItemsStatic = allItems.filter(
-        (item) => item.isDynamic === false && item.isImportant === false
-      );
-
+      const menuItems = allItems;
+      const menuItemsStatic = allItems.filter((item) => item.isDynamic === false && item.isImportant === false);
       setPages(extractPagesFromMenu(menuItems));
       setStaticPages(extractPagesFromMenu(menuItemsStatic));
     } catch (err) {
@@ -133,19 +129,17 @@ const AppRoutes = () => {
       <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
       <Route path="/department-notice/:slug" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
 
-      {/* CMS Rich-Text Pages (dynamic menu) */}
-      {pages.filter((p) => !p.isExternal).map((p) => (
-        <Route key={p._id} path={p.path} element={<MainLayout><RichContentPages /></MainLayout>} />
-      ))}
+
 
       {/* Multi-Section Pages (/:mainslug/:slug) */}
       {staticPages.filter((p) => !p.isExternal).map((p) => (
         <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><MultiSectionPages /></MainLayout>} />
       ))}
 
-      {/* Important  Pages */}
-      <Route path="/:slug" element={<MainLayout><ImportantPageDetail /></MainLayout>} />
-      <Route path="/:slug" element={<MainLayout><RichContentPages /></MainLayout>} />
+      {/* Important + Rich Content Pages – supports any nested path */}
+      <Route path="*" element={<MainLayout> <SlugResolver key={location.pathname} /></MainLayout>} />
+
+
 
       {/* ── Admin: Login (Public) ──────────────────────────────────────────── */}
       <Route element={<PublicAdminRoute />}>
@@ -213,9 +207,6 @@ const AppRoutes = () => {
 
         </Route>
       </Route>
-
-      {/* Fallback */}
-      <Route path="*" element={<MainLayout><Home /></MainLayout>} />
 
     </Routes>
   );
