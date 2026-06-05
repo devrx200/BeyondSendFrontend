@@ -1,4 +1,3 @@
-// DynamicContentEditor.jsx — fully working, no cursor jumps, attach link, tab switching, no auto-save
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import JoditEditor from "jodit-react";
 import axios from "axios";
@@ -76,7 +75,7 @@ const FILTERS = [
 ];
 
 /* ══════════════════════════════════════════════
-   ATTACH / MEDIA LIBRARY MODAL (FULL CODE)
+   ATTACH / MEDIA LIBRARY MODAL (FIXED)
 ══════════════════════════════════════════════ */
 function AttachModal({ selection, onAttach, onClose }) {
   const [files, setFiles] = useState([]);
@@ -92,6 +91,16 @@ function AttachModal({ selection, onAttach, onClose }) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   const searchRef = useRef(null);
+  const [linkText, setLinkText] = useState("");
+
+  // Initialize linkText from the selected text (if any)
+  useEffect(() => {
+    if (selection?.trim()) {
+      setLinkText(selection);
+    } else {
+      setLinkText("");
+    }
+  }, [selection]);
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -240,6 +249,21 @@ function AttachModal({ selection, onAttach, onClose }) {
             onFocus={e => { e.target.style.borderColor = WP.blue; e.target.style.boxShadow = `0 0 0 1px ${WP.blue}`; }}
             onBlur={e => { e.target.style.borderColor = WP.border; e.target.style.boxShadow = "none"; }}
           />
+          {/* ✅ FIXED: use linkText state, not selText */}
+          <input
+            value={linkText}
+            onChange={(e) => setLinkText(e.target.value)}
+            placeholder="Enter Link Text..."
+            style={{
+              border: `1px solid ${WP.border}`,
+              borderRadius: 3,
+              padding: "5px 8px",
+              fontSize: 13,
+              minWidth: 180,
+              fontFamily: FF,
+              color: WP.text,
+            }}
+          />
           <div style={{ display: "flex", gap: 4 }}>
             {FILTERS.map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)} style={{ ...btnSt, background: filter === f.key ? WP.blue : WP.white, borderColor: filter === f.key ? WP.blue : WP.border, color: filter === f.key ? WP.white : WP.textMid, fontWeight: filter === f.key ? 600 : 400 }}>
@@ -285,9 +309,9 @@ function AttachModal({ selection, onAttach, onClose }) {
           <div style={{ display: "flex", gap: 6 }}>
             <button onClick={onClose} style={{ border: `1px solid ${WP.border}`, background: WP.white, borderRadius: 3, padding: "5px 12px", fontSize: 13, cursor: "pointer", color: WP.textMid, fontFamily: FF }}>Cancel</button>
             <button
-              disabled={!selected}
+              disabled={!selected || !linkText.trim()}
               onClick={() => {
-                if (!selected) return;
+                if (!selected || !linkText.trim()) return;
                 onAttach({
                   _id: selected._id,
                   url: selected.filePath,
@@ -295,9 +319,10 @@ function AttachModal({ selection, onAttach, onClose }) {
                   category: getFileCategory(selected.mimeType),
                   mimeType: selected.mimeType,
                   fileSize: selected.fileSize,
+                  linkText: linkText,      // pass the final link text
                 });
               }}
-              style={{ border: "none", background: selected ? WP.blue : WP.line, borderRadius: 3, padding: "5px 14px", fontSize: 13, cursor: selected ? "pointer" : "default", color: selected ? WP.white : WP.textLight, fontFamily: FF, fontWeight: 600 }}>
+              style={{ border: "none", background: (selected && linkText.trim()) ? WP.blue : WP.line, borderRadius: 3, padding: "5px 14px", fontSize: 13, cursor: (selected && linkText.trim()) ? "pointer" : "default", color: (selected && linkText.trim()) ? WP.white : WP.textLight, fontFamily: FF, fontWeight: 600 }}>
               Insert Link
             </button>
           </div>
@@ -334,7 +359,7 @@ function Toast({ msg, type = "success", onDone }) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MAIN EDITOR – NO RE‑RENDER ON KEYSTROKE
+   MAIN EDITOR – NO RE‑RENDER ON KEYSTROKE (FIXED)
 ══════════════════════════════════════════════════════════ */
 const DynamicContentEditor = ({
   contents,
@@ -356,8 +381,8 @@ const DynamicContentEditor = ({
   const [noSelWarn, setNoSelWarn] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState(controlledTab || "en");
-
   const editorRef = useRef(null);
+  const savedSelectionRef = useRef(null);
   const activeTabRef = useRef(activeTab);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
@@ -437,10 +462,22 @@ const DynamicContentEditor = ({
       afterInit(editor) {
         editorRef.current = editor;
       },
-      // No `change` event – we update parent only on blur
+      mouseup(editor) {
+        const txt = editor.selection?.text?.() || "";
+        if (txt.trim()) {
+          setSelText(txt);
+          setNoSelWarn(false);
+        }
+      },
+      keyup(editor) {
+        const txt = editor.selection?.text?.() || "";
+        if (txt.trim()) {
+          setSelText(txt);
+          setNoSelWarn(false);
+        }
+      }
     },
-  }), [isFullscreen, height, externalValue]);
-
+  }), [isFullscreen, height]);
 
   // Save content to parent state on blur (when user leaves the editor)
   const handleBlur = useCallback(() => {
@@ -454,10 +491,39 @@ const DynamicContentEditor = ({
   }, [item, updateContent, ENG, HIN]);
 
   // Attach file link handler
-  const handleAttachClick = useCallback(() => {
-    setShowModal(true);
-  }, []);
+const handleAttachClick = useCallback(() => {
+  const editor = editorRef.current;
+  if (!editor) return;
 
+  // Try to get selected text using Jodit's API
+  let selectedText = editor.selection?.text?.() || "";
+
+  // Fallback: use window.getSelection() if Jodit returns empty
+  if (!selectedText.trim()) {
+    const sel = window.getSelection();
+    if (sel && sel.toString().trim()) {
+      selectedText = sel.toString();
+    }
+  }
+
+  if (!selectedText.trim()) {
+    setNoSelWarn(true);
+    setTimeout(() => setNoSelWarn(false), 3000);
+    return;
+  }
+
+  // Save the selection range BEFORE any focus change
+  try {
+    savedSelectionRef.current = editor.selection.save();
+  } catch (e) {
+    savedSelectionRef.current = null;
+  }
+
+  setSelText(selectedText);
+  setShowModal(true);
+}, []);
+
+  // ✅ FIXED: use file.linkText (the final text from modal) instead of selText
   const handleAttach = useCallback((file) => {
     const editor = editorRef.current;
     if (!editor) {
@@ -465,16 +531,35 @@ const DynamicContentEditor = ({
       setShowModal(false);
       return;
     }
+
+    // Restore the saved selection (where the user had highlighted text)
+    if (savedSelectionRef.current) {
+      editor.selection.restore(savedSelectionRef.current);
+      editor.selection.focus();
+    } else {
+      try { editor.selection.focus(); } catch (e) { /* ignore */ }
+    }
+
     const url = `${API_URL}${file.url}`;
-    const linkText = selText || file.title;
-    const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" data-file-id="${file._id}" data-category="${file.category}">${linkText}</a>`;
+    // Use the link text provided by the modal (user may have edited it)
+    const textToUse = file.linkText?.trim() || file.title;
+
+    const linkHtml = `<a
+  href="${url}"
+  target="_blank"
+  rel="noopener noreferrer"
+  data-file-id="${file._id}"
+  data-category="${file.category}"
+>${textToUse}</a>`;
+
     editor.selection.insertHTML(linkHtml);
-    // After insertion, sync content to parent
-    handleBlur();
+    handleBlur(); // save the change
+
     setToast({ msg: `"${file.title}" linked ✓`, type: "success" });
     setShowModal(false);
     setSelText("");
-  }, [selText, handleBlur]);
+    savedSelectionRef.current = null;
+  }, [handleBlur]);
 
   if (!item) return null;
 
@@ -488,7 +573,7 @@ const DynamicContentEditor = ({
               {lang === "en" ? "English" : "हिंदी"}
             </button>
           ))}
-        </div>npm
+        </div>
         <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, padding: "24px 32px" }}>
           <div className="cms-view" dangerouslySetInnerHTML={{ __html: externalValue || "<p style='color:#787c82'>No content yet.</p>" }} />
         </div>
@@ -580,7 +665,7 @@ const DynamicContentEditor = ({
         <AttachModal
           selection={selText}
           onAttach={handleAttach}
-          onClose={() => { setShowModal(false); setSelText(""); }}
+          onClose={() => { setShowModal(false); setSelText(""); setNoSelWarn(false); }}
         />
       )}
       {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}

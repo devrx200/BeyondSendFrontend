@@ -608,7 +608,7 @@ const RichContentPageManagements = () => {
             <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}><FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}</BtnBlack>
             <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}><FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}</BtnGreen>
             {isMobile && <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff" }}><FaExpand size={10} /></button>}
-            <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff", padding: "0 8px", fontSize: isMobile ? 11 : 13 }}><FaExpand size={10} /> {!isMobile && "Fullscreen"}</button>
+            <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff", padding: "0 8px", fontSize: isMobile ? 11 : 13 }}><FaExpand size={10} /> {!isMobile && "Full Screen"}</button>
           </div>
         </div>
         <FormBody />
@@ -623,7 +623,7 @@ const RichContentPageManagements = () => {
         <div style={{ position: "sticky", top: 0, zIndex: 1000, background: WP.white, borderBottom: `1px solid ${WP.line}`, padding: isMobile ? "8px 12px" : "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button onClick={goBackToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}><FaArrowLeft size={11} /> Back To List Page</button>
-            <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600 }}>{editingId ? "Edit Page (Fullscreen)" : "Add New Page (Fullscreen)"}</span>
+            <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600 }}>{editingId ? "Edit Page (Full Screen)" : "Add New Page (Full Screen)"}</span>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <BtnSecondary size="sm" onClick={() => form.slug && window.open(`${SITE_URL}/preview/${form.slug}`, "_blank")} disabled={!form.slug}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
