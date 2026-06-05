@@ -50,8 +50,7 @@ import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
 import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
 import PageCreatorManagement from "../views/Admin/MultiSectionPagesMangagement";
 import RichContentPageManagements from "../views/Admin/RichContentPageManagements";
-import FileUploader from "../views/Admin/uploaderPage";
-import FileManager from "../views/Admin/fileManager";
+import MediaLibraryMangments from "../views/Admin/MediaLibraryMangments";
 import DownloadManagement from "../views/Admin/DownloadManagement";
 import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagement";
 import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement";
@@ -153,7 +152,6 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
           <Route path="new-updates" element={<NewUpdatesManagement />} />
-          <Route path="gallery" element={<GalleryManagement />} />
           <Route path="admin-education-stats" element={<AdminEducationStats />} />
           <Route path="categories" element={<ManageCategories />} />
           <Route path="help-guidance" element={<HelpGuidance />} />
@@ -168,6 +166,7 @@ const AppRoutes = () => {
             <Route path="important-links" element={<ImportantLinksManagement />} />
             <Route path="feedbacks" element={<AdminFeedbackList />} />
             <Route path="menu" element={<MenuManagement />} />
+            <Route path="gallery" element={<GalleryManagement />} />
             <Route path="footer-section-manager" element={<FooterSection />} />
             <Route path="multi-section-pages-management" element={<PageCreatorManagement />} />
             <Route path="important-page-management" element={<ImportantPageManagement />} />
@@ -177,8 +176,7 @@ const AppRoutes = () => {
 
           {/* ADMIN + OFFICER */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMATE"]} />}>
-            <Route path="file-manager" element={<FileManager />} />
-            <Route path="file-uploader" element={<FileUploader />} />
+            <Route path="media-library-mangments" element={<MediaLibraryMangments />} />
             <Route path="download-management" element={<DownloadManagement />} />
           </Route>
 

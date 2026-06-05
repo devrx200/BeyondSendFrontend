@@ -1,130 +1,103 @@
+// DynamicContentEditor.jsx — Fixed: attach link, keyboard shortcuts, real-time onChange autosave
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import JoditEditor from "jodit-react";
 import axios from "axios";
-import { Modal, ModalHeader, ModalBody, Button, Progress } from "reactstrap";
+import { Progress } from "reactstrap";
 import Swal from "sweetalert2";
 import {
-  FaUpload,
-  FaEye,
-  FaCopy,
-  FaFilePdf,
-  FaFileExcel,
-  FaFileAlt,
-  FaFileWord,
-  FaFileImage,
-  FaTimes,
-  FaCloudUploadAlt,
-  FaFileCode,
-  FaFileArchive
+  FaUpload, FaFilePdf, FaFileExcel,
+  FaFileAlt, FaFileWord, FaFileImage, FaTimes,
+  FaCloudUploadAlt, FaFileCode, FaFileArchive, FaLink,
+  FaExpand, FaCompress,
 } from "react-icons/fa";
 
-/* ─── Design Tokens (Forest Green Theme) ─────────────────── */
-const T = {
-  ink:          "#0f1e1d",
-  inkMid:       "#2d4a48",
-  inkLight:     "#6b8a87",
-  forest:       "#0e3d3b",
-  forestMid:    "#155a56",
-  forestBright: "#1a7a74",
-  mint:         "#c8e8e5",
-  mintDark:     "#6bbfb8",
-  sage:         "#eaf5f4",
-  sageDark:     "#d4ecea",
-  line:         "#ddecea",
-  white:        "#ffffff",
-  offWhite:     "#f6faf9",
-  amber:        "#f59e0b",
-  amberBg:      "#fffbeb",
-  amberBd:      "#fcd34d",
-  danger:       "#dc2626",
-  dangerBg:     "#fff1f2",
-  dangerBd:     "#fca5a5",
+/* ── WordPress design tokens ── */
+const WP = {
+  bg: "#f0f0f1",
+  white: "#fff",
+  offWhite: "#f6f7f7",
+  text: "#1d2327",
+  textMid: "#50575e",
+  textLight: "#787c82",
+  border: "#c3c4c7",
+  line: "#dcdcde",
+  blue: "#2271b1",
+  blueHov: "#135e96",
+  blueBg: "#f0f6fc",
+  green: "#00a32a",
+  greenDark: "#007017",
+  greenBg: "#edfaef",
+  red: "#d63638",
+  redBg: "#fcf0f1",
+  amber: "#996800",
+  amberBg: "#fcf9e8",
+  amberBd: "#dba617",
+  black: "#1d2327",
 };
 
+const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
 const API_URL = import.meta.env.VITE_API_URL;
-const token   = sessionStorage.getItem("authToken");
+const getToken = () => sessionStorage.getItem("authToken");
 
-/* ─── File Helpers (shared) ─────────────────────────────── */
-const getFileExt = (mimeType, originalName) => {
-  if (mimeType.startsWith("image/"))         return originalName.split(".").pop().toLowerCase();
-  if (mimeType === "application/pdf")         return "pdf";
-  if (mimeType.includes("wordprocessingml")) return "docx";
-  if (mimeType.includes("spreadsheetml"))    return "xlsx";
-  if (mimeType.includes("presentationml"))   return "pptx";
-  return originalName.split(".").pop().toLowerCase() || "file";
-};
-
+/* ── File helpers ── */
 const getFileCategory = (mimeType) => {
-  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType?.startsWith("image/")) return "image";
   if (mimeType === "application/pdf") return "pdf";
   return "doc";
 };
+const fmtSize = (b) =>
+  b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" :
+  b >= 1024 ? Math.round(b / 1024) + " KB" : b + " B";
 
-const getFileIconInfo = (mimeType) => {
-  if (mimeType.startsWith("image/"))         return { emoji: "🖼️", bg: "#e0f2fe", fg: "#0369a1" };
-  if (mimeType === "application/pdf")         return { emoji: "📄", bg: "#fee2e2", fg: "#b91c1c" };
-  if (mimeType.includes("wordprocessingml")) return { emoji: "📝", bg: "#dbeafe", fg: "#1d4ed8" };
-  if (mimeType.includes("spreadsheetml"))    return { emoji: "📊", bg: "#dcfce7", fg: "#15803d" };
-  if (mimeType.includes("presentationml"))   return { emoji: "📋", bg: "#fff7ed", fg: "#c2410c" };
-  return { emoji: "📁", bg: T.sage, fg: T.inkMid };
+const FILE_ICON_MAP = {
+  image: { icon: FaFileImage, color: "#10b981" },
+  pdf:   { icon: FaFilePdf,   color: WP.red },
+  xlsx:  { icon: FaFileExcel, color: "#22c55e" },
+  docx:  { icon: FaFileWord,  color: WP.blue },
+  zip:   { icon: FaFileArchive, color: WP.amber },
+  code:  { icon: FaFileCode,  color: "#8b5cf6" },
+  default: { icon: FaFileAlt, color: WP.textMid },
 };
-
-const fmtSize = (bytes) => {
-  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
-  if (bytes >= 1024)    return Math.round(bytes / 1024) + " KB";
-  return bytes + " B";
+const getFileIcon = (mimeType, size = 28) => {
+  let { icon: Icon, color } = FILE_ICON_MAP.default;
+  if (mimeType?.startsWith("image"))       ({ icon: Icon, color } = FILE_ICON_MAP.image);
+  else if (mimeType === "application/pdf") ({ icon: Icon, color } = FILE_ICON_MAP.pdf);
+  else if (mimeType?.includes("spreadsheet") || mimeType?.includes("excel")) ({ icon: Icon, color } = FILE_ICON_MAP.xlsx);
+  else if (mimeType?.includes("document")  || mimeType?.includes("word"))    ({ icon: Icon, color } = FILE_ICON_MAP.docx);
+  else if (mimeType?.includes("zip")       || mimeType?.includes("rar"))     ({ icon: Icon, color } = FILE_ICON_MAP.zip);
+  return <Icon size={size} color={color} />;
 };
-
-const fmtDate = (iso) =>
-  new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 const FILTERS = [
-  { key: "all",   label: "All",    emoji: "⊞" },
-  { key: "image", label: "Images", emoji: "🖼️" },
-  { key: "pdf",   label: "PDF",    emoji: "📄" },
-  { key: "doc",   label: "Docs",   emoji: "📝" },
+  { key: "all",   label: "All Files" },
+  { key: "image", label: "Images" },
+  { key: "pdf",   label: "PDFs" },
+  { key: "doc",   label: "Docs" },
 ];
 
-/* ─── Helper: File Icon (React Icons) ───────────────────── */
-const getFileIconReact = (mimeType, size = 32) => {
-  const props = { size };
-  if (mimeType?.startsWith("image")) return <FaFileImage {...props} color="#10b981" />;
-  if (mimeType === "application/pdf") return <FaFilePdf {...props} color="#ef4444" />;
-  if (mimeType?.includes("spreadsheet") || mimeType?.includes("excel"))
-    return <FaFileExcel {...props} color="#22c55e" />;
-  if (mimeType?.includes("document") || mimeType?.includes("word"))
-    return <FaFileWord {...props} color="#3b82f6" />;
-  if (mimeType?.includes("zip") || mimeType?.includes("rar"))
-    return <FaFileArchive {...props} color="#f59e0b" />;
-  if (mimeType?.includes("json") || mimeType?.includes("javascript") || mimeType?.includes("xml"))
-    return <FaFileCode {...props} color="#8b5cf6" />;
-  return <FaFileAlt {...props} color="#6b7280" />;
-};
-
-/* ─── Enhanced Attach Modal (with Upload) ───────────────── */
+/* ══════════════════════════════════════════════
+   ATTACH / MEDIA LIBRARY MODAL
+══════════════════════════════════════════════ */
 function AttachModal({ selection, onAttach, onClose }) {
-  // File list & UI state
-  const [files, setFiles]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
-  const [query, setQuery]       = useState("");
-  const [filter, setFilter]     = useState("all");
-  const [selected, setSelected] = useState(null);
-  const searchRef               = useRef(null);
-
-  // Upload state
-  const [uploadFile, setUploadFile]       = useState(null);
-  const [uploadPreview, setUploadPreview] = useState(null);
+  const [files,          setFiles]         = useState([]);
+  const [loading,        setLoading]       = useState(true);
+  const [error,          setError]         = useState(null);
+  const [query,          setQuery]         = useState("");
+  const [filter,         setFilter]        = useState("all");
+  const [selected,       setSelected]      = useState(null);
+  const [uploadFile,     setUploadFile]    = useState(null);
+  const [uploadPreview,  setUploadPreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploading, setUploading]         = useState(false);
-  const [isDragging, setIsDragging]       = useState(false);
-  const fileInputRef                      = useRef(null);
+  const [uploading,      setUploading]     = useState(false);
+  const [isDragging,     setIsDragging]    = useState(false);
+  const fileInputRef = useRef(null);
+  const searchRef    = useRef(null);
 
   const fetchFiles = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/api/files/list`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
       setFiles(Array.isArray(res.data.data) ? res.data.data : res.data.data?.files || []);
       setError(null);
@@ -135,39 +108,37 @@ function AttachModal({ selection, onAttach, onClose }) {
     }
   }, []);
 
+  useEffect(() => { searchRef.current?.focus(); fetchFiles(); }, [fetchFiles]);
+
+  // Close on Escape key
   useEffect(() => {
-    searchRef.current?.focus();
-    fetchFiles();
-  }, [fetchFiles]);
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    return files.filter((f) => {
-      const matchFilter = filter === "all" || getFileCategory(f.mimeType) === filter;
-      const matchQuery  = !q || f.originalName.toLowerCase().includes(q);
-      return matchFilter && matchQuery;
-    });
+    return files.filter(f =>
+      (filter === "all" || getFileCategory(f.mimeType) === filter) &&
+      (!q || f.originalName.toLowerCase().includes(q))
+    );
   }, [files, query, filter]);
 
-  // Upload handlers
-  const handleSelectFile = (selectedFile) => {
-    if (!selectedFile) return;
-    setUploadFile(selectedFile);
+  const handleSelectFile = (file) => {
+    if (!file) return;
+    setUploadFile(file);
     setUploadProgress(0);
-    if (selectedFile.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => setUploadPreview(reader.result);
-      reader.readAsDataURL(selectedFile);
+    if (file.type.startsWith("image/")) {
+      const r = new FileReader();
+      r.onloadend = () => setUploadPreview(r.result);
+      r.readAsDataURL(file);
     } else {
       setUploadPreview(null);
     }
   };
 
-  const resetUpload = () => {
-    setUploadFile(null);
-    setUploadPreview(null);
-    setUploadProgress(0);
-  };
+  const resetUpload = () => { setUploadFile(null); setUploadPreview(null); setUploadProgress(0); };
 
   const handleUpload = async () => {
     if (!uploadFile) return;
@@ -176,12 +147,12 @@ function AttachModal({ selection, onAttach, onClose }) {
     try {
       setUploading(true);
       await axios.post(`${API_URL}/api/files/upload`, fd, {
-        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-        onUploadProgress: (e) => setUploadProgress(Math.round((e.loaded * 100) / e.total))
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${getToken()}` },
+        onUploadProgress: (e) => setUploadProgress(Math.round((e.loaded * 100) / e.total)),
       });
-      Swal.fire({ icon: "success", title: "File uploaded successfully!", timer: 1500, showConfirmButton: false });
+      Swal.fire({ icon: "success", title: "Uploaded!", timer: 1200, showConfirmButton: false });
       resetUpload();
-      await fetchFiles();  // refresh list
+      await fetchFiles();
     } catch {
       Swal.fire("Error", "Upload failed", "error");
     } finally {
@@ -189,138 +160,152 @@ function AttachModal({ selection, onAttach, onClose }) {
     }
   };
 
-  const copyLink = (path) => {
-    navigator.clipboard.writeText(API_URL + path);
-    Swal.fire({ icon: "success", title: "Link copied!", timer: 1000, showConfirmButton: false });
+  const btnSt = {
+    display: "inline-flex", alignItems: "center", gap: 4,
+    border: "1px solid transparent", borderRadius: 3,
+    fontSize: 12, fontWeight: 400, lineHeight: "2.15",
+    padding: "0 10px", cursor: "pointer", fontFamily: FF,
   };
 
   return (
     <>
-      <div onClick={onClose} style={{ position:"fixed", inset:0, zIndex:9990, background:"rgba(10,25,24,0.6)", backdropFilter:"blur(4px)" }} />
-      <div role="dialog" aria-modal="true" style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", zIndex:9991, width:"min(1100px,95vw)", background:T.white, borderRadius:20, boxShadow:"0 32px 80px rgba(10,35,34,.25)", overflow:"hidden" }}>
-        <div style={{ background:`linear-gradient(135deg,${T.forest},${T.forestMid})`, padding:"18px 22px 16px" }}>
-          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
-            <div>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
-                <span style={{ fontSize:17 }}>🔗</span>
-                <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:"#fff" }}>Upload & Attach Files From Library</h3>
-              </div>
-              <p style={{ margin:0, fontSize:12, color:"rgba(255,255,255,.5)" }}>Upload a new file or select an existing one to link</p>
-            </div>
-            <button onClick={onClose} style={{ background:"rgba(255,255,255,.12)", border:"none", color:"#fff", borderRadius:8, width:30, height:30, fontSize:18, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(0,0,0,.6)" }} />
+      <div role="dialog" style={{
+        position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+        zIndex: 9991, width: "min(1080px,96vw)", background: WP.white,
+        borderRadius: 4, boxShadow: "0 8px 40px rgba(0,0,0,.25)",
+        overflow: "hidden", display: "flex", flexDirection: "column",
+      }}>
+        {/* Header */}
+        <div style={{ background: WP.black, padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: WP.white }}>Upload Files / Media Library</h3>
+            {selection && <p style={{ margin: "2px 0 0", fontSize: 12, color: "rgba(255,255,255,.55)" }}>Linking to: "{selection}"</p>}
           </div>
-          {selection && (
-            <div style={{ marginTop:12, padding:"7px 12px", borderRadius:9, background:"rgba(255,255,255,.1)", border:"1px solid rgba(255,255,255,.18)", display:"flex", alignItems:"center", gap:7 }}>
-              <span style={{ fontSize:10, fontWeight:700, color:"rgba(255,255,255,.45)", textTransform:"uppercase", letterSpacing:".07em", flexShrink:0 }}>Selected text:</span>
-              <span style={{ fontSize:13, color:"#fff", fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{selection}"</span>
-            </div>
-          )}
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
         </div>
 
-        {/* Upload Area (merged from Media Library) */}
-        {!uploadFile && (
+        {/* Upload area */}
+        {!uploadFile ? (
           <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-            onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleSelectFile(e.dataTransfer.files[0]); }}
-            onClick={() => fileInputRef.current.click()}
+            onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={e => { e.preventDefault(); setIsDragging(false); }}
+            onDrop={e => { e.preventDefault(); setIsDragging(false); handleSelectFile(e.dataTransfer.files[0]); }}
+            onClick={() => fileInputRef.current?.click()}
             style={{
-              border: isDragging ? `2px dashed ${T.forestBright}` : `2px dashed ${T.line}`,
-              borderRadius: 16,
-              padding: "24px 20px",
-              textAlign: "center",
-              cursor: "pointer",
-              margin: "16px 16px 0 16px",
-              background: isDragging ? T.sage : T.white,
-              transition: "all 0.3s ease"
-            }}
-          >
-            <FaCloudUploadAlt size={40} style={{ color: isDragging ? T.forestBright : T.inkLight, marginBottom: 8 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: isDragging ? T.forestBright : T.inkMid, marginBottom: 4 }}>
-              {isDragging ? "Drop your file here!" : "Drag & drop file or click to browse"}
-            </div>
-            <div style={{ fontSize: 12, color: T.inkLight }}>Supports: Images, PDFs, Documents, Spreadsheets & more</div>
-            <input type="file" ref={fileInputRef} style={{ display: "none" }} onChange={(e) => handleSelectFile(e.target.files[0])} />
+              border: `2px dashed ${isDragging ? WP.blue : WP.line}`,
+              margin: "14px 18px 0", borderRadius: 3, padding: "18px 20px",
+              textAlign: "center", cursor: "pointer",
+              background: isDragging ? WP.blueBg : WP.offWhite,
+            }}>
+            <FaCloudUploadAlt size={32} style={{ color: isDragging ? WP.blue : WP.textLight, marginBottom: 6 }} />
+            <p style={{ margin: 0, fontSize: 13, color: isDragging ? WP.blue : WP.textMid, fontWeight: 600 }}>
+              {isDragging ? "Drop file here" : "Drag & drop or click to upload"}
+            </p>
+            <p style={{ margin: "3px 0 0", fontSize: 11, color: WP.textLight }}>Images, PDFs, Documents, Spreadsheets</p>
+            <input type="file" ref={fileInputRef} style={{ display: "none" }} onChange={e => handleSelectFile(e.target.files[0])} />
           </div>
-        )}
-
-        {uploadFile && (
-          <div style={{ background: T.sage, borderRadius: 12, padding: 12, margin: "16px 16px 0 16px" }}>
+        ) : (
+          <div style={{ margin: "14px 18px 0", background: WP.offWhite, border: `1px solid ${WP.line}`, borderRadius: 3, padding: "10px 14px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <div style={{ width: 48, height: 48, borderRadius: 8, background: uploadPreview ? "transparent" : `linear-gradient(135deg,${T.forest},${T.forestMid})`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                {uploadPreview ? <img src={uploadPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ color: "white" }}>{getFileIconReact(uploadFile.type, 24)}</div>}
+              <div style={{ width: 44, height: 44, borderRadius: 3, background: WP.line, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {uploadPreview ? <img src={uploadPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : getFileIcon(uploadFile.type)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uploadFile.name}</div>
-                <div style={{ fontSize: 11, color: T.inkLight }}>{fmtSize(uploadFile.size)} • {uploadFile.type || "Unknown type"}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: WP.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{uploadFile.name}</div>
+                <div style={{ fontSize: 11, color: WP.textLight }}>{fmtSize(uploadFile.size)}</div>
               </div>
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                <Button color="primary" onClick={handleUpload} disabled={uploading} style={{ background: `linear-gradient(135deg,${T.forest},${T.forestMid})`, border: "none", borderRadius: 8, padding: "6px 16px", fontSize: 12, fontWeight: 600 }}>
-                  <FaUpload style={{ marginRight: 4 }} /> {uploading ? "Uploading..." : "Upload"}
-                </Button>
-                <Button color="light" onClick={resetUpload} disabled={uploading} style={{ borderRadius: 8, padding: "6px 12px" }}><FaTimes /></Button>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={handleUpload} disabled={uploading} style={{ ...btnSt, background: WP.blue, borderColor: WP.blue, color: WP.white, opacity: uploading ? .7 : 1 }}>
+                  <FaUpload size={10} /> {uploading ? "Uploading…" : "Upload"}
+                </button>
+                <button onClick={resetUpload} disabled={uploading} style={{ ...btnSt, background: WP.white, borderColor: WP.border, color: WP.textMid }}>
+                  <FaTimes size={10} />
+                </button>
               </div>
             </div>
             {uploading && (
-              <div style={{ marginTop: 10 }}>
-                <Progress value={uploadProgress} style={{ height: 4, borderRadius: 4 }} barStyle={{ background: `linear-gradient(90deg,${T.forest},${T.forestBright})` }} />
-                <div style={{ textAlign: "right", marginTop: 4, fontSize: 10, fontWeight: 600, color: T.forestBright }}>{uploadProgress}%</div>
+              <div style={{ marginTop: 8 }}>
+                <Progress value={uploadProgress} style={{ height: 3 }} />
+                <div style={{ fontSize: 10, textAlign: "right", color: WP.textMid, marginTop: 2 }}>{uploadProgress}%</div>
               </div>
             )}
           </div>
         )}
 
-        <hr style={{ borderColor: T.line, margin: "12px 16px" }} />
+        <div style={{ margin: "12px 18px 0", borderTop: `1px solid ${WP.line}` }} />
 
-        {/* Search & Filters */}
-        <div style={{ padding:"0 16px", display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:10 }}>
-          <div style={{ position:"relative", flex:1, minWidth:160 }}>
-            <span style={{ position:"absolute", left:9, top:"50%", transform:"translateY(-50%)", fontSize:13, color:T.inkLight, pointerEvents:"none" }}>🔍</span>
-            <input ref={searchRef} value={query} onChange={(e)=>setQuery(e.target.value)} placeholder="Search files by name…" style={{ width:"100%", boxSizing:"border-box", padding:"6px 10px 6px 28px", borderRadius:8, border:`1.5px solid ${T.line}`, fontSize:12, background:T.white, color:T.ink, outline:"none", fontFamily:"inherit" }} />
-          </div>
-          <div style={{ display:"flex", gap:4, flexShrink:0 }}>
-            {FILTERS.map((f)=>(
-              <button key={f.key} onClick={()=>setFilter(f.key)} style={{ padding:"5px 10px", borderRadius:7, fontSize:11, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:4, fontFamily:"inherit", border:`1.5px solid ${filter===f.key?T.forestBright:T.line}`, background:filter===f.key?T.sage:T.white, color:filter===f.key?T.forest:T.inkLight }}>
-                <span>{f.emoji}</span>{f.label}
+        {/* Search & filter */}
+        <div style={{ padding: "8px 18px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <input
+            ref={searchRef} value={query} onChange={e => setQuery(e.target.value)}
+            placeholder="Search by filename…"
+            style={{ border: `1px solid ${WP.border}`, borderRadius: 3, padding: "5px 8px", fontSize: 13, fontFamily: FF, outline: "none", flex: 1, minWidth: 160, color: WP.text }}
+            onFocus={e => { e.target.style.borderColor = WP.blue; e.target.style.boxShadow = `0 0 0 1px ${WP.blue}`; }}
+            onBlur={e => { e.target.style.borderColor = WP.border; e.target.style.boxShadow = "none"; }}
+          />
+          <div style={{ display: "flex", gap: 4 }}>
+            {FILTERS.map(f => (
+              <button key={f.key} onClick={() => setFilter(f.key)} style={{ ...btnSt, background: filter === f.key ? WP.blue : WP.white, borderColor: filter === f.key ? WP.blue : WP.border, color: filter === f.key ? WP.white : WP.textMid, fontWeight: filter === f.key ? 600 : 400 }}>
+                {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* File Grid */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(118px,1fr))", gap:8, padding:"0 16px 12px 16px", maxHeight:300, overflowY:"auto" }}>
-          {loading && <div style={{ gridColumn:"1/-1", padding:"44px 0", textAlign:"center", color:T.inkLight }}><div style={{ fontSize:28, marginBottom:10, opacity:.4 }}>⏳</div><p style={{ margin:0, fontSize:13, fontWeight:600 }}>Loading files…</p></div>}
-          {!loading&&error && <div style={{ gridColumn:"1/-1", padding:"44px 0", textAlign:"center", color:T.danger }}><div style={{ fontSize:28, marginBottom:10 }}>⚠️</div><p style={{ margin:0, fontSize:13, fontWeight:600 }}>{error}</p></div>}
-          {!loading&&!error&&filtered.length===0 && <div style={{ gridColumn:"1/-1", padding:"44px 0", textAlign:"center", color:T.inkLight }}><p style={{ margin:0, fontSize:13, fontWeight:600 }}>No files found</p></div>}
-          {!loading&&!error&&filtered.map((file)=>{
-            const isSel = selected?._id===file._id;
-            const ext   = getFileExt(file.mimeType,file.originalName);
-            const { emoji,bg,fg } = getFileIconInfo(file.mimeType);
-            const isImage = file.mimeType.startsWith("image/");
+        {/* File grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))", gap: 6, padding: "0 18px 14px", maxHeight: 280, overflowY: "auto" }}>
+          {loading && <div style={{ gridColumn: "1/-1", padding: "30px 0", textAlign: "center", color: WP.textLight, fontSize: 13 }}>Loading…</div>}
+          {!loading && error && <div style={{ gridColumn: "1/-1", padding: "20px 0", textAlign: "center", color: WP.red, fontSize: 13 }}>{error}</div>}
+          {!loading && !error && filtered.length === 0 && <div style={{ gridColumn: "1/-1", padding: "20px 0", textAlign: "center", color: WP.textLight, fontSize: 13 }}>No files found</div>}
+          {!loading && !error && filtered.map(file => {
+            const isSel = selected?._id === file._id;
+            const isImg = file.mimeType?.startsWith("image/");
             return (
-              <div key={file._id} role="button" tabIndex={0} onClick={()=>setSelected(p=>p?._id===file._id?null:file)} title={file.originalName}
-                style={{ border:`${isSel?"1.5px":"0.5px"} solid ${isSel?T.forestBright:T.line}`, borderRadius:10, padding:"12px 10px 10px", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:5, position:"relative", background:isSel?T.sage:T.white }}>
-                {isSel&&<div style={{ position:"absolute", top:6, left:6, width:16, height:16, borderRadius:"50%", background:T.forest, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, color:"#fff" }}>✓</div>}
-                <div style={{ position:"absolute", top:6, right:6, fontSize:9, fontWeight:700, padding:"2px 5px", borderRadius:4, background:bg, color:fg, textTransform:"uppercase" }}>{ext}</div>
-                <div style={{ width:52, height:52, borderRadius:8, background:bg, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", flexShrink:0 }}>
-                  {isImage?<img src={`${API_URL}${file.filePath}`} alt={file.originalName} style={{ width:"100%", height:"100%", objectFit:"cover", borderRadius:8 }} onError={(e)=>{e.target.style.display="none"; e.target.parentNode.innerHTML=`<span style="font-size:24px">${emoji}</span>`;}} />:<span style={{ fontSize:24 }}>{emoji}</span>}
+              <div key={file._id} onClick={() => setSelected(p => p?._id === file._id ? null : file)}
+                style={{ border: `${isSel ? "2px" : "1px"} solid ${isSel ? WP.blue : WP.line}`, borderRadius: 3, padding: "8px 6px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: isSel ? WP.blueBg : WP.white, position: "relative" }}>
+                {isSel && (
+                  <div style={{ position: "absolute", top: 4, right: 4, width: 14, height: 14, borderRadius: "50%", background: WP.blue, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ color: WP.white, fontSize: 9, lineHeight: 1 }}>✓</span>
+                  </div>
+                )}
+                <div style={{ width: 50, height: 50, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: 2, background: "#f6f7f7" }}>
+                  {isImg
+                    ? <img src={`${API_URL}${file.filePath}`} alt={file.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
+                    : getFileIcon(file.mimeType)}
                 </div>
-                <span style={{ fontSize:11, fontWeight:600, textAlign:"center", color:T.ink, lineHeight:1.3, wordBreak:"break-word", width:"100%", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{file.originalName}</span>
-                <span style={{ fontSize:10, color:T.inkLight }}>{fmtSize(file.fileSize)}</span>
-                <span style={{ fontSize:10, color:T.inkLight }}>{fmtDate(file.createdAt)}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: WP.text, textAlign: "center", wordBreak: "break-word", width: "100%", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.3 }}>{file.originalName}</span>
+                <span style={{ fontSize: 10, color: WP.textLight }}>{fmtSize(file.fileSize)}</span>
               </div>
             );
           })}
         </div>
 
         {/* Footer */}
-        <div style={{ padding:"10px 16px", borderTop:`1px solid ${T.line}`, background:T.offWhite, display:"flex", alignItems:"center", justifyContent:"space-between", gap:8 }}>
-          <span style={{ fontSize:11, color:T.inkLight }}>
-            {selected?<><strong style={{ color:T.ink }}>{selected.originalName}</strong>{" · "}{fmtSize(selected.fileSize)}</>:`${filtered.length} file${filtered.length!==1?"s":""}`}
+        <div style={{ padding: "8px 18px", borderTop: `1px solid ${WP.line}`, background: WP.offWhite, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <span style={{ fontSize: 12, color: WP.textMid }}>
+            {selected
+              ? <><strong style={{ color: WP.text }}>{selected.originalName}</strong> · {fmtSize(selected.fileSize)}</>
+              : `${filtered.length} file${filtered.length !== 1 ? "s" : ""}`}
           </span>
-          <div style={{ display:"flex", gap:8, flexShrink:0 }}>
-            <button onClick={onClose} style={{ padding:"7px 14px", borderRadius:7, border:`1.5px solid ${T.line}`, background:T.white, color:T.inkMid, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>Cancel</button>
-            <button disabled={!selected} onClick={()=>{if(!selected)return; onAttach({_id:selected._id, url:selected.filePath, title:selected.originalName, category:getFileCategory(selected.mimeType), mimeType:selected.mimeType, fileSize:selected.fileSize});}} style={{ padding:"7px 18px", borderRadius:7, border:"none", fontSize:12, fontWeight:700, cursor:selected?"pointer":"default", background:selected?T.forest:T.line, color:selected?"#fff":T.inkLight, fontFamily:"inherit" }}>Attach link</button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={onClose} style={{ border: `1px solid ${WP.border}`, background: WP.white, borderRadius: 3, padding: "5px 12px", fontSize: 13, cursor: "pointer", color: WP.textMid, fontFamily: FF }}>Cancel</button>
+            <button
+              disabled={!selected}
+              onClick={() => {
+                if (!selected) return;
+                onAttach({
+                  _id: selected._id,
+                  url: selected.filePath,
+                  title: selected.originalName,
+                  category: getFileCategory(selected.mimeType),
+                  mimeType: selected.mimeType,
+                  fileSize: selected.fileSize,
+                });
+              }}
+              style={{ border: "none", background: selected ? WP.blue : WP.line, borderRadius: 3, padding: "5px 14px", fontSize: 13, cursor: selected ? "pointer" : "default", color: selected ? WP.white : WP.textLight, fontFamily: FF, fontWeight: 600 }}>
+              Insert Link
+            </button>
           </div>
         </div>
       </div>
@@ -328,234 +313,394 @@ function AttachModal({ selection, onAttach, onClose }) {
   );
 }
 
-/* ─── Toast (simple) ────────────────────────────────────── */
-function Toast({ msg, type="success", onDone }) {
-  useEffect(() => { const t=setTimeout(onDone,2800); return ()=>clearTimeout(t); }, [onDone]);
-  return (
-    <div style={{ position:"fixed", bottom:28, right:28, zIndex:10000, background:type==="success"?`linear-gradient(135deg,${T.forest},${T.forestBright})`:`linear-gradient(135deg,#92400e,#d97706)`, color:"#fff", padding:"11px 18px", borderRadius:12, fontSize:13, fontWeight:600, boxShadow:"0 8px 28px rgba(14,61,59,.28)", display:"flex", alignItems:"center", gap:8 }}>
-      <span>{type==="success"?"✅":"⚠️"}</span>{msg}
-    </div>
-  );
-}
-
-/* ─── Word / Char Counter ───────────────────────────────── */
+/* ── Word / Char counter ── */
 function ContentStats({ html }) {
   const stats = useMemo(() => {
-    const text  = html?.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim()||"";
+    const text = html?.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() || "";
     const words = text ? text.split(/\s+/).length : 0;
-    return { words, chars: text.length, read: Math.max(1,Math.ceil(words/200)) };
+    return { words, chars: text.length, read: Math.max(1, Math.ceil(words / 200)) };
   }, [html]);
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:16, fontSize:11, color:T.inkLight, fontWeight:600 }}>
-      {[{label:"Words",val:stats.words.toLocaleString()},{label:"Chars",val:stats.chars.toLocaleString()},{label:"~Read",val:`${stats.read} min`}].map((s)=>(
-        <span key={s.label} style={{ display:"flex", alignItems:"center", gap:4 }}>
-          <span style={{ fontWeight:800, color:T.forestMid, fontSize:13 }}>{s.val}</span>
-          <span style={{ textTransform:"uppercase", letterSpacing:".06em" }}>{s.label}</span>
-        </span>
-      ))}
+    <div style={{ display: "flex", gap: 14, fontSize: 12, color: WP.textMid }}>
+      <span><strong style={{ color: WP.text }}>{stats.words.toLocaleString()}</strong> words</span>
+      <span><strong style={{ color: WP.text }}>{stats.chars.toLocaleString()}</strong> chars</span>
+      <span>~<strong style={{ color: WP.text }}>{stats.read}</strong> min read</span>
     </div>
   );
 }
 
-/* ─── Main Component ────────────────────────────────────── */
+/* ── Toast ── */
+function Toast({ msg, type = "success", onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 2800); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 10000, background: type === "success" ? WP.green : WP.amber, color: WP.white, padding: "9px 16px", borderRadius: 3, fontSize: 13, fontWeight: 600, boxShadow: "0 4px 16px rgba(0,0,0,.2)", fontFamily: FF }}>
+      {type === "success" ? "✓" : "⚠"} {msg}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN EDITOR COMPONENT
+   
+   Props:
+   - contents / setContents : array state — [{ id, [engField]: "", [hinField]: "" }]
+   - engField (default "descriptionEn") : key for English content
+   - hinField (default "descriptionHi") : key for Hindi content
+   - viewMode (default false) : read-only display mode
+   - activeTab (optional) : controlled tab "en" | "hi"
+   - height (optional, default 460) : editor height in px
+   
+   Also accepts prop aliases for legacy compatibility:
+   - htmlContentEng → engField override
+   - htmlContentHin → hinField override
+══════════════════════════════════════════════════════════ */
 const DynamicContentEditor = ({
   contents,
   setContents,
-  viewMode     = false,
-  engField     = "descriptionEn",
-  hinField     = "descriptionHi",
+  viewMode   = false,
+  engField   = "descriptionEn",
+  hinField   = "descriptionHi",
+  // legacy aliases
+  htmlContentEng,
+  htmlContentHin,
   activeTab: controlledTab,
+  height = 460,
 }) => {
-  // Editor state
-  const [showModal, setShowModal]         = useState(false);
-  const [selectionText, setSelectionText] = useState("");
-  const [selectionRange, setSelectionRange] = useState(null);
-  const [toast, setToast]                 = useState(null);
-  const [noSelWarn, setNoSelWarn]         = useState(false);
-  const [isFullscreen, setIsFullscreen]   = useState(false);
-  const [activeTab, setActiveTab]         = useState(controlledTab || "en");
-  const editorContainerRef               = useRef(null);
+  // Resolve field names (legacy alias support)
+  const ENG = htmlContentEng || engField;
+  const HIN = htmlContentHin || hinField;
 
-  // Initialize empty content if needed
+  const [showModal,   setShowModal]   = useState(false);
+  const [selText,     setSelText]     = useState("");
+  const [toast,       setToast]       = useState(null);
+  const [noSelWarn,   setNoSelWarn]   = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeTab,   setActiveTab]   = useState(controlledTab || "en");
+
+  // ✅ KEY FIX: We store the actual Jodit editor instance here (not the React component ref)
+  const editorInstanceRef = useRef(null);
+  // This ref holds the React component reference (needed by JoditEditor)
+  const joditComponentRef = useRef(null);
+
+  // Ensure contents is initialized
   useEffect(() => {
     if (!contents || contents.length === 0) {
-      setContents([{ id: Date.now(), fileType:"RICH_TEXT", [engField]:"", [hinField]:"" }]);
+      setContents([{ id: Date.now(), [ENG]: "", [HIN]: "" }]);
     }
-  }, []);
+  }, []); // eslint-disable-line
 
-  const item = contents?.[0];
-  const updateContent = useCallback(
-    (id, updates) => setContents((prev) => prev.map((c) => (c.id===id?{...c,...updates}:c))),
-    [setContents]
-  );
-  const currentField = activeTab==="en" ? engField : hinField;
+  const item         = contents?.[0];
+  const currentField = activeTab === "en" ? ENG : HIN;
   const currentValue = item?.[currentField] || "";
 
-  // Attach file to selected text
-  const handleAttachClick = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount===0 || sel.isCollapsed) {
-      setNoSelWarn(true); setTimeout(()=>setNoSelWarn(false),2800); return;
+  const updateContent = useCallback((id, updates) => {
+    setContents(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  }, [setContents]);
+
+  /* ── Jodit config ── 
+     KEY FIXES:
+     1. enableDragAndDropFileToEditor: true
+     2. useSearch: true  
+     3. spellcheck: true
+     4. Keyboard shortcuts work via Jodit's built-in system — we DON'T disable them
+     5. No key: activeTab (prevents remount) — we use setValue instead
+  */
+  const joditConfig = useMemo(() => ({
+    height: isFullscreen ? "calc(100vh - 180px)" : height,
+    readonly: false,
+    toolbarAdaptive: false,
+    showCharsCounter: false,
+    showWordsCounter: false,
+    showXPathInStatusbar: false,
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: "insert_as_html",
+    spellcheck: true,
+    // ✅ Keyboard shortcuts ENABLED — these are Jodit built-ins, no override needed:
+    // Ctrl+B = Bold, Ctrl+I = Italic, Ctrl+U = Underline
+    // Ctrl+Z = Undo, Ctrl+Y = Redo, Ctrl+A = Select All
+    // Ctrl+C/V/X = Copy/Paste/Cut (native)
+    // Ctrl+L = Link, Ctrl+S = Save (can be customized)
+    cleanHTML: { removeEmptyElements: false, fillEmptyParagraph: false },
+    uploader: {
+      insertImageAsBase64URI: true,
+      imagesExtensions: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
+      withCredentials: false,
+    },
+    filebrowser: { ajax: { url: "" } },
+    link: { followOnDblClick: false, openInNewTabCheckbox: true },
+    // ✅ Full toolbar like WordPress/online editors
+    buttons: [
+      "bold", "italic", "underline", "strikethrough", "|",
+      "superscript", "subscript", "|",
+      "eraser", "|",
+      "ul", "ol", "|",
+      "outdent", "indent", "|",
+      "font", "fontsize", "brush", "paragraph", "|",
+      "align", "|",
+      "table", "link", "image", "video", "|",
+      "hr", "|",
+      "undo", "redo", "|",
+      "copyformat", "|",
+      "find", "|",
+      "fullsize", "source",
+    ],
+    // ✅ Custom keyboard shortcuts (additional ones)
+    commandToHotkeys: {
+      bold:      ["ctrl+b",  "cmd+b"],
+      italic:    ["ctrl+i",  "cmd+i"],
+      underline: ["ctrl+u",  "cmd+u"],
+      undo:      ["ctrl+z",  "cmd+z"],
+      redo:      ["ctrl+y",  "cmd+y", "ctrl+shift+z", "cmd+shift+z"],
+      selectAll: ["ctrl+a",  "cmd+a"],
+      link:      ["ctrl+k",  "cmd+k"],
+    },
+    style: {
+      fontFamily: "Georgia,'Times New Roman',serif",
+      fontSize: "15px",
+    },
+    events: {
+      // ✅ KEY FIX: Capture the actual editor instance when Jodit is ready
+      afterInit(editor) {
+        editorInstanceRef.current = editor;
+      },
+      // ✅ Real-time onChange: fires on every keystroke / change
+      change(newContent) {
+        if (item) {
+          updateContent(item.id, { [currentField]: newContent });
+        }
+      },
+    },
+  }), [isFullscreen, height, currentField, item, updateContent]);
+
+  /* ── Tab switch: sync editor value without remounting ── */
+  useEffect(() => {
+    const editor = editorInstanceRef.current;
+    if (!editor) return;
+    const newVal = item?.[currentField] || "";
+    // Only update if value actually differs to avoid cursor jump
+    if (editor.value !== newVal) {
+      editor.value = newVal;
     }
-    const range = sel.getRangeAt(0);
-    setSelectionText(sel.toString().trim().slice(0,80));
-    setSelectionRange(range.cloneRange());
+  }, [activeTab]); // eslint-disable-line
+
+  /* ── Attach File Link ── 
+     KEY FIX: Use editorInstanceRef.current (actual Jodit instance)
+     NOT joditComponentRef.current (React component wrapper)
+  */
+  const handleAttachClick = useCallback(() => {
+    const editor = editorInstanceRef.current;
+
+    if (!editor) {
+      setNoSelWarn(true);
+      setTimeout(() => setNoSelWarn(false), 2800);
+      return;
+    }
+
+    // ✅ Focus the editor first so selection is active
+    editor.focus();
+
+    // ✅ Check selection using Jodit's selection module
+    const sel = editor.selection;
+    if (!sel || sel.isCollapsed()) {
+      setNoSelWarn(true);
+      setTimeout(() => setNoSelWarn(false), 2800);
+      return;
+    }
+
+    // Get selected HTML/text
+    const selectedHtml = sel.html || "";
+    const selectedText = selectedHtml.replace(/<[^>]*>/g, "").trim();
+    setSelText(selectedText.slice(0, 80) || "selected text");
     setShowModal(true);
   }, []);
 
   const handleAttach = useCallback((file) => {
-    if (!selectionRange) return;
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(selectionRange);
-    const range = sel.getRangeAt(0);
-    if (range.collapsed) { setToast({msg:"Selection lost — re-select and try again",type:"warn"}); setShowModal(false); return; }
-    const a = document.createElement("a");
-    a.href  = `${API_URL}${file.url}`; a.target="_blank"; a.rel="noopener noreferrer";
-    a.title = file.title; a.setAttribute("data-file-id",file._id); a.setAttribute("data-category",file.category);
-    try { range.surroundContents(a); } catch { const c=range.extractContents(); a.appendChild(c); range.insertNode(a); }
-    sel.removeAllRanges();
-    const editorEl = editorContainerRef.current?.querySelector(".jodit-wysiwyg");
-    if (editorEl && item) updateContent(item.id,{ [currentField]: editorEl.innerHTML });
-    setToast({msg:`"${file.title}" linked successfully`,type:"success"});
-    setShowModal(false); setSelectionText(""); setSelectionRange(null);
-  }, [selectionRange, item, updateContent, currentField]);
+    const editor = editorInstanceRef.current;
+    if (!editor) {
+      setToast({ msg: "Editor not ready", type: "warn" });
+      setShowModal(false);
+      return;
+    }
 
-  const joditConfig = useMemo(() => ({
-    height: 480, readonly: false, toolbarAdaptive: false,
-    showCharsCounter:false, showWordsCounter:false, showXPathInStatusbar:false,
-    askBeforePasteHTML:false, askBeforePasteFromWord:false, defaultActionOnPaste:"insert_as_html",
-    cleanHTML:{ removeEmptyElements:false, fillEmptyParagraph:false },
-    uploader:{ insertImageAsBase64URI:true, imagesExtensions:["jpg","jpeg","png","gif","webp","svg"], withCredentials:false },
-    filebrowser:{ ajax:{ url:"" } },
-    link:{ followOnDblClick:false, openInNewTabCheckbox:true, noFollowCheckbox:true },
-    table:{ allowCellResize:true, allowCellSelection:true },
-    image:{ openOnDblClick:false, editSrc:false, useImageEditor:false },
-    buttons:[
-      "bold","italic","underline","strikethrough","|",
-      "font","fontsize","brush","paragraph","|","align","|",
-      "ul","ol","indent","outdent","|","link","image","|",
-      "table","hr","|","superscript","subscript","|",
-      "undo","redo","|","eraser","copyformat","|","source",
-    ],
-  }), []);
+    const url = `${API_URL}${file.url}`;
+    const linkText = selText || file.title;
+    // ✅ Build anchor HTML
+    const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" data-file-id="${file._id}" data-category="${file.category}">${linkText}</a>`;
+
+    // ✅ Insert HTML at selection using Jodit's selection module
+    editor.selection.insertHTML(linkHtml);
+
+    // ✅ Get updated content from editor and sync to state
+    const newContent = editor.value;
+    if (item) updateContent(item.id, { [currentField]: newContent });
+
+    setToast({ msg: `"${file.title}" linked ✓`, type: "success" });
+    setShowModal(false);
+    setSelText("");
+  }, [selText, item, updateContent, currentField]);
 
   if (!item) return null;
 
-  // View Mode
+  /* ── View mode ── */
   if (viewMode) {
     return (
-      <div style={{ fontFamily:"'Georgia',serif", lineHeight:1.8, fontSize:15, color:T.ink }}>
-        <div style={{ display:"flex", gap:4, marginBottom:12 }}>
-          {["en","hi"].map(lang=>(
-            <button key={lang} onClick={()=>setActiveTab(lang)} style={{ padding:"6px 14px", borderRadius:6, border:`1.5px solid ${activeTab===lang?T.forestBright:T.line}`, background:activeTab===lang?T.forest:T.white, color:activeTab===lang?"#fff":T.inkMid, fontWeight:700, fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
-              {lang==="en"?"🇬🇧 English":"🇮🇳 Hindi"}
+      <div style={{ fontFamily: "Georgia,serif", lineHeight: 1.8, fontSize: 15, color: WP.text }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+          {["en", "hi"].map(lang => (
+            <button key={lang} onClick={() => setActiveTab(lang)} style={{ padding: "4px 12px", borderRadius: 3, border: `1px solid ${activeTab === lang ? WP.blue : WP.border}`, background: activeTab === lang ? WP.blue : WP.white, color: activeTab === lang ? WP.white : WP.textMid, fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: FF }}>
+              {lang === "en" ? "English" : "हिंदी"}
             </button>
           ))}
         </div>
-        <div style={{ background:T.white, borderRadius:14, border:`1px solid ${T.line}`, padding:"32px 40px", boxShadow:"0 2px 16px rgba(14,61,59,.06)" }}>
-          <div className="cms-view" dangerouslySetInnerHTML={{ __html: currentValue || "<p style='color:#9ca3af'>No content yet.</p>" }} />
+        <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, padding: "24px 32px" }}>
+          <div className="cms-view" dangerouslySetInnerHTML={{ __html: currentValue || "<p style='color:#787c82'>No content yet.</p>" }} />
         </div>
         <ViewStyles />
       </div>
     );
   }
 
-  // Edit Mode
+  /* ── Edit mode ── */
   return (
-    <div ref={editorContainerRef} style={{ fontFamily:"inherit", ...(isFullscreen?{position:"fixed", inset:0, zIndex:9000, background:T.offWhite, padding:24, overflowY:"auto"}:{}) }}>
-      <div style={{ background:T.white, borderRadius:16, border:`1.5px solid ${T.line}`, boxShadow:"0 4px 24px rgba(14,61,59,.08)", overflow:"hidden" }}>
-        {/* Header */}
-        <div style={{ background:`linear-gradient(135deg,${T.forest},${T.forestMid})`, padding:"13px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:34, height:34, borderRadius:9, background:"rgba(255,255,255,.12)", border:"1px solid rgba(255,255,255,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17 }}>✍️</div>
-            <div>
-              <p style={{ margin:0, fontSize:14, fontWeight:800, color:"#fff" }}>Rich Text Editor</p>
-              <p style={{ margin:0, fontSize:11, color:"rgba(255,255,255,.5)" }}>Format · Link · Embed · Publish</p>
-            </div>
+    <div style={{
+      fontFamily: FF,
+      ...(isFullscreen ? {
+        position: "fixed", inset: 0, zIndex: 9000,
+        background: WP.bg, padding: 16, overflowY: "auto",
+      } : {}),
+    }}>
+      <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, overflow: "hidden" }}>
+
+        {/* ── Editor top bar ── */}
+        <div style={{ background: WP.black, padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {[{ key: "en", label: "English" }, { key: "hi", label: "हिंदी (Hindi)" }].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  padding: "4px 12px", borderRadius: 3,
+                  border: `1px solid ${activeTab === tab.key ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.2)"}`,
+                  background: activeTab === tab.key ? "rgba(255,255,255,.15)" : "transparent",
+                  color: activeTab === tab.key ? WP.white : "rgba(255,255,255,.6)",
+                  fontWeight: activeTab === tab.key ? 600 : 400,
+                  fontSize: 12, cursor: "pointer", fontFamily: FF,
+                }}>
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <button onClick={handleAttachClick} style={{ display:"flex", alignItems:"center", gap:7, padding:"8px 16px", borderRadius:9, background:"rgba(255,255,255,.14)", border:"1.5px solid rgba(255,255,255,.28)", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
-              <span style={{ fontSize:14 }}>🔗</span>Attach File Link & Upload File 
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button
+              onClick={handleAttachClick}
+              title="Select text in editor first, then click this"
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 3, background: WP.blue, border: `1px solid ${WP.blue}`, color: WP.white, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: FF }}>
+              <FaLink size={10} /> Attach File Link
             </button>
-            <button onClick={()=>setIsFullscreen(f=>!f)} style={{ width:34, height:34, borderRadius:8, background:"rgba(255,255,255,.1)", border:"1.5px solid rgba(255,255,255,.2)", color:"#fff", fontSize:15, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"inherit" }}>
-              {isFullscreen?"⊠":"⛶"}
+            <button
+              onClick={() => setIsFullscreen(f => !f)}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, borderRadius: 3, background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)", color: WP.white, fontSize: 13, cursor: "pointer" }}>
+              {isFullscreen ? <FaCompress size={11} /> : <FaExpand size={11} />}
             </button>
           </div>
         </div>
 
-        {/* Language tabs */}
-        <div style={{ background:T.offWhite, borderBottom:`1px solid ${T.line}`, padding:"0 20px", display:"flex", alignItems:"center", gap:0 }}>
-          {[{key:"en", label:"🇬🇧 English", field:engField},{key:"hi", label:"🇮🇳 Hindi", field:hinField}].map(tab=>(
-            <button key={tab.key} onClick={()=>setActiveTab(tab.key)} style={{ padding:"10px 18px", background:"none", border:"none", borderBottom:`3px solid ${activeTab===tab.key?T.forestBright:"transparent"}`, color:activeTab===tab.key?T.forest:T.inkLight, fontWeight:activeTab===tab.key?800:600, fontSize:13, cursor:"pointer", fontFamily:"inherit", transition:"all .15s" }}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
+        {/* Warning: no selection */}
         {noSelWarn && (
-          <div style={{ background:T.amberBg, borderBottom:`1.5px solid ${T.amberBd}`, padding:"9px 20px", display:"flex", alignItems:"center", gap:10, fontSize:13, color:"#92400e", fontWeight:600 }}>
-            <span style={{ fontSize:16 }}>⚠️</span>
-            <span><strong>Highlight text</strong> in the editor first, then click <strong>🔗 Attach File Link</strong>.</span>
+          <div style={{ background: WP.amberBg, borderBottom: `1px solid ${WP.amberBd}`, padding: "7px 14px", fontSize: 12, color: WP.amber, fontWeight: 600 }}>
+            ⚠ Highlight text in the editor first, then click "Attach File Link".
           </div>
         )}
 
-        <div style={{ background:T.sage, borderBottom:`1px solid ${T.line}`, padding:"8px 20px", display:"flex", alignItems:"center", gap:8, fontSize:12, color:T.inkMid }}>
-          <span style={{ fontSize:13 }}>💡</span>
-          <span><strong>Select text</strong> in the editor → click <strong>🔗 Attach File Link</strong> → upload or choose a file.</span>
+        {/* Tip bar */}
+        <div style={{ background: WP.offWhite, borderBottom: `1px solid ${WP.line}`, padding: "5px 14px", fontSize: 12, color: WP.textMid }}>
+          <strong>Shortcuts:</strong>{" "}
+          <kbd style={kbdSt}>Ctrl+B</kbd> Bold &nbsp;
+          <kbd style={kbdSt}>Ctrl+I</kbd> Italic &nbsp;
+          <kbd style={kbdSt}>Ctrl+U</kbd> Underline &nbsp;
+          <kbd style={kbdSt}>Ctrl+Z</kbd> Undo &nbsp;
+          <kbd style={kbdSt}>Ctrl+K</kbd> Link &nbsp;
+          <kbd style={kbdSt}>Ctrl+A</kbd> Select All
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          Select text → <strong>Attach File Link</strong> to insert a file link.
         </div>
 
-        <div style={{ background:T.white }}>
+        {/* ✅ Single JoditEditor instance — no key prop change on tab switch */}
+        <div style={{ background: WP.white }}>
           <JoditEditor
-            key={activeTab}
+            ref={joditComponentRef}
             value={currentValue}
             config={joditConfig}
-            onBlur={(content) => item && updateContent(item.id,{ [currentField]: content })}
+            // ✅ onBlur as backup sync (onChange is handled in config.events.change)
+            onBlur={(content) => {
+              if (item) updateContent(item.id, { [currentField]: content });
+            }}
           />
         </div>
 
-        <div style={{ background:T.offWhite, borderTop:`1px solid ${T.line}`, padding:"9px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
+        {/* Footer stats */}
+        <div style={{ background: WP.offWhite, borderTop: `1px solid ${WP.line}`, padding: "6px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <ContentStats html={currentValue} />
+          <span style={{ fontSize: 11, color: WP.textLight }}>
+            {activeTab === "en" ? "🇬🇧 English content" : "🇮🇳 Hindi content"}
+          </span>
         </div>
       </div>
 
-      {/* Enhanced Attach Modal (now includes upload) */}
-      {showModal && <AttachModal selection={selectionText} onAttach={handleAttach} onClose={()=>{setShowModal(false); setSelectionText(""); setSelectionRange(null);}} />}
-
-      {toast && <Toast msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+      {showModal && (
+        <AttachModal
+          selection={selText}
+          onAttach={handleAttach}
+          onClose={() => { setShowModal(false); setSelText(""); }}
+        />
+      )}
+      {toast && <Toast msg={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       <EditorStyles />
     </div>
   );
 };
 
-/* ─── Styles ─────────────────────────────────────────────── */
+/* ── keyboard hint style ── */
+const kbdSt = {
+  display: "inline-block",
+  background: "#2b1f1f",
+  border: "1px solid #c3c4c7",
+  borderRadius: 3,
+  padding: "0 4px",
+  fontSize: 10,
+  fontFamily: "monospace",
+  lineHeight: "1.6",
+};
+
+/* ── Scoped styles ── */
 function EditorStyles() {
   return (
     <style>{`
-      .jodit-toolbar__box { background:${T.offWhite}!important; border-bottom:1.5px solid ${T.line}!important; padding:4px 8px!important; }
-      .jodit-toolbar-button__button { border-radius:6px!important; transition:background .12s!important; }
-      .jodit-toolbar-button__button:hover { background:${T.sage}!important; color:${T.forest}!important; }
-      .jodit-wysiwyg { font-family:'Georgia',serif!important; font-size:15px!important; line-height:1.85!important; color:${T.ink}!important; padding:28px 36px!important; min-height:380px!important; caret-color:${T.forestBright}; }
-      .jodit-wysiwyg h1 { font-size:28px; font-weight:800; color:${T.forest}; margin:28px 0 12px; letter-spacing:-.02em; }
-      .jodit-wysiwyg h2 { font-size:22px; font-weight:700; color:${T.forestMid}; margin:24px 0 10px; }
-      .jodit-wysiwyg h3 { font-size:17px; font-weight:700; color:${T.inkMid}; margin:18px 0 8px; }
-      .jodit-wysiwyg p  { margin:0 0 14px; }
-      .jodit-wysiwyg a  { color:${T.forestBright}; text-decoration:underline; text-decoration-color:${T.mint}; text-underline-offset:3px; font-weight:600; }
-      .jodit-wysiwyg blockquote { border-left:4px solid ${T.forestBright}; margin:18px 0; padding:10px 20px; background:${T.sage}; border-radius:0 8px 8px 0; color:${T.inkMid}; font-style:italic; }
-      .jodit-wysiwyg table { border-collapse:collapse; width:100%; margin:16px 0; }
-      .jodit-wysiwyg td,.jodit-wysiwyg th { border:1.5px solid ${T.line}; padding:8px 12px; font-size:14px; }
-      .jodit-wysiwyg th { background:${T.sage}; font-weight:700; color:${T.forestMid}; }
-      .jodit-wysiwyg ul,.jodit-wysiwyg ol { padding-left:24px; margin:0 0 14px; }
-      .jodit-wysiwyg li { margin-bottom:4px; }
-      .jodit-wysiwyg code { background:${T.sage}; color:${T.forest}; padding:2px 6px; border-radius:4px; font-size:.88em; font-family:'Courier New',monospace; }
-      .jodit-wysiwyg pre { background:${T.ink}; color:#a8ffd8; padding:16px 20px; border-radius:10px; overflow-x:auto; font-family:'Courier New',monospace; font-size:13px; line-height:1.6; }
-      .jodit-wysiwyg img { max-width:100%; border-radius:8px; }
-      .jodit-wysiwyg hr { border:none; border-top:2px solid ${T.line}; margin:24px 0; }
-      .jodit-status-bar { display:none!important; }
-      div::-webkit-scrollbar { width: 8px; }
-      div::-webkit-scrollbar-track { background: ${T.sage}; border-radius: 10px; }
-      div::-webkit-scrollbar-thumb { background: linear-gradient(135deg, ${T.forest}, ${T.forestBright}); border-radius: 10px; }
-      div::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, ${T.forestMid}, ${T.forestBright}); }
+      .jodit-toolbar__box { background: ${WP.offWhite} !important; border-bottom: 1px solid ${WP.line} !important; padding: 2px 6px !important; }
+      .jodit-toolbar-button__button { border-radius: 3px !important; }
+      .jodit-toolbar-button__button:hover { background: ${WP.blueBg} !important; color: ${WP.blue} !important; }
+      .jodit-wysiwyg { font-family: Georgia, 'Times New Roman', serif !important; font-size: 15px !important; line-height: 1.8 !important; color: ${WP.text} !important; padding: 20px 24px !important; min-height: 380px !important; }
+      .jodit-wysiwyg h1 { font-size: 26px; font-weight: 700; color: ${WP.black}; margin: 20px 0 10px; }
+      .jodit-wysiwyg h2 { font-size: 20px; font-weight: 700; color: ${WP.black}; margin: 18px 0 8px; }
+      .jodit-wysiwyg h3 { font-size: 16px; font-weight: 700; color: ${WP.textMid}; margin: 14px 0 6px; }
+      .jodit-wysiwyg p { margin: 0 0 12px; }
+      .jodit-wysiwyg a { color: ${WP.blue}; text-decoration: underline; }
+      .jodit-wysiwyg a:hover { color: ${WP.blueHov}; }
+      .jodit-wysiwyg blockquote { border-left: 4px solid ${WP.blue}; margin: 16px 0; padding: 8px 16px; background: ${WP.blueBg}; border-radius: 0 3px 3px 0; color: ${WP.textMid}; font-style: italic; }
+      .jodit-wysiwyg table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+      .jodit-wysiwyg td, .jodit-wysiwyg th { border: 1px solid ${WP.line}; padding: 7px 10px; font-size: 13px; }
+      .jodit-wysiwyg th { background: ${WP.offWhite}; font-weight: 700; color: ${WP.textMid}; }
+      .jodit-wysiwyg ul, .jodit-wysiwyg ol { padding-left: 22px; margin: 0 0 12px; }
+      .jodit-wysiwyg li { margin-bottom: 3px; }
+      .jodit-wysiwyg code { background: ${WP.offWhite}; color: ${WP.red}; padding: 1px 5px; border-radius: 3px; font-size: .88em; font-family: 'Courier New', monospace; border: 1px solid ${WP.line}; }
+      .jodit-wysiwyg pre { background: ${WP.black}; color: #a8ffd8; padding: 14px 18px; border-radius: 3px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; }
+      .jodit-wysiwyg img { max-width: 100%; border-radius: 3px; }
+      .jodit-wysiwyg hr { border: none; border-top: 1px solid ${WP.line}; margin: 20px 0; }
+      .jodit-status-bar { display: none !important; }
+      /* Highlight selection color in editor */
+      .jodit-wysiwyg ::selection { background: rgba(34,113,177,.25); }
     `}</style>
   );
 }
@@ -563,18 +708,18 @@ function EditorStyles() {
 function ViewStyles() {
   return (
     <style>{`
-      .cms-view { font-family:'Georgia',serif; font-size:15px; line-height:1.85; color:${T.ink}; }
-      .cms-view h1 { font-size:28px; font-weight:800; color:${T.forest}; }
-      .cms-view h2 { font-size:22px; font-weight:700; color:${T.forestMid}; }
-      .cms-view h3 { font-size:17px; font-weight:700; color:${T.inkMid}; }
-      .cms-view a  { color:${T.forestBright}; font-weight:600; }
-      .cms-view blockquote { border-left:4px solid ${T.forestBright}; padding:10px 20px; background:${T.sage}; border-radius:0 8px 8px 0; color:${T.inkMid}; font-style:italic; margin:18px 0; }
-      .cms-view table { border-collapse:collapse; width:100%; }
-      .cms-view td,.cms-view th { border:1.5px solid ${T.line}; padding:8px 12px; }
-      .cms-view th { background:${T.sage}; font-weight:700; }
-      .cms-view img { max-width:100%; border-radius:8px; }
-      .cms-view pre { background:${T.ink}; color:#a8ffd8; padding:16px; border-radius:10px; overflow-x:auto; }
-      .cms-view code { background:${T.sage}; color:${T.forest}; padding:2px 6px; border-radius:4px; font-size:.88em; }
+      .cms-view { font-family: Georgia, serif; font-size: 15px; line-height: 1.8; color: ${WP.text}; }
+      .cms-view h1 { font-size: 26px; font-weight: 700; }
+      .cms-view h2 { font-size: 20px; font-weight: 700; }
+      .cms-view h3 { font-size: 16px; font-weight: 700; }
+      .cms-view a { color: ${WP.blue}; }
+      .cms-view blockquote { border-left: 4px solid ${WP.blue}; padding: 8px 16px; background: ${WP.blueBg}; border-radius: 0 3px 3px 0; color: ${WP.textMid}; font-style: italic; margin: 16px 0; }
+      .cms-view table { border-collapse: collapse; width: 100%; }
+      .cms-view td, .cms-view th { border: 1px solid ${WP.line}; padding: 7px 10px; }
+      .cms-view th { background: ${WP.offWhite}; font-weight: 700; }
+      .cms-view img { max-width: 100%; border-radius: 3px; }
+      .cms-view pre { background: ${WP.black}; color: #a8ffd8; padding: 14px; border-radius: 3px; overflow-x: auto; }
+      .cms-view code { background: ${WP.offWhite}; color: ${WP.red}; padding: 1px 5px; border-radius: 3px; font-size: .88em; }
     `}</style>
   );
 }

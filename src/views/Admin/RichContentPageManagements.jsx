@@ -1,9 +1,10 @@
-// RichContentPageManagements.jsx — WordPress-style CMS, fully corrected
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import { Spinner } from "reactstrap";
+import Swal from "sweetalert2";
 import {
-  FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt, FaCopy, FaCheck,
+  FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
+  FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand, FaCompress, FaTimes,
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 
@@ -12,278 +13,350 @@ const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 const getToken = () => sessionStorage.getItem("authToken");
 const authH = () => ({ Authorization: `Bearer ${getToken()}` });
 
-/* ─── Design tokens ─────────────────────────────────────────── */
-const C = {
+const SS_VIEW = "rcpm_view";
+const SS_EDITING_ID = "rcpm_editingId";
+const SS_FORM = "rcpm_form";
+const SS_EDITOR = "rcpm_editor";
+
+/* WordPress design tokens */
+const WP = {
   bg: "#f0f0f1",
-  card: "#ffffff",
-  border: "#c3c4c7",
+  white: "#fff",
   text: "#1d2327",
   textMid: "#50575e",
   textLight: "#787c82",
+  border: "#c3c4c7",
+  line: "#dcdcde",
+  blue: "#2271b1",
+  blueHov: "#135e96",
+  blueBg: "#f0f6fc",
   green: "#00a32a",
   greenDark: "#007017",
-  greenBg: "#f0f6ec",
-  black: "#1d2327",
-  blackHov: "#2c3338",
-  blue: "#2271b1",
-  blueLight: "#e8f0fb",
+  greenBg: "#edfaef",
   red: "#d63638",
+  redDark: "#b32d2e",
   redBg: "#fcf0f1",
   orange: "#dba617",
   orangeBg: "#fcf9e8",
   amber: "#996800",
-  line: "#dcdcde",
-  white: "#ffffff",
+  black: "#1d2327",
+  blackHov: "#2c3338",
+  focus: "#2271b1",
+  menuBg: "#1d2327",
 };
+
 const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
 
-/* ─── Button base ───────────────────────────────────────────── */
+const titleToSlug = (text) => {
+  if (!text) return "";
+  return text.toLowerCase().trim()
+    .replace(/[^a-z0-9\s\-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+const sanitiseSlug = (raw) =>
+  raw.toLowerCase().replace(/ +/g, "-").replace(/-{2,}/g, "-").replace(/[^a-z0-9\-]/g, "");
+const validateSlug = (value) => {
+  if (!value) return "Slug is required";
+  if (/[^a-z0-9\-]/.test(value)) return "Only lowercase letters, numbers and hyphens allowed";
+  if (value.startsWith("-") || value.endsWith("-")) return "Slug cannot start or end with a hyphen";
+  return "";
+};
+
 const btnBase = {
-  display: "inline-flex", alignItems: "center", gap: 5,
+  display: "inline-flex", alignItems: "center", gap: 4,
   border: "1px solid transparent", borderRadius: 3,
   fontSize: 13, fontWeight: 400, lineHeight: "2.15384615",
   padding: "0 10px", cursor: "pointer", fontFamily: FF,
   textDecoration: "none", whiteSpace: "nowrap",
-  transition: "background .12s,border-color .12s,color .12s",
 };
-const smPad = { fontSize: 12, padding: "1px 8px", lineHeight: "1.9" };
+const smPad = { fontSize: 11, padding: "0 8px", lineHeight: "1.9" };
 
-const BtnGreen = ({ children, onClick, disabled, size }) => (
-  <button onClick={onClick} disabled={disabled} style={{
-    ...btnBase, background: C.green, borderColor: C.greenDark, color: "#fff",
-    ...(size === "sm" ? smPad : {}), opacity: disabled ? .6 : 1,
-  }}
-    onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = C.greenDark; }}
-    onMouseLeave={e => { e.currentTarget.style.background = C.green; }}
-  >{children}</button>
-);
-
-const BtnBlack = ({ children, onClick, disabled, size }) => (
-  <button onClick={onClick} disabled={disabled} style={{
-    ...btnBase, background: C.black, borderColor: C.blackHov, color: "#fff",
-    ...(size === "sm" ? smPad : {}), opacity: disabled ? .6 : 1,
-  }}
-    onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = C.blackHov; }}
-    onMouseLeave={e => { e.currentTarget.style.background = C.black; }}
-  >{children}</button>
-);
-
-const BtnSecondary = ({ children, onClick, size }) => (
-  <button onClick={onClick} style={{
-    ...btnBase, background: C.white, borderColor: C.border, color: C.text,
-    ...(size === "sm" ? smPad : {}),
-  }}
-    onMouseEnter={e => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.color = C.blue; }}
-    onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.text; }}
-  >{children}</button>
-);
-
-const BtnDanger = ({ children, onClick, size }) => (
-  <button onClick={onClick} style={{
-    ...btnBase, background: C.white, borderColor: C.red, color: C.red,
-    ...(size === "sm" ? smPad : {}),
-  }}
-    onMouseEnter={e => { e.currentTarget.style.background = C.redBg; }}
-    onMouseLeave={e => { e.currentTarget.style.background = C.white; }}
-  >{children}</button>
-);
-
-/* ─── Status pill ───────────────────────────────────────────── */
-const StatusPill = ({ published, active, publishedAt }) => {
-  const pill = (bg, color, border, dot, label) => (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "2px 8px", borderRadius: 11, fontSize: 11, fontWeight: 600,
-      background: bg, color, border: `1px solid ${border}`,
-    }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, display: "inline-block" }} />
-      {label}
-    </span>
-  );
+const BtnBlue = ({ children, onClick, disabled, size }) => {
+  const [hov, setHov] = useState(false);
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-        {published
-          ? pill(C.greenBg, C.green, C.green, C.green, "Published")
-          : pill(C.orangeBg, C.amber, C.orange, C.orange, "Draft")}
-        {pill(
-          active ? C.greenBg : "#f6f7f7",
-          active ? C.greenDark : C.textLight,
-          active ? C.green : C.border,
-          active ? C.green : C.textLight,
-          active ? "Active" : "Inactive"
-        )}
-      </div>
-      {published && publishedAt && (
-        <span style={{ fontSize: 10, color: C.textLight }}>
-          {new Date(publishedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-        </span>
-      )}
-    </div>
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.blueHov : WP.blue, borderColor: hov ? WP.blueHov : WP.blue, color: "#fff", opacity: disabled ? .6 : 1 }}>
+      {children}
+    </button>
   );
 };
-
-/* ─── Empty state ───────────────────────────────────────────── */
-const EmptyState = ({ onAdd }) => (
-  <div style={{ textAlign: "center", padding: "60px 20px", color: C.textMid }}>
-    <div style={{ fontSize: 48, marginBottom: 12, opacity: .3 }}>📄</div>
-    <p style={{ fontSize: 15, fontWeight: 600, color: C.text, margin: "0 0 6px" }}>No pages yet</p>
-    <p style={{ fontSize: 13, margin: "0 0 18px" }}>Create your first rich content page.</p>
-    <BtnGreen onClick={onAdd}>+ Add New Page</BtnGreen>
-  </div>
-);
-
-/* ─── Slug helpers ──────────────────────────────────────────── */
-// Auto-generate slug from title (used only when not manually edited)
-const titleToSlug = (text) => {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s\-/]/g, "")   // strip invalid chars
-    .replace(/\s+/g, "-")               // spaces → single hyphen
-    .replace(/-{2,}/g, "-")             // collapse multiple hyphens
-    .replace(/^[-/]+|[-/]+$/g, "");     // strip leading/trailing - and /
-};
-
-// Real-time slug sanitise as user types
-const sanitiseSlug = (raw) => {
-  return raw
-    .toLowerCase()
-    .replace(/ +/g, "-")               // every run of spaces → single -
-    .replace(/-{2,}/g, "-")            // collapse consecutive hyphens
-    .replace(/[^a-z0-9\-/]/g, "");     // strip anything else
-};
-
-const validateSlug = (value) => {
-  if (!value) return "Slug is required";
-  if (value.startsWith("/") || value.endsWith("/")) return "Slug cannot start or end with /";
-  if (/[^a-z0-9\-/]/.test(value)) return "Only lowercase letters, numbers, hyphens and / allowed";
-  return "";
-};
-
-/* ─── Copy-to-clipboard mini hook ──────────────────────────── */
-const CopyBtn = ({ text }) => {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
+const BtnGreen = ({ children, onClick, disabled, size }) => {
+  const [hov, setHov] = useState(false);
   return (
-    <button onClick={copy} title="Copy URL" style={{
-      ...btnBase, background: "none", border: `1px solid ${C.border}`,
-      color: copied ? C.green : C.textMid, padding: "3px 7px", fontSize: 11,
-    }}>
-      {copied ? <FaCheck size={10} /> : <FaCopy size={10} />}
-      {copied ? " Copied!" : " Copy"}
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.greenDark : WP.green, borderColor: hov ? WP.greenDark : WP.green, color: "#fff", opacity: disabled ? .6 : 1 }}>
+      {children}
+    </button>
+  );
+};
+const BtnBlack = ({ children, onClick, disabled, size }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.blackHov : WP.black, borderColor: hov ? WP.blackHov : WP.black, color: "#fff", opacity: disabled ? .6 : 1 }}>
+      {children}
+    </button>
+  );
+};
+const BtnSecondary = ({ children, onClick, disabled, size }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: WP.white, borderColor: hov ? WP.blue : WP.border, color: hov ? WP.blue : WP.text, opacity: disabled ? .5 : 1 }}>
+      {children}
+    </button>
+  );
+};
+const BtnDanger = ({ children, onClick, size }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.redBg : WP.white, borderColor: WP.red, color: WP.red }}>
+      {children}
     </button>
   );
 };
 
-/* ─── Pagination bar ────────────────────────────────────────── */
-const PaginationBar = ({ currentPage, totalPages, totalItems, shown, onPrev, onNext }) => (
-  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderTop: `1px solid ${C.line}`, background: "#f6f7f7", flexWrap: "wrap", gap: 8 }}>
-    <span style={{ fontSize: 12, color: C.textLight }}>
-      Showing <b>{shown}</b> of <b>{totalItems}</b> page{totalItems !== 1 ? "s" : ""}
+const LinkBtn = ({ children, onClick, color }) => (
+  <button onClick={onClick} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: color || WP.blue, fontFamily: FF, textDecoration: "none" }}
+    onMouseEnter={e => e.currentTarget.style.color = color ? WP.redDark : WP.blueHov}
+    onMouseLeave={e => e.currentTarget.style.color = color || WP.blue}>
+    {children}
+  </button>
+);
+
+const StatusBadge = ({ published, active }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <span style={{
+      display: "inline-block",
+      padding: "1px 7px",
+      borderRadius: 3,
+      fontSize: 11,
+      fontWeight: 600,
+      background: published ? WP.greenBg : WP.orangeBg,
+      color: published ? WP.greenDark : WP.amber,
+      border: `1px solid ${published ? WP.green : WP.orange}`,
+    }}>
+      {published ? "Published" : "Draft"}
     </span>
+    <span style={{
+      display: "inline-block",
+      padding: "1px 7px",
+      borderRadius: 3,
+      fontSize: 11,
+      fontWeight: 600,
+      background: active ? WP.greenBg : "#f8d7da",
+      color: active ? WP.greenDark : "#a30000",
+      border: `1px solid ${active ? WP.green : "#f5c6cb"}`
+    }}>
+      {active ? "Active" : "Inactive"}
+    </span>
+  </div>
+);
+
+const CopyBtn = ({ text }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }); }}
+      style={{ background: "none", border: "none", padding: "0 2px", cursor: "pointer", color: copied ? WP.green : WP.textLight, fontSize: 11, fontFamily: FF, display: "inline-flex", alignItems: "center", gap: 2 }}>
+      {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
+      {copied ? "Copied" : "Copy"}
+    </button>
+  );
+};
+
+const AutoSaveIndicator = ({ status }) => {
+  if (!status) return null;
+  const map = { saving: { text: "Auto‑saving…", color: WP.amber }, saved: { text: "Auto‑saved.", color: WP.green }, error: { text: "Auto‑save failed", color: WP.red } };
+  const s = map[status];
+  return <span style={{ fontSize: 12, color: s.color }}>{s.text}</span>;
+};
+
+const fi = { border: `1px solid ${WP.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 14, color: WP.text, outline: "none", fontFamily: FF, width: "100%", boxSizing: "border-box", background: WP.white, lineHeight: 1.5 };
+const lbl = { fontSize: 13, fontWeight: 600, color: WP.text, marginBottom: 4, display: "block" };
+const focus = { onFocus: e => { e.target.style.borderColor = WP.focus; e.target.style.boxShadow = `0 0 0 1px ${WP.focus}`; }, onBlur: e => { e.target.style.borderColor = WP.border; e.target.style.boxShadow = "none"; } };
+
+const Card = ({ title, children, action }) => (
+  <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, boxShadow: "0 1px 1px rgba(0,0,0,.04)" }}>
+    {title && (
+      <div style={{ padding: "8px 12px", borderBottom: `1px solid ${WP.line}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <h2 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: WP.text }}>{title}</h2>
+        {action}
+      </div>
+    )}
+    <div style={{ padding: 12 }}>{children}</div>
+  </div>
+);
+
+const FlashMsg = ({ msg }) => msg ? (
+  <div style={{ margin: "8px 0", padding: "8px 12px", borderLeft: `4px solid ${msg.type === "success" ? WP.green : WP.red}`, background: msg.type === "success" ? WP.greenBg : WP.redBg, fontSize: 13, color: msg.type === "success" ? WP.greenDark : WP.red }}>
+    {msg.text}
+  </div>
+) : null;
+
+const Pagination = ({ currentPage, totalPages, totalItems, shown, onPrev, onNext }) => (
+  <div style={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${WP.line}`, background: "#f6f7f7", flexWrap: "wrap", gap: 6 }}>
+    <span style={{ fontSize: 12, color: WP.textMid }}>{shown} of {totalItems} items</span>
     {totalPages > 1 && (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button disabled={currentPage === 1} onClick={onPrev}
-          style={{ ...btnBase, background: C.white, borderColor: C.border, color: C.text, fontSize: 12, padding: "2px 10px", opacity: currentPage === 1 ? .45 : 1 }}>
-          ← Prev
-        </button>
-        <span style={{ fontSize: 12, color: C.textMid }}>Page {currentPage} / {totalPages}</span>
-        <button disabled={currentPage === totalPages} onClick={onNext}
-          style={{ ...btnBase, background: C.white, borderColor: C.border, color: C.text, fontSize: 12, padding: "2px 10px", opacity: currentPage === totalPages ? .45 : 1 }}>
-          Next →
-        </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <button disabled={currentPage === 1} onClick={onPrev} style={{ ...btnBase, fontSize: 11, padding: "1px 6px", background: WP.white, borderColor: WP.border, color: WP.text, opacity: currentPage === 1 ? .4 : 1 }}>‹</button>
+        <span style={{ fontSize: 12, color: WP.textMid }}>{currentPage}/{totalPages}</span>
+        <button disabled={currentPage === totalPages} onClick={onNext} style={{ ...btnBase, fontSize: 11, padding: "1px 6px", background: WP.white, borderColor: WP.border, color: WP.text, opacity: currentPage === totalPages ? .4 : 1 }}>›</button>
       </div>
     )}
   </div>
 );
 
-/* ─── Empty form ────────────────────────────────────────────── */
-const emptyForm = () => ({
-  titleEn: "", titleHi: "", slug: "",
-  shortDescriptionEn: "", shortDescriptionHi: "",
-  descriptionEn: "", descriptionHi: "",
-  metaKeywords: "", tags: "",
-  categoryId: "", isActive: true,
-});
+const emptyForm = () => ({ titleEn: "", titleHi: "", slug: "", shortDescriptionEn: "", shortDescriptionHi: "", descriptionEn: "", descriptionHi: "", metaKeywords: "", tags: "", categoryId: "", isActive: true });
 
-/* ─── Shared input style ────────────────────────────────────── */
-const fi = {
-  border: `1px solid ${C.border}`, borderRadius: 4, padding: "6px 10px",
-  fontSize: 14, color: C.text, outline: "none", fontFamily: FF,
-  width: "100%", boxSizing: "border-box", background: C.white,
-  lineHeight: 1.6, transition: "border-color .15s",
+// Custom hook for responsive breakpoints
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+    const listener = (e) => setMatches(e.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, [matches, query]);
+  return matches;
 };
-const lbl = {
-  fontSize: 12, fontWeight: 600, color: C.textMid,
-  textTransform: "uppercase", letterSpacing: ".06em",
-  marginBottom: 6, display: "block",
-};
-const focusBlue = { onFocus: e => { e.target.style.borderColor = C.blue; }, onBlur: e => { e.target.style.borderColor = C.border; } };
 
-/* ══════════════════════════════════════════════════════════════ */
-/*  MAIN COMPONENT                                               */
-/* ══════════════════════════════════════════════════════════════ */
 const RichContentPageManagements = () => {
+  // Responsive breakpoints
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const isTablet = useMediaQuery("(max-width: 768px)");
+
+  const initView = () => sessionStorage.getItem(SS_VIEW) || "list";
+  const initEditingId = () => sessionStorage.getItem(SS_EDITING_ID) || null;
+  const initForm = () => { try { const s = sessionStorage.getItem(SS_FORM); return s ? JSON.parse(s) : emptyForm(); } catch { return emptyForm(); } };
+  const initEditor = () => { try { const s = sessionStorage.getItem(SS_EDITOR); return s ? JSON.parse(s) : [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } catch { return [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } };
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pages, setPages] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [view, setView] = useState("list");
+  const [editingId, setEditingId] = useState(initEditingId);
+  const [view, setView] = useState(initView);
   const [message, setMessage] = useState(null);
-  const [form, setForm] = useState(emptyForm());
+  const [form, setForm] = useState(initForm);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
-
-  const [editorContents, setEditorContents] = useState([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
+  const [editorContents, setEditorContents] = useState(initEditor);
   const [slugError, setSlugError] = useState("");
-  const [fullscreenEdit, setFullscreenEdit] = useState(false);
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initEditingId());
   const [categories, setCategories] = useState([]);
   const [counts, setCounts] = useState({ all: 0, published: 0, draft: 0, active: 0, inactive: 0 });
+  const [autoSaveStatus, setAutoSaveStatus] = useState(null);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  const [isFormFullscreen, setIsFormFullscreen] = useState(false);
+  const [excerptLang, setExcerptLang] = useState("en");
 
-  /* ── Auto-dismiss message ── */
+  // ---------- NEW AUTO‑SAVE (time‑based) ----------
+  const autoSaveInterval = useRef(null);
+  const isAutoSaving = useRef(false);
+  const lastAutoSaved = useRef(null);
+
+  // Refs to always have the latest state inside the interval callback
+  const formRef = useRef(form);
+  const editorContentsRef = useRef(editorContents);
+  const editingIdRef = useRef(editingId);
+
+  useEffect(() => { formRef.current = form; }, [form]);
+  useEffect(() => { editorContentsRef.current = editorContents; }, [editorContents]);
+  useEffect(() => { editingIdRef.current = editingId; }, [editingId]);
+
+  const buildPayload = useCallback((f, ec) => {
+    const ed = ec[0] || {};
+    return { ...f, descriptionEn: ed.descriptionEn || "", descriptionHi: ed.descriptionHi || "", metaKeywords: f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean), tags: f.tags.split(",").map(x => x.trim()).filter(Boolean), categoryId: f.categoryId || null };
+  }, []);
+
+  const doAutoSave = useCallback(async (f, ec, eid) => {
+    if (!f.titleEn?.trim()) return;
+    if (validateSlug(f.slug)) return;
+    const payload = buildPayload(f, ec);
+    const hash = JSON.stringify(payload);
+    if (hash === lastAutoSaved.current) return;
+
+    setAutoSaveStatus("saving");
+    try {
+      if (eid) {
+        await axios.post(`${API}/api/rich-content-page/update/${eid}`, payload, { headers: authH() });
+      } else {
+        const res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() });
+        const newId = res.data.data?._id || res.data._id;
+        if (newId) {
+          setEditingId(newId);
+          sessionStorage.setItem(SS_EDITING_ID, newId);
+        }
+      }
+      lastAutoSaved.current = hash;
+      setAutoSaveStatus("saved");
+      setTimeout(() => setAutoSaveStatus(null), 3000);
+    } catch {
+      setAutoSaveStatus("error");
+      setTimeout(() => setAutoSaveStatus(null), 4000);
+    }
+  }, [buildPayload]);
+
+  // Set up 1‑minute interval when form is open
   useEffect(() => {
-    if (!message) return;
-    const t = setTimeout(() => setMessage(null), 4500);
-    return () => clearTimeout(t);
-  }, [message]);
+    if (view !== "form") {
+      if (autoSaveInterval.current) {
+        clearInterval(autoSaveInterval.current);
+        autoSaveInterval.current = null;
+      }
+      return;
+    }
 
-  /* ── Auto-slug from English title ── */
+    autoSaveInterval.current = setInterval(() => {
+      if (!isAutoSaving.current && view === "form") {
+        isAutoSaving.current = true;
+        doAutoSave(formRef.current, editorContentsRef.current, editingIdRef.current)
+          .finally(() => {
+            isAutoSaving.current = false;
+          });
+      }
+    }, 60000); // every 60 seconds
+
+    return () => {
+      if (autoSaveInterval.current) {
+        clearInterval(autoSaveInterval.current);
+        autoSaveInterval.current = null;
+      }
+    };
+  }, [view, doAutoSave]);
+
+  // ---------- END AUTO‑SAVE CHANGES ----------
+
+  useEffect(() => { sessionStorage.setItem(SS_VIEW, view); }, [view]);
+  useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
+  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_FORM, JSON.stringify(form)); }, [form, view]);
+  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_EDITOR, JSON.stringify(editorContents)); }, [editorContents, view]);
+  useEffect(() => { if (!message) return; const t = setTimeout(() => setMessage(null), 4500); return () => clearTimeout(t); }, [message]);
+
   useEffect(() => {
     if (slugManuallyEdited || !form.titleEn) return;
     const generated = titleToSlug(form.titleEn);
-    if (generated !== form.slug) {
-      setForm(prev => ({ ...prev, slug: generated }));
-      setSlugError(validateSlug(generated));
-    }
+    if (generated !== form.slug) { setForm(prev => ({ ...prev, slug: generated })); setSlugError(validateSlug(generated)); }
   }, [form.titleEn, slugManuallyEdited]);
 
-  /* ── Fetch on filter/page/sort change ── */
   useEffect(() => { getAllPages(); }, [currentPage, filterStatus, search, sortBy, sortOrder]);
-
-  /* ── Fetch categories once ── */
   useEffect(() => { fetchCategories(); }, []);
 
-  /* ──────────────────────── API ────────────────────────────── */
   const fetchCategories = async () => {
-    try {
-      const res = await axios.get(`${API}/api/get-categories`, { headers: authH() });
-      setCategories(res.data.data || []);
-    } catch { console.error("Failed to load categories"); }
+    try { const res = await axios.get(`${API}/api/get-categories`, { headers: authH() }); setCategories(res.data.data || []); } catch { }
   };
 
   const getAllPages = async () => {
@@ -294,553 +367,393 @@ const RichContentPageManagements = () => {
       if (filterStatus === "draft") params.isPublished = false;
       if (filterStatus === "active") params.isActive = true;
       if (filterStatus === "inactive") params.isActive = false;
-
       const res = await axios.get(`${API}/api/rich-content-pages/get-all`, { headers: authH(), params });
       const data = res.data.data || [];
       setPages(data);
       const ti = res.data.pagination?.totalItems ?? data.length;
       setTotalPages(res.data.pagination?.totalPages || 1);
       setTotalItems(ti);
-      setCounts({
-        all: ti,
-        published: data.filter(p => p.isPublished).length,
-        draft: data.filter(p => !p.isPublished).length,
-        active: data.filter(p => p.isActive).length,
-        inactive: data.filter(p => !p.isActive).length,
-      });
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+      setCounts({ all: ti, published: data.filter(p => p.isPublished).length, draft: data.filter(p => !p.isPublished).length, active: data.filter(p => p.isActive).length, inactive: data.filter(p => !p.isActive).length });
+    } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (publishAfter = false) => {
     const err = validateSlug(form.slug);
     if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
     try {
       setSaving(true);
-      const ed = editorContents[0] || {};
-      const payload = {
-        ...form,
-        descriptionEn: ed.descriptionEn || "",
-        descriptionHi: ed.descriptionHi || "",
-        metaKeywords: form.metaKeywords.split(",").map(x => x.trim()).filter(Boolean),
-        tags: form.tags.split(",").map(x => x.trim()).filter(Boolean),
-        categoryId: form.categoryId || null,
-      };
-      if (editingId) {
-        await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() });
-      } else {
-        await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() });
-      }
-      setMessage({ type: "success", text: editingId ? "✓ Page updated successfully" : "✓ Page created successfully" });
-      getAllPages(); resetForm(); setView("list");
-    } catch (err) {
-      setMessage({ type: "danger", text: err?.response?.data?.message || "Something went wrong" });
-    } finally { setSaving(false); }
+      // No need to clear an auto‑save timer – we use interval now
+      const payload = buildPayload(form, editorContents);
+      let savedId = editingId;
+      if (editingId) { await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() }); }
+      else { const res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() }); savedId = res.data.data?._id || res.data._id; if (savedId) setEditingId(savedId); }
+      if (publishAfter && savedId) { await axios.post(`${API}/api/rich-content-page/publish/${savedId}`, {}, { headers: authH() }); }
+      lastAutoSaved.current = JSON.stringify(payload);
+      setMessage({ type: "success", text: publishAfter ? "Page published." : "Draft saved." });
+      getAllPages();
+    } catch (err) { setMessage({ type: "danger", text: err?.response?.data?.message || "Something went wrong" }); } finally { setSaving(false); }
   };
 
-  const handlePublish = async (id) => {
-    try {
-      await axios.post(`${API}/api/rich-content-page/publish/${id}`, {}, { headers: authH() });
-      setMessage({ type: "success", text: "✓ Page published" });
-      getAllPages();
-    } catch (err) { console.error(err); }
-  };
+  const handlePublish = async (id) => { try { await axios.post(`${API}/api/rich-content-page/publish/${id}`, {}, { headers: authH() }); getAllPages(); } catch { } };
+  const handleDraft = async (id) => { try { await axios.post(`${API}/api/rich-content-page/draft/${id}`, {}, { headers: authH() }); getAllPages(); } catch { } };
 
-  const handleDraft = async (id) => {
-    try {
-      await axios.post(`${API}/api/rich-content-page/draft/${id}`, {}, { headers: authH() });
-      setMessage({ type: "success", text: "✓ Moved to draft" });
-      getAllPages();
-    } catch (err) { console.error(err); }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this page? This cannot be undone.")) return;
-    try {
-      await axios.delete(`${API}/api/rich-content-page/${id}`, { headers: authH() });
-      setMessage({ type: "success", text: "✓ Page deleted" });
-      getAllPages();
-    } catch (err) { console.error(err); }
+  const handleDelete = async (id, title) => {
+    const result = await Swal.fire({ title: "Delete this page?", html: `<span style="font-size:13px;color:#50575e">Permanently delete <strong>"${title || "Untitled"}"</strong>?<br>This cannot be undone.</span>`, icon: "warning", showCancelButton: true, confirmButtonColor: WP.red, cancelButtonColor: WP.textMid, confirmButtonText: "Delete", cancelButtonText: "Cancel", reverseButtons: true });
+    if (!result.isConfirmed) return;
+    try { await axios.delete(`${API}/api/rich-content-page-delete/${id}`, { headers: authH() }); Swal.fire({ title: "Deleted", icon: "success", timer: 1500, showConfirmButton: false }); getAllPages(); } catch (err) { Swal.fire("Error", err?.response?.data?.message || "Delete failed", "error"); }
   };
 
   const handleEdit = (row) => {
     setEditingId(row._id);
-    setForm({
-      titleEn: row.titleEn || "",
-      titleHi: row.titleHi || "",
-      slug: row.slug || "",
-      shortDescriptionEn: row.shortDescriptionEn || "",
-      shortDescriptionHi: row.shortDescriptionHi || "",
-      descriptionEn: row.descriptionEn || "",
-      descriptionHi: row.descriptionHi || "",
-      metaKeywords: (row.metaKeywords || []).join(", "),
-      tags: (row.tags || []).join(", "),
-      categoryId: row.categoryId || "",
-      isActive: row.isActive,
-    });
+    setForm({ titleEn: row.titleEn || "", titleHi: row.titleHi || "", slug: row.slug || "", shortDescriptionEn: row.shortDescriptionEn || "", shortDescriptionHi: row.shortDescriptionHi || "", descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "", metaKeywords: (row.metaKeywords || []).join(", "), tags: (row.tags || []).join(", "), categoryId: row.categoryId || "", isActive: row.isActive });
     setEditorContents([{ id: 1, descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "" }]);
-    setSlugManuallyEdited(true);
-    setSlugError("");
-    setFullscreenEdit(false);
-    setView("form");
+    setSlugManuallyEdited(true); setSlugError(""); lastAutoSaved.current = null; setView("form");
   };
 
   const resetForm = useCallback(() => {
-    setEditingId(null); setForm(emptyForm());
-    setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
-    setFullscreenEdit(false); setSlugManuallyEdited(false); setSlugError("");
+    setEditingId(null); setForm(emptyForm()); setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
+    setSlugManuallyEdited(false); setSlugError(""); lastAutoSaved.current = null; setAutoSaveStatus(null);
+    [SS_EDITING_ID, SS_FORM, SS_EDITOR].forEach(k => sessionStorage.removeItem(k));
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-  };
+  const handleChange = (e) => { const { name, value, type, checked } = e.target; setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value })); };
+  const handleSlugChange = (e) => { setSlugManuallyEdited(true); const clean = sanitiseSlug(e.target.value); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
+  const handleSlugBlur = (e) => { const clean = e.target.value.replace(/^-+|-+$/g, ""); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
+  const handleSort = (col) => { if (sortBy === col) setSortOrder(o => o === "desc" ? "asc" : "desc"); else { setSortBy(col); setSortOrder("desc"); } setCurrentPage(1); };
+  const sortIcon = (col) => sortBy !== col ? " ⇅" : sortOrder === "desc" ? " ↓" : " ↑";
+  const goBackToList = () => { resetForm(); setView("list"); };
 
-  /* ── Slug typing: sanitise live ── */
-  const handleSlugChange = (e) => {
-    setSlugManuallyEdited(true);
-    const clean = sanitiseSlug(e.target.value);
-    setForm(prev => ({ ...prev, slug: clean }));
-    setSlugError(validateSlug(clean));
-  };
-
-  /* ── On blur: strip leading/trailing - and / ── */
-  const handleSlugBlur = (e) => {
-    const clean = e.target.value.replace(/^[-/]+|[-/]+$/g, "");
-    setForm(prev => ({ ...prev, slug: clean }));
-    setSlugError(validateSlug(clean));
-  };
-
-  /* ── Sort ── */
-  const handleSort = (col) => {
-    if (sortBy === col) setSortOrder(o => o === "desc" ? "asc" : "desc");
-    else { setSortBy(col); setSortOrder("desc"); }
-    setCurrentPage(1);
-  };
-  const sortIcon = (col) => sortBy !== col ? " ⇅" : (sortOrder === "desc" ? " ↓" : " ↑");
-
-  /* ── current page's publish state (for sidebar) ── */
   const editingRow = pages.find(p => p._id === editingId);
   const isPublished = !!editingRow?.isPublished;
   const fullSlugURL = form.slug ? `${SITE_URL}/${form.slug}` : "";
-  const previewfullSlugURL = form.slug? `${SITE_URL}/preview/${form.slug}`: "";
 
-  /* ── Inline alert ── */
-  const Alert = ({ msg }) => msg ? (
-    <div style={{ margin: "14px 24px 0", padding: "10px 14px", borderRadius: 4, fontSize: 13, fontWeight: 500, background: msg.type === "success" ? C.greenBg : C.redBg, color: msg.type === "success" ? C.greenDark : C.red, border: `1px solid ${msg.type === "success" ? C.green : C.red}` }}>
-      {msg.text}
-    </div>
-  ) : null;
+  const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
+  };
 
-  /* ══════════════════════════════════════════════════════════ */
-  /*  LIST VIEW                                                 */
-  /* ══════════════════════════════════════════════════════════ */
+  /* LIST VIEW */
   if (view === "list") {
-    const filters = [
-      { k: "all", l: "All" },
-      { k: "published", l: "Published" },
-      { k: "draft", l: "Draft" },
-      { k: "active", l: "Active" },
-      { k: "inactive", l: "Inactive" },
-    ];
+    const thSt = { padding: "8px 10px", fontWeight: 700, color: WP.textMid, fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", background: "#f6f7f7", borderBottom: `1px solid ${WP.line}`, textAlign: "left" };
+    const filters = [{ k: "all", l: "All" }, { k: "published", l: "Published" }, { k: "draft", l: "Draft" }, { k: "active", l: "Active" }, { k: "inactive", l: "Inactive" }];
 
-    const thStyle = {
-      padding: "9px 12px", fontWeight: 700, color: C.textMid, fontSize: 11,
-      textTransform: "uppercase", letterSpacing: ".05em",
-      background: "#f6f7f7", borderBottom: `1px solid ${C.line}`,
+    const tableWrapperStyle = {
+      overflowX: "auto",
+      WebkitOverflowScrolling: "touch",
+      width: "100%",
     };
 
-    return (
-      <div style={{ background: C.bg, minHeight: "100vh", fontFamily: FF }}>
+    const tdStyle = (isAction = false) => ({
+      padding: isMobile ? "6px 8px" : "8px 10px",
+      verticalAlign: "center",
+      fontSize: isMobile ? 11 : 13,
+      ...(isAction && { textAlign: "right" })
+    });
 
-        {/* ── Top bar ── */}
-        <div style={{ background: C.white, borderBottom: `1px solid ${C.line}`, padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 23, fontWeight: 400, color: C.text, lineHeight: 1.3 }}>Rich Content Pages</h1>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: C.textMid }}>{totalItems} page{totalItems !== 1 ? "s" : ""} total</p>
+    return (
+      <div style={{ background: WP.bg, minHeight: "100vh", fontFamily: FF }}>
+        <div style={{ background: WP.white, borderBottom: `1px solid ${WP.line}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <strong style={{ margin: 0, fontSize: isMobile ? 18 : 21, fontWeight: 400, color: WP.text }}>Rich Content Pages</strong>
           </div>
-          <BtnGreen onClick={() => { resetForm(); setView("form"); }}>+ Add New Page</BtnGreen>
+          <div>
+            <BtnBlue onClick={() => { resetForm(); setView("form"); }} size="sm">Add New Page</BtnBlue>
+          </div>
+          <FlashMsg msg={message} />
         </div>
 
-        <Alert msg={message} />
-
-        {/* ── Filter tabs + search ── */}
-        <div style={{ margin: "14px 24px 0", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", fontSize: 13 }}>
+        <div style={{ padding: "10px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 0, fontSize: 13, flexWrap: "wrap" }}>
             {filters.map((f, i) => (
               <React.Fragment key={f.k}>
-                {i > 0 && <span style={{ color: C.border, margin: "0 5px" }}>|</span>}
+                {i > 0 && <span style={{ color: WP.border, margin: "0 4px" }}>|</span>}
                 <button onClick={() => { setFilterStatus(f.k); setCurrentPage(1); }}
-                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 13, fontFamily: FF, color: filterStatus === f.k ? C.blue : C.textMid, fontWeight: filterStatus === f.k ? 700 : 400, textDecoration: filterStatus === f.k ? "underline" : "none" }}>
-                  {f.l} <span style={{ color: C.textLight, fontWeight: 400 }}>({counts[f.k] ?? 0})</span>
+                  style={{ background: "none", border: "none", padding: "0 2px", cursor: "pointer", fontSize: isMobile ? 11 : 13, fontFamily: FF, color: filterStatus === f.k ? WP.text : WP.blue, fontWeight: filterStatus === f.k ? 600 : 400, textDecoration: "none", whiteSpace: "nowrap" }}
+                  onMouseEnter={e => { if (filterStatus !== f.k) e.currentTarget.style.color = WP.blueHov; }}
+                  onMouseLeave={e => { if (filterStatus !== f.k) e.currentTarget.style.color = WP.blue; }}>
+                  {f.l} <span style={{ color: WP.textLight }}>({counts[f.k] ?? 0})</span>
                 </button>
               </React.Fragment>
             ))}
           </div>
-          <div style={{ marginLeft: "auto" }}>
-            <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
-              placeholder="Search pages…"
-              style={{ ...fi, width: 220, padding: "5px 10px", fontSize: 13 }}
-              {...focusBlue} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6, width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end" }}>
+            <input value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }} placeholder="Search pages…" style={{ ...fi, width: isMobile ? "calc(100% - 70px)" : 200, padding: "4px 8px", fontSize: 13 }} {...focus} />
+            <BtnBlue size="sm" onClick={getAllPages}>Search</BtnBlue>
           </div>
         </div>
 
-        {/* ── Table card ── */}
-        <div style={{ margin: "12px 24px 0" }}>
-          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4, boxShadow: "0 1px 1px rgba(0,0,0,.04)" }}>
-
-            {/* top pagination */}
-            <PaginationBar
-              currentPage={currentPage} totalPages={totalPages}
-              totalItems={totalItems} shown={pages.length}
-              onPrev={() => setCurrentPage(p => p - 1)}
-              onNext={() => setCurrentPage(p => p + 1)}
-            />
-
+        <div style={{ margin: "8px 16px" }}>
+          <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, boxShadow: "0 1px 1px rgba(0,0,0,.04)" }}>
+            <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => p - 1)} onNext={() => setCurrentPage(p => p + 1)} />
             {loading ? (
-              <div style={{ padding: 40, textAlign: "center" }}><Spinner color="primary" /></div>
+              <div style={{ padding: 40, textAlign: "center" }}><Spinner size="sm" /></div>
             ) : pages.length === 0 ? (
-              <EmptyState onAdd={() => { resetForm(); setView("form"); }} />
+              <div style={{ padding: "40px 20px", textAlign: "center", color: WP.textMid }}>
+                <p style={{ fontSize: 15, marginBottom: 12 }}>No pages found.</p>
+                <BtnBlue onClick={() => { resetForm(); setView("form"); }}>Add New Page</BtnBlue>
+              </div>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thStyle, width: 36, textAlign: "center" }}>#</th>
-                    <th style={{ ...thStyle, textAlign: "left" }}>Title (EN)</th>
-                    <th style={{ ...thStyle, textAlign: "left" }}>Category</th>
-                    <th onClick={() => handleSort("createdAt")} style={{ ...thStyle, textAlign: "left", cursor: "pointer", userSelect: "none" }}>Created{sortIcon("createdAt")}</th>
-                    <th onClick={() => handleSort("updatedAt")} style={{ ...thStyle, textAlign: "left", cursor: "pointer", userSelect: "none" }}>Updated{sortIcon("updatedAt")}</th>
-                    <th style={{ ...thStyle, textAlign: "left" }}>Status</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pages.map((item, idx) => (
-                    <tr key={item._id} style={{ borderBottom: `1px solid ${C.line}` }}
-                      onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"}
-                      onMouseLeave={e => e.currentTarget.style.background = ""}>
-
-                      <td style={{ padding: "10px 12px", color: C.textLight, fontSize: 12, textAlign: "center", width: 36 }}>
-                        {(currentPage - 1) * 100 + idx + 1}
-                      </td>
-
-                      {/* Title + slug below */}
-                      <td style={{ padding: "10px 12px" }}>
-                        <div style={{ fontWeight: 600, color: C.text, fontSize: 14, marginBottom: 2 }}>
-                          {item.titleEn || <span style={{ color: C.textLight, fontStyle: "italic" }}>Untitled</span>}
-                        </div>
-                        {item.titleHi && <div style={{ fontSize: 12, color: C.textMid, marginBottom: 3 }}>{item.titleHi}</div>}
-                        {/* Slug shown below title as green permalink line */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
-                          <span style={{ fontSize: 11, color: C.textLight }}>{SITE_URL}/</span>
-                          <span style={{ fontSize: 11, color: C.green, fontWeight: 500 }}>{item.slug}</span>
-                        </div>
-                      </td>
-
-                      {/* Category */}
-                      <td style={{ padding: "10px 12px", fontSize: 12, color: C.textMid }}>
-                        {categories.find(c => c._id === item.categoryId)?.categoryNameEn || <span style={{ color: C.border }}>—</span>}
-                      </td>
-
-                      {/* Dates */}
-                      <td style={{ padding: "10px 12px", fontSize: 12, color: C.textMid }}>
-                        {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                      </td>
-                      <td style={{ padding: "10px 12px", fontSize: 12, color: C.textMid }}>
-                        {new Date(item.updatedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                      </td>
-
-                      {/* Status pills */}
-                      <td style={{ padding: "10px 12px" }}>
-                        <StatusPill published={item.isPublished} active={item.isActive} publishedAt={item.publishedAt} />
-                      </td>
-
-                      {/* Actions — all on one row, sm size */}
-                      <td style={{ padding: "10px 12px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: 5, justifyContent: "flex-end", flexWrap: "nowrap", alignItems: "center" }}>
-                          <BtnSecondary size="sm" onClick={() => handleEdit(item)}>
-                            <FaEdit size={11} /> Edit
-                          </BtnSecondary>
-                          <BtnSecondary size="sm" onClick={() => window.open(`${SITE_URL}/preview/${item.slug}`, "_blank")}>
-                            <FaEye size={11} /> Preview
-                          </BtnSecondary>
-                          {/* Conditional: Publish OR Draft */}
-                          {item.isPublished ? (
-                            <BtnSecondary size="sm" onClick={() => handleDraft(item._id)}>
-                              <FaFileAlt size={11} /> Draft
-                            </BtnSecondary>
-                          ) : (
-                            <BtnGreen size="sm" onClick={() => handlePublish(item._id)}>
-                              <FaCloudUploadAlt size={11} /> Publish
-                            </BtnGreen>
-                          )}
-                          <BtnDanger size="sm" onClick={() => handleDelete(item._id)}>
-                            <FaTrashAlt size={11} /> Delete
-                          </BtnDanger>
-                        </div>
-                      </td>
+              <div style={tableWrapperStyle}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 11 : 13, minWidth: 600 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...thSt, width: 28, padding: isMobile ? "6px 6px" : "8px 10px" }}><input type="checkbox" /></th>
+                      <th style={{ ...thSt, padding: isMobile ? "6px 6px" : "8px 10px" }}>SNo.</th>
+                      <th style={{ ...thSt, padding: isMobile ? "6px 6px" : "8px 10px" }}>Title / Hindi / Link</th>
+                      <th style={{ ...thSt, padding: isMobile ? "6px 6px" : "8px 10px" }}>Category</th>
+                      <th onClick={() => handleSort("createdAt")} style={{ ...thSt, cursor: "pointer", padding: isMobile ? "6px 6px" : "8px 10px" }}>Created{sortIcon("createdAt")}</th>
+                      <th onClick={() => handleSort("publishDate")} style={{ ...thSt, cursor: "pointer", padding: isMobile ? "6px 6px" : "8px 10px" }}>Published{sortIcon("publishDate")}</th>
+                      <th onClick={() => handleSort("updatedAt")} style={{ ...thSt, cursor: "pointer", padding: isMobile ? "6px 6px" : "8px 10px" }}>Updated{sortIcon("updatedAt")}</th>
+                      <th style={{ ...thSt, padding: isMobile ? "6px 6px" : "8px 10px" }}>Actions</th>
+                      <th style={{ ...thSt, padding: isMobile ? "6px 6px" : "8px 10px" }}>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {pages.map((item, idx) => (
+                      <tr key={item._id}
+                        onMouseEnter={() => setHoveredRow(item._id)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                        style={{ borderBottom: `1px solid ${WP.line}`, background: hoveredRow === item._id ? "#f9f9f9" : WP.white }}>
+                        <td style={{ ...tdStyle(), width: 28 }}>
+                          <input type="checkbox" style={{ cursor: "pointer", marginTop: 2 }} />
+                        </td>
+                        <td style={tdStyle()}>{(currentPage - 1) * 100 + idx + 1}</td>
+                        <td style={tdStyle()}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              <strong style={{ fontSize: isMobile ? 13 : 14 }}>
+                                <button onClick={() => handleEdit(item)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: isMobile ? 13 : 14, fontWeight: 600, color: WP.text, fontFamily: FF, textAlign: "left" }}>
+                                  {item.titleEn || <em style={{ color: WP.textLight }}>Untitled</em>}
+                                </button>
+                              </strong>
+                              {item.titleHi && (
+                                <span style={{ fontSize: 10, background: WP.blueBg, color: WP.blue, padding: "2px 5px", borderRadius: 3, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                                  <span>हि</span> <span>{item.titleHi.length > (isMobile ? 15 : 20) ? item.titleHi.slice(0, isMobile ? 15 : 20) + "…" : item.titleHi}</span>
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                              <FaLink size={isMobile ? 8 : 10} style={{ color: WP.textLight }} />
+                              <a href={`${SITE_URL}/${item.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: isMobile ? 9 : 11, color: WP.blue, textDecoration: "none" }}>{SITE_URL}/{item.slug}</a>
+                              <CopyBtn text={`${SITE_URL}/${item.slug}`} />
+                            </div>
+                            {hoveredRow === item._id && !isMobile && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontSize: 12 }}>
+                                <LinkBtn onClick={() => handleEdit(item)}>Edit</LinkBtn>
+                                <span style={{ color: WP.border }}>|</span>
+                                <LinkBtn onClick={() => handleDelete(item._id, item.titleEn)} color={WP.red}>Trash</LinkBtn>
+                                <span style={{ color: WP.border }}>|</span>
+                                <LinkBtn onClick={() => window.open(`${SITE_URL}/preview/${item.slug}`, "_blank")}>Preview</LinkBtn>
+                                <span style={{ color: WP.border }}>|</span>
+                                {item.isPublished
+                                  ? <LinkBtn onClick={() => handleDraft(item._id)}>Move to Draft</LinkBtn>
+                                  : <LinkBtn onClick={() => handlePublish(item._id)} color={WP.green}>Publish</LinkBtn>}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={tdStyle()}>
+                          {categories.find(c => c._id === item.categoryId)?.categoryNameEn || <span style={{ color: WP.border }}>—</span>}
+                        </td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
+                          {formatDate(item.createdAt)}
+                        </td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
+                          {item.isPublished && item.publishDate ? formatDate(item.publishDate) : <span style={{ color: WP.border }}>—</span>}
+                        </td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
+                          {formatDate(item.updatedAt)}
+                        </td>
+                        <td style={{ ...tdStyle(true) }}>
+                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                            <BtnSecondary size="sm" onClick={() => handleEdit(item)}><FaEdit size={isMobile ? 9 : 11} /> {!isMobile && "Edit"}</BtnSecondary>
+                            <BtnSecondary size="sm" onClick={() => window.open(`${SITE_URL}/preview/${item.slug}`, "_blank")}><FaEye size={isMobile ? 9 : 11} /> {!isMobile && "Preview"}</BtnSecondary>
+                            {item.isPublished ? (
+                              <BtnSecondary size="sm" onClick={() => handleDraft(item._id)}><FaFileAlt size={isMobile ? 9 : 11} /> {!isMobile && "Draft"}</BtnSecondary>
+                            ) : (
+                              <BtnGreen size="sm" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={isMobile ? 9 : 11} /> {!isMobile && "Publish"}</BtnGreen>
+                            )}
+                            <BtnDanger size="sm" onClick={() => handleDelete(item._id, item.titleEn)}><FaTrashAlt size={isMobile ? 9 : 11} /> {!isMobile && "Delete"}</BtnDanger>
+                          </div>
+                        </td>
+                        <td style={tdStyle()}>
+                          <StatusBadge published={item.isPublished} active={item.isActive} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-
-            {/* bottom pagination */}
-            <PaginationBar
-              currentPage={currentPage} totalPages={totalPages}
-              totalItems={totalItems} shown={pages.length}
-              onPrev={() => setCurrentPage(p => p - 1)}
-              onNext={() => setCurrentPage(p => p + 1)}
-            />
+            <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => p - 1)} onNext={() => setCurrentPage(p => p + 1)} />
           </div>
         </div>
-        <div style={{ height: 24 }} />
+        <div style={{ height: 20 }} />
       </div>
     );
   }
 
-  /* ══════════════════════════════════════════════════════════ */
-  /*  FORM VIEW                                                 */
-  /* ══════════════════════════════════════════════════════════ */
-  return (
-    <div style={{
-      background: C.bg, fontFamily: FF,
-      ...(fullscreenEdit ? { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflowY: "auto" } : {}),
-    }}>
+  /* FORM BODY (shared between normal and fullscreen) */
+  const FormBody = () => {
+    const gridColumns = isMobile ? "1fr" : "1fr 260px";
 
-      {/* ── Form top bar ── */}
-      <div style={{ background: C.white, borderBottom: `1px solid ${C.line}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={() => { resetForm(); setView("list"); }}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: C.blue, fontSize: 13, fontFamily: FF }}>
-            ← All Pages
-          </button>
-          <span style={{ color: C.border }}>|</span>
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: C.text }}>
-            {editingId ? "Edit Page" : "Add New Page"}
-          </h1>
-        </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          <BtnSecondary size="sm" onClick={() => previewfullSlugURL && window.open(previewfullSlugURL, "_blank")}>
-            <FaEye size={11} /> Preview
-          </BtnSecondary>
-          <BtnSecondary size="sm" onClick={() => setFullscreenEdit(!fullscreenEdit)}>
-            {fullscreenEdit ? "✕ Exit Fullscreen" : "⛶ Fullscreen"}
-          </BtnSecondary>
-          <BtnBlack onClick={() => { resetForm(); setView("list"); }}>
-            ← Back to Pages
-          </BtnBlack>
-          <BtnGreen size="sm" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Saving…" : editingId ? "✓ Update Page" : "✓ Publish Page"}
-          </BtnGreen>
-        </div>
-      </div>
-
-      <Alert msg={message} />
-
-      {/* ── Two-column grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: fullscreenEdit ? "1fr" : "1fr 268px", gap: 20, padding: "20px 24px", maxWidth: 1400, margin: "0 auto" }}>
-
-        {/* ────────── LEFT ────────── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Title card */}
-          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-            <div style={{ padding: "11px 18px", borderBottom: `1px solid ${C.line}` }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Page Title</span>
-            </div>
-            <div style={{ padding: "16px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div>
-                <label style={lbl}>Title (English) <span style={{ color: C.red }}>*</span></label>
-                <input name="titleEn" value={form.titleEn} onChange={handleChange} style={fi} {...focusBlue} />
-              </div>
-              <div>
-                <label style={lbl}>Title (Hindi)</label>
-                <input name="titleHi" value={form.titleHi} onChange={handleChange} style={fi} {...focusBlue} />
-              </div>
-
-              {/* ── Slug field — full row ── */}
-              <div style={{ gridColumn: "1/-1" }}>
-                <label style={lbl}>Slug / URL Permalink</label>
-
-                {/* Input with origin prefix */}
-                <div style={{
-                  display: "flex", alignItems: "stretch",
-                  border: `1px solid ${slugError ? C.red : C.border}`,
-                  borderRadius: 4, overflow: "hidden",
-                }}>
-                  <span style={{
-                    background: "#f6f7f7", borderRight: `1px solid ${C.border}`,
-                    padding: "6px 10px", fontSize: 12, color: C.textLight,
-                    display: "flex", alignItems: "center", flexShrink: 0, whiteSpace: "nowrap",
-                  }}>
-                    {SITE_URL}/
-                  </span>
-                  <input
-                    name="slug" value={form.slug}
-                    onChange={handleSlugChange} onBlur={handleSlugBlur}
-                    placeholder="my-page-slug"
-                    style={{ ...fi, border: "none", borderRadius: 0, flex: 1, outline: "none" }}
-                  />
+    return (
+      <>
+        <FlashMsg msg={message} />
+        <div style={{ display: "grid", gridTemplateColumns: gridColumns, gap: isMobile ? 12 : 16, padding: isMobile ? "12px" : "16px 20px", maxWidth: 1380, margin: "0 auto" }}>
+          {/* LEFT COLUMN */}
+          <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 12 : 14 }}>
+            <Card>
+              <input
+                name="titleEn"
+                value={form.titleEn}
+                onChange={handleChange}
+                placeholder="Add English title"
+                style={{ ...fi, fontSize: isMobile ? 18 : 22, fontWeight: 400, padding: "6px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0, marginBottom: 10 }}
+                onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)}
+                onBlur={(e) => (e.target.style.borderBottomColor = WP.line)}
+              />
+              <input
+                name="titleHi"
+                value={form.titleHi}
+                onChange={handleChange}
+                placeholder="शीर्षक (Hindi)"
+                style={{ ...fi, fontSize: isMobile ? 14 : 16, padding: "5px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0 }}
+                onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)}
+                onBlur={(e) => (e.target.style.borderBottomColor = WP.line)}
+              />
+              <div style={{ marginTop: 10, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: isMobile ? 6 : 6, fontSize: 13 }}>
+                <span style={{ color: WP.textMid, fontWeight: 600 }}>Permalink:</span>
+                <span style={{ color: WP.textMid }}>{SITE_URL}/</span>
+                <div style={{ display: "flex", alignItems: "stretch", border: `1px solid ${slugError ? WP.red : WP.border}`, borderRadius: 3, overflow: "hidden", flex: 1 }}>
+                  <input name="slug" value={form.slug} onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="page-slug" style={{ ...fi, border: "none", borderRadius: 0, width: "100%", padding: "3px 6px", fontSize: 13 }} />
                 </div>
+                {!slugError && form.slug && <CopyBtn text={fullSlugURL} />}
+                {slugError && <span style={{ fontSize: 11, color: WP.red }}>⚠ {slugError}</span>}
+              </div>
+            </Card>
+            <Card title="Page Main Content Area">
+              <DynamicContentEditor contents={editorContents} setContents={setEditorContents} engField="descriptionEn" hinField="descriptionHi" />
+            </Card>
+          </div>
 
-                {/* Error */}
-                {slugError && (
-                  <div style={{ fontSize: 12, color: C.red, marginTop: 4 }}>⚠ {slugError}</div>
-                )}
-
-                {/* Full URL preview + copy — shown below slug input like WP */}
-                {!slugError && form.slug && (
-                  <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 12, color: C.textLight }}>Permalink:</span>
-                    <span style={{ fontSize: 12, color: C.green, fontWeight: 500, wordBreak: "break-all" }}>
-                      {fullSlugURL}
-                    </span>
-                    <CopyBtn text={fullSlugURL} />
+          {/* RIGHT SIDEBAR */}
+          <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 12 : 14 }}>
+            <Card title="View Mangments Tools">
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 6, borderBottom: `1px solid ${WP.line}`, flexWrap: "wrap", gap: 4 }}>
+                  <span>Status: <strong style={{ color: isPublished ? WP.greenDark : WP.amber }}>{isPublished ? "Published" : "Draft"}</strong></span>
+                  <AutoSaveIndicator status={autoSaveStatus} />
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", paddingBottom: 6, borderBottom: `1px solid ${WP.line}` }}>
+                  <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} style={{ accentColor: WP.green, cursor: "pointer" }} />
+                  <span>Active (Visible on site)</span>
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
+                  <BtnBlack onClick={() => handleSubmit(false)} disabled={saving} size="sm"><FaSave size={10} /> {saving ? "Saving…" : editingId ? "Update Draft" : "Save Draft"}</BtnBlack>
+                  <BtnGreen onClick={() => handleSubmit(true)} disabled={saving} size="sm"><FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish Page"}</BtnGreen>
+                  {editingId && isPublished && <BtnSecondary onClick={() => handleDraft(editingId)} size="sm"><FaFileAlt size={10} /> Move to Draft</BtnSecondary>}
+                  <div style={{ borderTop: `1px solid ${WP.line}`, paddingTop: 6, marginTop: 2 }}>
+                    <LinkBtn onClick={goBackToList} color={WP.red}><FaTrashAlt size={9} style={{ marginRight: 3 }} />Discard Changes</LinkBtn>
                   </div>
-                )}
-
-                <p style={{ margin: "4px 0 0", fontSize: 11, color: C.textLight }}>
-                  Spaces convert to hyphens. Multiple hyphens collapse to one. Cannot start or end with /.
-                </p>
+                </div>
               </div>
-            </div>
+            </Card>
+            <Card
+              title={
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 8 }}>
+                  <span>Short Description -</span>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <button onClick={() => setExcerptLang("en")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "en" ? 600 : 400, color: excerptLang === "en" ? WP.blue : WP.textMid }}>English</button>
+                    <button onClick={() => setExcerptLang("hi")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "hi" ? 600 : 400, color: excerptLang === "hi" ? WP.blue : WP.textMid }}>Hindi</button>
+                  </div>
+                </div>
+              }
+            >
+              {excerptLang === "en" ? (
+                <textarea name="shortDescriptionEn" placeholder="Short Description English" value={form.shortDescriptionEn} onChange={handleChange} rows={4} style={{ ...fi, resize: "vertical" }} {...focus} />
+              ) : (
+                <textarea name="shortDescriptionHi" placeholder="Short Description Hindi" value={form.shortDescriptionHi} onChange={handleChange} rows={4} style={{ ...fi, resize: "vertical" }} {...focus} />
+              )}
+            </Card>
+            <Card title="Category">
+              <select name="categoryId" value={form.categoryId} onChange={handleChange} style={{ ...fi, fontSize: 13 }} {...focus}>
+                <option value="">— No Category —</option>
+                {categories.map(cat => <option key={cat._id} value={cat._id}>{cat.categoryNameEn}</option>)}
+              </select>
+              {form.categoryId && <p style={{ margin: "4px 0 0", fontSize: 11, color: WP.textLight }}>हिंदी: {categories.find(c => c._id === form.categoryId)?.categoryNameHi || "—"}</p>}
+            </Card>
+            <Card title="Tags">
+              <input name="tags" value={form.tags} onChange={handleChange} placeholder="tag1, tag2, tag3" style={{ ...fi, fontSize: 13 }} {...focus} />
+              <p style={{ margin: "3px 0 0", fontSize: 11, color: WP.textLight }}>Separate with commas</p>
+            </Card>
+            <Card title="SEO & Meta">
+              <div><label style={{ ...lbl, fontSize: 12 }}>Meta Keywords</label><input name="metaKeywords" value={form.metaKeywords} onChange={handleChange} placeholder="keyword1, keyword2" style={{ ...fi, fontSize: 12 }} {...focus} /><p style={{ margin: "3px 0 0", fontSize: 11, color: WP.textLight }}>Separate with commas</p></div>
+            </Card>
           </div>
-
-          {/* Short description */}
-          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-            <div style={{ padding: "11px 18px", borderBottom: `1px solid ${C.line}` }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Short Description (Excerpt)</span>
-            </div>
-            <div style={{ padding: "16px 18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div>
-                <label style={lbl}>English Excerpt</label>
-                <textarea name="shortDescriptionEn" value={form.shortDescriptionEn} onChange={handleChange}
-                  rows={3} style={{ ...fi, resize: "vertical", minHeight: 80 }} {...focusBlue} />
-              </div>
-              <div>
-                <label style={lbl}>Hindi Excerpt</label>
-                <textarea name="shortDescriptionHi" value={form.shortDescriptionHi} onChange={handleChange}
-                  rows={3} style={{ ...fi, resize: "vertical", minHeight: 80 }} {...focusBlue} />
-              </div>
-            </div>
-          </div>
-
         </div>
+        <div style={{ height: 24 }} />
+      </>
+    );
+  };
 
-        {/* ────────── RIGHT SIDEBAR ────────── */}
-        {!fullscreenEdit && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* Publish box */}
-            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-              <div style={{ padding: "9px 14px", borderBottom: `1px solid ${C.line}` }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Publish</span>
-              </div>
-              <div style={{ padding: "12px 14px" }}>
-                {/* Status row */}
-                <div style={{ marginBottom: 10, fontSize: 13, display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ color: C.textMid }}>Status:</span>
-                  <span style={{ fontWeight: 600, color: isPublished ? C.green : C.amber }}>
-                    {isPublished ? "Published" : "Draft"}
-                  </span>
-                </div>
-
-                {/* Active toggle */}
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", fontSize: 13 }}>
-                    <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange}
-                      style={{ width: 15, height: 15, accentColor: C.green }} />
-                    <span style={{ color: C.text, fontWeight: 500 }}>Active (visible)</span>
-                  </label>
-                </div>
-
-                {/* Divider */}
-                <div style={{ borderTop: `1px solid ${C.line}`, margin: "10px 0" }} />
-
-                {/* Action buttons — all same size, one per row */}
-                <div style={{ display: "flex", flexDirection: "row", gap: 7 }}>
-                  <BtnGreen onClick={handleSubmit} disabled={saving}>
-                    {saving ? "⏳ Saving…" : editingId ? <><FaCheck style={{ marginRight: 5 }} />Update Page</> : <><FaCloudUploadAlt style={{ marginRight: 5 }} />Publish Page</>}
-                  </BtnGreen>
-                  {editingId && (
-                    isPublished ? (
-                      <BtnSecondary onClick={() => handleDraft(editingId)}>
-                        <FaFileAlt style={{ marginRight: 5 }} /> Move to Draft
-                      </BtnSecondary>
-                    ) : (
-                      <BtnGreen onClick={() => handlePublish(editingId)}>
-                        <FaCloudUploadAlt style={{ marginRight: 5 }} /> Publish Now
-                      </BtnGreen>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Category box */}
-            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-              <div style={{ padding: "9px 14px", borderBottom: `1px solid ${C.line}` }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Category</span>
-              </div>
-              <div style={{ padding: "12px 14px" }}>
-                <label style={lbl}>Select Category</label>
-                <select name="categoryId" value={form.categoryId} onChange={handleChange}
-                  style={{ ...fi, appearance: "none", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23787c82'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center", paddingRight: 28 }}
-                  {...focusBlue}>
-                  <option value="">— No Category —</option>
-                  {categories.map(cat => (
-                    <option key={cat._id} value={cat._id}>{cat.categoryNameEn}</option>
-                  ))}
-                </select>
-                {form.categoryId && (
-                  <p style={{ margin: "5px 0 0", fontSize: 11, color: C.textLight }}>
-                    Hindi: {categories.find(c => c._id === form.categoryId)?.categoryNameHi || "—"}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* SEO box */}
-            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-              <div style={{ padding: "9px 14px", borderBottom: `1px solid ${C.line}` }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>SEO & Meta</span>
-              </div>
-              <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 11 }}>
-                <div>
-                  <label style={lbl}>Meta Keywords</label>
-                  <input name="metaKeywords" value={form.metaKeywords} onChange={handleChange}
-                    placeholder="keyword1, keyword2" style={{ ...fi, fontSize: 12 }} {...focusBlue} />
-                  <p style={{ margin: "3px 0 0", fontSize: 11, color: C.textLight }}>Separate with commas</p>
-                </div>
-                <div>
-                  <label style={lbl}>Tags</label>
-                  <input name="tags" value={form.tags} onChange={handleChange}
-                    placeholder="tag1, tag2" style={{ ...fi, fontSize: 12 }} {...focusBlue} />
-                  <p style={{ margin: "3px 0 0", fontSize: 11, color: C.textLight }}>Separate with commas</p>
-                </div>
-              </div>
-            </div>
-
+  /* NORMAL FORM VIEW with sticky bar */
+  if (view === "form" && !isFormFullscreen) {
+    return (
+      <div style={{ background: WP.bg, minHeight: "100vh", fontFamily: FF }}>
+        <div style={{ background: WP.white, borderBottom: `1px solid ${WP.line}`, padding: isMobile ? "8px 12px" : "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", top: 0, zIndex: 1000, boxShadow: "0 1px 2px rgba(0,0,0,.05)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={goBackToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}><FaArrowLeft size={11} /> Back To List Page</button>
+            <span style={{ color: WP.border }}>›</span>
+            <span style={{ fontSize: isMobile ? 12 : 14, color: WP.text, fontWeight: 600 }}>{editingId ? "Edit Page" : "Add New Page"}</span>
+            <AutoSaveIndicator status={autoSaveStatus} />
           </div>
-        )}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <BtnDanger onClick={goBackToList} style={{ ...btnBase, background: "none", border: `1px solid ${WP.border}`, color: WP.red, fontSize: 12, padding: "2px 8px" }}><FaTimes size={10} /> Close</BtnDanger>
+            <BtnSecondary size="sm" onClick={() => form.slug && window.open(`${SITE_URL}/preview/${form.slug}`, "_blank")} disabled={!form.slug}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
+            <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}><FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}</BtnBlack>
+            <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}><FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}</BtnGreen>
+            {isMobile && (
+              <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff" }}><FaExpand size={10} /></button>
+            )}
+            <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff", padding: "0 8px", fontSize: isMobile ? 11 : 13 }}><FaExpand size={10} /> {!isMobile && "Fullscreen"}</button>
+          </div>
+        </div>
+        <FormBody />
       </div>
+    );
+  }
 
-      {/* Rich content editor */}
-      <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 4 }}>
-        <div style={{ padding: "11px 18px", borderBottom: `1px solid ${C.line}` }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Page Content</span>
+  /* FULLSCREEN MODE */
+  if (isFormFullscreen) {
+    return (
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: WP.bg, zIndex: 2000, overflowY: "auto", fontFamily: FF }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 1000, background: WP.white, borderBottom: `1px solid ${WP.line}`, padding: isMobile ? "8px 12px" : "8px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={goBackToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}><FaArrowLeft size={11} /> Back To List Page</button>
+            <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600 }}>{editingId ? "Edit Page (Fullscreen)" : "Add New Page (Fullscreen)"}</span>
+            <AutoSaveIndicator status={autoSaveStatus} />
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <BtnSecondary size="sm" onClick={() => form.slug && window.open(`${SITE_URL}/preview/${form.slug}`, "_blank")} disabled={!form.slug}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
+            <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}><FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}</BtnBlack>
+            <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}><FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}</BtnGreen>
+            <button onClick={() => setIsFormFullscreen(false)} style={{ ...btnBase, background: WP.red, color: "#fff" }}><FaCompress size={10} /> {!isMobile && "Exit Full Screen"}</button>
+          </div>
         </div>
-        <div style={{ padding: 0 }}>
-          <DynamicContentEditor
-            contents={editorContents} setContents={setEditorContents}
-            engField="descriptionEn" hinField="descriptionHi"
-          />
-        </div>
+        <FormBody />
       </div>
-      <div style={{ height: 24 }} />
-    </div>
-  );
+    );
+  }
+
+  return null;
 };
 
 export default RichContentPageManagements;

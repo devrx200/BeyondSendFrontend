@@ -63,8 +63,8 @@ const adminMenu = [
     id: "news-notices",
     icon: FaNewspaper,
     label: {
-      en: "News & Notices",
-      hi: "समाचार एवं सूचनाएं"
+      en: "Add News & Notices",
+      hi: "समाचार एवं सूचनाएं जोड़ें "
     },
     submenu: [
       {
@@ -75,7 +75,7 @@ const adminMenu = [
           en: "Latest Updates Tiker",
           hi: "नवीन अपडेट स्लाइडर"
         },
-          allowedRoles: ["ADMIN", "OFFICER"],
+        allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       },
       {
@@ -86,7 +86,7 @@ const adminMenu = [
           en: "Announcements",
           hi: "घोषणाएं"
         },
-          allowedRoles: ["ADMIN", "OFFICER"],
+        allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       },
       {
@@ -118,8 +118,8 @@ const adminMenu = [
     id: "page-management",
     icon: FaPager,
     label: {
-      en: "Page Management",
-      hi: "पेज प्रबंधन"
+      en: "All Page Management",
+      hi: " सभी पेज प्रबंधन"
     },
     submenu: [
 
@@ -161,76 +161,17 @@ const adminMenu = [
   },
 
   {
-    id: "content-management",
+    id: "media-library",
     icon: FaFolderOpen,
+    path: "/admin/media-library-mangments",
     label: {
-      en: "Content Management",
-      hi: "सामग्री प्रबंधन"
+      en: "Media, Resources & Library",
+      hi: "मीडिया, संसाधन एवं लाइब्रेरी"
     },
-    submenu: [
+    allowedRoles: ["ADMIN", "OFFICER"],
+    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
 
-      {
-        id: "file-manager",
-        icon: FaFolder,
-        path: "/admin/file-manager",
-        label: {
-          en: "File Manager",
-          hi: "फ़ाइल प्रबंधक"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
-      },
-      {
-        id: "file-uploader",
-        icon: FaCloudUploadAlt,
-        path: "/admin/file-uploader",
-        label: {
-          en: "File Uploader",
-          hi: "फ़ाइल अपलोडर"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
-      },
-
-    ]
   },
-
-  {
-    id: "media-and-download-management",
-    icon: FaPhotoVideo,
-    label: {
-      en: "Media & Resources",
-      hi: "मीडिया एवं संसाधन"
-    },
-    submenu: [
-      {
-        id: "gallery-page",
-        icon: FaImages,
-        path: "/admin/gallery",
-        label: {
-          en: "Photo Galleries",
-          hi: "फोटो गैलरी"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
-      },
-
-      {
-        id: "downloads-management",
-        icon: FaDownload,
-        path: "/admin/download-management",
-        label: {
-          en: "Download Resources",
-          hi: "डाउनलोड संसाधन"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
-      }
-    ]
-  },
-
-
-
   {
     id: "education-management",
     icon: FaUniversity,
@@ -247,10 +188,43 @@ const adminMenu = [
           en: "Education Statistics",
           hi: "शिक्षा सांख्यिकी"
         },
-         allowedRoles: ["ADMIN"],
+        allowedRoles: ["ADMIN"],
         allowedEmployeeTypes: ["DIRECTORATE"]
       },
-      
+
+    ]
+  },
+  {
+    id: "media-and-download-management",
+    icon: FaPhotoVideo,
+    label: {
+      en: "Gallery & Download Pages",
+      hi: "गैलरी एवं डाउनलोड पृष्ठ"
+    },
+    submenu: [
+      {
+        id: "gallery-page",
+        icon: FaImages,
+        path: "/admin/gallery",
+        label: {
+          en: "Photo Galleries Page",
+          hi: "फोटो गैलरी पेज"
+        },
+        allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+      },
+
+      {
+        id: "downloads-management",
+        icon: FaDownload,
+        path: "/admin/download-management",
+        label: {
+          en: "Download Page",
+          hi: "डाउनलोड पेज"
+        },
+        allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+      }
     ]
   },
 
@@ -270,7 +244,7 @@ const adminMenu = [
           en: "Categories",
           hi: "श्रेणियाँ"
         },
-         allowedRoles: ["ADMIN", "OFFICER"],
+        allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
       }
     ]
@@ -292,7 +266,7 @@ const adminMenu = [
           hi: "हेडर प्रबंधन"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "menu-management",
@@ -303,7 +277,7 @@ const adminMenu = [
           hi: "मेनू प्रबंधन"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "slider",
@@ -313,8 +287,8 @@ const adminMenu = [
           en: "Home Slider",
           hi: "होम स्लाइडर"
         },
-         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedRoles: ["ADMIN", "NIC"],
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "about-content",
@@ -325,7 +299,7 @@ const adminMenu = [
           hi: "परिचय अनुभाग"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "important-links",
@@ -336,7 +310,7 @@ const adminMenu = [
           hi: "महत्वपूर्ण लिंक"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "brands",
@@ -347,7 +321,7 @@ const adminMenu = [
           hi: "फुटर ब्रांड्स"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "footer-management",
@@ -358,7 +332,7 @@ const adminMenu = [
           hi: "फुटर प्रबंधन"
         },
         allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE" ,"NIC"]
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       }
     ]
   },
@@ -465,8 +439,8 @@ const adminMenu = [
   },
   {
     id: "database-backup",
-    icon: FaDatabase, 
-    path: "/admin/database-backup-managments", 
+    icon: FaDatabase,
+    path: "/admin/database-backup-managments",
     label: {
       en: "Database Backup",
       hi: "डेटाबेस बैकअप"
