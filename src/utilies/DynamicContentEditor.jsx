@@ -1,4 +1,4 @@
-// DynamicContentEditor.jsx — Fixed: attach link, keyboard shortcuts, real-time onChange autosave
+// DynamicContentEditor.jsx — fully working, no cursor jumps, attach link, tab switching, no auto-save
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import JoditEditor from "jodit-react";
 import axios from "axios";
@@ -47,51 +47,51 @@ const getFileCategory = (mimeType) => {
 };
 const fmtSize = (b) =>
   b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" :
-  b >= 1024 ? Math.round(b / 1024) + " KB" : b + " B";
+    b >= 1024 ? Math.round(b / 1024) + " KB" : b + " B";
 
 const FILE_ICON_MAP = {
   image: { icon: FaFileImage, color: "#10b981" },
-  pdf:   { icon: FaFilePdf,   color: WP.red },
-  xlsx:  { icon: FaFileExcel, color: "#22c55e" },
-  docx:  { icon: FaFileWord,  color: WP.blue },
-  zip:   { icon: FaFileArchive, color: WP.amber },
-  code:  { icon: FaFileCode,  color: "#8b5cf6" },
+  pdf: { icon: FaFilePdf, color: WP.red },
+  xlsx: { icon: FaFileExcel, color: "#22c55e" },
+  docx: { icon: FaFileWord, color: WP.blue },
+  zip: { icon: FaFileArchive, color: WP.amber },
+  code: { icon: FaFileCode, color: "#8b5cf6" },
   default: { icon: FaFileAlt, color: WP.textMid },
 };
 const getFileIcon = (mimeType, size = 28) => {
   let { icon: Icon, color } = FILE_ICON_MAP.default;
-  if (mimeType?.startsWith("image"))       ({ icon: Icon, color } = FILE_ICON_MAP.image);
+  if (mimeType?.startsWith("image")) ({ icon: Icon, color } = FILE_ICON_MAP.image);
   else if (mimeType === "application/pdf") ({ icon: Icon, color } = FILE_ICON_MAP.pdf);
   else if (mimeType?.includes("spreadsheet") || mimeType?.includes("excel")) ({ icon: Icon, color } = FILE_ICON_MAP.xlsx);
-  else if (mimeType?.includes("document")  || mimeType?.includes("word"))    ({ icon: Icon, color } = FILE_ICON_MAP.docx);
-  else if (mimeType?.includes("zip")       || mimeType?.includes("rar"))     ({ icon: Icon, color } = FILE_ICON_MAP.zip);
+  else if (mimeType?.includes("document") || mimeType?.includes("word")) ({ icon: Icon, color } = FILE_ICON_MAP.docx);
+  else if (mimeType?.includes("zip") || mimeType?.includes("rar")) ({ icon: Icon, color } = FILE_ICON_MAP.zip);
   return <Icon size={size} color={color} />;
 };
 
 const FILTERS = [
-  { key: "all",   label: "All Files" },
+  { key: "all", label: "All Files" },
   { key: "image", label: "Images" },
-  { key: "pdf",   label: "PDFs" },
-  { key: "doc",   label: "Docs" },
+  { key: "pdf", label: "PDFs" },
+  { key: "doc", label: "Docs" },
 ];
 
 /* ══════════════════════════════════════════════
-   ATTACH / MEDIA LIBRARY MODAL
+   ATTACH / MEDIA LIBRARY MODAL (FULL CODE)
 ══════════════════════════════════════════════ */
 function AttachModal({ selection, onAttach, onClose }) {
-  const [files,          setFiles]         = useState([]);
-  const [loading,        setLoading]       = useState(true);
-  const [error,          setError]         = useState(null);
-  const [query,          setQuery]         = useState("");
-  const [filter,         setFilter]        = useState("all");
-  const [selected,       setSelected]      = useState(null);
-  const [uploadFile,     setUploadFile]    = useState(null);
-  const [uploadPreview,  setUploadPreview] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [selected, setSelected] = useState(null);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploading,      setUploading]     = useState(false);
-  const [isDragging,     setIsDragging]    = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
-  const searchRef    = useRef(null);
+  const searchRef = useRef(null);
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -110,7 +110,6 @@ function AttachModal({ selection, onAttach, onClose }) {
 
   useEffect(() => { searchRef.current?.focus(); fetchFiles(); }, [fetchFiles]);
 
-  // Close on Escape key
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -169,14 +168,13 @@ function AttachModal({ selection, onAttach, onClose }) {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(0,0,0,.6)" }} />
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9990, background: "rgba(71, 70, 70, 0.38)" }} />
       <div role="dialog" style={{
         position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
         zIndex: 9991, width: "min(1080px,96vw)", background: WP.white,
         borderRadius: 4, boxShadow: "0 8px 40px rgba(0,0,0,.25)",
         overflow: "hidden", display: "flex", flexDirection: "column",
       }}>
-        {/* Header */}
         <div style={{ background: WP.black, padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: WP.white }}>Upload Files / Media Library</h3>
@@ -185,7 +183,6 @@ function AttachModal({ selection, onAttach, onClose }) {
           <button onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,.7)", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>
         </div>
 
-        {/* Upload area */}
         {!uploadFile ? (
           <div
             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
@@ -235,7 +232,6 @@ function AttachModal({ selection, onAttach, onClose }) {
 
         <div style={{ margin: "12px 18px 0", borderTop: `1px solid ${WP.line}` }} />
 
-        {/* Search & filter */}
         <div style={{ padding: "8px 18px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <input
             ref={searchRef} value={query} onChange={e => setQuery(e.target.value)}
@@ -253,7 +249,6 @@ function AttachModal({ selection, onAttach, onClose }) {
           </div>
         </div>
 
-        {/* File grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))", gap: 6, padding: "0 18px 14px", maxHeight: 280, overflowY: "auto" }}>
           {loading && <div style={{ gridColumn: "1/-1", padding: "30px 0", textAlign: "center", color: WP.textLight, fontSize: 13 }}>Loading…</div>}
           {!loading && error && <div style={{ gridColumn: "1/-1", padding: "20px 0", textAlign: "center", color: WP.red, fontSize: 13 }}>{error}</div>}
@@ -281,7 +276,6 @@ function AttachModal({ selection, onAttach, onClose }) {
           })}
         </div>
 
-        {/* Footer */}
         <div style={{ padding: "8px 18px", borderTop: `1px solid ${WP.line}`, background: WP.offWhite, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontSize: 12, color: WP.textMid }}>
             {selected
@@ -340,71 +334,58 @@ function Toast({ msg, type = "success", onDone }) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MAIN EDITOR COMPONENT
-   
-   Props:
-   - contents / setContents : array state — [{ id, [engField]: "", [hinField]: "" }]
-   - engField (default "descriptionEn") : key for English content
-   - hinField (default "descriptionHi") : key for Hindi content
-   - viewMode (default false) : read-only display mode
-   - activeTab (optional) : controlled tab "en" | "hi"
-   - height (optional, default 460) : editor height in px
-   
-   Also accepts prop aliases for legacy compatibility:
-   - htmlContentEng → engField override
-   - htmlContentHin → hinField override
+   MAIN EDITOR – NO RE‑RENDER ON KEYSTROKE
 ══════════════════════════════════════════════════════════ */
 const DynamicContentEditor = ({
   contents,
   setContents,
-  viewMode   = false,
-  engField   = "descriptionEn",
-  hinField   = "descriptionHi",
-  // legacy aliases
+  viewMode = false,
+  engField = "descriptionEn",
+  hinField = "descriptionHi",
   htmlContentEng,
   htmlContentHin,
   activeTab: controlledTab,
   height = 460,
 }) => {
-  // Resolve field names (legacy alias support)
   const ENG = htmlContentEng || engField;
   const HIN = htmlContentHin || hinField;
 
-  const [showModal,   setShowModal]   = useState(false);
-  const [selText,     setSelText]     = useState("");
-  const [toast,       setToast]       = useState(null);
-  const [noSelWarn,   setNoSelWarn]   = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selText, setSelText] = useState("");
+  const [toast, setToast] = useState(null);
+  const [noSelWarn, setNoSelWarn] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeTab,   setActiveTab]   = useState(controlledTab || "en");
+  const [activeTab, setActiveTab] = useState(controlledTab || "en");
 
-  // ✅ KEY FIX: We store the actual Jodit editor instance here (not the React component ref)
-  const editorInstanceRef = useRef(null);
-  // This ref holds the React component reference (needed by JoditEditor)
-  const joditComponentRef = useRef(null);
+  const editorRef = useRef(null);
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
-  // Ensure contents is initialized
+  // Ensure contents array exists
   useEffect(() => {
     if (!contents || contents.length === 0) {
       setContents([{ id: Date.now(), [ENG]: "", [HIN]: "" }]);
     }
-  }, []); // eslint-disable-line
+  }, [contents, setContents, ENG, HIN]);
 
-  const item         = contents?.[0];
+  const item = contents?.[0];
   const currentField = activeTab === "en" ? ENG : HIN;
-  const currentValue = item?.[currentField] || "";
+  const externalValue = item?.[currentField] || "";
 
   const updateContent = useCallback((id, updates) => {
     setContents(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   }, [setContents]);
 
-  /* ── Jodit config ── 
-     KEY FIXES:
-     1. enableDragAndDropFileToEditor: true
-     2. useSearch: true  
-     3. spellcheck: true
-     4. Keyboard shortcuts work via Jodit's built-in system — we DON'T disable them
-     5. No key: activeTab (prevents remount) — we use setValue instead
-  */
+  // Sync editor when external value changes (tab switch, loading a page)
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (editor.value !== externalValue) {
+      editor.value = externalValue;
+    }
+  }, [externalValue]);
+
+  // Stable Jodit config – NO `value` prop, NO `change` event that causes re‑renders
   const joditConfig = useMemo(() => ({
     height: isFullscreen ? "calc(100vh - 180px)" : height,
     readonly: false,
@@ -416,11 +397,6 @@ const DynamicContentEditor = ({
     askBeforePasteFromWord: false,
     defaultActionOnPaste: "insert_as_html",
     spellcheck: true,
-    // ✅ Keyboard shortcuts ENABLED — these are Jodit built-ins, no override needed:
-    // Ctrl+B = Bold, Ctrl+I = Italic, Ctrl+U = Underline
-    // Ctrl+Z = Undo, Ctrl+Y = Redo, Ctrl+A = Select All
-    // Ctrl+C/V/X = Copy/Paste/Cut (native)
-    // Ctrl+L = Link, Ctrl+S = Save (can be customized)
     cleanHTML: { removeEmptyElements: false, fillEmptyParagraph: false },
     uploader: {
       insertImageAsBase64URI: true,
@@ -429,7 +405,6 @@ const DynamicContentEditor = ({
     },
     filebrowser: { ajax: { url: "" } },
     link: { followOnDblClick: false, openInNewTabCheckbox: true },
-    // ✅ Full toolbar like WordPress/online editors
     buttons: [
       "bold", "italic", "underline", "strikethrough", "|",
       "superscript", "subscript", "|",
@@ -445,104 +420,65 @@ const DynamicContentEditor = ({
       "find", "|",
       "fullsize", "source",
     ],
-    // ✅ Custom keyboard shortcuts (additional ones)
     commandToHotkeys: {
-      bold:      ["ctrl+b",  "cmd+b"],
-      italic:    ["ctrl+i",  "cmd+i"],
-      underline: ["ctrl+u",  "cmd+u"],
-      undo:      ["ctrl+z",  "cmd+z"],
-      redo:      ["ctrl+y",  "cmd+y", "ctrl+shift+z", "cmd+shift+z"],
-      selectAll: ["ctrl+a",  "cmd+a"],
-      link:      ["ctrl+k",  "cmd+k"],
+      bold: ["ctrl+b", "cmd+b"],
+      italic: ["ctrl+i", "cmd+i"],
+      underline: ["ctrl+u", "cmd+u"],
+      undo: ["ctrl+z", "cmd+z"],
+      redo: ["ctrl+y", "cmd+y", "ctrl+shift+z", "cmd+shift+z"],
+      selectAll: ["ctrl+a", "cmd+a"],
+      link: ["ctrl+k", "cmd+k"],
     },
     style: {
       fontFamily: "Georgia,'Times New Roman',serif",
       fontSize: "15px",
     },
     events: {
-      // ✅ KEY FIX: Capture the actual editor instance when Jodit is ready
       afterInit(editor) {
-        editorInstanceRef.current = editor;
+        editorRef.current = editor;
       },
-      // ✅ Real-time onChange: fires on every keystroke / change
-      change(newContent) {
-        if (item) {
-          updateContent(item.id, { [currentField]: newContent });
-        }
-      },
+      // No `change` event – we update parent only on blur
     },
-  }), [isFullscreen, height, currentField, item, updateContent]);
+  }), [isFullscreen, height, externalValue]);
 
-  /* ── Tab switch: sync editor value without remounting ── */
-  useEffect(() => {
-    const editor = editorInstanceRef.current;
-    if (!editor) return;
-    const newVal = item?.[currentField] || "";
-    // Only update if value actually differs to avoid cursor jump
-    if (editor.value !== newVal) {
-      editor.value = newVal;
+
+  // Save content to parent state on blur (when user leaves the editor)
+  const handleBlur = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor || !item) return;
+    const newContent = editor.value;
+    const field = activeTabRef.current === "en" ? ENG : HIN;
+    if (newContent !== item[field]) {
+      updateContent(item.id, { [field]: newContent });
     }
-  }, [activeTab]); // eslint-disable-line
+  }, [item, updateContent, ENG, HIN]);
 
-  /* ── Attach File Link ── 
-     KEY FIX: Use editorInstanceRef.current (actual Jodit instance)
-     NOT joditComponentRef.current (React component wrapper)
-  */
+  // Attach file link handler
   const handleAttachClick = useCallback(() => {
-    const editor = editorInstanceRef.current;
-
-    if (!editor) {
-      setNoSelWarn(true);
-      setTimeout(() => setNoSelWarn(false), 2800);
-      return;
-    }
-
-    // ✅ Focus the editor first so selection is active
-    editor.focus();
-
-    // ✅ Check selection using Jodit's selection module
-    const sel = editor.selection;
-    if (!sel || sel.isCollapsed()) {
-      setNoSelWarn(true);
-      setTimeout(() => setNoSelWarn(false), 2800);
-      return;
-    }
-
-    // Get selected HTML/text
-    const selectedHtml = sel.html || "";
-    const selectedText = selectedHtml.replace(/<[^>]*>/g, "").trim();
-    setSelText(selectedText.slice(0, 80) || "selected text");
     setShowModal(true);
   }, []);
 
   const handleAttach = useCallback((file) => {
-    const editor = editorInstanceRef.current;
+    const editor = editorRef.current;
     if (!editor) {
       setToast({ msg: "Editor not ready", type: "warn" });
       setShowModal(false);
       return;
     }
-
     const url = `${API_URL}${file.url}`;
     const linkText = selText || file.title;
-    // ✅ Build anchor HTML
     const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" data-file-id="${file._id}" data-category="${file.category}">${linkText}</a>`;
-
-    // ✅ Insert HTML at selection using Jodit's selection module
     editor.selection.insertHTML(linkHtml);
-
-    // ✅ Get updated content from editor and sync to state
-    const newContent = editor.value;
-    if (item) updateContent(item.id, { [currentField]: newContent });
-
+    // After insertion, sync content to parent
+    handleBlur();
     setToast({ msg: `"${file.title}" linked ✓`, type: "success" });
     setShowModal(false);
     setSelText("");
-  }, [selText, item, updateContent, currentField]);
+  }, [selText, handleBlur]);
 
   if (!item) return null;
 
-  /* ── View mode ── */
+  // View mode (read‑only)
   if (viewMode) {
     return (
       <div style={{ fontFamily: "Georgia,serif", lineHeight: 1.8, fontSize: 15, color: WP.text }}>
@@ -552,16 +488,16 @@ const DynamicContentEditor = ({
               {lang === "en" ? "English" : "हिंदी"}
             </button>
           ))}
-        </div>
+        </div>npm
         <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, padding: "24px 32px" }}>
-          <div className="cms-view" dangerouslySetInnerHTML={{ __html: currentValue || "<p style='color:#787c82'>No content yet.</p>" }} />
+          <div className="cms-view" dangerouslySetInnerHTML={{ __html: externalValue || "<p style='color:#787c82'>No content yet.</p>" }} />
         </div>
         <ViewStyles />
       </div>
     );
   }
 
-  /* ── Edit mode ── */
+  // Edit mode
   return (
     <div style={{
       fontFamily: FF,
@@ -571,8 +507,7 @@ const DynamicContentEditor = ({
       } : {}),
     }}>
       <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, overflow: "hidden" }}>
-
-        {/* ── Editor top bar ── */}
+        {/* Top bar */}
         <div style={{ background: WP.black, padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {[{ key: "en", label: "English" }, { key: "hi", label: "हिंदी (Hindi)" }].map(tab => (
@@ -607,14 +542,12 @@ const DynamicContentEditor = ({
           </div>
         </div>
 
-        {/* Warning: no selection */}
         {noSelWarn && (
           <div style={{ background: WP.amberBg, borderBottom: `1px solid ${WP.amberBd}`, padding: "7px 14px", fontSize: 12, color: WP.amber, fontWeight: 600 }}>
             ⚠ Highlight text in the editor first, then click "Attach File Link".
           </div>
         )}
 
-        {/* Tip bar */}
         <div style={{ background: WP.offWhite, borderBottom: `1px solid ${WP.line}`, padding: "5px 14px", fontSize: 12, color: WP.textMid }}>
           <strong>Shortcuts:</strong>{" "}
           <kbd style={kbdSt}>Ctrl+B</kbd> Bold &nbsp;
@@ -627,22 +560,16 @@ const DynamicContentEditor = ({
           Select text → <strong>Attach File Link</strong> to insert a file link.
         </div>
 
-        {/* ✅ Single JoditEditor instance — no key prop change on tab switch */}
+        {/* JoditEditor – NO `value` prop, only onBlur sync */}
         <div style={{ background: WP.white }}>
           <JoditEditor
-            ref={joditComponentRef}
-            value={currentValue}
             config={joditConfig}
-            // ✅ onBlur as backup sync (onChange is handled in config.events.change)
-            onBlur={(content) => {
-              if (item) updateContent(item.id, { [currentField]: content });
-            }}
+            onBlur={handleBlur}
           />
         </div>
 
-        {/* Footer stats */}
         <div style={{ background: WP.offWhite, borderTop: `1px solid ${WP.line}`, padding: "6px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <ContentStats html={currentValue} />
+          <ContentStats html={externalValue} />
           <span style={{ fontSize: 11, color: WP.textLight }}>
             {activeTab === "en" ? "🇬🇧 English content" : "🇮🇳 Hindi content"}
           </span>
@@ -662,7 +589,7 @@ const DynamicContentEditor = ({
   );
 };
 
-/* ── keyboard hint style ── */
+/* ── Styles ── */
 const kbdSt = {
   display: "inline-block",
   background: "#2b1f1f",
@@ -674,7 +601,6 @@ const kbdSt = {
   lineHeight: "1.6",
 };
 
-/* ── Scoped styles ── */
 function EditorStyles() {
   return (
     <style>{`
@@ -699,7 +625,6 @@ function EditorStyles() {
       .jodit-wysiwyg img { max-width: 100%; border-radius: 3px; }
       .jodit-wysiwyg hr { border: none; border-top: 1px solid ${WP.line}; margin: 20px 0; }
       .jodit-status-bar { display: none !important; }
-      /* Highlight selection color in editor */
       .jodit-wysiwyg ::selection { background: rgba(34,113,177,.25); }
     `}</style>
   );

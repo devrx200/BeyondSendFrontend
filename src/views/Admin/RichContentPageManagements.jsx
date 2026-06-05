@@ -18,7 +18,7 @@ const SS_EDITING_ID = "rcpm_editingId";
 const SS_FORM = "rcpm_form";
 const SS_EDITOR = "rcpm_editor";
 
-/* WordPress design tokens */
+/* WordPress design tokens (same as before, unchanged) */
 const WP = {
   bg: "#f0f0f1",
   white: "#fff",
@@ -172,13 +172,6 @@ const CopyBtn = ({ text }) => {
   );
 };
 
-const AutoSaveIndicator = ({ status }) => {
-  if (!status) return null;
-  const map = { saving: { text: "Auto‑saving…", color: WP.amber }, saved: { text: "Auto‑saved.", color: WP.green }, error: { text: "Auto‑save failed", color: WP.red } };
-  const s = map[status];
-  return <span style={{ fontSize: 12, color: s.color }}>{s.text}</span>;
-};
-
 const fi = { border: `1px solid ${WP.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 14, color: WP.text, outline: "none", fontFamily: FF, width: "100%", boxSizing: "border-box", background: WP.white, lineHeight: 1.5 };
 const lbl = { fontSize: 13, fontWeight: 600, color: WP.text, marginBottom: 4, display: "block" };
 const focus = { onFocus: e => { e.target.style.borderColor = WP.focus; e.target.style.boxShadow = `0 0 0 1px ${WP.focus}`; }, onBlur: e => { e.target.style.borderColor = WP.border; e.target.style.boxShadow = "none"; } };
@@ -216,7 +209,6 @@ const Pagination = ({ currentPage, totalPages, totalItems, shown, onPrev, onNext
 
 const emptyForm = () => ({ titleEn: "", titleHi: "", slug: "", shortDescriptionEn: "", shortDescriptionHi: "", descriptionEn: "", descriptionHi: "", metaKeywords: "", tags: "", categoryId: "", isActive: true });
 
-// Custom hook for responsive breakpoints
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -230,7 +222,6 @@ const useMediaQuery = (query) => {
 };
 
 const RichContentPageManagements = () => {
-  // Responsive breakpoints
   const isMobile = useMediaQuery("(max-width: 640px)");
   const isTablet = useMediaQuery("(max-width: 768px)");
 
@@ -258,88 +249,16 @@ const RichContentPageManagements = () => {
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initEditingId());
   const [categories, setCategories] = useState([]);
   const [counts, setCounts] = useState({ all: 0, published: 0, draft: 0, active: 0, inactive: 0 });
-  const [autoSaveStatus, setAutoSaveStatus] = useState(null);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [isFormFullscreen, setIsFormFullscreen] = useState(false);
   const [excerptLang, setExcerptLang] = useState("en");
-
-  // ---------- NEW AUTO‑SAVE (time‑based) ----------
-  const autoSaveInterval = useRef(null);
-  const isAutoSaving = useRef(false);
-  const lastAutoSaved = useRef(null);
-
-  // Refs to always have the latest state inside the interval callback
-  const formRef = useRef(form);
-  const editorContentsRef = useRef(editorContents);
-  const editingIdRef = useRef(editingId);
-
-  useEffect(() => { formRef.current = form; }, [form]);
-  useEffect(() => { editorContentsRef.current = editorContents; }, [editorContents]);
-  useEffect(() => { editingIdRef.current = editingId; }, [editingId]);
 
   const buildPayload = useCallback((f, ec) => {
     const ed = ec[0] || {};
     return { ...f, descriptionEn: ed.descriptionEn || "", descriptionHi: ed.descriptionHi || "", metaKeywords: f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean), tags: f.tags.split(",").map(x => x.trim()).filter(Boolean), categoryId: f.categoryId || null };
   }, []);
 
-  const doAutoSave = useCallback(async (f, ec, eid) => {
-    if (!f.titleEn?.trim()) return;
-    if (validateSlug(f.slug)) return;
-    const payload = buildPayload(f, ec);
-    const hash = JSON.stringify(payload);
-    if (hash === lastAutoSaved.current) return;
-
-    setAutoSaveStatus("saving");
-    try {
-      if (eid) {
-        await axios.post(`${API}/api/rich-content-page/update/${eid}`, payload, { headers: authH() });
-      } else {
-        const res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() });
-        const newId = res.data.data?._id || res.data._id;
-        if (newId) {
-          setEditingId(newId);
-          sessionStorage.setItem(SS_EDITING_ID, newId);
-        }
-      }
-      lastAutoSaved.current = hash;
-      setAutoSaveStatus("saved");
-      setTimeout(() => setAutoSaveStatus(null), 3000);
-    } catch {
-      setAutoSaveStatus("error");
-      setTimeout(() => setAutoSaveStatus(null), 4000);
-    }
-  }, [buildPayload]);
-
-  // Set up 1‑minute interval when form is open
-  useEffect(() => {
-    if (view !== "form") {
-      if (autoSaveInterval.current) {
-        clearInterval(autoSaveInterval.current);
-        autoSaveInterval.current = null;
-      }
-      return;
-    }
-
-    autoSaveInterval.current = setInterval(() => {
-      if (!isAutoSaving.current && view === "form") {
-        isAutoSaving.current = true;
-        doAutoSave(formRef.current, editorContentsRef.current, editingIdRef.current)
-          .finally(() => {
-            isAutoSaving.current = false;
-          });
-      }
-    }, 60000); // every 60 seconds
-
-    return () => {
-      if (autoSaveInterval.current) {
-        clearInterval(autoSaveInterval.current);
-        autoSaveInterval.current = null;
-      }
-    };
-  }, [view, doAutoSave]);
-
-  // ---------- END AUTO‑SAVE CHANGES ----------
-
+  // Session storage effects
   useEffect(() => { sessionStorage.setItem(SS_VIEW, view); }, [view]);
   useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
   useEffect(() => { if (view === "form") sessionStorage.setItem(SS_FORM, JSON.stringify(form)); }, [form, view]);
@@ -382,13 +301,11 @@ const RichContentPageManagements = () => {
     if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
     try {
       setSaving(true);
-      // No need to clear an auto‑save timer – we use interval now
       const payload = buildPayload(form, editorContents);
       let savedId = editingId;
       if (editingId) { await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() }); }
       else { const res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() }); savedId = res.data.data?._id || res.data._id; if (savedId) setEditingId(savedId); }
       if (publishAfter && savedId) { await axios.post(`${API}/api/rich-content-page/publish/${savedId}`, {}, { headers: authH() }); }
-      lastAutoSaved.current = JSON.stringify(payload);
       setMessage({ type: "success", text: publishAfter ? "Page published." : "Draft saved." });
       getAllPages();
     } catch (err) { setMessage({ type: "danger", text: err?.response?.data?.message || "Something went wrong" }); } finally { setSaving(false); }
@@ -407,21 +324,38 @@ const RichContentPageManagements = () => {
     setEditingId(row._id);
     setForm({ titleEn: row.titleEn || "", titleHi: row.titleHi || "", slug: row.slug || "", shortDescriptionEn: row.shortDescriptionEn || "", shortDescriptionHi: row.shortDescriptionHi || "", descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "", metaKeywords: (row.metaKeywords || []).join(", "), tags: (row.tags || []).join(", "), categoryId: row.categoryId || "", isActive: row.isActive });
     setEditorContents([{ id: 1, descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "" }]);
-    setSlugManuallyEdited(true); setSlugError(""); lastAutoSaved.current = null; setView("form");
+    setSlugManuallyEdited(true); setSlugError(""); setView("form");
   };
 
   const resetForm = useCallback(() => {
     setEditingId(null); setForm(emptyForm()); setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
-    setSlugManuallyEdited(false); setSlugError(""); lastAutoSaved.current = null; setAutoSaveStatus(null);
+    setSlugManuallyEdited(false); setSlugError("");
     [SS_EDITING_ID, SS_FORM, SS_EDITOR].forEach(k => sessionStorage.removeItem(k));
   }, []);
+
+  // Auto‑save draft when going back to list (optional – remove if not wanted)
+  const goBackToList = useCallback(async () => {
+    if (form.titleEn?.trim()) {
+      try {
+        const payload = buildPayload(form, editorContents);
+        if (editingId) {
+          await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() });
+        } else {
+          const res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() });
+          const newId = res.data.data?._id || res.data._id;
+          if (newId) setEditingId(newId);
+        }
+      } catch (err) { console.error("Save on back failed", err); }
+    }
+    resetForm();
+    setView("list");
+  }, [form, editorContents, editingId, buildPayload, resetForm]);
 
   const handleChange = (e) => { const { name, value, type, checked } = e.target; setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value })); };
   const handleSlugChange = (e) => { setSlugManuallyEdited(true); const clean = sanitiseSlug(e.target.value); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
   const handleSlugBlur = (e) => { const clean = e.target.value.replace(/^-+|-+$/g, ""); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
   const handleSort = (col) => { if (sortBy === col) setSortOrder(o => o === "desc" ? "asc" : "desc"); else { setSortBy(col); setSortOrder("desc"); } setCurrentPage(1); };
   const sortIcon = (col) => sortBy !== col ? " ⇅" : sortOrder === "desc" ? " ↓" : " ↑";
-  const goBackToList = () => { resetForm(); setView("list"); };
 
   const editingRow = pages.find(p => p._id === editingId);
   const isPublished = !!editingRow?.isPublished;
@@ -439,23 +373,12 @@ const RichContentPageManagements = () => {
     });
   };
 
-  /* LIST VIEW */
+  // ========== LIST VIEW ==========
   if (view === "list") {
     const thSt = { padding: "8px 10px", fontWeight: 700, color: WP.textMid, fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", background: "#f6f7f7", borderBottom: `1px solid ${WP.line}`, textAlign: "left" };
     const filters = [{ k: "all", l: "All" }, { k: "published", l: "Published" }, { k: "draft", l: "Draft" }, { k: "active", l: "Active" }, { k: "inactive", l: "Inactive" }];
-
-    const tableWrapperStyle = {
-      overflowX: "auto",
-      WebkitOverflowScrolling: "touch",
-      width: "100%",
-    };
-
-    const tdStyle = (isAction = false) => ({
-      padding: isMobile ? "6px 8px" : "8px 10px",
-      verticalAlign: "center",
-      fontSize: isMobile ? 11 : 13,
-      ...(isAction && { textAlign: "right" })
-    });
+    const tableWrapperStyle = { overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" };
+    const tdStyle = (isAction = false) => ({ padding: isMobile ? "6px 8px" : "8px 10px", verticalAlign: "center", fontSize: isMobile ? 11 : 13, ...(isAction && { textAlign: "right" }) });
 
     return (
       <div style={{ background: WP.bg, minHeight: "100vh", fontFamily: FF }}>
@@ -463,9 +386,7 @@ const RichContentPageManagements = () => {
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
             <strong style={{ margin: 0, fontSize: isMobile ? 18 : 21, fontWeight: 400, color: WP.text }}>Rich Content Pages</strong>
           </div>
-          <div>
-            <BtnBlue onClick={() => { resetForm(); setView("form"); }} size="sm">Add New Page</BtnBlue>
-          </div>
+          <div><BtnBlue onClick={() => { resetForm(); setView("form"); }} size="sm">Add New Page</BtnBlue></div>
           <FlashMsg msg={message} />
         </div>
 
@@ -517,24 +438,25 @@ const RichContentPageManagements = () => {
                   </thead>
                   <tbody>
                     {pages.map((item, idx) => (
-                      <tr key={item._id}
-                        onMouseEnter={() => setHoveredRow(item._id)}
-                        onMouseLeave={() => setHoveredRow(null)}
-                        style={{ borderBottom: `1px solid ${WP.line}`, background: hoveredRow === item._id ? "#f9f9f9" : WP.white }}>
-                        <td style={{ ...tdStyle(), width: 28 }}>
-                          <input type="checkbox" style={{ cursor: "pointer", marginTop: 2 }} />
-                        </td>
+                      <tr key={item._id} onMouseEnter={() => setHoveredRow(item._id)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: `1px solid ${WP.line}`, background: hoveredRow === item._id ? "#f9f9f9" : WP.white }}>
+                        <td style={{ ...tdStyle(), width: 28 }}><input type="checkbox" style={{ cursor: "pointer", marginTop: 2 }} /></td>
                         <td style={tdStyle()}>{(currentPage - 1) * 100 + idx + 1}</td>
                         <td style={tdStyle()}>
                           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                              <strong style={{ fontSize: isMobile ? 13 : 14 }}>
+                              <strong title={item.titleEn || "Untitled"} style={{ fontSize: isMobile ? 13 : 14 }}>
                                 <button onClick={() => handleEdit(item)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: isMobile ? 13 : 14, fontWeight: 600, color: WP.text, fontFamily: FF, textAlign: "left" }}>
-                                  {item.titleEn || <em style={{ color: WP.textLight }}>Untitled</em>}
+                                  {item.titleEn ? (
+                                    item.titleEn.length > 35
+                                      ? `${item.titleEn.slice(0, 35)}...`
+                                      : item.titleEn
+                                  ) : (
+                                    <em style={{ color: WP.textLight }}>Untitled</em>
+                                  )}
                                 </button>
                               </strong>
                               {item.titleHi && (
-                                <span style={{ fontSize: 10, background: WP.blueBg, color: WP.blue, padding: "2px 5px", borderRadius: 3, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                                <span title={item.titleHi} style={{ fontSize: 10, background: WP.blueBg, color: WP.blue, padding: "2px 5px", borderRadius: 3, display: "inline-flex", alignItems: "center", gap: 2 }}>
                                   <span>हि</span> <span>{item.titleHi.length > (isMobile ? 15 : 20) ? item.titleHi.slice(0, isMobile ? 15 : 20) + "…" : item.titleHi}</span>
                                 </span>
                               )}
@@ -552,25 +474,15 @@ const RichContentPageManagements = () => {
                                 <span style={{ color: WP.border }}>|</span>
                                 <LinkBtn onClick={() => window.open(`${SITE_URL}/preview/${item.slug}`, "_blank")}>Preview</LinkBtn>
                                 <span style={{ color: WP.border }}>|</span>
-                                {item.isPublished
-                                  ? <LinkBtn onClick={() => handleDraft(item._id)}>Move to Draft</LinkBtn>
-                                  : <LinkBtn onClick={() => handlePublish(item._id)} color={WP.green}>Publish</LinkBtn>}
+                                {item.isPublished ? <LinkBtn onClick={() => handleDraft(item._id)}>Move to Draft</LinkBtn> : <LinkBtn onClick={() => handlePublish(item._id)} color={WP.green}>Publish</LinkBtn>}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td style={tdStyle()}>
-                          {categories.find(c => c._id === item.categoryId)?.categoryNameEn || <span style={{ color: WP.border }}>—</span>}
-                        </td>
-                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
-                          {formatDate(item.createdAt)}
-                        </td>
-                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
-                          {item.isPublished && item.publishDate ? formatDate(item.publishDate) : <span style={{ color: WP.border }}>—</span>}
-                        </td>
-                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>
-                          {formatDate(item.updatedAt)}
-                        </td>
+                        <td style={tdStyle()}>{categories.find(c => c._id === item.categoryId)?.categoryNameEn || <span style={{ color: WP.border }}>—</span>}</td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>{formatDate(item.createdAt)}</td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>{item.isPublished && item.publishDate ? formatDate(item.publishDate) : <span style={{ color: WP.border }}>—</span>}</td>
+                        <td style={{ ...tdStyle(), whiteSpace: "nowrap" }}>{formatDate(item.updatedAt)}</td>
                         <td style={{ ...tdStyle(true) }}>
                           <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
                             <BtnSecondary size="sm" onClick={() => handleEdit(item)}><FaEdit size={isMobile ? 9 : 11} /> {!isMobile && "Edit"}</BtnSecondary>
@@ -583,9 +495,7 @@ const RichContentPageManagements = () => {
                             <BtnDanger size="sm" onClick={() => handleDelete(item._id, item.titleEn)}><FaTrashAlt size={isMobile ? 9 : 11} /> {!isMobile && "Delete"}</BtnDanger>
                           </div>
                         </td>
-                        <td style={tdStyle()}>
-                          <StatusBadge published={item.isPublished} active={item.isActive} />
-                        </td>
+                        <td style={tdStyle()}><StatusBadge published={item.isPublished} active={item.isActive} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -600,35 +510,17 @@ const RichContentPageManagements = () => {
     );
   }
 
-  /* FORM BODY (shared between normal and fullscreen) */
+  // ========== FORM BODY (shared) ==========
   const FormBody = () => {
     const gridColumns = isMobile ? "1fr" : "1fr 260px";
-
     return (
       <>
         <FlashMsg msg={message} />
         <div style={{ display: "grid", gridTemplateColumns: gridColumns, gap: isMobile ? 12 : 16, padding: isMobile ? "12px" : "16px 20px", maxWidth: 1380, margin: "0 auto" }}>
-          {/* LEFT COLUMN */}
           <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 12 : 14 }}>
             <Card>
-              <input
-                name="titleEn"
-                value={form.titleEn}
-                onChange={handleChange}
-                placeholder="Add English title"
-                style={{ ...fi, fontSize: isMobile ? 18 : 22, fontWeight: 400, padding: "6px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0, marginBottom: 10 }}
-                onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)}
-                onBlur={(e) => (e.target.style.borderBottomColor = WP.line)}
-              />
-              <input
-                name="titleHi"
-                value={form.titleHi}
-                onChange={handleChange}
-                placeholder="शीर्षक (Hindi)"
-                style={{ ...fi, fontSize: isMobile ? 14 : 16, padding: "5px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0 }}
-                onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)}
-                onBlur={(e) => (e.target.style.borderBottomColor = WP.line)}
-              />
+              <input name="titleEn" value={form.titleEn} onChange={handleChange} placeholder="Add English title" style={{ ...fi, fontSize: isMobile ? 18 : 22, fontWeight: 400, padding: "6px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0, marginBottom: 10 }} onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)} onBlur={(e) => (e.target.style.borderBottomColor = WP.line)} />
+              <input name="titleHi" value={form.titleHi} onChange={handleChange} placeholder="शीर्षक (Hindi)" style={{ ...fi, fontSize: isMobile ? 14 : 16, padding: "5px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0 }} onFocus={(e) => (e.target.style.borderBottomColor = WP.focus)} onBlur={(e) => (e.target.style.borderBottomColor = WP.line)} />
               <div style={{ marginTop: 10, display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: isMobile ? 6 : 6, fontSize: 13 }}>
                 <span style={{ color: WP.textMid, fontWeight: 600 }}>Permalink:</span>
                 <span style={{ color: WP.textMid }}>{SITE_URL}/</span>
@@ -644,13 +536,11 @@ const RichContentPageManagements = () => {
             </Card>
           </div>
 
-          {/* RIGHT SIDEBAR */}
           <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 12 : 14 }}>
             <Card title="View Mangments Tools">
               <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 6, borderBottom: `1px solid ${WP.line}`, flexWrap: "wrap", gap: 4 }}>
                   <span>Status: <strong style={{ color: isPublished ? WP.greenDark : WP.amber }}>{isPublished ? "Published" : "Draft"}</strong></span>
-                  <AutoSaveIndicator status={autoSaveStatus} />
                 </div>
                 <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", paddingBottom: 6, borderBottom: `1px solid ${WP.line}` }}>
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} style={{ accentColor: WP.green, cursor: "pointer" }} />
@@ -666,17 +556,15 @@ const RichContentPageManagements = () => {
                 </div>
               </div>
             </Card>
-            <Card
-              title={
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 8 }}>
-                  <span>Short Description -</span>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={() => setExcerptLang("en")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "en" ? 600 : 400, color: excerptLang === "en" ? WP.blue : WP.textMid }}>English</button>
-                    <button onClick={() => setExcerptLang("hi")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "hi" ? 600 : 400, color: excerptLang === "hi" ? WP.blue : WP.textMid }}>Hindi</button>
-                  </div>
+            <Card title={
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 8 }}>
+                <span>Short Description -</span>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={() => setExcerptLang("en")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "en" ? 600 : 400, color: excerptLang === "en" ? WP.blue : WP.textMid }}>English</button>
+                  <button onClick={() => setExcerptLang("hi")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "hi" ? 600 : 400, color: excerptLang === "hi" ? WP.blue : WP.textMid }}>Hindi</button>
                 </div>
-              }
-            >
+              </div>
+            }>
               {excerptLang === "en" ? (
                 <textarea name="shortDescriptionEn" placeholder="Short Description English" value={form.shortDescriptionEn} onChange={handleChange} rows={4} style={{ ...fi, resize: "vertical" }} {...focus} />
               ) : (
@@ -704,7 +592,7 @@ const RichContentPageManagements = () => {
     );
   };
 
-  /* NORMAL FORM VIEW with sticky bar */
+  // ========== NORMAL FORM VIEW ==========
   if (view === "form" && !isFormFullscreen) {
     return (
       <div style={{ background: WP.bg, minHeight: "100vh", fontFamily: FF }}>
@@ -713,16 +601,13 @@ const RichContentPageManagements = () => {
             <button onClick={goBackToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}><FaArrowLeft size={11} /> Back To List Page</button>
             <span style={{ color: WP.border }}>›</span>
             <span style={{ fontSize: isMobile ? 12 : 14, color: WP.text, fontWeight: 600 }}>{editingId ? "Edit Page" : "Add New Page"}</span>
-            <AutoSaveIndicator status={autoSaveStatus} />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <BtnDanger onClick={goBackToList} style={{ ...btnBase, background: "none", border: `1px solid ${WP.border}`, color: WP.red, fontSize: 12, padding: "2px 8px" }}><FaTimes size={10} /> Close</BtnDanger>
             <BtnSecondary size="sm" onClick={() => form.slug && window.open(`${SITE_URL}/preview/${form.slug}`, "_blank")} disabled={!form.slug}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
             <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}><FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}</BtnBlack>
             <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}><FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}</BtnGreen>
-            {isMobile && (
-              <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff" }}><FaExpand size={10} /></button>
-            )}
+            {isMobile && <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff" }}><FaExpand size={10} /></button>}
             <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff", padding: "0 8px", fontSize: isMobile ? 11 : 13 }}><FaExpand size={10} /> {!isMobile && "Fullscreen"}</button>
           </div>
         </div>
@@ -731,7 +616,7 @@ const RichContentPageManagements = () => {
     );
   }
 
-  /* FULLSCREEN MODE */
+  // ========== FULLSCREEN FORM VIEW ==========
   if (isFormFullscreen) {
     return (
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: WP.bg, zIndex: 2000, overflowY: "auto", fontFamily: FF }}>
@@ -739,7 +624,6 @@ const RichContentPageManagements = () => {
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button onClick={goBackToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}><FaArrowLeft size={11} /> Back To List Page</button>
             <span style={{ fontSize: isMobile ? 12 : 14, fontWeight: 600 }}>{editingId ? "Edit Page (Fullscreen)" : "Add New Page (Fullscreen)"}</span>
-            <AutoSaveIndicator status={autoSaveStatus} />
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <BtnSecondary size="sm" onClick={() => form.slug && window.open(`${SITE_URL}/preview/${form.slug}`, "_blank")} disabled={!form.slug}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
