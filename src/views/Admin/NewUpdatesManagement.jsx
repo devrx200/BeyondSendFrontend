@@ -12,19 +12,20 @@ import {
   FormGroup,
   Label,
   Input,
-  Badge, Col , Row
+  Badge, Col, Row
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBullhorn } from "react-icons/fa";
 import Swal from "sweetalert2";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
 const NewUpdates = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const [list, setList] = useState([]);
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-
+  
+  // console.log("Token:", token);
   const [formData, setFormData] = useState({
     titleEng: "",
     titleHin: "",
@@ -37,20 +38,21 @@ const NewUpdates = () => {
   });
 
   /* ================= LOAD LIST ================= */
-  const loadNotices = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/notice-ticker/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setList(res.data.data || []);
-    } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Failed to load notices", "error");
-    }
-  };
-
   useEffect(() => {
+    const loadNotices = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/notice-ticker/all`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setList(res.data.data || []);
+      } catch (err) {
+        Swal.fire("Error", err.response?.data?.message || "Failed to load notices", "error");
+      }
+    };
+
+
     loadNotices();
-  }, [token]);
+  }, [API_URL, token]);
 
   /* ================= MODAL ================= */
   const toggleModal = () => {
@@ -105,7 +107,7 @@ const NewUpdates = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       Swal.fire("Success", res.data.message, "success");
-      loadNotices();
+      // loadNotices();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Failed", "error");
     }
@@ -143,7 +145,7 @@ const NewUpdates = () => {
 
       Swal.fire("Success", res.data.message, "success");
       toggleModal();
-      loadNotices();
+      // loadNotices();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Operation failed", "error");
     }
@@ -278,32 +280,32 @@ const NewUpdates = () => {
                 </Input>
               </FormGroup>
               <Row>
-              <Col xs={6}>
-                <Label className="fw-semibold small">Status</Label>
-                <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
-                  <option value="true">✅ Active</option>
-                  <option value="false">⛔ Inactive</option>
-                </Input>
-              </Col>
-               <Col xs={6}>
-               <FormGroup>
-                <Label>Open in New Tab</Label>
-                <Input
-                  type="select"
-                  value={String(formData.openInNewTab)}
-                  disabled={!formData.isExternal}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      openInNewTab: e.target.value === "true"
-                    })
-                  }
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </Input>
-              </FormGroup>
-               </Col>
+                <Col xs={6}>
+                  <Label className="fw-semibold small">Status</Label>
+                  <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
+                    <option value="true">✅ Active</option>
+                    <option value="false">⛔ Inactive</option>
+                  </Input>
+                </Col>
+                <Col xs={6}>
+                  <FormGroup>
+                    <Label>Open in New Tab</Label>
+                    <Input
+                      type="select"
+                      value={String(formData.openInNewTab)}
+                      disabled={!formData.isExternal}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          openInNewTab: e.target.value === "true"
+                        })
+                      }
+                    >
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
               </Row>
 
               <FormGroup>

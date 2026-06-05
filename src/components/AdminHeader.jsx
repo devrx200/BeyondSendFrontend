@@ -125,7 +125,7 @@ const AdminHeader = ({ toggleSidebar }) => {
       showConfirmButton: false
     });
 
-    navigate("/admin/login", {
+    navigate("/auth/login", {
       replace: true
     });
 

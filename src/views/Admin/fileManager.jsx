@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Row, Col, Table, Spinner, Badge, Button } from "reactstrap";
 
-const API = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 const FileManager = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+const API = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
   const formatDateTime = (date) =>
     new Date(date).toLocaleString("en-IN", {
       day: "2-digit",

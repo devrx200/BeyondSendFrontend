@@ -17,9 +17,10 @@ import {
   FaFileCode,
   FaFileArchive
 } from "react-icons/fa";
-const API_URL = import.meta.env.VITE_API_URL;
 
 const FileUploadModal = ({ isOpen, toggle }) => {
+   const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -28,16 +29,18 @@ const FileUploadModal = ({ isOpen, toggle }) => {
   const [fileList, setFileList] = useState([]);
   const [hoveredId, setHoveredId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-
+ 
   /* ================= FETCH FILE LIST ================= */
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/files/list`,
-          { headers: {
+        {
+          headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
-          }}  
-        );
+          }
+        }
+      );
       setFileList(res.data?.data || []);
     } catch {
       setFileList([]);
@@ -134,7 +137,7 @@ const FileUploadModal = ({ isOpen, toggle }) => {
     try {
       setUploading(true);
       await axios.post(`${API_URL}/api/files/upload`, fd, {
-        headers: { "Content-Type": "multipart/form-data" , Authorization: `Bearer ${token}`},
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
         onUploadProgress: (e) => setProgress(Math.round((e.loaded * 100) / e.total))
       });
 

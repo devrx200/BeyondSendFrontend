@@ -53,7 +53,7 @@ const DownloadManagement = () => {
 
   useEffect(() => {
     fetchDownloads();
-  }, []);
+  }, [token, API_URL]);
 
   /* ================= FILE ================= */
   const handleFileChange = (e) => {

@@ -24,11 +24,11 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-const API = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
-
+  const API = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
@@ -90,79 +90,64 @@ const AnnouncementsManagement = () => {
     }
   };
 
-  /* ================= FETCH LIST ================= */
-  // const fetchAnnouncements = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await axios.get(`${API}/api/get-announcements-list`);
-  //     setAnnouncements(res.data.data || []);
-  //   } catch (err) {
-  //     Swal.fire({
-  //       icon: "error",
-  //       title: isHindi ? "त्रुटि" : "Error",
-  //       text: err.response?.data?.message || "Failed to load announcements"
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  const fetchAnnouncements = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API}/api/get-announcements-list`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const list = (res.data.data || []).map((item) => ({
-        ...item,
-        _id: item.id || item._id,
-        fromDate: item.fromDate ? item.fromDate.split("T")[0] : "",
-        expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
-        categoryId: item.categoryId || null,
-        isActive: item.isActive !== false,
-        isExternal: !!item.isExternal,
-        isNew: !!item.isNew,
-        isSchemes: !!item.isSchemes,
-        openInNewTab: !!item.openInNewTab
-      }));
-
-      setAnnouncements(list);
-      const orders = list
-        .map((a) => Number(a.displayOrder))
-        .filter((o) => !isNaN(o));
-
-      setUsedOrders(orders);
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: isHindi ? "त्रुटि" : "Error",
-        text: err.response?.data?.message || "Failed to load announcements"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
   useEffect(() => {
+    const fetchAnnouncements = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API}/api/get-announcements-list`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const list = (res.data.data || []).map((item) => ({
+          ...item,
+          _id: item.id || item._id,
+          fromDate: item.fromDate ? item.fromDate.split("T")[0] : "",
+          expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
+          categoryId: item.categoryId || null,
+          isActive: item.isActive !== false,
+          isExternal: !!item.isExternal,
+          isNew: !!item.isNew,
+          isSchemes: !!item.isSchemes,
+          openInNewTab: !!item.openInNewTab
+        }));
+
+        setAnnouncements(list);
+        const orders = list
+          .map((a) => Number(a.displayOrder))
+          .filter((o) => !isNaN(o));
+
+        setUsedOrders(orders);
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: isHindi ? "त्रुटि" : "Error",
+          text: err.response?.data?.message || "Failed to load announcements"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
+
     fetchAnnouncements();
     fetchCategories();
-  }, [token]);
+  }, [API, token]);
 
- const getNextAvailableOrder = (requested, usedOrders) => {
-  let order = requested;
-  while (usedOrders.includes(order)) order++;
-  return order;
-};
+  const getNextAvailableOrder = (requested, usedOrders) => {
+    let order = requested;
+    while (usedOrders.includes(order)) order++;
+    return order;
+  };
 
-useEffect(() => {
-  const schemeOrders = announcements
-    .filter(a => a.isSchemes === formData.isSchemes)
-    .map(a => Number(a.displayOrder))
-    .filter(Boolean);
+  useEffect(() => {
+    const schemeOrders = announcements
+      .filter(a => a.isSchemes === formData.isSchemes)
+      .map(a => Number(a.displayOrder))
+      .filter(Boolean);
 
-  setUsedOrders(schemeOrders);
-}, [formData.isSchemes, announcements]);
+    setUsedOrders(schemeOrders);
+  }, [formData.isSchemes, announcements]);
 
   /* ================= MODAL ================= */
   const toggleModal = () => {
@@ -244,7 +229,7 @@ useEffect(() => {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchAnnouncements();
+      window.location.reload();
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -317,7 +302,7 @@ useEffect(() => {
         res = await axios.post(`${API}/api/create-announcement`, fd, {
           headers: {
             'Content-Type': 'multipart/form-data',
-             Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`
           }
         });
         Swal.fire({
@@ -329,7 +314,7 @@ useEffect(() => {
         });
       }
       toggleModal();
-      fetchAnnouncements();
+      window.location.reload();
     } catch (err) {
       console.error("❌ Submit error:", err.response?.data || err.message);
       console.error("Full error:", err);

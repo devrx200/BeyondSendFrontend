@@ -39,8 +39,7 @@ import { Navigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 /* ================= INITIAL FORM STATE ================= */
 const initialFormData = {
   titleEng: "",
@@ -68,7 +67,8 @@ const initialDocumentData = {
 };
 
 const MultiSectionPagesMangagement = () => {
-
+const API_URL = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
   const { isHindi } = useLanguage();
 
   // Main state

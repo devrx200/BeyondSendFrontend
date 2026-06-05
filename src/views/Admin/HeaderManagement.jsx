@@ -14,9 +14,10 @@ import { FaSave } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 const HeaderManagement = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
   const [formData, setFormData] = useState({
     phone: "",
     email: "",
