@@ -13,10 +13,10 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 
+
+const HelpGuidance = () => {
 const API_URL = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
-const HelpGuidance = () => {
-
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -78,7 +78,7 @@ const HelpGuidance = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, [page, search, statusFilter, accessFilter]);
+  useEffect(() => { loadData(); }, [page, search, statusFilter, accessFilter, token, API_URL]);
 
   /* ── HELPERS ── */
   const getEmbedUrl = (url) => {
@@ -113,24 +113,40 @@ const HelpGuidance = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.title.trim()) return Swal.fire("Validation", "Title required", "warning");
-    const fd = new FormData();
-    Object.keys(form).forEach(k => fd.append(k, form[k]));
-    if (form.contentType === "PDF" && file) fd.append("file", file);
-    try {
-      const url = editingId
-        ? `${API_URL}/api/update-help-guidance/${editingId}`
-        : `${API_URL}/api/create-help-guidance`;
-      const method = editingId ? "put" : "post";
-      const res = await axios({ method, url, data: fd }, { headers: { Authorization: `Bearer ${token}` } });
-      Swal.fire("Success", res?.data?.message, "success");
-      toggleModal();
-      loadData();
-    } catch (err) {
-      Swal.fire("Error", err?.response?.data?.message || "Error", "error");
-    }
-  };
+  e.preventDefault();
+  
+  if (!form.title.trim()) {
+    return Swal.fire("Validation", "Title required", "warning");
+  }
+  
+  const fd = new FormData();
+  Object.keys(form).forEach(k => fd.append(k, form[k]));
+  if (form.contentType === "PDF" && file) fd.append("file", file);
+  
+  try {
+    const url = editingId
+      ? `${API_URL}/api/update-help-guidance/${editingId}`
+      : `${API_URL}/api/create-help-guidance`;
+    const method = editingId ? "put" : "post";
+    
+    // Fix: Move headers to config object, not as second parameter after data
+    const res = await axios({
+      method, 
+      url, 
+      data: fd,
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data" // Required for file upload
+      }
+    });
+    
+    Swal.fire("Success", res?.data?.message || "Operation successful", "success");
+    toggleModal();
+    loadData();
+  } catch (err) {
+    Swal.fire("Error", err?.response?.data?.message || "Error occurred", "error");
+  }
+};
 
   const handleEdit = (item) => {
     setEditingId(item._id);

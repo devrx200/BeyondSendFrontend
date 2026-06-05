@@ -20,8 +20,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { FaPlus, FaEdit, FaTrash, FaSave } from "react-icons/fa";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 /* ---------- CURRENT ACADEMIC YEAR ---------- */
 const getCurrentAcademicYear = () => {
   const now = new Date();
@@ -34,7 +33,8 @@ const AdminEducationStats = () => {
   const [list, setList] = useState([]);
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
-
+const API_URL = import.meta.env.VITE_API_URL;
+const token = sessionStorage.getItem("authToken");
   // ✅ FIXED STATE
   const [form, setForm] = useState({
     totalGovernmentUniversities: 0,

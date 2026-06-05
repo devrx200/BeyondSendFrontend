@@ -23,10 +23,10 @@ import Swal from "sweetalert2";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
+
+const DirectorateNoticeManagement = () => {
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
-const DirectorateNoticeManagement = () => {
-
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [list, setList] = useState([]);
@@ -92,7 +92,7 @@ const DirectorateNoticeManagement = () => {
   useEffect(() => {
     fetchList();
     fetchCategories();
-  }, [token]);
+  }, [API,token]);
 
   /* ================= MODAL ================= */
 

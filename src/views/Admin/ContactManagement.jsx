@@ -31,14 +31,13 @@ const token = sessionStorage.getItem("authToken");
   });
 
   /* ================= LOAD DATA ================= */
-  const load = async () => {
-    const res = await axios.get(`${API}/api/contact-list-officials`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  useEffect(() => {
+  const getData = async () => {
+    const res = await axios.get(`${API}/api/contact-list-officials`);
     setData(res.data.data || {});
   };
 
-  useEffect(() => { load() }, []);
+   getData() }, [token, API]);
 
   const validateAddressField = (name, value) => {
     if (!value || !value.trim()) return "This field is required";
@@ -165,7 +164,7 @@ const token = sessionStorage.getItem("authToken");
       });
 
       Swal.fire("Success", res.data.message, "success");
-      load();
+    
     } catch (err) {
       Swal.fire("Error", err?.response?.data?.message || "Something went wrong", "error");
     } finally {
@@ -264,15 +263,23 @@ const token = sessionStorage.getItem("authToken");
          }
       });
 
-      Swal.fire("Success", res.data.message, "success");
+    Swal.fire("Success", res.data.message, "success").then(() => {
+  setTimeout(() => {
+    window.location.reload();
+  }, 2000);
+});
       setModal(false);
       setOfficial({});
       setFile(null);
       setEditId(null);
-      load();
-    } catch (err) {
-      Swal.fire("Error", err?.response?.data?.message || "Unable to save official", "error");
-    }
+    }catch (err) {
+    console.log("Error object:", err);
+    console.log("Error response:", err.response);
+    console.log("Error message:", err.message);
+    
+    // This will show you the actual error
+    Swal.fire("Error", JSON.stringify(err.response?.data || err.message), "error");
+  }
   };
 
   const handleEdit = (o) => {
@@ -293,8 +300,15 @@ const handleDelete = (o) => {
         await axios.delete(`${API}/api/contact/official/${o._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        Swal.fire("Deleted!", `${o.name} has been deleted.`, "success");
-        load();
+      Swal.fire({
+  title: "Deleted!",
+  text: `${o.name} has been deleted.`,
+  icon: "success",
+  timer: 2000,
+  showConfirmButton: false
+}).then(() => {
+  window.location.reload();
+}); // Reload the page to reflect changes
       } catch (err) {
         Swal.fire("Error", err?.response?.data?.message || "Unable to delete official", "error");
       }
