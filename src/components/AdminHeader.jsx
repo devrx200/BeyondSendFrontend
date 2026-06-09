@@ -233,7 +233,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                   src={
                     profile?.profileImage
                       ? `${API_URL}${profile.profileImage}`
-                      : "/default-avatar.png"
+                      : "/default-avatar.svg"
                   }
                   alt="Profile"
                   className="adm-profile-pill-avatar"
@@ -320,7 +320,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                     src={
                       profile?.profileImage
                         ? `${API_URL}${profile.profileImage}`
-                        : "/default-avatar.png"
+                        : "/default-avatar.svg"
                     }
                     alt="Profile"
                     className="img-fluid rounded-circle shadow border"
