@@ -351,7 +351,7 @@ try {
   /* ================= TREE RENDER ================= */
   const renderTree = (menuItems) =>
     menuItems.map((menu, index) => (
-      <Fragment key={menu._id}>
+      <Fragment key={menu._id || `menu-${index}`}>
         {/* MAIN MENU */}
         <tr className="bg-danger">
           <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"14px", width:"30px" }}>{index + 1}</td>
@@ -409,7 +409,7 @@ try {
 
         {/* SUBMENU */}
         {menu.submenu?.map((sub, subIndex) => (
-          <Fragment key={sub._id}>
+          <Fragment key={sub._id || `sub-${subIndex}`}>
             <tr>
               <td style={{ paddingLeft:"30px", color:"green" , fontWeight:"500" , fontSize:"14px"}}>{subIndex + 1}</td>
               <td style={{ paddingLeft:"50px", color:"green" , fontWeight:"500" , fontSize:"14px" }}>{sub.titleEng}</td>
@@ -468,7 +468,7 @@ try {
 
             {/* CHILD */}
             {sub.submenu?.map((child , index2) => (
-              <tr key={child._id}>
+              <tr key={child._id || `child-${index2}`}>
               <td style={{paddingLeft: 80,color:"green" , fontWeight:"500" , fontSize:"14px"}}>{index2 + 1}</td>
 
                 <td style={{ paddingLeft: 80 , color:"blue" , fontWeight:"500"}}>{child.titleEng}</td>
@@ -603,11 +603,11 @@ try {
                   onChange={handleChange}
                 >
                   <option value="">None (Main Menu)</option>
-                  {menuItems.map((menu) => (
-                    <option key={menu._id} value={menu._id}>
-                      {menu.titleEng}
-                    </option>
-                  ))}
+                    {menuItems.map((menu, mIndex) => (
+                      <option key={menu._id || `menu-opt-${mIndex}`} value={menu._id}>
+                        {menu.titleEng}
+                      </option>
+                    ))}
                 </Input>
               </FormGroup>
               {form.parentMenuId && (
@@ -623,8 +623,8 @@ try {
 
                     {menuItems
                       .find((m) => m._id === form.parentMenuId)
-                      ?.submenu?.map((sub) => (
-                        <option key={sub._id} value={sub._id}>
+                      ?.submenu?.map((sub, si) => (
+                        <option key={sub._id || `sub-opt-${si}`} value={sub._id}>
                           {sub.titleEng}
                         </option>
                       ))}

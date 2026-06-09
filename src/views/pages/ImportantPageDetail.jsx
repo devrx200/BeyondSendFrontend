@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Container,
   Card,
@@ -11,6 +12,8 @@ import {
   Row,
   Col,
   Spinner,
+  Breadcrumb,
+  BreadcrumbItem,
 } from "reactstrap";
 import {
   FaCalendarAlt,
@@ -18,10 +21,12 @@ import {
   FaChevronLeft,
   FaDownload,
   FaHome,
+  FaList,
   FaPrint,
 } from "react-icons/fa";
 import axios from "axios";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { FaTicketSimple } from "react-icons/fa6";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -32,7 +37,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
   const [detail, setDetail] = useState(prefetchedData);
   const [loading, setLoading] = useState(!prefetchedData);
 
-  // Sync when prefetchedData changes (e.g., new slug from resolver)
+  // Sync when prefetchedData changes
   useEffect(() => {
     if (prefetchedData) {
       setDetail(prefetchedData);
@@ -40,9 +45,9 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
     }
   }, [prefetchedData]);
 
-  // Fetch only when slug changes and no prefetchedData is available
+  // Fetch only when slug changes and no prefetchedData
   useEffect(() => {
-    if (prefetchedData) return; // already have data
+    if (prefetchedData) return;
 
     let isMounted = true;
     const fetchDetail = async () => {
@@ -128,95 +133,147 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
     win.print();
   };
 
+  // Helper to generate meta description (strip HTML tags, truncate)
+  const getMetaDescription = () => {
+    if (!detail) return "";
+    const rawHtml = isHindi ? detail.descriptionHi : detail.descriptionEn;
+    if (!rawHtml) return "";
+    const text = rawHtml.replace(/<[^>]*>/g, "").trim();
+    return text.length > 160 ? text.substring(0, 157) + "..." : text;
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <div className="text-center py-5">
-        <Spinner color="primary" />
-      </div>
+      <>
+        <Helmet>
+          <html lang={isHindi ? "hi" : "en"} />
+          <title>{isHindi ? "लोड हो रहा है..." : "Loading..."}</title>
+        </Helmet>
+        <div className="text-center py-5">
+          <Spinner color="primary" />
+        </div>
+      </>
     );
   }
 
+  // 404 state
   if (!detail) {
     return (
-      <Container className="py-5">
-        <Row className="justify-content-center align-items-center">
-          <Col md={8} lg={6}>
-            <Card
-              className="border-0 shadow-lg text-center"
-              style={{ borderRadius: "16px", background: "linear-gradient(135deg, #f8fbff, #eef4ff)" }}
-            >
-              <CardBody className="p-5">
-                <h1 className="fw-bold mb-3" style={{ fontSize: "80px", color: "#0d6efd", letterSpacing: "2px" }}>
-                  404
-                </h1>
-                <h4 className="fw-semibold mb-2">Oops! Page Not Found</h4>
-                <p className="text-muted mb-4">
-                  The page you are looking for might have been removed,<br />
-                  renamed or is temporarily unavailable.
-                </p>
-                <Button tag={Link} to="/" color="primary" size="lg" className="rounded-pill px-4">
-                  <FaHome className="me-2" /> Go to Home
-                </Button>
-              </CardBody>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
+      <>
+        <Helmet>
+          <html lang={isHindi ? "hi" : "en"} />
+          <title>{isHindi ? "पृष्ठ नहीं मिला" : "Page Not Found"}</title>
+          <meta name="description" content={isHindi ? "अनुरोधित पृष्ठ मौजूद नहीं है" : "The requested page does not exist"} />
+        </Helmet>
+        <Container className="py-5">
+          <Row className="justify-content-center align-items-center">
+            <Col md={8} lg={6}>
+              <Card
+                className="border-0 shadow-lg text-center"
+                style={{ borderRadius: "16px", background: "linear-gradient(135deg, #f8fbff, #eef4ff)" }}
+              >
+                <CardBody className="p-5">
+                  <h1 className="fw-bold mb-3" style={{ fontSize: "80px", color: "#0d6efd", letterSpacing: "2px" }}>
+                    404
+                  </h1>
+                  <h4 className="fw-semibold mb-2">{isHindi ? "उफ़! पृष्ठ नहीं मिला" : "Oops! Page Not Found"}</h4>
+                  <p className="text-muted mb-4">
+                    {isHindi
+                      ? "आप जिस पृष्ठ को खोज रहे हैं, उसे हटा दिया गया होगा, नाम बदल दिया गया होगा या अस्थायी रूप से अनुपलब्ध है।"
+                      : "The page you are looking for might have been removed, renamed or is temporarily unavailable."}
+                  </p>
+                  <Button tag={Link} to="/" color="primary" size="lg" className="rounded-pill px-4">
+                    <FaHome className="me-2" /> {isHindi ? "होम पर जाएं" : "Go to Home"}
+                  </Button>
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </>
     );
   }
 
+  // Normal view with SEO
+  const pageTitle = isHindi ? detail.titleHi : detail.titleEn;
+  const metaDescription = getMetaDescription();
+
   return (
-    <Container className="py-4">
-      <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
-        <CardHeader
-          className="text-white border-0 p-4"
-          style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
-        >
-          <h1 className="fw-bold mb-3 text-white">{isHindi ? detail.titleHi : detail.titleEn}</h1>
-          <hr />
-          <Row className="g-2 align-items-center">
-            <Col xs="auto">
-              <Badge color="light" className="text-dark rounded-pill px-3 py-2">
-                <FaCalendarAlt size={11} /> {isHindi ? "प्रकाशन तिथि" : "Created"} : {formatDateTime(detail.createdAt)}
-              </Badge>
-            </Col>
-            <Col xs="auto">
-              <Badge color="light" className="text-dark rounded-pill px-3 py-2">
-                <FaCalendarPlus size={11} /> {isHindi ? "अपडेट" : "Updated"} : {formatDateTime(detail.updatedAt)}
-              </Badge>
-            </Col>
-            <Col className="text-end">
-              <Badge tag={Link} to="/" color="dark" className="text-white px-3 py-2">
-                <FaChevronLeft size={12} /> {isHindi ? "वापस जाएं मुख्य पृष्ठ पर" : "Back To Home"}
-              </Badge>
-            </Col>
-          </Row>
-        </CardHeader>
+    <>
+      <Helmet>
+        <html lang={isHindi ? "hi" : "en"} />
+        <title>{pageTitle} - Department of Higher Education, Government of Chhattisgarh India. </title>
+        {metaDescription && <meta name="description" content={metaDescription} />}
+        <meta property="og:title" content={pageTitle} />
+        {metaDescription && <meta property="og:description" content={metaDescription} />}
+        <meta property="og:type" content="article" />
+      </Helmet>
 
-        <CardBody className="p-4">
-          <div
-            id="printable-content"
-            className="lh-lg text-secondary"
-            dangerouslySetInnerHTML={{ __html: isHindi ? detail.descriptionHi : detail.descriptionEn }}
-          />
-          <hr />
-          <div className="d-flex justify-content-between align-items-center mt-3">
-            {detail.file && (
-              <Button tag="a" href={`${API}${detail.file}`} download color="danger" size="sm">
-                <FaDownload size={14} /> {isHindi ? "डाउनलोड" : "Download"}
+      <Container className="py-4">
+        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+          <BreadcrumbItem>
+            <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+              <FaHome size={13} />
+              {isHindi ? "होम" : "Home"}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
+            <FaList size={13} />
+            {pageTitle}
+          </BreadcrumbItem>
+        </Breadcrumb>
+        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+          <CardHeader
+            className="text-white border-0 p-4"
+            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+          >
+            <h1 className="fw-bold mb-3 text-white">{pageTitle}</h1>
+            <hr />
+            <Row className="g-2 align-items-center">
+              <Col xs="auto">
+                <Badge color="light" className="text-dark rounded-pill px-3 py-2">
+                  <FaCalendarAlt size={11} /> {isHindi ? "प्रकाशन तिथि" : "Created"} : {formatDateTime(detail.createdAt)}
+                </Badge>
+              </Col>
+              <Col xs="auto">
+                <Badge color="light" className="text-dark rounded-pill px-3 py-2">
+                  <FaCalendarPlus size={11} /> {isHindi ? "अपडेट" : "Updated"} : {formatDateTime(detail.updatedAt)}
+                </Badge>
+              </Col>
+              <Col className="text-end">
+                <Badge tag={Link} to="/" color="dark" className="text-white px-3 py-2">
+                  <FaChevronLeft size={12} /> {isHindi ? "वापस जाएं मुख्य पृष्ठ पर" : "Back To Home"}
+                </Badge>
+              </Col>
+            </Row>
+          </CardHeader>
+
+          <CardBody className="p-4">
+            <div
+              id="printable-content"
+              className="lh-lg text-secondary"
+              dangerouslySetInnerHTML={{ __html: isHindi ? detail.descriptionHi : detail.descriptionEn }}
+            />
+            <hr />
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              {detail.file && (
+                <Button tag="a" href={`${API}${detail.file}`} download color="danger" size="sm">
+                  <FaDownload size={14} /> {isHindi ? "डाउनलोड" : "Download"}
+                </Button>
+              )}
+              <Button onClick={handlePrint} color="primary" size="sm">
+                <FaPrint size={14} /> {isHindi ? "प्रिंट करें" : "Print"}
               </Button>
-            )}
-            <Button onClick={handlePrint} color="primary" size="sm">
-              <FaPrint size={14} /> {isHindi ? "प्रिंट करें" : "Print"}
-            </Button>
-          </div>
-        </CardBody>
+            </div>
+          </CardBody>
 
-        <CardFooter className="bg-light text-center fw-bold">
-          {isHindi ? "धन्यवाद !" : "Thanks For Reading !"}
-        </CardFooter>
-      </Card>
-    </Container>
+          <CardFooter className="bg-light text-center fw-bold">
+            {isHindi ? "धन्यवाद !" : "Thanks For Reading !"}
+          </CardFooter>
+        </Card>
+      </Container>
+    </>
   );
 };
 
