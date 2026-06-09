@@ -12,6 +12,8 @@ import {
   Row,
   Col,
   Spinner,
+  Breadcrumb,
+  BreadcrumbItem,
 } from "reactstrap";
 import {
   FaCalendarAlt,
@@ -19,10 +21,12 @@ import {
   FaChevronLeft,
   FaDownload,
   FaHome,
+  FaList,
   FaPrint,
 } from "react-icons/fa";
 import axios from "axios";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { FaTicketSimple } from "react-icons/fa6";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -207,6 +211,18 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
       </Helmet>
 
       <Container className="py-4">
+        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+          <BreadcrumbItem>
+            <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+              <FaHome size={13} />
+              {isHindi ? "होम" : "Home"}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
+            <FaList size={13} />
+            {pageTitle}
+          </BreadcrumbItem>
+        </Breadcrumb>
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           <CardHeader
             className="text-white border-0 p-4"
