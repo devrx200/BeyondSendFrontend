@@ -1060,59 +1060,53 @@ const saveFooter = async () => {
                                 <th width="80">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {footer.socialLinks.map((item, index) => (
-                                <tr key={item._id || index}>
-                                    <td>{item.platform}</td>
-                                    <td>{item.url}</td>
-                                    <td>
+                                <tbody>
+                                    {footer.socialLinks.map((item, index) => (
+                                        <tr key={item._id || index}>
+                                            <td>{item.platform}</td>
+                                            <td>{item.url}</td>
+                                            <td className="text-center" style={{ whiteSpace: "nowrap" }}>
+                                                {/* EDIT */}
+                                                <button
+                                                    type="button"
+                                                    title="Edit"
+                                                    onClick={() => handleEditSocial(item, index)}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        marginRight: "6px",
+                                                        cursor: "pointer",
+                                                        fontSize: "16px",
+                                                        lineHeight: "1",
+                                                        color: "#198754",
+                                                    }}
+                                                >
+                                                    <FaEdit />
+                                                </button>
 
-                                        <td className="text-center" style={{ whiteSpace: "nowrap" }}>
-                                            {/* EDIT */}
-                                            <button
-                                                type="button"
-                                                title="Edit"
-                                                onClick={() => handleEditSocial(item, index)}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "16px",
-                                                    lineHeight: "1",
-                                                    color: "#198754",
-                                                }}
-                                            >
-                                                <FaEdit />
-                                            </button>
+                                                {/* DELETE */}
+                                                <button
+                                                    type="button"
+                                                    title="Delete"
+                                                    onClick={() => deleteAnyLink("social", item, index)}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        cursor: "pointer",
+                                                        fontSize: "16px",
+                                                        lineHeight: "1",
+                                                        color: "#ad2937",
+                                                    }}
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
 
-                                            {/* DELETE */}
-                                            <button
-                                                type="button"
-                                                title="Delete"
-                                                onClick={() => deleteAnyLink("social", item, index)}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    cursor: "pointer",
-                                                    fontSize: "16px",
-                                                    lineHeight: "1",
-                                                    color: "#ad2937",
-                                                }}
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </td>
-
-
-                                    </td>
-                                </tr>
-                            ))}
-
-
-                        </tbody>
+                                </tbody>
                     </Table>
                 </CardBody>
             </Card>

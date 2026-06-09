@@ -7,7 +7,6 @@ import AnnouncementsAndSchemes from "../../components/AnnouncementsAndSchemes";
 import NoticeDepAndDirectorate from "../../components/NoticeDepAndDirectorate";
 import QuickAccess from "../../components/QuickAccess";
 import { useLanguage } from "../../contexts/LanguageContext";
-
 const Home = () => {
   const { isHindi } = useLanguage();
 

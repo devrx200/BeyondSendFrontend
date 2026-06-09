@@ -151,7 +151,8 @@ const Gallery = () => {
      RENDER
   ────────────────────────────────────────── */
   return (
-    <PageLayout>
+    <PageLayout  title="Photo Gallery"
+      titleHi="चित्र प्रदर्शनी" >
 
       {/* ══ HERO BANNER ══ */}
       <div
