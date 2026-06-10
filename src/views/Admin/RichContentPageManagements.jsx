@@ -16,7 +16,6 @@ const authH = () => ({ Authorization: `Bearer ${getToken()}` });
 const SS_VIEW       = "rcpm_view";
 const SS_EDITING_ID = "rcpm_editingId";
 const SS_FORM       = "rcpm_form";
-const SS_EDITOR     = "rcpm_editor";
 const SS_FULLSCREEN = "rcpm_fullscreen";
 
 const WP = {
@@ -30,26 +29,28 @@ const WP = {
 };
 
 const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
+
 const titleToSlug = (text) => {
   if (!text) return "";
   return text.toLowerCase().trim()
-    .replace(/[^a-z0-9\s\-\/]/g, "")      
+    .replace(/[^a-z0-9\s\-\/]/g, "")
     .replace(/\s+/g, "-")
     .replace(/\-{2,}/g, "-")
-    .replace(/\/{2,}/g, "/")               
-    .replace(/^-+|-+$/g, "")              
-    .replace(/^\/+|\/+$/g, "");           
+    .replace(/\/{2,}/g, "/")
+    .replace(/^-+|-+$/g, "")
+    .replace(/^\/+|\/+$/g, "");
 };
+
 const sanitiseSlug = (raw) =>
   raw.toLowerCase()
     .replace(/ +/g, "-")
     .replace(/\-{2,}/g, "-")
-    .replace(/\/{2,}/g, "/")               
-    .replace(/[^a-z0-9\-\/]/g, "")        
-    .replace(/^\/+|\/+$/g, "");            
+    .replace(/\/{2,}/g, "/")
+    .replace(/[^a-z0-9\-\/]/g, "")
+    .replace(/^\/+|\/+$/g, "");
+
 const validateSlug = (value) => {
   if (!value) return "Slug is required";
-  // Allow letters, numbers, hyphens, and forward slashes
   if (/[^a-z0-9\-\/]/.test(value)) return "Only lowercase letters, numbers, hyphens and forward slashes allowed";
   if (value.startsWith("-") || value.endsWith("-")) return "Slug cannot start or end with a hyphen";
   if (value.startsWith("/") || value.endsWith("/")) return "Slug cannot start or end with a slash";
@@ -185,7 +186,12 @@ const Pagination = ({ currentPage, totalPages, totalItems, shown, onPrev, onNext
   </div>
 );
 
-const emptyForm = () => ({ titleEn: "", titleHi: "", slug: "", shortDescriptionEn: "", shortDescriptionHi: "", descriptionEn: "", descriptionHi: "", metaKeywords: "", tags: "", categoryId: "", isActive: true });
+const emptyForm = () => ({
+  titleEn: "", titleHi: "", slug: "",
+  shortDescriptionEn: "", shortDescriptionHi: "",
+  descriptionEn: "", descriptionHi: "",
+  metaKeywords: "", tags: "", categoryId: "", isActive: true
+});
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -200,13 +206,13 @@ const useMediaQuery = (query) => {
 };
 
 // ============================================================
-// FormBody moved OUTSIDE the main component for proper memoization
+// FormBody (now uses uncontrolled DynamicContentEditor)
 // ============================================================
 const FormBody = React.memo(({
-  form, setForm, editorContents, setEditorContents,
-  excerptLang, setExcerptLang, categories, slugError, fullSlugURL,
+  form, setForm, categories, slugError, fullSlugURL,
   isPublished, saving, editingId, handleChange, handleSlugChange,
-  handleSlugBlur, handleSubmit, handleDraft, goBackToList, isMobile, message
+  handleSlugBlur, handleSubmit, handleDraft, goBackToList, isMobile, message,
+  excerptLang, setExcerptLang
 }) => {
   const gridColumns = isMobile ? "1fr" : "1fr 260px";
   return (
@@ -241,7 +247,21 @@ const FormBody = React.memo(({
           </Card>
 
           <Card title="Page Main Content Area">
-            <DynamicContentEditor contents={editorContents} setContents={setEditorContents} engField="descriptionEn" hinField="descriptionHi" />
+            <DynamicContentEditor
+              engField="descriptionEn"
+              hinField="descriptionHi"
+              height={460}
+              initialEn={form.descriptionEn}
+              initialHi={form.descriptionHi}
+              onChange={(contentObj) => {
+                setForm(prev => ({
+                  ...prev,
+                  descriptionEn: contentObj.descriptionEn,
+                  descriptionHi: contentObj.descriptionHi,
+                }));
+              }}
+              instanceId="rich_content_editor"
+            />
           </Card>
         </div>
 
@@ -317,7 +337,6 @@ const RichContentPageManagements = () => {
   const initView        = () => sessionStorage.getItem(SS_VIEW) || "list";
   const initEditingId   = () => sessionStorage.getItem(SS_EDITING_ID) || null;
   const initForm        = () => { try { const s = sessionStorage.getItem(SS_FORM);   return s ? JSON.parse(s) : emptyForm(); } catch { return emptyForm(); } };
-  const initEditor      = () => { try { const s = sessionStorage.getItem(SS_EDITOR); return s ? JSON.parse(s) : [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } catch { return [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } };
   const initFullscreen  = () => sessionStorage.getItem(SS_FULLSCREEN) === "true";
 
   const [loading,             setLoading]             = useState(false);
@@ -334,7 +353,6 @@ const RichContentPageManagements = () => {
   const [totalItems,          setTotalItems]          = useState(0);
   const [sortBy,              setSortBy]              = useState("createdAt");
   const [sortOrder,           setSortOrder]           = useState("desc");
-  const [editorContents,      setEditorContents]      = useState(initEditor);
   const [slugError,           setSlugError]           = useState("");
   const [slugManuallyEdited,  setSlugManuallyEdited]  = useState(!!initEditingId());
   const [categories,          setCategories]          = useState([]);
@@ -349,15 +367,20 @@ const RichContentPageManagements = () => {
     sessionStorage.setItem(SS_FULLSCREEN, isFormFullscreen ? "true" : "false");
   }, [isFormFullscreen]);
 
-  const buildPayload = useCallback((f, ec) => {
-    const ed = ec[0] || {};
-    return { ...f, descriptionEn: ed.descriptionEn || "", descriptionHi: ed.descriptionHi || "", metaKeywords: f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean), tags: f.tags.split(",").map(x => x.trim()).filter(Boolean), categoryId: f.categoryId || null };
+  const buildPayload = useCallback((f) => {
+    return {
+      ...f,
+      descriptionEn: f.descriptionEn,
+      descriptionHi: f.descriptionHi,
+      metaKeywords: f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean),
+      tags: f.tags.split(",").map(x => x.trim()).filter(Boolean),
+      categoryId: f.categoryId || null
+    };
   }, []);
 
   useEffect(() => { sessionStorage.setItem(SS_VIEW, view); }, [view]);
   useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
   useEffect(() => { if (view === "form") sessionStorage.setItem(SS_FORM, JSON.stringify(form)); }, [form, view]);
-  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_EDITOR, JSON.stringify(editorContents)); }, [editorContents, view]);
   useEffect(() => { if (!message) return; const t = setTimeout(() => setMessage(null), 4500); return () => clearTimeout(t); }, [message]);
 
   // Debounced slug generation
@@ -404,7 +427,7 @@ const RichContentPageManagements = () => {
     if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
     try {
       setSaving(true);
-      const payload = buildPayload(form, editorContents);
+      const payload = buildPayload(form);
       let savedId = editingId;
       if (editingId) {
         await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() });
@@ -430,25 +453,37 @@ const RichContentPageManagements = () => {
 
   const handleEdit = (row) => {
     setEditingId(row._id);
-    setForm({ titleEn: row.titleEn || "", titleHi: row.titleHi || "", slug: row.slug || "", shortDescriptionEn: row.shortDescriptionEn || "", shortDescriptionHi: row.shortDescriptionHi || "", descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "", metaKeywords: (row.metaKeywords || []).join(", "), tags: (row.tags || []).join(", "), categoryId: row.categoryId || "", isActive: row.isActive });
-    setEditorContents([{ id: 1, descriptionEn: row.descriptionEn || "", descriptionHi: row.descriptionHi || "" }]);
-    setSlugManuallyEdited(true); setSlugError(""); setView("form");
+    setForm({
+      titleEn: row.titleEn || "",
+      titleHi: row.titleHi || "",
+      slug: row.slug || "",
+      shortDescriptionEn: row.shortDescriptionEn || "",
+      shortDescriptionHi: row.shortDescriptionHi || "",
+      descriptionEn: row.descriptionEn || "",
+      descriptionHi: row.descriptionHi || "",
+      metaKeywords: (row.metaKeywords || []).join(", "),
+      tags: (row.tags || []).join(", "),
+      categoryId: row.categoryId || "",
+      isActive: row.isActive
+    });
+    setSlugManuallyEdited(true);
+    setSlugError("");
+    setView("form");
   };
 
   const resetForm = useCallback(() => {
     setEditingId(null);
     setForm(emptyForm());
-    setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
     setSlugManuallyEdited(false);
     setSlugError("");
     setIsFormFullscreen(false);
-    [SS_EDITING_ID, SS_FORM, SS_EDITOR, SS_FULLSCREEN].forEach(k => sessionStorage.removeItem(k));
+    [SS_EDITING_ID, SS_FORM, SS_FULLSCREEN].forEach(k => sessionStorage.removeItem(k));
   }, []);
 
   const goBackToList = useCallback(async () => {
-    if (form.titleEn?.trim()) {
+    if (form.titleEn?.trim() || form.descriptionEn?.trim()) {
       try {
-        const payload = buildPayload(form, editorContents);
+        const payload = buildPayload(form);
         if (editingId) {
           await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() });
         } else {
@@ -460,7 +495,7 @@ const RichContentPageManagements = () => {
     }
     resetForm();
     setView("list");
-  }, [form, editorContents, editingId, buildPayload, resetForm]);
+  }, [form, editingId, buildPayload, resetForm]);
 
   const handleChange    = (e) => { const { name, value, type, checked } = e.target; setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value })); };
   const handleSlugChange = (e) => { setSlugManuallyEdited(true); const clean = sanitiseSlug(e.target.value); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
@@ -658,14 +693,13 @@ const RichContentPageManagements = () => {
         <FormTopBar fullscreen={false} />
         <FormBody
           form={form} setForm={setForm}
-          editorContents={editorContents} setEditorContents={setEditorContents}
-          excerptLang={excerptLang} setExcerptLang={setExcerptLang}
           categories={categories} slugError={slugError} fullSlugURL={fullSlugURL}
           isPublished={isPublished} saving={saving} editingId={editingId}
           handleChange={handleChange} handleSlugChange={handleSlugChange}
           handleSlugBlur={handleSlugBlur} handleSubmit={handleSubmit}
           handleDraft={handleDraft} goBackToList={goBackToList}
           isMobile={isMobile} message={message}
+          excerptLang={excerptLang} setExcerptLang={setExcerptLang}
         />
       </div>
     );
@@ -677,14 +711,13 @@ const RichContentPageManagements = () => {
         <FormTopBar fullscreen={true} />
         <FormBody
           form={form} setForm={setForm}
-          editorContents={editorContents} setEditorContents={setEditorContents}
-          excerptLang={excerptLang} setExcerptLang={setExcerptLang}
           categories={categories} slugError={slugError} fullSlugURL={fullSlugURL}
           isPublished={isPublished} saving={saving} editingId={editingId}
           handleChange={handleChange} handleSlugChange={handleSlugChange}
           handleSlugBlur={handleSlugBlur} handleSubmit={handleSubmit}
           handleDraft={handleDraft} goBackToList={goBackToList}
           isMobile={isMobile} message={message}
+          excerptLang={excerptLang} setExcerptLang={setExcerptLang}
         />
       </div>
     );

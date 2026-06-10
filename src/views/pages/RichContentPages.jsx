@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";            
+import { Helmet } from "react-helmet-async";
 import {
   Card,
   CardBody,
@@ -244,13 +244,13 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
               )}
               {descriptionHtml && (
                 <>
-                  <h5 className="fw-bold border-bottom pb-2 mb-3">
+                  <h5 className="fw-bold">
                     {isHindi ? "विवरण" : "Details"}
                   </h5>
+                  <hr/>
                   <div
-                    className="text-secondary lh-lg"
+                    className="cms-content"
                     dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-                    style={{ wordBreak: "break-word" }}
                   />
                 </>
               )}
