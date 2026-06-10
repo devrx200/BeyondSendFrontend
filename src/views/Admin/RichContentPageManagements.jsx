@@ -30,21 +30,31 @@ const WP = {
 };
 
 const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
-
 const titleToSlug = (text) => {
   if (!text) return "";
   return text.toLowerCase().trim()
-    .replace(/[^a-z0-9\s\-]/g, "")
+    .replace(/[^a-z0-9\s\-\/]/g, "")      
     .replace(/\s+/g, "-")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/\-{2,}/g, "-")
+    .replace(/\/{2,}/g, "/")               
+    .replace(/^-+|-+$/g, "")              
+    .replace(/^\/+|\/+$/g, "");           
 };
 const sanitiseSlug = (raw) =>
-  raw.toLowerCase().replace(/ +/g, "-").replace(/-{2,}/g, "-").replace(/[^a-z0-9\-]/g, "");
+  raw.toLowerCase()
+    .replace(/ +/g, "-")
+    .replace(/\-{2,}/g, "-")
+    .replace(/\/{2,}/g, "/")               
+    .replace(/[^a-z0-9\-\/]/g, "")        
+    .replace(/^\/+|\/+$/g, "");            
 const validateSlug = (value) => {
   if (!value) return "Slug is required";
-  if (/[^a-z0-9\-]/.test(value)) return "Only lowercase letters, numbers and hyphens allowed";
+  // Allow letters, numbers, hyphens, and forward slashes
+  if (/[^a-z0-9\-\/]/.test(value)) return "Only lowercase letters, numbers, hyphens and forward slashes allowed";
   if (value.startsWith("-") || value.endsWith("-")) return "Slug cannot start or end with a hyphen";
+  if (value.startsWith("/") || value.endsWith("/")) return "Slug cannot start or end with a slash";
+  if (/\/{2,}/.test(value)) return "Slug cannot contain consecutive slashes";
+  if (/\-{2,}/.test(value)) return "Slug cannot contain consecutive hyphens";
   return "";
 };
 
