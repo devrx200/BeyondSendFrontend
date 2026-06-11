@@ -13,11 +13,12 @@ import {
   FormGroup,
   Label,
   Input,
-  Badge,
+  Badge, Row, Col
 } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from "../../contexts/LanguageContext";
 import Swal from "sweetalert2";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -67,32 +68,32 @@ const MenuManagement = () => {
     loadMenus();
   }, []);
 
- const saveMenuOrder = async (updatedMenus) => {
-  try {
-    const token = sessionStorage.getItem("authToken");
-    
+  const saveMenuOrder = async (updatedMenus) => {
+    try {
+      const token = sessionStorage.getItem("authToken");
 
-    await axios.post(`${API}/api/menu/reorder`, 
-      {
-        menus: updatedMenus, // <-- full ordered tree
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+
+      await axios.post(`${API}/api/menu/reorder`,
+        {
+          menus: updatedMenus, // <-- full ordered tree
         },
-      }
-    );
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    alert("Menu Order Saved Successfully");
-  } catch (err) {
-    console.error(
-      "Order save failed",
-      err?.response?.data || err.message
-    );
-    alert("Failed to save menu order");
-  }
-};
+      alert("Menu Order Saved Successfully");
+    } catch (err) {
+      console.error(
+        "Order save failed",
+        err?.response?.data || err.message
+      );
+      alert("Failed to save menu order");
+    }
+  };
 
 
   const reorderArray = (arr, fromIndex, toIndex) => {
@@ -148,7 +149,7 @@ const MenuManagement = () => {
       parentMenuId: "",
       parentSubmenuId: "",
       isDynamic: false,
-      isImportant : false,
+      isImportant: false,
     });
   };
 
@@ -174,7 +175,7 @@ const MenuManagement = () => {
   /* ================= UPDATE ================= */
   const updateMenu = async () => {
     if (editing.type === "MENU") {
-      await axios.put(`${API}/api/menu/${editing.menuId}`, form ,{
+      await axios.put(`${API}/api/menu/${editing.menuId}`, form, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -209,83 +210,83 @@ const MenuManagement = () => {
 
   /* ================= DELETE ================= */
   const deleteMenu = async ({ type, menuId, submenuId, childId }) => {
-   const confirmText = isHindi
-    ? "क्या आप वाकई इसे डिलीट करना चाहते हैं?"
-    : "Are you sure you want to delete this?";
+    const confirmText = isHindi
+      ? "क्या आप वाकई इसे डिलीट करना चाहते हैं?"
+      : "Are you sure you want to delete this?";
 
-  const successText = isHindi
-    ? "सफलतापूर्वक डिलीट किया गया"
-    : "Deleted successfully";
+    const successText = isHindi
+      ? "सफलतापूर्वक डिलीट किया गया"
+      : "Deleted successfully";
 
-  const cancelText = isHindi
-    ? "डिलीट प्रक्रिया रद्द कर दी गई"
-    : "Delete cancelled";
+    const cancelText = isHindi
+      ? "डिलीट प्रक्रिया रद्द कर दी गई"
+      : "Delete cancelled";
 
-  const result = await Swal.fire({
-    title: isHindi ? "क्या आप सुनिश्चित हैं?" : "Are you sure?",
-    text: confirmText,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#6c757d",
-    confirmButtonText: isHindi ? "हाँ, डिलीट करें" : "Yes, Delete",
-    cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      icon: "info",
-      title: cancelText,
-      timer: 1500,
-      showConfirmButton: false,
+    const result = await Swal.fire({
+      title: isHindi ? "क्या आप सुनिश्चित हैं?" : "Are you sure?",
+      text: confirmText,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: isHindi ? "हाँ, डिलीट करें" : "Yes, Delete",
+      cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
     });
-    return;
-  }
-try {
-    if (type === "MENU") {
-      await axios.delete(`${API}/api/menu/${menuId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    }
 
-    if (type === "SUBMENU") {
-      await axios.delete(`${API}/api/menu/${menuId}/submenu/${submenuId}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+    if (!result.isConfirmed) {
+      Swal.fire({
+        icon: "info",
+        title: cancelText,
+        timer: 1500,
+        showConfirmButton: false,
       });
+      return;
     }
-
-    if (type === "CHILD") {
-      await axios.delete(
-        `${API}/api/menu/${menuId}/api/submenu/${submenuId}/child/${childId}`,
-        {
+    try {
+      if (type === "MENU") {
+        await axios.delete(`${API}/api/menu/${menuId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
-      );
-    }
+        });
+      }
 
-    Swal.fire({
-      icon: "success",
-      title: successText,
-      timer: 1500,
-      showConfirmButton: false,
-    });
-    loadMenus();
-     } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
-      text: error?.response?.data?.message || error.message,
-    });
-  }
+      if (type === "SUBMENU") {
+        await axios.delete(`${API}/api/menu/${menuId}/submenu/${submenuId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      if (type === "CHILD") {
+        await axios.delete(
+          `${API}/api/menu/${menuId}/api/submenu/${submenuId}/child/${childId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: successText,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      loadMenus();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
+        text: error?.response?.data?.message || error.message,
+      });
+    }
   };
 
   /* ================= EDIT ================= */
@@ -302,8 +303,8 @@ try {
       isActive: data.isActive,
       parentMenuId: menuId || "",
       parentSubmenuId: submenuId || "",
-      isDynamic : data.isDynamic|| false,
-      isImportant : data.isImportant|| false,
+      isDynamic: data.isDynamic || false,
+      isImportant: data.isImportant || false,
     });
 
     setModal(true);
@@ -316,35 +317,35 @@ try {
     try {
       if (editing) {
         await updateMenu();
-         Swal.fire({
-        icon: "success",
-        title: isHindi
-          ? "मेनू सफलतापूर्वक अपडेट किया गया"
-          : "Menu updated successfully",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+        Swal.fire({
+          icon: "success",
+          title: isHindi
+            ? "मेनू सफलतापूर्वक अपडेट किया गया"
+            : "Menu updated successfully",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } else {
         await createMenu();
-         Swal.fire({
-        icon: "success",
-        title: isHindi
-          ? "मेनू सफलतापूर्वक जोड़ा गया"
-          : "Menu added successfully",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+        Swal.fire({
+          icon: "success",
+          title: isHindi
+            ? "मेनू सफलतापूर्वक जोड़ा गया"
+            : "Menu added successfully",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       }
 
       toggleModal();
       loadMenus();
     } catch (err) {
       console.error("Save error", err);
-       Swal.fire({
-      icon: "error",
-      title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
-      text: err?.response?.data?.message || err.message,
-    });
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
+        text: err?.response?.data?.message || err.message,
+      });
     }
   };
 
@@ -354,124 +355,129 @@ try {
       <Fragment key={menu._id || `menu-${index}`}>
         {/* MAIN MENU */}
         <tr className="bg-danger">
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"14px", width:"30px" }}>{index + 1}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff", fontWeight:"600" , fontSize:"14px", width:"200px" }}>{menu.titleEng}</td>
-           <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px" , width:"200px"}}>{menu.titleHi}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px" ,width:"240px"}}>{menu.path}</td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px", width:"140px" }}>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "30px" }}>{index + 1}</td>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "200px" }}>{menu.titleEng}</td>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "200px" }}>{menu.titleHi}</td>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "240px" }}>{menu.path}</td>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "140px" }}>
             <Badge color="primary">Menu</Badge>
           </td>
-          <td style={{ color:"#000000ff" , backgroundColor:"#b5fde9ff",fontWeight:"600" , fontSize:"14px",width:"300px" }}>
-            <Button
-              size="sm"
-              color="warning"
-              onClick={() =>
-                handleEdit({
-                  type: "MENU",
-                  menuId: menu._id,
-                  data: menu,
-                })
-              }
-            >
-              Edit
-            </Button>{" "}
-            <Button
-              size="sm"
-              color="danger"
-              onClick={() =>
-                deleteMenu({
-                  type: "MENU",
-                  menuId: menu._id,
-                })
-              }
-            >
-              Delete
-            </Button>
-            <Button
-              size="sm"
-              color="secondary"
-              disabled={index === 0}
-              onClick={() => moveMainMenu(index, "UP")}
-            >
-              ↑
-            </Button>{" "}
-            <Button
-              size="sm"
-              color="secondary"
-              disabled={index === menuItems.length - 1}
-              onClick={() => moveMainMenu(index, "DOWN")}
-            >
-              ↓
-            </Button>
+          <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "300px" }}>
+            <div className="d-flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                color="warning"
+                onClick={() =>
+                  handleEdit({
+                    type: "MENU",
+                    menuId: menu._id,
+                    data: menu,
+                  })
+                }
+              >
+                <FaEdit />
+              </Button>{" "}
+              <Button
+                size="sm"
+                color="danger"
+                onClick={() =>
+                  deleteMenu({
+                    type: "MENU",
+                    menuId: menu._id,
+                  })
+                }
+              >
+                <FaTrash />
+              </Button>
+              <Button
+                size="sm"
+                color="secondary"
+                disabled={index === 0}
+                onClick={() => moveMainMenu(index, "UP")}
+              >
+                ↑
+              </Button>{" "}
+              <Button
+                size="sm"
+                color="secondary"
+                disabled={index === menuItems.length - 1}
+                onClick={() => moveMainMenu(index, "DOWN")}
+              >
+                ↓
+              </Button>
+            </div>
+
           </td >
-          
+
         </tr>
 
         {/* SUBMENU */}
         {menu.submenu?.map((sub, subIndex) => (
           <Fragment key={sub._id || `sub-${subIndex}`}>
             <tr>
-              <td style={{ paddingLeft:"30px", color:"green" , fontWeight:"500" , fontSize:"14px"}}>{subIndex + 1}</td>
-              <td style={{ paddingLeft:"50px", color:"green" , fontWeight:"500" , fontSize:"14px" }}>{sub.titleEng}</td>
-           <td style={{ color:"green" , fontWeight:"500" , fontSize:"14px" }}>{sub.titleHi}</td>
+              <td style={{ paddingLeft: "30px", color: "green", fontWeight: "500", fontSize: "14px" }}>{subIndex + 1}</td>
+              <td style={{ paddingLeft: "50px", color: "green", fontWeight: "500", fontSize: "14px" }}>{sub.titleEng}</td>
+              <td style={{ color: "green", fontWeight: "500", fontSize: "14px" }}>{sub.titleHi}</td>
 
               <td>{sub.path}</td>
               <td>
                 <Badge color="info">Submenu</Badge>
               </td>
               <td>
-                <Button
-                  size="sm"
-                  color="warning"
-                  onClick={() =>
-                    handleEdit({
-                      type: "SUBMENU",
-                      menuId: menu._id,
-                      submenuId: sub._id,
-                      data: sub,
-                    })
-                  }
-                >
-                  Edit
-                </Button>{" "}
-                <Button
-                  size="sm"
-                  color="danger"
-                  onClick={() =>
-                    deleteMenu({
-                      type: "SUBMENU",
-                      menuId: menu._id,
-                      submenuId: sub._id,
-                    })
-                  }
-                >
-                  Delete
-                </Button>
-                <Button
+                <div className="d-flex gap-2 flex-wrap">
+                  <Button
                     size="sm"
-                   color="secondary"
-                  disabled={subIndex === 0}
-                  onClick={() => moveSubMenu(menu._id, subIndex, "UP")}
-                >
-                  ↑
-                </Button>{" "}
-                <Button
-                  size="sm"
-                  color="secondary"
-                  disabled={subIndex === menu.submenu.length - 1}
-                  onClick={() => moveSubMenu(menu._id, subIndex, "DOWN")}
-                >
-                  ↓
-                </Button>
+                    color="warning"
+                    onClick={() =>
+                      handleEdit({
+                        type: "SUBMENU",
+                        menuId: menu._id,
+                        submenuId: sub._id,
+                        data: sub,
+                      })
+                    }
+                  >
+                    <FaEdit />
+                  </Button>{" "}
+                  <Button
+                    size="sm"
+                    color="danger"
+                    onClick={() =>
+                      deleteMenu({
+                        type: "SUBMENU",
+                        menuId: menu._id,
+                        submenuId: sub._id,
+                      })
+                    }
+                  >
+                    <FaTrash />
+                  </Button>
+                  <Button
+                    size="sm"
+                    color="secondary"
+                    disabled={subIndex === 0}
+                    onClick={() => moveSubMenu(menu._id, subIndex, "UP")}
+                  >
+                    ↑
+                  </Button>{" "}
+                  <Button
+                    size="sm"
+                    color="secondary"
+                    disabled={subIndex === menu.submenu.length - 1}
+                    onClick={() => moveSubMenu(menu._id, subIndex, "DOWN")}
+                  >
+                    ↓
+                  </Button>
+                </div>
               </td>
             </tr>
 
             {/* CHILD */}
-            {sub.submenu?.map((child , index2) => (
+            {sub.submenu?.map((child, index2) => (
               <tr key={child._id || `child-${index2}`}>
-              <td style={{paddingLeft: 80,color:"green" , fontWeight:"500" , fontSize:"14px"}}>{index2 + 1}</td>
+                <td style={{ paddingLeft: 80, color: "green", fontWeight: "500", fontSize: "14px" }}>{index2 + 1}</td>
 
-                <td style={{ paddingLeft: 80 , color:"blue" , fontWeight:"500"}}>{child.titleEng}</td>
+                <td style={{ paddingLeft: 80, color: "blue", fontWeight: "500" }}>{child.titleEng}</td>
                 <td >{child.titleHi}</td>
 
                 <td>{child.path}</td>
@@ -492,7 +498,7 @@ try {
                       })
                     }
                   >
-                    Edit
+                    <FaEdit />
                   </Button>{" "}
                   <Button
                     size="sm"
@@ -506,7 +512,7 @@ try {
                       })
                     }
                   >
-                    Delete
+                    <FaTrash />
                   </Button>
                 </td>
               </tr>
@@ -530,10 +536,13 @@ try {
         <Table bordered hover responsive>
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Path</th>
-              <th>Type</th>
-              <th>Actions</th>
+              <th style={{ width: "30px" }}>#</th>
+              <th style={{ width: "200px" }}>Title (Eng)</th>
+              <th style={{ width: "200px" }}>Title (Hi)</th>
+              <th style={{ width: "240px" }}>Path</th>
+              <th style={{ width: "140px" }}>Type</th>
+              <th style={{ width: "300px" }}>Actions</th>
+
             </tr>
           </thead>
           <tbody>
@@ -555,83 +564,101 @@ try {
 
           <Form onSubmit={handleSubmit}>
             <ModalBody>
-              <FormGroup>
-                <Label>Title (English)</Label>
-                <Input
-                  name="titleEng"
-                  value={form.titleEng}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Title (Hindi)</Label>
-                <Input
-                  name="titleHi"
-                  value={form.titleHi}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label>Path</Label>
-                <Input
-                  name="path"
-                  value={form.path}
-                  onChange={handleChange}
-                  required
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label>Order</Label>
-                <Input
-                  type="number"
-                  name="order"
-                  value={form.order}
-                  onChange={handleChange}
-                  min="0"
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label>Parent Menu (for Submenu)</Label>
-                <Input
-                  type="select"
-                  name="parentMenuId"
-                  value={form.parentMenuId}
-                  onChange={handleChange}
-                >
-                  <option value="">None (Main Menu)</option>
-                    {menuItems.map((menu, mIndex) => (
-                      <option key={menu._id || `menu-opt-${mIndex}`} value={menu._id}>
-                        {menu.titleEng}
-                      </option>
-                    ))}
-                </Input>
-              </FormGroup>
-              {form.parentMenuId && (
-                <FormGroup>
-                  <Label>Parent Submenu (for Child Menu)</Label>
-                  <Input
-                    type="select"
-                    name="parentSubmenuId"
-                    value={form.parentSubmenuId}
-                    onChange={handleChange}
-                  >
-                    <option value="">None (Submenu)</option>
-
-                    {menuItems
-                      .find((m) => m._id === form.parentMenuId)
-                      ?.submenu?.map((sub, si) => (
-                        <option key={sub._id || `sub-opt-${si}`} value={sub._id}>
-                          {sub.titleEng}
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Title (English)</Label>
+                    <Input
+                      name="titleEng"
+                      value={form.titleEng}
+                      onChange={handleChange}
+                      required
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Title (Hindi)</Label>
+                    <Input
+                      name="titleHi"
+                      value={form.titleHi}
+                      onChange={handleChange}
+                      required
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Path</Label>
+                    <Input
+                      name="path"
+                      value={form.path}
+                      onChange={handleChange}
+                      required
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Order</Label>
+                    <Input
+                      type="number"
+                      name="order"
+                      value={form.order}
+                      onChange={handleChange}
+                      min="0"
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label>Parent Menu (for Submenu)</Label>
+                    <Input
+                      type="select"
+                      name="parentMenuId"
+                      value={form.parentMenuId}
+                      onChange={handleChange}
+                    >
+                      <option value="">None (Main Menu)</option>
+                      {menuItems.map((menu, mIndex) => (
+                        <option key={menu._id || `menu-opt-${mIndex}`} value={menu._id}>
+                          {menu.titleEng}
                         </option>
                       ))}
-                  </Input>
-                </FormGroup>
-              )}
+                    </Input>
+                  </FormGroup>
+                </Col>
+                {form.parentMenuId && (
+                  <>
+                    <Col md={6}>
+                      <FormGroup>
+                        <Label>Parent Submenu (for Child Menu)</Label>
+                        <Input
+                          type="select"
+                          name="parentSubmenuId"
+                          value={form.parentSubmenuId}
+                          onChange={handleChange}
+                        >
+                          <option value="">None (Submenu)</option>
 
+                          {menuItems
+                            .find((m) => m._id === form.parentMenuId)
+                            ?.submenu?.map((sub, si) => (
+                              <option key={sub._id || `sub-opt-${si}`} value={sub._id}>
+                                {sub.titleEng}
+                              </option>
+                            ))}
+                        </Input>
+                      </FormGroup>
+                    </Col>
+                  </>
+
+                )}
+              </Row>
               <FormGroup check>
                 <Input
                   type="checkbox"
