@@ -273,7 +273,7 @@ const FormBody = React.memo(({
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", paddingBottom: 6, borderBottom: `1px solid ${WP.line}` }}>
                 <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} style={{ accentColor: WP.green, cursor: "pointer" }} />
-                <span>Active (Visible on site)</span>
+                <span>Active (Visible on site) & Preview</span>
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
                 <BtnBlack onClick={() => handleSubmit(false)} disabled={saving} size="sm"><FaSave size={10} /> {saving ? "Saving…" : editingId ? "Update Draft" : "Save Draft"}</BtnBlack>

@@ -23,6 +23,9 @@ const SlugResolver = ({ preview = false }) => {
 
   const [status, setStatus] = useState("loading");
   const [pageData, setPageData] = useState(null);
+  
+  // 1. Add a state to store the error details from the backend
+  const [errorDetails, setErrorDetails] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -33,7 +36,9 @@ const SlugResolver = ({ preview = false }) => {
           setStatus("404");
           return;
         }
+        
         setStatus("loading");
+        
         const response = await axios.post(`${API}/api/resolve-slug/get-page`, {
           fullSlug: slugForApi,
           preview: isPreview,
@@ -47,11 +52,18 @@ const SlugResolver = ({ preview = false }) => {
           setPageData(data.data);
           setStatus(data.type);
         } else {
+          // Fallback if backend returns 200 OK but success is false
           setStatus("404");
+          if (data?.details) setErrorDetails(data.details);
         }
       } catch (error) {
         if (mounted) {
           setStatus("404");
+          
+          // 2. Extract the custom details string from the 404 error response
+          if (error.response && error.response.data && error.response.data.details) {
+            setErrorDetails(error.response.data.details);
+          }
         }
       }
     };
@@ -107,8 +119,15 @@ const SlugResolver = ({ preview = false }) => {
         <h4>{isHindi ? "पेज नहीं मिला" : "Page Not Found"}</h4>
         <p className="text-muted">
           {isHindi ? "यह पेज उपलब्ध नहीं है।" : "This page does not exist."}
+          <br />
+          {/* 3. Display the backend error details dynamically if they exist */}
+          {errorDetails && (
+            <small className="text-danger mt-2 d-block">
+              {errorDetails}
+            </small>
+          )}
         </p>
-        <Link to="/" className="btn btn-primary rounded-pill px-4">
+        <Link to="/" className="btn btn-primary rounded-pill px-4 mt-3">
           {isHindi ? "होम पेज पर जाएं" : "Go to Home"}
         </Link>
       </Container>

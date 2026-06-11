@@ -5,15 +5,16 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardBody,
+  CardHeader,
   Row,
   Col,
   Badge,
   Spinner,
   Container,
   Button,
-  ListGroup,
-  ListGroupItem,
   Alert,
+  Breadcrumb,
+  BreadcrumbItem,
 } from "reactstrap";
 import {
   FaCalendarAlt,
@@ -28,10 +29,7 @@ import {
   FaFile,
   FaBuilding,
   FaNewspaper,
-  FaTag,
   FaUserTie,
-  FaCalendarPlus,
-  FaCalendarCheck,
   FaChevronLeft,
 } from "react-icons/fa";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -65,14 +63,11 @@ const MultiSectionPages = () => {
     try {
       setLoading(true);
       setError(false);
-
       const res = await axios.get(
         `${API}/api/get-content-by-main-slug/${mainSlug}?page=${page}&limit=${pageSize}`
       );
-
       const data = res?.data?.data || [];
       setContentList(data);
-
       const pagination = res?.data?.pagination;
       if (pagination) {
         setServerPagination(true);
@@ -80,7 +75,6 @@ const MultiSectionPages = () => {
         setTotalPages(pagination.totalPages || 1);
         setTotalDocuments(pagination.totalDocuments || data.length);
       } else {
-        // fallback to client-side pagination
         setServerPagination(false);
         setTotalDocuments(data.length);
         setTotalPages(Math.max(1, Math.ceil((data.length || 0) / pageSize)));
@@ -109,7 +103,6 @@ const MultiSectionPages = () => {
 
   useEffect(() => {
     setError(false);
-
     if (mainSlug && slug) {
       setContentList([]);
       setContentDetail(null);
@@ -121,45 +114,34 @@ const MultiSectionPages = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainSlug, slug]);
 
-  // Pagination helpers
   const displayedList = serverPagination
     ? contentList
     : contentList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const onPageChange = (page) => {
     if (page < 1 || page > totalPages) return;
-    if (serverPagination) {
-      fetchContentListByMainSlug(page);
-    }
+    if (serverPagination) fetchContentListByMainSlug(page);
     setCurrentPage(page);
   };
 
   const getFileIcon = (fileType) => {
     switch (fileType?.toLowerCase()) {
-      case "pdf":
-        return <FaFilePdf className="text-danger me-2" />;
+      case "pdf":   return <FaFilePdf className="text-danger me-2" />;
       case "doc":
-      case "docx":
-        return <FaFileWord className="text-primary me-2" />;
+      case "docx":  return <FaFileWord className="text-primary me-2" />;
       case "xls":
-      case "xlsx":
-        return <FaFileExcel className="text-success me-2" />;
-      default:
-        return <FaFile className="text-secondary me-2" />;
+      case "xlsx":  return <FaFileExcel className="text-success me-2" />;
+      default:      return <FaFile className="text-secondary me-2" />;
     }
   };
 
   const formatDateTime = (date) => {
-    if (!date) return "";
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) return "";
-    return dateObj.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
+    if (!date) return "—";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
     });
   };
 
@@ -170,11 +152,9 @@ const MultiSectionPages = () => {
 
   const getExcerpt = (html, len = 120) => {
     const text = stripHtml(html);
-    if (text.length <= len) return text;
-    return text.slice(0, len).trim() + "...";
+    return text.length <= len ? text : text.slice(0, len).trim() + "...";
   };
 
-  // Helper to generate meta description from content (HTML)
   const getMetaDescription = (htmlContent, fallback = "") => {
     if (!htmlContent) return fallback;
     const text = stripHtml(htmlContent);
@@ -187,13 +167,10 @@ const MultiSectionPages = () => {
     return base.replace(/\/$/, "");
   };
 
-  const getSlugTitle = (slug) => {
-    return slug
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
+  const getSlugTitle = (s) =>
+    s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Loading state
+  /* ================= LOADING ================= */
   if (loading) {
     return (
       <>
@@ -203,15 +180,13 @@ const MultiSectionPages = () => {
           <meta name="description" content={isHindi ? "कृपया प्रतीक्षा करें" : "Please wait while content loads"} />
         </Helmet>
         <Container className="py-5 text-center">
-          <div className="d-flex flex-column align-items-center justify-content-center min-vh-50">
+          <div className="d-flex flex-column align-items-center justify-content-center" style={{ minHeight: "50vh" }}>
             <Spinner color="primary" style={{ width: "4rem", height: "4rem" }} />
             <h5 className="mt-4 text-primary fw-semibold">
               {isHindi ? "लोड हो रहा है..." : "Loading..."}
             </h5>
             <p className="text-muted mt-2">
-              {isHindi
-                ? "कृपया प्रतीक्षा करें"
-                : "Please wait while we fetch the content"}
+              {isHindi ? "कृपया प्रतीक्षा करें" : "Please wait while we fetch the content"}
             </p>
           </div>
         </Container>
@@ -219,32 +194,21 @@ const MultiSectionPages = () => {
     );
   }
 
-  // Error state
+  /* ================= ERROR ================= */
   if (error) {
     return (
       <>
         <Helmet>
           <html lang={isHindi ? "hi" : "en"} />
           <title>{isHindi ? "त्रुटि" : "Error"} - {SITE_TITLE_SUFFIX}</title>
-          <meta name="description" content={isHindi ? "कुछ गलत हो गया। कृपया पुनः प्रयास करें।" : "Something went wrong. Please try again."} />
+          <meta name="description" content={isHindi ? "कुछ गलत हो गया।" : "Something went wrong."} />
         </Helmet>
         <Container className="py-5">
           <div className="d-flex justify-content-center">
-            <Alert color="danger" className="text-center w-100 max-w-500">
-              <h5 className="alert-heading">
-                {isHindi ? "त्रुटि हुई" : "Error Occurred"}
-              </h5>
-              <p className="mb-0">
-                {isHindi
-                  ? "कुछ गलत हो गया। कृपया पुनः प्रयास करें।"
-                  : "Something went wrong. Please try again."}
-              </p>
-              <Button
-                color="danger"
-                outline
-                className="mt-3"
-                onClick={() => window.location.reload()}
-              >
+            <Alert color="danger" className="text-center w-100">
+              <h5 className="alert-heading">{isHindi ? "त्रुटि हुई" : "Error Occurred"}</h5>
+              <p className="mb-0">{isHindi ? "कुछ गलत हो गया। कृपया पुनः प्रयास करें।" : "Something went wrong. Please try again."}</p>
+              <Button color="danger" outline className="mt-3" onClick={() => window.location.reload()}>
                 {isHindi ? "पुनः प्रयास करें" : "Retry"}
               </Button>
             </Alert>
@@ -257,9 +221,9 @@ const MultiSectionPages = () => {
   /* ================= LIST PAGE ================= */
   if (!slug) {
     const currentPath = getCurrentPath();
-    const listTitle = getSlugTitle(mainSlug);
-    const pageTitle = `${listTitle} - ${SITE_TITLE_SUFFIX}`;
-    const metaDesc = isHindi
+    const listTitle   = getSlugTitle(mainSlug);
+    const pageTitle   = `${listTitle} - ${SITE_TITLE_SUFFIX}`;
+    const metaDesc    = isHindi
       ? `${listTitle} सूची - कुल ${totalDocuments} आइटम`
       : `${listTitle} list - Total ${totalDocuments} items`;
 
@@ -275,33 +239,26 @@ const MultiSectionPages = () => {
         </Helmet>
 
         <Container className="py-4 my-4">
-          {/* Breadcrumb */}
-          <nav aria-label="breadcrumb" className="mb-4">
-            <ol className="breadcrumb bg-white px-3 py-2 rounded-3 shadow-sm border align-items-center">
-              <li className="breadcrumb-item">
-                <Link
-                  to="/"
-                  className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
-                >
-                  <FaHome size={13} />
-                  {isHindi ? "होम" : "Home"}
-                </Link>
-              </li>
-              <li className="breadcrumb-item active fw-semibold text-secondary d-flex align-items-center gap-1">
-                <FaNewspaper size={13} />
-                {listTitle}
-              </li>
-            </ol>
-          </nav>
+          <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+            <BreadcrumbItem>
+              <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+                <FaHome size={13} />
+                {isHindi ? "होम" : "Home"}
+              </Link>
+            </BreadcrumbItem>
+            <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
+              <FaNewspaper size={13} />
+              {listTitle}
+            </BreadcrumbItem>
+          </Breadcrumb>
 
-          {/* Page Header */}
-          <Card
-            className="border-0 shadow-sm mb-4 text-white rounded-4"
-            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
-          >
-            <CardBody className="py-3 px-4">
+          <Card className="border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+            <CardHeader
+              className="text-white border-0 p-4"
+              style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+            >
               <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 className="mb-0 fw-semibold d-flex text-white align-items-center gap-2">
+                <h5 className="mb-0 fw-bold text-white d-flex align-items-center gap-2">
                   <FaNewspaper />
                   {listTitle}
                 </h5>
@@ -309,44 +266,24 @@ const MultiSectionPages = () => {
                   {totalDocuments} {isHindi ? "आइटम" : "Items"}
                 </Badge>
               </div>
-            </CardBody>
+            </CardHeader>
           </Card>
 
-          {/* Content List */}
           {totalDocuments > 0 ? (
             <div>
               {displayedList.length > 0 ? (
-                displayedList.map((item, idx) => (
-                  <Card
-                    key={item._id}
-                    className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden"
-                    style={{
-                      transition: "all 0.3s ease",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Link
-                      to={`${currentPath}/${item.slug}`}
-                      className="text-decoration-none text-dark"
-                    >
-                      <CardBody className="py-3 px-4 position-relative">
+                displayedList.map((item) => (
+                  <Card key={item._id} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden" style={{ cursor: "pointer" }}>
+                    <Link to={`${currentPath}/${item.slug}`} className="text-decoration-none text-dark">
+                      <CardBody className="py-3 px-4">
                         <div className="d-flex align-items-start">
-                          {/* Modern gradient left bar */}
-                          <div
-                            className="me-3 rounded-pill"
-                            style={{
-                              width: "6px",
-                              minHeight: "100%",
-                              background: "linear-gradient(180deg, #0d6efd, #6610f2)",
-                            }}
-                          ></div>
-
+                          <div className="me-3 rounded-pill flex-shrink-0" style={{ width: 6, alignSelf: "stretch", background: "linear-gradient(180deg, #0d6efd, #6610f2)" }} />
                           <div className="flex-grow-1">
                             <h6 className="fw-bold mb-2 text-dark">
                               {isHindi ? item.titleHin || item.titleEng : item.titleEng}
                             </h6>
                             <div className="small text-muted mb-3">
-                              { isHindi ? getExcerpt(item.htmlContentHi, 100) || getExcerpt(item.htmlContent, 100) : getExcerpt(item.htmlContent, 100) }
+                              {isHindi ? getExcerpt(item.htmlContentHi, 100) || getExcerpt(item.htmlContent, 100) : getExcerpt(item.htmlContent, 100)}
                             </div>
                             <div className="d-flex flex-wrap gap-3 text-secondary small">
                               {item.department && (
@@ -357,19 +294,16 @@ const MultiSectionPages = () => {
                               )}
                               <span className="d-flex align-items-center gap-1">
                                 <FaCalendarAlt size={12} className="text-success" />
-                                {isHindi ? "प्रकाशन:" : "Created:"}{" "}
-                                {formatDateTime(item.createdAt)}
+                                {isHindi ? "प्रकाशन:" : "Created:"} {formatDateTime(item.createdAt)}
                               </span>
                               <span className="d-flex align-items-center gap-1">
                                 <FaClock size={12} className="text-warning" />
-                                {isHindi ? "अपडेट:" : "Updated:"}{" "}
-                                {formatDateTime(item.updatedAt)}
+                                {isHindi ? "अपडेट:" : "Updated:"} {formatDateTime(item.updatedAt)}
                               </span>
                               {item.documentsUpdate?.length > 0 && (
                                 <span className="d-flex align-items-center gap-1">
                                   <FaFileAlt size={12} className="text-danger" />
-                                  {item.documentsUpdate.length}{" "}
-                                  {isHindi ? "दस्तावेज़" : "Docs"}
+                                  {item.documentsUpdate.length} {isHindi ? "दस्तावेज़" : "Docs"}
                                 </span>
                               )}
                             </div>
@@ -385,16 +319,11 @@ const MultiSectionPages = () => {
               ) : (
                 <Card className="border-0 shadow-sm rounded-3">
                   <CardBody className="text-center py-4">
-                    <h6 className="text-muted mb-0">
-                      {isHindi
-                        ? "इस पृष्ठ पर कोई आइटम नहीं"
-                        : "No items on this page"}
-                    </h6>
+                    <h6 className="text-muted mb-0">{isHindi ? "इस पृष्ठ पर कोई आइटम नहीं" : "No items on this page"}</h6>
                   </CardBody>
                 </Card>
               )}
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="d-flex justify-content-center mt-4">
                   <ul className="pagination shadow-sm rounded">
@@ -405,9 +334,7 @@ const MultiSectionPages = () => {
                     </li>
                     {Array.from({ length: totalPages }).map((_, i) => (
                       <li key={i} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                        <button className="page-link" onClick={() => onPageChange(i + 1)}>
-                          {i + 1}
-                        </button>
+                        <button className="page-link" onClick={() => onPageChange(i + 1)}>{i + 1}</button>
                       </li>
                     ))}
                     <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
@@ -423,14 +350,8 @@ const MultiSectionPages = () => {
             <Card className="border-0 shadow-sm rounded-3">
               <CardBody className="text-center py-5">
                 <FaFileAlt size={48} className="text-muted mb-3" />
-                <h5 className="text-muted mb-2">
-                  {isHindi ? "कोई सामग्री नहीं मिली" : "No Content Found"}
-                </h5>
-                <p className="text-muted">
-                  {isHindi
-                    ? "इस श्रेणी में अभी तक कोई सामग्री नहीं है।"
-                    : "No content available in this category yet."}
-                </p>
+                <h5 className="text-muted mb-2">{isHindi ? "कोई सामग्री नहीं मिली" : "No Content Found"}</h5>
+                <p className="text-muted">{isHindi ? "इस श्रेणी में अभी तक कोई सामग्री नहीं है।" : "No content available in this category yet."}</p>
               </CardBody>
             </Card>
           )}
@@ -440,14 +361,17 @@ const MultiSectionPages = () => {
   }
 
   /* ================= DETAIL PAGE ================= */
-  const currentPath = getCurrentPath();
-  const detailTitle = contentDetail
+  const currentPath    = getCurrentPath();
+  const listTitle      = getSlugTitle(mainSlug);
+  const detailTitle    = contentDetail
     ? (isHindi ? contentDetail.titleHin || contentDetail.titleEng : contentDetail.titleEng)
     : "";
-  const pageTitle = `${detailTitle} - ${SITE_TITLE_SUFFIX}`;
+  const pageTitle      = `${detailTitle} - ${SITE_TITLE_SUFFIX}`;
   const metaDescription = contentDetail
-    ? getMetaDescription(isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContent || contentDetail.htmlContent, "")
+    ? getMetaDescription(isHindi ? contentDetail.htmlContentHi : contentDetail.htmlContent, "")
     : "";
+  const publishDate    = formatDateTime(contentDetail?.createdAt);
+  const updateDate     = formatDateTime(contentDetail?.updatedAt);
 
   return (
     <>
@@ -461,166 +385,134 @@ const MultiSectionPages = () => {
       </Helmet>
 
       <Container className="py-4">
-        {/* Breadcrumb */}
-        <nav aria-label="breadcrumb" className="mb-4">
-          <ol className="breadcrumb bg-white p-3 rounded shadow-sm border">
-            <li className="breadcrumb-item">
-              <Link to="/" className="text-decoration-none d-flex align-items-center">
-                <FaHome className="me-2 text-primary" />
-                <span className="text-primary fw-medium">
-                  {isHindi ? "होम" : "Home"}
-                </span>
-              </Link>
-            </li>
-            <li className="breadcrumb-item">
-              <Link to={currentPath} className="text-decoration-none d-flex align-items-center">
-                <FaNewspaper className="me-2 text-secondary" />
-                <span className="text-dark">{getSlugTitle(mainSlug)}</span>
-              </Link>
-            </li>
-            <li className="breadcrumb-item active fw-semibold text-truncate text-dark">
-              {detailTitle}
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+          <BreadcrumbItem>
+            <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+              <FaHome size={13} />
+              {isHindi ? "होम" : "Home"}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            <Link to={currentPath} className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+              <FaNewspaper size={13} />
+              {listTitle}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem active className="fw-semibold text-secondary text-truncate" style={{ maxWidth: 260 }}>
+            {detailTitle}
+          </BreadcrumbItem>
+        </Breadcrumb>
 
         {contentDetail && (
-          <Card className="shadow border-0">
-            <CardBody className="p-0">
-              <div className="bg-gradient-primary text-dark p-4 rounded-top">
-                <h1 className="h3 fw-bold mb-3">{detailTitle}</h1>
-                <hr className="my-0 py-0" />
-                <Row className="g-3">
-                  {contentDetail.department && (
-                    <Col md="auto">
-                      <div className="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded">
-                        <FaUserTie className="me-2" />
-                        <span className="fw-medium">{contentDetail.department}</span>
-                      </div>
-                    </Col>
-                  )}
-                  <Col md="auto">
-                    <div className="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded">
-                      <FaCalendarAlt className="me-2" />
-                      <span className="fw-medium">
-                        {isHindi ? "प्रकाशन तिथि" : "Created At"}:{" "}
-                        {formatDateTime(contentDetail.createdAt)}
-                      </span>
-                    </div>
+          <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+            <CardHeader
+              className="text-white border-0 p-4"
+              style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+            >
+              <h4 className="fw-bold mb-3 text-white">{detailTitle}</h4>
+              <hr className="border-white opacity-25 my-3" />
+              <Row className="g-2 align-items-center">
+                {contentDetail.department && (
+                  <Col xs="auto">
+                    <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                      <FaUserTie size={12} />
+                      {contentDetail.department}
+                    </Badge>
                   </Col>
-                  <Col md="auto">
-                    <div className="d-flex align-items-center bg-white bg-opacity-25 p-2 rounded">
-                      <FaCalendarPlus className="me-2" />
-                      <span className="fw-medium">
-                        {isHindi ? "अपडेट किया गया" : "Updated At"}:{" "}
-                        {formatDateTime(contentDetail.updatedAt)}
-                      </span>
-                    </div>
-                  </Col>
-                  <Col md="auto" className="ms-auto d-flex align-items-center">
-                    <Link to={currentPath} className="bg-black text-white px-2 rounded text-decoration-none fw-medium">
-                      <FaChevronLeft className="me-2" />
-                      {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
-                    </Link>
-                  </Col>
-                  <hr className="my-0 py-0" />
-                </Row>
-              </div>
-              <div className="px-4">
-                <div className="content-body mb-5">
-                  <div
-                    className="prose-content"
-                    dangerouslySetInnerHTML={{
-                      __html: isHindi
-                        ? contentDetail.htmlContentHi
-                        : contentDetail.htmlContent || contentDetail.htmlContent,
-                    }}
-                  />
-                </div>
-
-                {/* Documents Section */}
-                {contentDetail.documentsUpdate?.length > 0 && (
-                  <div className="mt-5 pt-4 border-top">
-                    <h4 className="mb-3 fw-bold">
-                      {isHindi
-                        ? "इस सूचना से संबंधित सभी अद्यतन दस्तावेज़"
-                        : "All Updates Related to This Notification"}
-                    </h4>
-                    <hr className="my-3 py-0" />
-                    {contentDetail.documentsUpdate.map((doc, i) => (
-                      <table key={`file-${i}`} className="table table-bordered align-middle mb-3">
-                        <tbody>
-                          {/* DATE */}
-                          <tr>
-                            <td style={{ width: "180px" }} className="fw-semibold bg-light">
-                              {isHindi ? "तिथि" : "Dates"}
-                            </td>
-                            <td>
-                              <b className="text-info">Created At:</b> {formatDateTime(doc.createdAt)} ||{" "}
-                              <b className="text-success">Updated At:</b> {formatDateTime(doc.updatedAt)}
-                            </td>
-                          </tr>
-                          {/* VIEW / DOWNLOAD */}
-                          <tr>
-                            <td style={{ width: "180px" }} className="fw-semibold bg-light">
-                              {isHindi ? "देखें / डाउनलोड" : "View / Download"}
-                            </td>
-                            <td>
-                              <div className="d-flex flex-column gap-2">
-                                <div className="d-flex align-items-center gap-2 flex-wrap">
-                                  <a
-                                    href={`${API}${doc.fileUrl}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="fw-bold text-decoration-none"
-                                  >
-                                    {getFileIcon(doc.fileType)} {isHindi ? doc.titleHin || doc.titleEng : doc.titleEng}
-                                  </a>
-                                  <strong className="text-danger small fw-bold">
-                                    {isHindi ? "फाइल विवरण" : "File Details"} :
-                                    <span className="ms-1">
-                                      {doc.fileSize} | {doc.fileType?.toUpperCase()}
-                                    </span>
-                                    <Badge
-                                      color="dark"
-                                      onClick={() => window.open(`${API}${doc.fileUrl}`, "_blank")}
-                                      className="btn btn-sm d-inline-flex align-items-center ms-3"
-                                      style={{ cursor: "pointer" }}
-                                    >
-                                      <FaDownload className="me-1" />
-                                      {isHindi ? "डाउनलोड" : "Download"}
-                                    </Badge>
-                                  </strong>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                          {/* Description */}
-                          <tr>
-                            <td style={{ width: "180px" }} className="fw-semibold bg-light">
-                              {isHindi ? "विवरण" : "Description"}
-                            </td>
-                            <td>
-                              <div className="d-flex flex-column gap-2">
-                                <p>{isHindi ? doc.shortDescriptionHin || doc.shortDescriptionEn : doc.shortDescriptionEn}</p>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    ))}
-                    <div className="mt-5 pt-4 my-2 mx-3 text-center border-top">
-                      <small className="mb-3 fw-bold text-secondary">
-                        <i>
-                          {isHindi
-                            ? "* इस सूचना का पूर्ण विवरण *"
-                            : " * Complete Details of This Notification *"}
-                        </i>
-                      </small>
-                    </div>
-                  </div>
                 )}
-              </div>
+                <Col xs="auto">
+                  <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                    <FaCalendarAlt size={12} />
+                    <strong>{isHindi ? "प्रकाशन:" : "Published:"}</strong> {publishDate}
+                  </Badge>
+                </Col>
+                <Col xs="auto">
+                  <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                    <FaClock size={12} />
+                    <strong>{isHindi ? "अपडेट:" : "Updated:"}</strong> {updateDate}
+                  </Badge>
+                </Col>
+                <Col xs="auto" className="ms-auto">
+                  <Button tag={Link} to={currentPath} color="dark" size="sm" className="fw-semibold px-3 d-flex align-items-center gap-2">
+                    <FaChevronLeft size={11} />
+                    {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
+                  </Button>
+                </Col>
+              </Row>
+            </CardHeader>
+
+            <CardBody className="p-4">
+              <div
+                className="prose-content mb-5"
+                dangerouslySetInnerHTML={{
+                  __html: isHindi
+                    ? contentDetail.htmlContentHi || contentDetail.htmlContent
+                    : contentDetail.htmlContent,
+                }}
+              />
+
+              {contentDetail.documentsUpdate?.length > 0 && (
+                <div className="mt-5 pt-4 border-top">
+                  <h4 className="mb-3 fw-bold">
+                    {isHindi ? "इस सूचना से संबंधित सभी अद्यतन दस्तावेज़" : "All Updates Related to This Notification"}
+                  </h4>
+                  <hr className="my-3" />
+                  {contentDetail.documentsUpdate.map((doc, i) => (
+                    <table key={i} className="table table-bordered align-middle mb-3">
+                      <tbody>
+                        <tr>
+                          <td style={{ width: 180 }} className="fw-semibold bg-light">
+                            {isHindi ? "तिथि" : "Dates"}
+                          </td>
+                          <td>
+                            <b className="text-info">Created At:</b> {formatDateTime(doc.createdAt)} &nbsp;||&nbsp;
+                            <b className="text-success">Updated At:</b> {formatDateTime(doc.updatedAt)}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ width: 180 }} className="fw-semibold bg-light">
+                            {isHindi ? "देखें / डाउनलोड" : "View / Download"}
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                              <a href={`${API}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="fw-bold text-decoration-none">
+                                {getFileIcon(doc.fileType)}
+                                {isHindi ? doc.titleHin || doc.titleEng : doc.titleEng}
+                              </a>
+                              <strong className="text-danger small fw-bold">
+                                {isHindi ? "फाइल विवरण" : "File Details"}:
+                                <span className="ms-1">{doc.fileSize} | {doc.fileType?.toUpperCase()}</span>
+                                <Badge
+                                  color="dark"
+                                  onClick={() => window.open(`${API}${doc.fileUrl}`, "_blank")}
+                                  className="btn btn-sm d-inline-flex align-items-center ms-3"
+                                  style={{ cursor: "pointer" }}
+                                >
+                                  <FaDownload className="me-1" />
+                                  {isHindi ? "डाउनलोड" : "Download"}
+                                </Badge>
+                              </strong>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style={{ width: 180 }} className="fw-semibold bg-light">
+                            {isHindi ? "विवरण" : "Description"}
+                          </td>
+                          <td>
+                            <p className="mb-0">{isHindi ? doc.shortDescriptionHin || doc.shortDescriptionEn : doc.shortDescriptionEn}</p>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  ))}
+                  <div className="mt-4 pt-3 text-center border-top">
+                    <small className="fw-bold text-secondary">
+                      <i>{isHindi ? "* इस सूचना का पूर्ण विवरण *" : "* Complete Details of This Notification *"}</i>
+                    </small>
+                  </div>
+                </div>
+              )}
             </CardBody>
           </Card>
         )}
