@@ -23,7 +23,7 @@ import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import DynamicContentEditor from "../../utilies/DynamicContentEditor";
+// import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
@@ -510,9 +510,9 @@ const AnnouncementsManagement = () => {
                     </Input>
                   </FormGroup>
                 </Col>
-                <Card title="Page Main Content Area">
+                {/* <Card title="Page Main Content Area">
                   <DynamicContentEditor contents={editorContents} setContents={setEditorContents} engField="descriptionEn" hinField="descriptionHi" />
-                </Card>
+                </Card> */}
               </Row>
 
               <Row>
