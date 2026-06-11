@@ -397,9 +397,7 @@ const isNoticeNew = (createdAt) => {
            <ModalBody className="p-4">
   {/* Title Section */}
   <div className="mb-4">
-    <h6 className="text-primary mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
-      <span>📝</span> Title Information
-    </h6>
+   
     <Row>
       <Col md={6}>
         <FormGroup className="mb-3">
@@ -439,10 +437,9 @@ const isNoticeNew = (createdAt) => {
 
   {/* Link Section */}
   <div className="mb-4">
-    <h6 className="text-primary mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
-      <span>🔗</span> Link Configuration
-    </h6>
-    <FormGroup className="mb-3">
+   <Row>
+    <Col md={6}>
+  <FormGroup className="mb-3">
       <Label className="fw-semibold mb-2">
         Link URL <span className="text-danger">*</span>
       </Label>
@@ -457,14 +454,25 @@ const isNoticeNew = (createdAt) => {
       />
       <small className="text-muted">Enter full URL including https://</small>
     </FormGroup>
-  </div>
-
-  {/* Options Section */}
-  <div className="mb-4">
-    <h6 className="text-primary mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
-      <span>⚙️</span> Options & Settings
-    </h6>
-    <Row>
+    </Col>
+  <Col md={6}>
+        <FormGroup className="mb-3">
+          <Label className="fw-semibold mb-2">
+            Display Order 
+          </Label>
+          <Input
+            type="number"
+            placeholder="Enter display order"
+            value={formData.displayOrder}
+            onChange={e => setFormData({ ...formData, displayOrder: e.target.value })}
+            className="border-2 rounded-3 py-2"
+            style={{ borderColor: "#e2e8f0" }}
+          />
+          <small className="text-muted">Lower numbers appear first</small>
+        </FormGroup>
+      </Col>
+   </Row>
+   <Row>
       {/* External Link Radio Buttons */}
       <Col md={6}>
         <div className="mb-3">
@@ -486,7 +494,7 @@ const isNoticeNew = (createdAt) => {
                   className="form-check-input"
                 />
                 <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
-                  ❌ No
+                  No
                 </span>
               </Label>
             </FormGroup>
@@ -505,7 +513,7 @@ const isNoticeNew = (createdAt) => {
                   className="form-check-input"
                 />
                 <span className="badge bg-primary px-3 py-2 rounded-pill">
-                  ✅ Yes
+                   Yes
                 </span>
               </Label>
             </FormGroup>
@@ -561,10 +569,6 @@ const isNoticeNew = (createdAt) => {
           </div>
         </Col>
       )}
-    </Row>
-
-    {/* Status and Display Order */}
-    <Row>
       <Col md={6}>
         <FormGroup className="mb-3">
           <Label className="fw-semibold mb-2 d-block">Status</Label>
@@ -610,23 +614,16 @@ const isNoticeNew = (createdAt) => {
           </div>
         </FormGroup>
       </Col>
+    </Row>
+  </div>
 
-      <Col md={6}>
-        <FormGroup className="mb-3">
-          <Label className="fw-semibold mb-2">
-            Display Order <span className="text-muted">(Optional)</span>
-          </Label>
-          <Input
-            type="number"
-            placeholder="Enter display order"
-            value={formData.displayOrder}
-            onChange={e => setFormData({ ...formData, displayOrder: e.target.value })}
-            className="border-2 rounded-3 py-2"
-            style={{ borderColor: "#e2e8f0" }}
-          />
-          <small className="text-muted">Lower numbers appear first</small>
-        </FormGroup>
-      </Col>
+  {/* Options Section */}
+  <div className="mb-4">
+    {/* Status and Display Order */}
+    <Row>
+      
+
+      
     </Row>
   </div>
 
