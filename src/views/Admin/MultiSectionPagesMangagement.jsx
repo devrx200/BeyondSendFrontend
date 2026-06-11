@@ -67,8 +67,8 @@ const initialDocumentData = {
 };
 
 const MultiSectionPagesMangagement = () => {
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const { isHindi } = useLanguage();
 
   // Main state
@@ -110,7 +110,7 @@ const token = sessionStorage.getItem("authToken");
       if (filterMenuId?.trim()) params.append("menuId", filterMenuId.trim());
 
       const response = await axios.get(
-        `${API_URL}/api/get-all-content?${params.toString()}`,{ headers: { Authorization: `Bearer ${token}` } }
+        `${API_URL}/api/get-all-content?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data?.success) {
@@ -937,19 +937,31 @@ const token = sessionStorage.getItem("authToken");
             </div>
           ) : (
             <>
-              <div className="table-responsive">
-                <Table bordered hover>
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: "50px" }}>#</th>
-                      <th>Title (EN)</th>
-                      <th>Menu</th>
-                      <th>Main Slug</th>
-                      <th>Slug</th>
-                      <th>Department</th>
-                       <th>Status</th>
-                      <th style={{ width: "100px" }}>Documents</th>
-                      <th style={{ width: "120px" }}>Actions</th>
+              <div className="table-responsive shadow-sm rounded">
+                <Table
+                  responsive
+                  hover
+                  bordered
+                  className="align-middle mb-0"
+                >
+                  <thead
+                    className="sticky-top"
+                    
+                  >
+                    <tr className="text-uppercase fw-semibold small" style={{
+                      backgroundColor: "#134d48",
+                      color: "#fff",
+                      // zIndex: 1,
+                    }}>
+                      <th className="py-3 ps-3">S.No</th>
+                      <th className="py-3">Title</th>
+                      <th className="py-3">Menu</th>
+                      <th className="py-3">Main Slug</th>
+                      <th className="py-3">Slug</th>
+                      <th className="py-3">Department</th>
+                      <th className="py-3 text-center">Status</th>
+                      <th className="py-3 text-center">Docs</th>
+                      <th className="py-3 text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -982,9 +994,14 @@ const token = sessionStorage.getItem("authToken");
                             </code>
                           </td>
                           <td>{item.department || "N/A"}</td>
-                          <td>
-                            <span className={`badge ${item.isActive === true ? "bg-success" : "bg-danger"}`}>
-                              {item.isActive === true ? "Active" : "Inactive"}
+                          <td className="text-center">
+                            <span
+                              className={`badge rounded-pill px-3 py-2 ${item.isActive
+                                  ? "bg-success-subtle text-success"
+                                  : "bg-danger-subtle text-danger"
+                                }`}
+                            >
+                              {item.isActive ? "ACTIVE" : "INACTIVE"}
                             </span>
                           </td>
 
@@ -993,44 +1010,46 @@ const token = sessionStorage.getItem("authToken");
                               {item.documentsUpdate?.length || 0}
                             </span>
                           </td>
-                          <td>
-                            <Button
-                              size="sm"
-                              color="warning"
-                              className="me-1 p-1 text-dark"
-                              onClick={() => handleEdit(item)}
-                              title="Edit"
-                            >
-                              <FaEdit />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="danger"
-                              className="p-1"
-                              onClick={() => handleDelete(item._id)}
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </Button>
+                          <td className="py-3 px-3 align-middle text-center">
+                            <div className="btn-group gap-2">
+                              <Button
+                                size="sm"
+                                color="warning"
+                                className="rounded-circle p-0 border-0"
+                                style={{ width: "32px", height: "32px" }}
+                                onClick={() => handleEdit(item)}
+                                title="Edit"
+                              >
+                                <FaEdit size={14} />
+                              </Button>
 
-                            {/* Visit Page */}
-                            <Button
-                              size="sm"
-                              color="primary"
-                              className="p-1 ms-1"
-                              onClick={() =>
-                                window.open(
-                                  `${item.menuId?.path}/${item.mainSlug}`,
-                                  "_blank"
-                                )
-                              }
-                              title="Visit Page"
-                            >
-                              <FaEye className="me-1" />
-                              {isHindi ? "देखें" : "View"}
+                              <Button
+                                size="sm"
+                                color="danger"
+                                className="rounded-circle p-0 border-0"
+                                style={{ width: "32px", height: "32px" }}
+                                onClick={() => handleDelete(item._id)}
+                                title="Delete"
+                              >
+                                <FaTrash size={14} />
+                              </Button>
 
-                            </Button>
+                              <Button
+                                size="sm"
+                                style={{ backgroundColor: "#3c63e4", padding: "6px 12px" }}
+                                className="rounded-pill"
+                                onClick={() =>
+                                  window.open(
+                                    `${item.menuId?.path}/${item.mainSlug}`,
+                                    "_blank"
+                                  )
+                                }
+                                title="Visit Page"
+                              >
+                                <FaEye size={12} />
 
+                              </Button>
+                            </div>
                           </td>
 
                         </tr>
@@ -1044,6 +1063,7 @@ const token = sessionStorage.getItem("authToken");
               {renderPagination()}
             </>
           )}
+
         </CardBody>
       </Card>
 

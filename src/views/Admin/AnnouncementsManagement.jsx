@@ -23,7 +23,7 @@ import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-
+// import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
@@ -36,7 +36,7 @@ const AnnouncementsManagement = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [usedOrders, setUsedOrders] = useState([]);
-
+  const initEditor = () => { try { const s = sessionStorage.getItem(SS_EDITOR); return s ? JSON.parse(s) : [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } catch { return [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } };
   const initialState = {
     titleEn: "",
     titleHi: "",
@@ -57,7 +57,7 @@ const AnnouncementsManagement = () => {
     isSchemes: false,
     isActive: true
   };
-
+  const [editorContents, setEditorContents] = useState(initEditor);
   const [formData, setFormData] = useState(initialState);
 
   /* ================= QUILL MODULES ================= */
@@ -71,7 +71,14 @@ const AnnouncementsManagement = () => {
       ["clean"]
     ]
   };
-
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      descriptionEn: editorContents.descriptionEn,
+      descriptionHi: editorContents.descriptionHi
+    }));
+  }, [editorContents]);
+  //  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_EDITOR, JSON.stringify(editorContents)); }, [editorContents, view]);
   /* ================= SLUG AUTO ================= */
   const generateSlug = (text) =>
     text
@@ -398,24 +405,27 @@ const AnnouncementsManagement = () => {
                           {item.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          color="info"
-                          className="me-2"
-                          onClick={() => handleEdit(item)}
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="danger"
-                          onClick={() => handleDelete(item._id || item.id)}
-                          title="Delete"
-                        >
-                          <FaTrash />
-                        </Button>
+                      <td >
+                        <div className="d-flex align-items-center mb-2" style={{ gap: "2px" }}>
+                          <Button
+                            size="sm"
+                            color="info"
+                            className="me-2"
+                            onClick={() => handleEdit(item)}
+                            title="Edit"
+                          >
+                            <FaEdit />
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="danger"
+                            onClick={() => handleDelete(item._id || item.id)}
+                            title="Delete"
+                          >
+                            <FaTrash />
+                          </Button>
+                        </div>
+
                       </td>
                     </tr>
                   ))
@@ -500,6 +510,9 @@ const AnnouncementsManagement = () => {
                     </Input>
                   </FormGroup>
                 </Col>
+                {/* <Card title="Page Main Content Area">
+                  <DynamicContentEditor contents={editorContents} setContents={setEditorContents} engField="descriptionEn" hinField="descriptionHi" />
+                </Card> */}
               </Row>
 
               <Row>
