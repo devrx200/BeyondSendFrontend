@@ -443,7 +443,13 @@ const AnnouncementsManagement = () => {
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-            <ModalBody className="p-4" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+            <ModalBody
+              className="p-3"
+              style={{
+                maxHeight: "75vh",
+                overflowY: "auto"
+              }}
+            >
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -552,40 +558,43 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
-
-              <FormGroup className="mb-3">
-                <Label className="fw-semibold">
-                  Description (English) <span className="text-danger">*</span>
-                </Label>
-                <div style={{ height: "200px" }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.descriptionEn}
-                    onChange={(value) => setFormData({ ...formData, descriptionEn: value })}
-                    modules={quillModules}
-                    placeholder="Write detailed description in English..."
-                    style={{ height: "150px" }}
-                  />
-                </div>
-              </FormGroup>
-
-              <FormGroup className="mb-3">
-                <Label className="fw-semibold">
-                  Description (Hindi) <span className="text-danger">*</span>
-                </Label>
-                <div style={{ height: "200px" }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.descriptionHi}
-                    name="descriptionHi"
-                    onChange={(value) => setFormData({ ...formData, descriptionHi: value })}
-                    modules={quillModules}
-                    placeholder="हिंदी में विस्तृत विवरण लिखें..."
-                    style={{ height: "150px" }}
-                  />
-                </div>
-              </FormGroup>
-
+              <Row>
+                <Col md={6}>
+                  <FormGroup className="mb-3">
+                    <Label className="fw-semibold">
+                      Description (English) <span className="text-danger">*</span>
+                    </Label>
+                    <div style={{ height: "200px" }}>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.descriptionEn}
+                        onChange={(value) => setFormData({ ...formData, descriptionEn: value })}
+                        modules={quillModules}
+                        placeholder="Write detailed description in English..."
+                        style={{ height: "150px" }}
+                      />
+                    </div>
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-3">
+                    <Label className="fw-semibold">
+                      Description (Hindi) <span className="text-danger">*</span>
+                    </Label>
+                    <div style={{ height: "200px" }}>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.descriptionHi}
+                        name="descriptionHi"
+                        onChange={(value) => setFormData({ ...formData, descriptionHi: value })}
+                        modules={quillModules}
+                        placeholder="हिंदी में विस्तृत विवरण लिखें..."
+                        style={{ height: "150px" }}
+                      />
+                    </div>
+                  </FormGroup>
+                </Col>
+              </Row>
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -634,7 +643,6 @@ const AnnouncementsManagement = () => {
                     />
                   </FormGroup>
                 </Col>
-
                 <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">

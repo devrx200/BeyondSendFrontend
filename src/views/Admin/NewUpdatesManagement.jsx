@@ -181,9 +181,7 @@ const isNoticeNew = (createdAt) => {
   /* ================= UI ================= */
   return (
     <Card>
-      <CardBody>
-
-        {/* HEADER */}
+            {/* HEADER */}
     <CardHeader
   className="px-4 py-3"
   style={{
@@ -241,9 +239,7 @@ const isNoticeNew = (createdAt) => {
 
   </div>
 </CardHeader>
-      
-  <Card className="shadow-sm border-0">
-  <CardBody className="p-0">
+      <CardBody>
     <div className="table-responsive">
       <Table responsive hover className="align-middle mb-0">
         <thead className="bg-light border-bottom border-2">
@@ -350,8 +346,7 @@ const isNoticeNew = (createdAt) => {
         </tbody>
       </Table>
     </div>
-  </CardBody>
-</Card>
+  
         <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap">
           <div className="text-muted small">
             Showing {indexOfFirstItem + 1} -

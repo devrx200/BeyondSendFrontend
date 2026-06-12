@@ -25,7 +25,7 @@ import Swal from "sweetalert2";
 import "../../css/Footer.css";
 
 const API = import.meta.env.VITE_API_URL;
- const token = sessionStorage.getItem("authToken");
+const token = sessionStorage.getItem("authToken");
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
 
@@ -117,7 +117,7 @@ const FooterSection = () => {
 
     const fetchFooter = async () => {
         const { data } = await axios.get(`${API}/api/get-all-footer`, {
-          headers: { "Content-Type": "application/json",  },
+            headers: { "Content-Type": "application/json", },
         });
         if (data) setFooter(data);
     };
@@ -269,46 +269,46 @@ const FooterSection = () => {
     //         headers: {   Authorization: `Bearer ${token}` },
     //     });
     // };
-const saveFooterToDB = async (footerPayload) => {
-    const formData = new FormData();
-    formData.append("contactInfo", JSON.stringify(footerPayload.contactInfo));
-    formData.append("quickLinks", JSON.stringify(footerPayload.quickLinks));
-    formData.append("importantLinks", JSON.stringify(footerPayload.importantLinks));
-    formData.append("socialLinks", JSON.stringify(footerPayload.socialLinks));
+    const saveFooterToDB = async (footerPayload) => {
+        const formData = new FormData();
+        formData.append("contactInfo", JSON.stringify(footerPayload.contactInfo));
+        formData.append("quickLinks", JSON.stringify(footerPayload.quickLinks));
+        formData.append("importantLinks", JSON.stringify(footerPayload.importantLinks));
+        formData.append("socialLinks", JSON.stringify(footerPayload.socialLinks));
 
-    // Only attach file if it's a new upload
-    if (footerPayload.contactInfo?.organizerLogo instanceof File) {
-        formData.append("organizerLogo", footerPayload.contactInfo.organizerLogo);
-    }
+        // Only attach file if it's a new upload
+        if (footerPayload.contactInfo?.organizerLogo instanceof File) {
+            formData.append("organizerLogo", footerPayload.contactInfo.organizerLogo);
+        }
 
-    await axios.post(`${API}/api/save-footer`, formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-};
+        await axios.post(`${API}/api/save-footer`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+    };
 
-const saveFooter = async () => {
-    const validationErrors = validateFooter();
-    setErrors(validationErrors);
+    const saveFooter = async () => {
+        const validationErrors = validateFooter();
+        setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) {
-        return Swal.fire("Validation Error", "Please fix the highlighted errors", "warning");
-    }
+        if (Object.keys(validationErrors).length > 0) {
+            return Swal.fire("Validation Error", "Please fix the highlighted errors", "warning");
+        }
 
-    try {
-        Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        // ❌ REMOVE the second Swal.fire and tokenString lines that were here
+        try {
+            Swal.fire({ title: "Saving...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            // ❌ REMOVE the second Swal.fire and tokenString lines that were here
 
-        await saveFooterToDB(footer); // ✅ reuse the fixed helper
+            await saveFooterToDB(footer); // ✅ reuse the fixed helper
 
-        Swal.fire("Success", "Footer saved successfully", "success");
-        fetchFooter();
-    } catch (error) {
-        Swal.fire("Error", error?.response?.data?.message || "Footer save failed", "error");
-    }
-};
+            Swal.fire("Success", "Footer saved successfully", "success");
+            fetchFooter();
+        } catch (error) {
+            Swal.fire("Error", error?.response?.data?.message || "Footer save failed", "error");
+        }
+    };
     // const saveFooter = async () => {
     //     const validationErrors = validateFooter();
     //     setErrors(validationErrors);
@@ -348,7 +348,7 @@ const saveFooter = async () => {
     //         if (footer.contactInfo.organizerLogo instanceof File) {
     //             formData.append("organizerLogo", footer.contactInfo.organizerLogo);
     //         }
-          
+
     //         const res = await axios.post(
     //             `${API}/api/save-footer`,
     //             formData,
@@ -488,8 +488,22 @@ const saveFooter = async () => {
     };
 
     return (
-        <Container  className="footer-admin-page">
-            <h3 className="page-title">Footer Section Manager</h3>
+        <Container className="footer-admin-page">
+            <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div>
+                    <h4 className="mb-1 fw-bold">
+                        Footer Section Manager
+                    </h4>
+                    <small className="text-muted">
+                        Manage footer links, contact details, social media and footer content
+                    </small>
+                </div>
+
+                <Button color="primary" onClick={saveFooter}>
+                    <FaSave className="me-2" />
+                    Save Footer Content
+                </Button>
+            </div>
 
             <Card className="admin-card">
                 <CardBody>
@@ -715,32 +729,32 @@ const saveFooter = async () => {
                                         }));
                                     }}
                                     invalid={!!errors.organizerLogo}
-                                    
+
                                 />
 
                                 {errors.organizerLogo && (
                                     <FormFeedback>{errors.organizerLogo}</FormFeedback>
                                 )}
-                                    {footer?.contactInfo?.organizerLogo && (
-      <div style={{ marginTop: "10px" }}>
-        <img
-          src={
-            footer.contactInfo.organizerLogo instanceof File
-              ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
-              : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
-          }
-          alt="Preview"
-          height="60"
-          style={{
-            border: "1px solid #ddd",
-            padding: "4px",
-            borderRadius: "6px",
-          }}/>
-          </div>
-    )}
+                                {footer?.contactInfo?.organizerLogo && (
+                                    <div style={{ marginTop: "10px" }}>
+                                        <img
+                                            src={
+                                                footer.contactInfo.organizerLogo instanceof File
+                                                    ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
+                                                    : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
+                                            }
+                                            alt="Preview"
+                                            height="60"
+                                            style={{
+                                                border: "1px solid #ddd",
+                                                padding: "4px",
+                                                borderRadius: "6px",
+                                            }} />
+                                    </div>
+                                )}
                             </FormGroup>
                         </Col>
-                        
+
                     </Row>
                 </CardBody>
             </Card>
@@ -890,8 +904,21 @@ const saveFooter = async () => {
                                                 />
                                             </td> */}
                                             <td className="text-center">
-                                                <FaEdit
-                                                    className="edit-icon me-2" style={{
+                                                <div className="d-flex gap-2 justify-center-content">
+                                                    <FaEdit
+                                                        className="edit-icon me-2" style={{
+                                                            background: "transparent",
+                                                            border: "none",
+                                                            padding: "4px",
+                                                            marginRight: "6px",
+                                                            cursor: "pointer",
+                                                            fontSize: "23px",
+                                                            lineHeight: "1",
+                                                            color: "#198754",
+                                                        }}
+                                                        onClick={() => handleEditLink("quick", link, index)}
+                                                    />
+                                                    <FaTrash style={{
                                                         background: "transparent",
                                                         border: "none",
                                                         padding: "4px",
@@ -899,20 +926,10 @@ const saveFooter = async () => {
                                                         cursor: "pointer",
                                                         fontSize: "23px",
                                                         lineHeight: "1",
-                                                        color: "#198754",
-                                                    }}
-                                                    onClick={() => handleEditLink("quick", link, index)}
-                                                />
-                                                <FaTrash style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "23px",
-                                                    lineHeight: "1",
-                                                    color: "#af2e1d",
-                                                }} onClick={() => deleteAnyLink("quick", link, index)} />
+                                                        color: "#af2e1d",
+                                                    }} onClick={() => deleteAnyLink("quick", link, index)} />
+
+                                                </div>
 
                                             </td>
                                         </tr>
@@ -962,6 +979,7 @@ const saveFooter = async () => {
                                                     />
                                                 </td> */}
                                                 <td className="text-center">
+                                                     <div className="d-flex gap-2 justify-center-content">
                                                     <FaEdit
                                                         className="edit-icon me-2" style={{
                                                             background: "transparent",
@@ -985,6 +1003,7 @@ const saveFooter = async () => {
                                                         lineHeight: "1",
                                                         color: "#a71c17",
                                                     }} onClick={() => deleteAnyLink("important", link, index)} />
+                                               </div>
                                                 </td>
 
                                             </tr>
@@ -1060,63 +1079,58 @@ const saveFooter = async () => {
                                 <th width="80">Action</th>
                             </tr>
                         </thead>
-                                <tbody>
-                                    {footer.socialLinks.map((item, index) => (
-                                        <tr key={item._id || index}>
-                                            <td>{item.platform}</td>
-                                            <td>{item.url}</td>
-                                            <td className="text-center" style={{ whiteSpace: "nowrap" }}>
-                                                {/* EDIT */}
-                                                <button
-                                                    type="button"
-                                                    title="Edit"
-                                                    onClick={() => handleEditSocial(item, index)}
-                                                    style={{
-                                                        background: "transparent",
-                                                        border: "none",
-                                                        padding: "4px",
-                                                        marginRight: "6px",
-                                                        cursor: "pointer",
-                                                        fontSize: "16px",
-                                                        lineHeight: "1",
-                                                        color: "#198754",
-                                                    }}
-                                                >
-                                                    <FaEdit />
-                                                </button>
+                        <tbody>
+                            {footer.socialLinks.map((item, index) => (
+                                <tr key={item._id || index}>
+                                    <td>{item.platform}</td>
+                                    <td>{item.url}</td>
+                                    <td className="text-center" style={{ whiteSpace: "nowrap" }}>
+                                        {/* EDIT */}
+                                        <button
+                                            type="button"
+                                            title="Edit"
+                                            onClick={() => handleEditSocial(item, index)}
+                                            style={{
+                                                background: "transparent",
+                                                border: "none",
+                                                padding: "4px",
+                                                marginRight: "6px",
+                                                cursor: "pointer",
+                                                fontSize: "16px",
+                                                lineHeight: "1",
+                                                color: "#198754",
+                                            }}
+                                        >
+                                            <FaEdit />
+                                        </button>
 
-                                                {/* DELETE */}
-                                                <button
-                                                    type="button"
-                                                    title="Delete"
-                                                    onClick={() => deleteAnyLink("social", item, index)}
-                                                    style={{
-                                                        background: "transparent",
-                                                        border: "none",
-                                                        padding: "4px",
-                                                        cursor: "pointer",
-                                                        fontSize: "16px",
-                                                        lineHeight: "1",
-                                                        color: "#ad2937",
-                                                    }}
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                        {/* DELETE */}
+                                        <button
+                                            type="button"
+                                            title="Delete"
+                                            onClick={() => deleteAnyLink("social", item, index)}
+                                            style={{
+                                                background: "transparent",
+                                                border: "none",
+                                                padding: "4px",
+                                                cursor: "pointer",
+                                                fontSize: "16px",
+                                                lineHeight: "1",
+                                                color: "#ad2937",
+                                            }}
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
 
-                                </tbody>
+                        </tbody>
                     </Table>
                 </CardBody>
             </Card>
 
-            {/* ================= SAVE ================= */}
-            <div className="text-end">
-                <Button color="primary" size="lg" onClick={saveFooter}>
-                    Save Footer Content
-                </Button>
-            </div>
+
         </Container>
     );
 };

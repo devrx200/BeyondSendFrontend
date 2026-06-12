@@ -14,8 +14,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const token = sessionStorage.getItem("authToken");
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 /* ================= INITIAL FORM ================= */
 const initialForm = {
@@ -104,6 +103,8 @@ const roleColor = (role) => {
 
 /* ================================================= */
 const AdminUserManagement = () => {
+  const token = sessionStorage.getItem("authToken");
+const API_URL = import.meta.env.VITE_API_URL;
   const { isHindi } = useLanguage();
   const navigate = useNavigate();
 

@@ -17,7 +17,7 @@ import Swal from "sweetalert2";
 
 const HeaderManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+  const token = sessionStorage.getItem("authToken");
   const [formData, setFormData] = useState({
     phone: "",
     email: "",
@@ -94,7 +94,7 @@ const token = sessionStorage.getItem("authToken");
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`
           },
-        }  
+        }
       );
 
       Swal.fire("Success", "Header saved successfully", "success");
@@ -107,7 +107,21 @@ const token = sessionStorage.getItem("authToken");
 
   return (
     <Container fluid className="mt-4">
-      <h3 className="mb-3">🌐 Header Management</h3>
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+          <h4 className="mb-1 fw-bold text-dark">
+            🌐 Header Management
+          </h4>
+          <small className="text-muted">
+            Manage website header menus and settings
+          </small>
+        </div>
+
+        <Button color="success" onClick={handleSubmit}>
+          <FaSave className="me-2" />
+          Save Header
+        </Button>
+      </div>
 
       {/* CONTACT */}
       <Card className="mb-3 shadow-sm">
@@ -214,12 +228,7 @@ const token = sessionStorage.getItem("authToken");
         </CardBody>
       </Card>
 
-      {/* SAVE */}
-      <div className="text-end mt-3">
-        <Button color="success" onClick={handleSubmit}>
-          <FaSave /> Save Header
-        </Button>
-      </div>
+
     </Container>
   );
 };

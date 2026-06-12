@@ -3,9 +3,10 @@ import { Container, Table, Button, Modal, ModalHeader, ModalBody } from "reactst
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 const AdminFeedbackList = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
