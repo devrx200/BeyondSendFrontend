@@ -299,7 +299,7 @@ const API_URL = import.meta.env.VITE_API_URL;
       {/* ── Gradient Header ── */}
       <CardHeader
         className="border-0 py-4"
-        style={headerGradient}
+        // style={headerGradient}
       >
         <Row className="align-items-center">
           <Col>
@@ -376,14 +376,14 @@ const API_URL = import.meta.env.VITE_API_URL;
 
         {/* ── Table ── */}
         <div className="table-responsive">
-          <Table hover striped className="mb-0 align-middle">
-            <thead style={headerGradient}>
-              <tr>
+          <Table hover striped className="mb-0 align-middle text-success">
+            <thead >
+              <tr className="text-primary">
                 {["#", "Photo", "Name", "Role", "Email", "Mobile", "Designation", "Permissions", "Controls", "Status", "Actions"].map(
                   (col) => (
                     <th
                       key={col}
-                      className="text-white fw-semibold"
+                      className="text-dark fw-semibold"
                       style={{ fontSize: "13px", whiteSpace: "nowrap", padding: "12px 14px" }}
                     >
                       {col}

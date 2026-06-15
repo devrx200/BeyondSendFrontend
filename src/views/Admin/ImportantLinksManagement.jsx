@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
     Card, CardBody, Button, Table, Form,
-    FormGroup, Label, Input, Row, Col, Badge
+    FormGroup, Label, Input, Row, Col, Badge,
+    CardHeader
 } from "reactstrap";
 import axios from "axios";
 import IconPicker from "../../components/IconPicker";
@@ -168,17 +169,20 @@ const ImportantLinksManagement = () => {
     return (
         <>
             {/* PAGE HEADER */}
-            <div className="adm-page-head">
-                <div>
-                    <h3 className="adm-page-title"><FaLink /> Important Links Management</h3>
-                    <p className="adm-page-subtitle">Manage quick-access links shown on the public site.</p>
+            <CardHeader className="rounded border">
+                <div className="adm-page-head">
+                    <div>
+                        <h3 className="adm-page-title text-white"><FaLink className="text-white" /> Important Links Management</h3>
+                        <p className="adm-page-subtitle text-white">Manage quick-access links shown on the public site.</p>
+                    </div>
+                    {!modal && (
+                        <Button color="primary" onClick={openAdd}>
+                            <FaPlus className="me-1" /> Add Link
+                        </Button>
+                    )}
                 </div>
-                {!modal && (
-                    <Button color="primary" onClick={openAdd}>
-                        <FaPlus className="me-1" /> Add Link
-                    </Button>
-                )}
-            </div>
+            </CardHeader>
+
 
             {/* INLINE FORM CARD (replaces modal) */}
             {modal && (

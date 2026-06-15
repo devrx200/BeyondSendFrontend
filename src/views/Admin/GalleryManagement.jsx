@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import {
   Card, CardBody, Button, Row, Col,
   Modal, ModalHeader, ModalBody, ModalFooter,
-  Form, Label, Input, Badge
+  Form, Label, Input, Badge,
+  CardHeader
 } from "reactstrap";
 import { FaImages, FaPlus, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import axios from "axios";
@@ -249,16 +250,16 @@ const GalleryManagement = () => {
 
   return (
     <Card className="shadow-sm border-0">
-      <CardBody>
-
-        {/* HEADER */}
-        <div className="d-flex justify-content-between mb-3">
+      <CardHeader>
+           {/* HEADER */}
+        <div className="d-flex justify-content-between">
           <h4><FaImages /> Gallery Management</h4>
-          <Button color="primary" onClick={toggleModal}>
+          <Button color="light" className="text-success" onClick={toggleModal}>
             <FaPlus /> Add Gallery
           </Button>
         </div>
-
+      </CardHeader>
+      <CardBody>
         {/* TABLE */}
         <div className="table-responsive">
           <table className="table table-bordered table-hover align-middle">

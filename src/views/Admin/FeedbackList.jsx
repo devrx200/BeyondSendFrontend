@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Table, Button, Modal, ModalHeader, ModalBody } from "reactstrap";
+import { Container, Table, Button, Modal, ModalHeader, ModalBody, CardHeader } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -107,7 +107,10 @@ const AdminFeedbackList = () => {
 
   return (
     <Container className="py-4">
-      <h4 className="mb-4">All Users Feedback List</h4>
+      <CardHeader className="shadow rounded">
+      <h4 className="mb-4 text-white">All Users Feedback List</h4>
+
+      </CardHeader>
 
       <Table bordered hover responsive>
         <thead className="table-light">

@@ -13,7 +13,7 @@ import {
   Label,
   Input,
   Row,
-  Col, Badge
+  Col, Badge, CardHeader
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaImage } from "react-icons/fa";
 import axios from "axios";
@@ -323,15 +323,18 @@ const AboutSectionMangement = () => {
 
   return (
     <Card className="shadow-sm border-0">
-      <CardBody>
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h4 className="mb-0">
+      <CardHeader>
+          <div className="d-flex justify-content-between align-items-center mb-3 ">
+          <h4 className="mb-0 text-white">
             <FaImage className="me-2" /> About Section
           </h4>
-          <Button color="primary" onClick={toggleModal}>
-            <FaPlus className="me-2" /> Add
+          <Button color="light" className="text-success" onClick={toggleModal}>
+            <FaPlus className="me-2 " /> Add
           </Button>
         </div>
+      </CardHeader>
+      <CardBody>
+      
 
         <Table responsive bordered striped hover>
           <thead>

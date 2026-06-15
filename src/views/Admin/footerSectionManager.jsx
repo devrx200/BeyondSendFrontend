@@ -9,7 +9,8 @@ import {
     Input,
     FormGroup,
     Label,
-    Table, FormFeedback
+    Table, FormFeedback,
+    CardHeader
 } from "reactstrap";
 import {
     FaPhoneAlt,
@@ -489,22 +490,23 @@ const FooterSection = () => {
 
     return (
         <Container className="footer-admin-page">
+            <CardHeader className="rounded border">
             <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                 <div>
-                    <h4 className="mb-1 fw-bold">
+                    <h4 className="mb-1 fw-bold text-white">
                         Footer Section Manager
                     </h4>
-                    <small className="text-muted">
+                    <small className="text-light">
                         Manage footer links, contact details, social media and footer content
                     </small>
                 </div>
 
-                <Button color="primary" onClick={saveFooter}>
+                <Button color="light" className="text-success" onClick={saveFooter}>
                     <FaSave className="me-2" />
                     Save Footer Content
                 </Button>
             </div>
-
+            </CardHeader>
             <Card className="admin-card">
                 <CardBody>
                     <h3 className="section-title">Contact Information</h3>

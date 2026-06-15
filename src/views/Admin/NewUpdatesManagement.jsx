@@ -122,16 +122,16 @@ const NewUpdates = () => {
       Swal.fire("Error", err.response?.data?.message || "Failed", "error");
     }
   };
-const isNoticeNew = (createdAt) => {
-  const createdDate = new Date(createdAt);
-  const today = new Date();
+  const isNoticeNew = (createdAt) => {
+    const createdDate = new Date(createdAt);
+    const today = new Date();
 
-  const diffDays = Math.floor(
-    (today - createdDate) / (1000 * 60 * 60 * 24)
-  );
+    const diffDays = Math.floor(
+      (today - createdDate) / (1000 * 60 * 60 * 24)
+    );
 
-  return diffDays < 7;
-};
+    return diffDays < 7;
+  };
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -181,172 +181,167 @@ const isNoticeNew = (createdAt) => {
   /* ================= UI ================= */
   return (
     <Card>
-            {/* HEADER */}
-    <CardHeader
-  className="px-4 py-3"
-  style={{
-    background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
-    color: "#fff",
-    borderBottom: "none",
-  }}
->
-  <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-    
-    {/* Left Side */}
-    <div>
-      <h3 className="mb-1 fw-semibold text-shadow text-white" style={{ textShadow: "1px 1px 2px rgba(231, 231, 231, 0.96)" }}>
-        <FaBullhorn className="me-2 text-danger" />
-        Notice Ticker Management
-      </h3>
-      <small style={{ opacity: 1.85 }} className="text-shadow text-warning" fontSize={14}>
-        
-        New Update Slider on Home Page
-      </small>
-    </div>
+      {/* HEADER */}
+      <CardHeader
+        className="px-4 py-3"
 
-    {/* Right Side */}
-    <div className="d-flex align-items-center gap-3">
-      <Badge
-        pill
-        style={{
-          background: "rgba(255,255,255,0.15)",
-          color: "#fff",
-          padding: "8px 14px",
-          fontSize: "13px",
-          fontWeight: 500,
-          backdropFilter: "blur(5px)",
-        }}
       >
-        Total: {list.length}
-      </Badge>
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
 
-      <Button
-        onClick={toggleModal}
-        style={{
-          background: "#fff",
-          color: "#0f766e",
-          border: "none",
-          borderRadius: "10px",
-          padding: "8px 18px",
-          fontWeight: 600,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-        }}
-      >
-        <FaPlus className="me-2" />
-        Add Notice
-      </Button>
-    </div>
+          {/* Left Side */}
+          <div>
+            <h3 className="mb-1 fw-semibold text-shadow text-white" style={{ textShadow: "1px 1px 2px rgba(231, 231, 231, 0.96)" }}>
+              <FaBullhorn className="me-2 text-danger" />
+              Notice Ticker Management
+            </h3>
+            <small style={{ opacity: 1.85 }} className="text-shadow text-warning" fontSize={14}>
 
-  </div>
-</CardHeader>
+              New Update Slider on Home Page
+            </small>
+          </div>
+
+          {/* Right Side */}
+          <div className="d-flex align-items-center gap-3">
+            <Badge
+              pill
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                color: "#fff",
+                padding: "8px 14px",
+                fontSize: "13px",
+                fontWeight: 500,
+                backdropFilter: "blur(5px)",
+              }}
+            >
+              Total: {list.length}
+            </Badge>
+
+            <Button
+              onClick={toggleModal}
+              style={{
+                background: "#fff",
+                color: "#0f766e",
+                border: "none",
+                borderRadius: "10px",
+                padding: "8px 18px",
+                fontWeight: 600,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              }}
+            >
+              <FaPlus className="me-2" />
+              Add Notice
+            </Button>
+          </div>
+
+        </div>
+      </CardHeader>
       <CardBody>
-    <div className="table-responsive">
-      <Table responsive hover className="align-middle mb-0">
-        <thead className="bg-light border-bottom border-2">
-          <tr>
-            <th className="py-3 px-3 text-secondary-emphasis small fw-semibold">S.No</th>
-            <th className="py-3 text-secondary-emphasis small fw-semibold">Title</th>
-            <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Order</th>
-            <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Type</th>
-            <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Status</th>
-            <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Actions</th>
-          </tr>
-        </thead>
-        
-        <tbody>
-          {currentData.length === 0 ? (
-            <tr>
-              <td colSpan="6" className="text-center py-5">
-                <div className="py-4 text-muted">
-                  <span className="display-4 d-block mb-3">📢</span>
-                  <p className="mb-0">No notices found</p>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            currentData.map((n, i) => (
-              <tr key={n._id} className="border-bottom">
-                <td className="py-3 px-3 align-middle">
-                  <strong>{indexOfFirstItem + i + 1}</strong>
-                </td>
-                
-                <td className="py-3 align-middle">
-                  <div className="text-truncate fw-semibold" style={{ maxWidth: "400px" }}>
-                    {n.titleEng}
-                  </div>
-                  {n.titleHin && (
-                    <div className="text-truncate text-muted small mt-1" style={{ maxWidth: "400px" }}>
-                      {n.titleHin}
-                    </div>
-                  )}
-                </td>
-                
-                <td className="py-3 align-middle text-center">
-                  <span className="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3 py-2 fw-bold border border-warning">
-                    {n.displayOrder || 'N/A'}
-                  </span>
-                </td>
-                
-                <td className="py-3 align-middle text-center">
-                  {isNoticeNew(n.createdAt) ? (
-                    <span className="badge bg-primary rounded-pill px-3 py-2 fw-bold shadow-sm">
-                      NEW
-                    </span>
-                  ) : (
-                    <span className="badge bg-secondary rounded-pill px-3 py-2 fw-bold">
-                      OLD
-                    </span>
-                  )}
-                </td>
-                
-           <td className="text-center align-middle">
-  <span
-    className={`badge rounded-pill px-3 py-2 fw-semibold small ${
-      n.isActive
-        ? "bg-success-subtle text-success border border-success-subtle"
-        : "bg-secondary-subtle text-secondary border border-secondary-subtle"
-    }`}
-  >
-    {n.isActive ? "ACTIVE" : "INACTIVE"}
-  </span>
-</td>
-                
- <td className="py-3 align-middle text-center">
-  <div className="d-flex justify-content-center gap-2">
-    
-    <Button
-      color="light"
-      size="sm"
-      outline
-      onClick={() => handleEdit(n)}
-      className="rounded rounded-pill outline outline-primary border border-primary text-primary d-flex align-items-center justify-content-center"
-      style={{ width: "50px", height: "50px" }}
-      title="Edit"
-    >
-      <FaEdit size={18} />
-    </Button>
-
-    <Button
-      color="light"
-      size="sm"
-      outline
-      onClick={() => handleDelete(n._id)}
-      className="rounded rounded-pill outline outline-danger border border-danger text-danger d-flex align-items-center justify-content-center"
-      style={{ width: "50px", height: "50px" }}
-      title="Delete"
-    >
-      <FaTrash size={18} />
-    </Button>
-
-  </div>
-</td>
+        <div className="table-responsive">
+          <Table responsive hover className="align-middle mb-0">
+            <thead className="bg-light border-bottom border-2">
+              <tr>
+                <th className="py-3 px-3 text-secondary-emphasis small fw-semibold">S.No</th>
+                <th className="py-3 text-secondary-emphasis small fw-semibold">Title</th>
+                <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Order</th>
+                <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Type</th>
+                <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Status</th>
+                <th className="py-3 text-center text-secondary-emphasis small fw-semibold">Actions</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
-    </div>
-  
+            </thead>
+
+            <tbody>
+              {currentData.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-5">
+                    <div className="py-4 text-muted">
+                      <span className="display-4 d-block mb-3">📢</span>
+                      <p className="mb-0">No notices found</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                currentData.map((n, i) => (
+                  <tr key={n._id} className="border-bottom">
+                    <td className="py-3 px-3 align-middle">
+                      <strong>{indexOfFirstItem + i + 1}</strong>
+                    </td>
+
+                    <td className="py-3 align-middle">
+                      <div className="text-truncate fw-semibold" style={{ maxWidth: "400px" }}>
+                        {n.titleEng}
+                      </div>
+                      {n.titleHin && (
+                        <div className="text-truncate text-muted small mt-1" style={{ maxWidth: "400px" }}>
+                          {n.titleHin}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="py-3 align-middle text-center">
+                      <span className="badge bg-warning-subtle text-warning-emphasis rounded-pill px-3 py-2 fw-bold border border-warning">
+                        {n.displayOrder || 'N/A'}
+                      </span>
+                    </td>
+
+                    <td className="py-3 align-middle text-center">
+                      {isNoticeNew(n.createdAt) ? (
+                        <span className="badge bg-primary rounded-pill px-3 py-2 fw-bold shadow-sm">
+                          NEW
+                        </span>
+                      ) : (
+                        <span className="badge bg-secondary rounded-pill px-3 py-2 fw-bold">
+                          OLD
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="text-center align-middle">
+                      <span
+                        className={`badge rounded-pill px-3 py-2 fw-semibold small ${n.isActive
+                            ? "bg-success-subtle text-success border border-success-subtle"
+                            : "bg-secondary-subtle text-secondary border border-secondary-subtle"
+                          }`}
+                      >
+                        {n.isActive ? "ACTIVE" : "INACTIVE"}
+                      </span>
+                    </td>
+
+                    <td className="py-3 align-middle text-center">
+                      <div className="d-flex justify-content-center gap-2">
+
+                        <Button
+                          color="light"
+                          size="sm"
+                          outline
+                          onClick={() => handleEdit(n)}
+                          className="rounded rounded-pill outline outline-primary border border-primary text-primary d-flex align-items-center justify-content-center"
+                          style={{ width: "50px", height: "50px" }}
+                          title="Edit"
+                        >
+                          <FaEdit size={18} />
+                        </Button>
+
+                        <Button
+                          color="light"
+                          size="sm"
+                          outline
+                          onClick={() => handleDelete(n._id)}
+                          className="rounded rounded-pill outline outline-danger border border-danger text-danger d-flex align-items-center justify-content-center"
+                          style={{ width: "50px", height: "50px" }}
+                          title="Delete"
+                        >
+                          <FaTrash size={18} />
+                        </Button>
+
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
+
         <div className="d-flex justify-content-between align-items-center mt-3 flex-wrap">
           <div className="text-muted small">
             Showing {indexOfFirstItem + 1} -
@@ -389,241 +384,241 @@ const isNoticeNew = (createdAt) => {
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-           <ModalBody className="p-4">
-  {/* Title Section */}
-  <div className="mb-4">
-   
-    <Row>
-      <Col md={6}>
-        <FormGroup className="mb-3">
-          <Label className="fw-semibold mb-2">
-            Title (English) <span className="text-danger">*</span>
-          </Label>
-          <Input
-            type="text"
-            placeholder="Enter English title"
-            value={formData.titleEng}
-            onChange={e => setFormData({ ...formData, titleEng: e.target.value })}
-            required
-            className="border-2 rounded-3 py-2"
-            style={{ borderColor: "#e2e8f0" }}
-          />
-          <small className="text-muted">English title will be displayed on website</small>
-        </FormGroup>
-      </Col>
-      <Col md={6}>
-        <FormGroup className="mb-3">
-          <Label className="fw-semibold mb-2">
-            Title (Hindi) <span className="text-muted">(Optional)</span>
-          </Label>
-          <Input
-            type="text"
-            placeholder="हिंदी शीर्षक दर्ज करें"
-            value={formData.titleHin}
-            onChange={e => setFormData({ ...formData, titleHin: e.target.value })}
-            className="border-2 rounded-3 py-2"
-            style={{ borderColor: "#e2e8f0" }}
-          />
-          <small className="text-muted">Hindi title for bilingual support</small>
-        </FormGroup>
-      </Col>
-    </Row>
-  </div>
+            <ModalBody className="p-4">
+              {/* Title Section */}
+              <div className="mb-4">
 
-  {/* Link Section */}
-  <div className="mb-4">
-   <Row>
-    <Col md={6}>
-  <FormGroup className="mb-3">
-      <Label className="fw-semibold mb-2">
-        Link URL <span className="text-danger">*</span>
-      </Label>
-      <Input
-        type="url"
-        placeholder="https://example.com"
-        value={formData.link}
-        onChange={e => setFormData({ ...formData, link: e.target.value })}
-        required
-        className="border-2 rounded-3 py-2"
-        style={{ borderColor: "#e2e8f0" }}
-      />
-      <small className="text-muted">Enter full URL including https://</small>
-    </FormGroup>
-    </Col>
-  <Col md={6}>
-        <FormGroup className="mb-3">
-          <Label className="fw-semibold mb-2">
-            Display Order 
-          </Label>
-          <Input
-            type="number"
-            placeholder="Enter display order"
-            value={formData.displayOrder}
-            onChange={e => setFormData({ ...formData, displayOrder: e.target.value })}
-            className="border-2 rounded-3 py-2"
-            style={{ borderColor: "#e2e8f0" }}
-          />
-          <small className="text-muted">Lower numbers appear first</small>
-        </FormGroup>
-      </Col>
-   </Row>
-   <Row>
-      {/* External Link Radio Buttons */}
-      <Col md={6}>
-        <div className="mb-3">
-          <Label className="fw-semibold mb-2 d-block">External Link</Label>
-          <div className="d-flex gap-4">
-            <FormGroup check className="me-4">
-              <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                <Input
-                  type="radio"
-                  name="isExternal"
-                  checked={formData.isExternal === false}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isExternal: false,
-                      openInNewTab: false
-                    })
-                  }
-                  className="form-check-input"
-                />
-                <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
-                  No
-                </span>
-              </Label>
-            </FormGroup>
-            <FormGroup check>
-              <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                <Input
-                  type="radio"
-                  name="isExternal"
-                  checked={formData.isExternal === true}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isExternal: true,
-                    })
-                  }
-                  className="form-check-input"
-                />
-                <span className="badge bg-primary px-3 py-2 rounded-pill">
-                   Yes
-                </span>
-              </Label>
-            </FormGroup>
-          </div>
-        </div>
-      </Col>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold mb-2">
+                        Title (English) <span className="text-danger">*</span>
+                      </Label>
+                      <Input
+                        type="text"
+                        placeholder="Enter English title"
+                        value={formData.titleEng}
+                        onChange={e => setFormData({ ...formData, titleEng: e.target.value })}
+                        required
+                        className="border-2 rounded-3 py-2"
+                        style={{ borderColor: "#e2e8f0" }}
+                      />
+                      <small className="text-muted">English title will be displayed on website</small>
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold mb-2">
+                        Title (Hindi) <span className="text-muted">(Optional)</span>
+                      </Label>
+                      <Input
+                        type="text"
+                        placeholder="हिंदी शीर्षक दर्ज करें"
+                        value={formData.titleHin}
+                        onChange={e => setFormData({ ...formData, titleHin: e.target.value })}
+                        className="border-2 rounded-3 py-2"
+                        style={{ borderColor: "#e2e8f0" }}
+                      />
+                      <small className="text-muted">Hindi title for bilingual support</small>
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </div>
 
-      {/* Open in New Tab - Only shows when External Link is Yes */}
-      {formData.isExternal && (
-        <Col md={6}>
-          <div className="mb-3">
-            <Label className="fw-semibold mb-2 d-block">Open in New Tab</Label>
-            <div className="d-flex gap-4">
-              <FormGroup check className="me-4">
-                <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                  <Input
-                    type="radio"
-                    name="openInNewTab"
-                    checked={formData.openInNewTab === false}
-                    onChange={() =>
-                      setFormData({
-                        ...formData,
-                        openInNewTab: false
-                      })
-                    }
-                    className="form-check-input"
-                  />
-                  <span className="badge bg-secondary px-3 py-2 rounded-pill">
-                    No
-                  </span>
-                </Label>
-              </FormGroup>
-              <FormGroup check>
-                <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                  <Input
-                    type="radio"
-                    name="openInNewTab"
-                    checked={formData.openInNewTab === true}
-                    onChange={() =>
-                      setFormData({
-                        ...formData,
-                        openInNewTab: true
-                      })
-                    }
-                    className="form-check-input"
-                  />
-                  <span className="badge bg-info px-3 py-2 rounded-pill text-white">
-                    Yes
-                  </span>
-                </Label>
-              </FormGroup>
-            </div>
-          </div>
-        </Col>
-      )}
-      <Col md={6}>
-        <FormGroup className="mb-3">
-          <Label className="fw-semibold mb-2 d-block">Status</Label>
-          <div className="d-flex gap-4">
-            <FormGroup check className="me-4">
-              <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                <Input
-                  type="radio"
-                  name="isActive"
-                  checked={formData.isActive === true}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isActive: true
-                    })
-                  }
-                  className="form-check-input"
-                />
-                <span className="badge bg-success px-3 py-2 rounded-pill">
-                  ✅ Active
-                </span>
-              </Label>
-            </FormGroup>
-            <FormGroup check>
-              <Label check className="d-flex align-items-center gap-2 cursor-pointer">
-                <Input
-                  type="radio"
-                  name="isActive"
-                  checked={formData.isActive === false}
-                  onChange={() =>
-                    setFormData({
-                      ...formData,
-                      isActive: false
-                    })
-                  }
-                  className="form-check-input"
-                />
-                <span className="badge bg-danger px-3 py-2 rounded-pill">
-                  ⛔ Inactive
-                </span>
-              </Label>
-            </FormGroup>
-          </div>
-        </FormGroup>
-      </Col>
-    </Row>
-  </div>
+              {/* Link Section */}
+              <div className="mb-4">
+                <Row>
+                  <Col md={6}>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold mb-2">
+                        Link URL <span className="text-danger">*</span>
+                      </Label>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com"
+                        value={formData.link}
+                        onChange={e => setFormData({ ...formData, link: e.target.value })}
+                        required
+                        className="border-2 rounded-3 py-2"
+                        style={{ borderColor: "#e2e8f0" }}
+                      />
+                      <small className="text-muted">Enter full URL including https://</small>
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold mb-2">
+                        Display Order
+                      </Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter display order"
+                        value={formData.displayOrder}
+                        onChange={e => setFormData({ ...formData, displayOrder: e.target.value })}
+                        className="border-2 rounded-3 py-2"
+                        style={{ borderColor: "#e2e8f0" }}
+                      />
+                      <small className="text-muted">Lower numbers appear first</small>
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  {/* External Link Radio Buttons */}
+                  <Col md={6}>
+                    <div className="mb-3">
+                      <Label className="fw-semibold mb-2 d-block">External Link</Label>
+                      <div className="d-flex gap-4">
+                        <FormGroup check className="me-4">
+                          <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                            <Input
+                              type="radio"
+                              name="isExternal"
+                              checked={formData.isExternal === false}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  isExternal: false,
+                                  openInNewTab: false
+                                })
+                              }
+                              className="form-check-input"
+                            />
+                            <span className="badge bg-light text-dark px-3 py-2 rounded-pill">
+                              No
+                            </span>
+                          </Label>
+                        </FormGroup>
+                        <FormGroup check>
+                          <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                            <Input
+                              type="radio"
+                              name="isExternal"
+                              checked={formData.isExternal === true}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  isExternal: true,
+                                })
+                              }
+                              className="form-check-input"
+                            />
+                            <span className="badge bg-primary px-3 py-2 rounded-pill">
+                              Yes
+                            </span>
+                          </Label>
+                        </FormGroup>
+                      </div>
+                    </div>
+                  </Col>
 
-  {/* Options Section */}
-  <div className="mb-4">
-    {/* Status and Display Order */}
-    <Row>
-      
+                  {/* Open in New Tab - Only shows when External Link is Yes */}
+                  {formData.isExternal && (
+                    <Col md={6}>
+                      <div className="mb-3">
+                        <Label className="fw-semibold mb-2 d-block">Open in New Tab</Label>
+                        <div className="d-flex gap-4">
+                          <FormGroup check className="me-4">
+                            <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                              <Input
+                                type="radio"
+                                name="openInNewTab"
+                                checked={formData.openInNewTab === false}
+                                onChange={() =>
+                                  setFormData({
+                                    ...formData,
+                                    openInNewTab: false
+                                  })
+                                }
+                                className="form-check-input"
+                              />
+                              <span className="badge bg-secondary px-3 py-2 rounded-pill">
+                                No
+                              </span>
+                            </Label>
+                          </FormGroup>
+                          <FormGroup check>
+                            <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                              <Input
+                                type="radio"
+                                name="openInNewTab"
+                                checked={formData.openInNewTab === true}
+                                onChange={() =>
+                                  setFormData({
+                                    ...formData,
+                                    openInNewTab: true
+                                  })
+                                }
+                                className="form-check-input"
+                              />
+                              <span className="badge bg-info px-3 py-2 rounded-pill text-white">
+                                Yes
+                              </span>
+                            </Label>
+                          </FormGroup>
+                        </div>
+                      </div>
+                    </Col>
+                  )}
+                  <Col md={6}>
+                    <FormGroup className="mb-3">
+                      <Label className="fw-semibold mb-2 d-block">Status</Label>
+                      <div className="d-flex gap-4">
+                        <FormGroup check className="me-4">
+                          <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                            <Input
+                              type="radio"
+                              name="isActive"
+                              checked={formData.isActive === true}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  isActive: true
+                                })
+                              }
+                              className="form-check-input"
+                            />
+                            <span className="badge bg-success px-3 py-2 rounded-pill">
+                              ✅ Active
+                            </span>
+                          </Label>
+                        </FormGroup>
+                        <FormGroup check>
+                          <Label check className="d-flex align-items-center gap-2 cursor-pointer">
+                            <Input
+                              type="radio"
+                              name="isActive"
+                              checked={formData.isActive === false}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  isActive: false
+                                })
+                              }
+                              className="form-check-input"
+                            />
+                            <span className="badge bg-danger px-3 py-2 rounded-pill">
+                              ⛔ Inactive
+                            </span>
+                          </Label>
+                        </FormGroup>
+                      </div>
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </div>
 
-      
-    </Row>
-  </div>
+              {/* Options Section */}
+              <div className="mb-4">
+                {/* Status and Display Order */}
+                <Row>
 
-  {/* Optional: New Badge Section (commented but ready) */}
-  {/* <div className="mb-3">
+
+
+                </Row>
+              </div>
+
+              {/* Optional: New Badge Section (commented but ready) */}
+              {/* <div className="mb-3">
     <FormGroup check className="d-flex align-items-center gap-3 p-3 bg-light rounded-3">
       <Input
         type="checkbox"
@@ -638,17 +633,19 @@ const isNoticeNew = (createdAt) => {
       </Label>
     </FormGroup>
   </div> */}
-</ModalBody>
+            </ModalBody>
 
             <ModalFooter>
-              <Button color="primary" type="submit">
-                <FaSave className="me-2" />
-                {editingId ? "Update" : "Save"}
-              </Button>
-              <Button color="secondary" onClick={toggleModal}>
-                <FaTimes className="me-2" />
-                Cancel
-              </Button>
+              <div className="d-flex justify-content-between w-100">
+                <Button color="secondary" onClick={toggleModal}>
+                  <FaTimes className="me-2" />
+                  Cancel
+                </Button>
+                <Button color="primary" type="submit">
+                  <FaSave className="me-2" />
+                  {editingId ? "Update" : "Save"}
+                </Button>
+              </div>
             </ModalFooter>
           </Form>
         </Modal>

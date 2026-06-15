@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter,
-  Form, FormGroup, Label, Input, Container, Badge, Row, Col
+  Form, FormGroup, Label, Input, Container, Badge, Row, Col,
+  CardHeader
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
 import axios from "axios";
@@ -190,17 +191,18 @@ const DownloadManagement = () => {
   return (
     <Container className="mt-4">
       <Card className="shadow-lg border-0">
-        <CardBody>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-bold text-primary">
+        <CardHeader>
+           <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="fw-bold text-white">
               <FaFileAlt className="me-2" />
               Download Management
             </h4>
-            <Button color="primary" onClick={toggleModal}>
+            <Button color="light" className="text-success" onClick={toggleModal}>
               <FaPlus className="me-2" /> Add Download
             </Button>
           </div>
-
+        </CardHeader>
+        <CardBody>
           <Table hover responsive className="align-middle">
             <thead className="table-light">
               <tr>

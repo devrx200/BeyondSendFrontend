@@ -8,7 +8,8 @@ import {
   Button,
   Input,
   FormGroup,
-  Label
+  Label,
+  CardHeader
 } from "reactstrap";
 import { FaSave } from "react-icons/fa";
 import axios from "axios";
@@ -107,21 +108,23 @@ const HeaderManagement = () => {
 
   return (
     <Container fluid className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <div>
-          <h4 className="mb-1 fw-bold text-dark">
-            🌐 Header Management
-          </h4>
-          <small className="text-muted">
-            Manage website header menus and settings
-          </small>
+      <CardHeader className="rounded shadow-lg">
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom text-white">
+          <div>
+            <h4 className="mb-1 fw-bold text-white">
+              🌐 Header Management
+            </h4>
+            <small className="text-white">
+              Manage website header menus and settings
+            </small>
+          </div>
+          <Button color="light" className="text-success" onClick={handleSubmit}>
+            <FaSave className="me-2" />
+            Save Header
+          </Button>
         </div>
+      </CardHeader>
 
-        <Button color="success" onClick={handleSubmit}>
-          <FaSave className="me-2" />
-          Save Header
-        </Button>
-      </div>
 
       {/* CONTACT */}
       <Card className="mb-3 shadow-sm">

@@ -9,7 +9,8 @@ import {
   Input,
   FormGroup,
   Label,
-  Table
+  Table,
+  CardHeader
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -104,8 +105,10 @@ const ContactCardCMS = () => {
 
   return (
     <Container className="mt-4">
-
-      <h3 className="mb-3">📇 Contact Card Management</h3>
+<CardHeader>
+<h4 className="mb-3 text-white">📇 Contact Card Management</h4>
+</CardHeader>
+      
 
       {/* ================= FORM ================= */}
       <Card className="mb-4 shadow-sm">

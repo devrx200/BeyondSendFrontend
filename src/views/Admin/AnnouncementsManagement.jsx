@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   CardBody,
   Button,
   Table,
-  Form,
   FormGroup,
   Label,
   Input,
@@ -16,7 +15,7 @@ import {
   NavItem,
   NavLink,
   TabContent,
-  TabPane , ModalHeader,
+  TabPane,
   CardHeader
 } from "reactstrap";
 import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaLink, FaArrowLeft, FaList } from "react-icons/fa";
@@ -29,31 +28,29 @@ const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
   const API = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("authToken");
-  
-  // Load active tab from sessionStorage on mount
+  const isSubmittingRef = useRef(false);
+
   const [activeTab, setActiveTab] = useState(() => {
     const savedTab = sessionStorage.getItem("announcements_active_tab");
     return savedTab || "list";
   });
-  
+
   const [announcements, setAnnouncements] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [usedOrders, setUsedOrders] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  
-  // Editor contents state
-  const [editorContents, setEditorContents] = useState([
-    { id: 1, descriptionEn: "", descriptionHi: "" }
-  ]);
-  
+
+  // ── descriptionEn / descriptionHi now live inside formData ──
   const initialState = {
     titleEn: "",
     titleHi: "",
     slug: "",
     shortDescriptionEn: "",
     shortDescriptionHi: "",
+    descriptionEn: "",
+    descriptionHi: "",
     categoryId: "",
     image: null,
     fromDate: "",
@@ -66,7 +63,7 @@ const AnnouncementsManagement = () => {
     isSchemes: false,
     isActive: true
   };
-  
+
   const [formData, setFormData] = useState(initialState);
 
   const generateSlug = (text) =>
@@ -126,7 +123,6 @@ const AnnouncementsManagement = () => {
     fetchCategories();
   }, [API, token]);
 
-  // Save active tab to sessionStorage when it changes
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     sessionStorage.setItem("announcements_active_tab", tab);
@@ -149,7 +145,6 @@ const AnnouncementsManagement = () => {
   const handleAddNew = () => {
     setEditingId(null);
     setFormData(initialState);
-    setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
     handleTabChange("form");
   };
 
@@ -157,8 +152,7 @@ const AnnouncementsManagement = () => {
     handleTabChange("list");
     setEditingId(null);
     setFormData(initialState);
-    setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
-    fetchAnnouncements(); // Refresh list
+    fetchAnnouncements();
   };
 
   const handleEdit = (item) => {
@@ -173,6 +167,8 @@ const AnnouncementsManagement = () => {
       slug: item.slug || "",
       shortDescriptionEn: item.shortDescriptionEn || "",
       shortDescriptionHi: item.shortDescriptionHi || "",
+      descriptionEn: item.descriptionEn || "",
+      descriptionHi: item.descriptionHi || "",
       categoryId: item.categoryId?._id || "",
       image: null,
       fromDate: item.fromDate,
@@ -185,14 +181,6 @@ const AnnouncementsManagement = () => {
       isSchemes: !!item.isSchemes,
       isActive: item.isActive !== false
     });
-    
-    // Set editor contents with existing descriptions
-    setEditorContents([{
-      id: 1,
-      descriptionEn: item.descriptionEn || "",
-      descriptionHi: item.descriptionHi || ""
-    }]);
-    
     handleTabChange("form");
   };
 
@@ -221,7 +209,7 @@ const AnnouncementsManagement = () => {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchAnnouncements(); // Refresh list without page reload
+      fetchAnnouncements();
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -231,15 +219,17 @@ const AnnouncementsManagement = () => {
     }
   };
 
+  // ── handleSubmit: guarded against double-fires + uses formData.descriptionEn/Hi ──
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    // Prevent duplicate/auto submissions firing back-to-back
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setSubmitting(true);
 
     const fd = new FormData();
-
-    // Get description from editor
-    const descriptionEn = editorContents[0]?.descriptionEn || "";
-    const descriptionHi = editorContents[0]?.descriptionHi || "";
 
     Object.keys(formData).forEach((key) => {
       if (key === "image") return;
@@ -251,10 +241,6 @@ const AnnouncementsManagement = () => {
         fd.append(key, value);
       }
     });
-
-    // Append descriptions from editor
-    fd.append("descriptionEn", descriptionEn);
-    fd.append("descriptionHi", descriptionHi);
 
     if (formData.image && formData.image instanceof File) {
       fd.append('image', formData.image);
@@ -291,8 +277,8 @@ const AnnouncementsManagement = () => {
           showConfirmButton: false
         });
       }
-      
-      handleBackToList(); // Go back to list after success
+
+      handleBackToList();
     } catch (err) {
       console.error("Submit error:", err.response?.data || err.message);
       Swal.fire({
@@ -302,25 +288,25 @@ const AnnouncementsManagement = () => {
       });
     } finally {
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
   return (
     <Card className=" ">
-         <CardHeader className="d-flex justify-content-between align-items-center mb-4">
-          <span className="mb-0 d-flex align-items-center  fs-3 fw-3" >
-            <FaBullhorn className="me-2 " />
-            {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
-          </span>
-          {activeTab === "list" && (
-            <Button color="primary" onClick={handleAddNew} className="d-flex align-items-center">
-              <FaPlus className="me-2" />
-              {isHindi ? "नई घोषणा" : "Add Announcement"}
-            </Button>
-          )}
-        </CardHeader>
+      <CardHeader className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3" >
+          <FaBullhorn className="me-2 " />
+          {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
+        </h4>
+        {activeTab === "list" && (
+          <Button color="light"  onClick={handleAddNew} className="d-flex align-items-center text-success">
+            <FaPlus className="me-2" />
+            {isHindi ? "नई घोषणा" : "Add Announcement"}
+          </Button>
+        )}
+      </CardHeader>
       <CardBody className="p-4">
-     
 
         <Nav tabs className="mb-3">
           <NavItem>
@@ -342,7 +328,6 @@ const AnnouncementsManagement = () => {
               onClick={() => {
                 if (!editingId) {
                   setFormData(initialState);
-                  setEditorContents([{ id: 1, descriptionEn: "", descriptionHi: "" }]);
                 }
                 handleTabChange("form");
               }}
@@ -420,6 +405,7 @@ const AnnouncementsManagement = () => {
                                 color="info"
                                 onClick={() => handleEdit(item)}
                                 title="Edit"
+                                type="button"
                               >
                                 <FaEdit />
                               </Button>
@@ -428,6 +414,7 @@ const AnnouncementsManagement = () => {
                                 color="danger"
                                 onClick={() => handleDelete(item._id || item.id)}
                                 title="Delete"
+                                type="button"
                               >
                                 <FaTrash />
                               </Button>
@@ -444,48 +431,70 @@ const AnnouncementsManagement = () => {
 
           {/* FORM TAB */}
           <TabPane tabId="form">
-            <Form onSubmit={handleSubmit}>
-              <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+
+            <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+              <Button
+                color="link"
+                onClick={handleBackToList}
+                className="p-0 text-decoration-none fw-semibold"
+                type="button"
+              >
+                <FaArrowLeft className="me-2" />
+                {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
+              </Button>
+
+              <div className="d-flex gap-2">
                 <Button
-                  color="link"
+                  color="light"
+                  className="border"
                   onClick={handleBackToList}
-                  className="p-0 text-decoration-none fw-semibold"
+                  disabled={submitting}
+                  type="button"
                 >
-                  <FaArrowLeft className="me-2" />
-                  {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
+                  {isHindi ? "रद्द करें" : "Cancel"}
                 </Button>
-
-                <div className="d-flex gap-2">
-                  <Button
-                    color="light"
-                    className="border"
-                    onClick={handleBackToList}
-                    disabled={submitting}
-                  >
-                    {isHindi ? "रद्द करें" : "Cancel"}
-                  </Button>
-
-                  <Button
-                    color="primary"
-                    type="submit"
-                    disabled={submitting}
-                  >
-                    {submitting ? (
-                      <>
-                        <Spinner size="sm" className="me-2" />
-                        {isHindi ? "प्रोसेसिंग..." : "Processing..."}
-                      </>
-                    ) : (
-                      <>
-                        {editingId
-                          ? (isHindi ? "अपडेट करें" : "Update")
-                          : (isHindi ? "बनाएं" : "Create")}
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  color="primary"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  type="button"
+                >
+                  {submitting ? (
+                    <>
+                      <Spinner size="sm" className="me-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {editingId ? "Update" : "Create"}
+                    </>
+                  )}
+                </Button>
               </div>
+            </div>
 
+            {/*
+              IMPORTANT FIX:
+              Changed <Form> (a native <form> tag with no onSubmit handler)
+              to a plain <div>. Any internal button inside
+              DynamicContentEditor (e.g. an EN/HI language toggle) that
+              doesn't set type="button" was previously treated as a
+              type="submit" button. Inside a real <form> with no onSubmit
+              handler, clicking it triggered the browser's native form
+              submission -> full page reload, wiping all state.
+              Using a <div> here removes the native <form> element
+              entirely, so no nested button can ever trigger that
+              native submit/reload behavior. The actual save still
+              happens only via the explicit "Create"/"Update" button's
+              onClick={handleSubmit} above.
+            */}
+            <div onKeyDown={(e) => {
+              // Extra safety: pressing Enter anywhere in the form
+              // (e.g. inside an input or the editor) should never submit.
+              if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+                e.preventDefault();
+              }
+            }}>
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -592,20 +601,27 @@ const AnnouncementsManagement = () => {
                 </Col>
               </Row>
 
-              {/* DynamicContentEditor instead of ReactQuill */}
+              {/* DynamicContentEditor */}
               <Row>
                 <Col md={12}>
                   <FormGroup className="mb-3">
                     <Label className="fw-semibold mb-2">
                       Description (English & Hindi) <span className="text-danger">*</span>
                     </Label>
-                    <DynamicContentEditor 
-                      contents={editorContents}
-                      setContents={setEditorContents}
+                    <DynamicContentEditor
                       engField="descriptionEn"
                       hinField="descriptionHi"
-                      instanceId="announcements_editor"
-                      height ="350px"
+                      height={460}
+                      initialEn={formData.descriptionEn}
+                      initialHi={formData.descriptionHi}
+                      onChange={(contentObj) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          descriptionEn: contentObj.descriptionEn,
+                          descriptionHi: contentObj.descriptionHi,
+                        }));
+                      }}
+                      instanceId="content_editor"
                     />
                   </FormGroup>
                 </Col>
@@ -775,7 +791,7 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
-            </Form>
+            </div>
           </TabPane>
         </TabContent>
       </CardBody>
