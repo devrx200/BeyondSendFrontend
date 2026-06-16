@@ -146,20 +146,16 @@ const DbBackupManagement = () => {
     if (!confirmResult.isConfirmed) return;
 
     try {
-
       Swal.fire({
         title: t("Preparing Download...", "डाउनलोड की तैयारी..."),
         text: t("Please wait while the files are being compressed.", "कृपया प्रतीक्षा करें जब तक फ़ाइलें संपीड़ित की जा रही हैं।"),
         allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
       });
-
 
       const [response] = await Promise.all([
         axios({
-          url: `${API}/api/nic/get-db-backup-download${folderName}`,
+          url: `${API}/api/nic/get-db-backup-download/${folderName}`,
           method: 'GET',
           responseType: 'blob',
           ...getAuthConfig()
@@ -174,14 +170,28 @@ const DbBackupManagement = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       Swal.close();
+
     } catch (err) {
       console.error("Error downloading file:", err);
+
+      let backendMessage = t("Could not retrieve the backup archive.", "बैकअप पुरालेख प्राप्त नहीं किया जा सका।");
+
+      if (err.response?.data instanceof Blob) {
+        try {
+          const errorJson = JSON.parse(await err.response.data.text());
+          if (errorJson?.message) backendMessage = errorJson.message;
+        } catch (e) { }
+      } else if (err.response?.data?.message) {
+        backendMessage = err.response.data.message;
+      } else if (err.message) {
+        backendMessage = err.message;
+      }
+
       Swal.fire({
         icon: "error",
         title: t("Download Failed", "डाउनलोड विफल रहा"),
-        text: t("Could not retrieve the backup archive.", "बैकअप पुरालेख प्राप्त नहीं किया जा सका।"),
+        text: backendMessage,
         confirmButtonColor: "#3085d6"
       });
     }

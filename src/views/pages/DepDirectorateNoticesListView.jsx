@@ -209,24 +209,8 @@ const DepDirectorateNoticesListView = () => {
           <meta property="og:title" content={`${pageTitleText} - ${SITE_TITLE_SUFFIX}`} />
           <meta property="og:type" content="website" />
         </Helmet>
-        <PageLayout title={pageTitleText} titleHi={pageTitleText} showBreadcrumb={false}>
+        <PageLayout title={pageTitleText} titleHi={pageTitleText} showBreadcrumb={true}>
           <Container className="py-4 bg-light my-3 rounded">
-            {/* Breadcrumb */}
-            <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
-              <BreadcrumbItem>
-                <Link
-                  to="/"
-                  className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
-                >
-                  <FaHome size={13} />
-                  {isHindi ? "होम" : "Home"}
-                </Link>
-              </BreadcrumbItem>
-              <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
-                <FaNewspaper size={13} />
-                {pageTitleText}
-              </BreadcrumbItem>
-            </Breadcrumb>
 
             {/* Page Header */}
             <Card
