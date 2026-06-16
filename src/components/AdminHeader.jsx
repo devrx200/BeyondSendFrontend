@@ -259,7 +259,7 @@ const AdminHeader = ({ toggleSidebar }) => {
               {/* MY PROFILE */}
 
               <DropdownItem
-                className="adm-profile-item"
+                className="adm-profile-item text-dark"
                 onClick={() => {
                   setProfileModal(true);
                   setProfileDropdown(false);
