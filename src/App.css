@@ -3,25 +3,24 @@
    Higher Education Department - Chhattisgarh
    ======================================== */
 
-/* CSS Variables for Consistent Theming */
 :root {
-  /* Primary Colors - Modern Blue Palette */
+  /* Primary */
   --primary-color: #1e40af;
   --primary-light: #3b82f6;
   --primary-dark: #1e3a8a;
   --primary-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
 
-  /* Secondary Colors */
+  /* Secondary */
   --secondary-color: #f59e0b;
   --secondary-light: #fbbf24;
   --secondary-dark: #d97706;
 
-  /* Accent Colors */
+  /* Accent */
   --accent-color: #10b981;
   --accent-light: #34d399;
   --accent-dark: #059669;
 
-  /* Neutral Colors */
+  /* Neutrals */
   --white: #ffffff;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -34,15 +33,15 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
 
-  /* Semantic Colors */
+  /* Semantic */
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
   --info: #3b82f6;
 
-  /* Typography */
-  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-family-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Typography - Government of India standard (Noto Sans for Latin, Noto Sans Devanagari for Hindi) */
+  --font-family-base: 'Noto Sans', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-heading: 'Noto Sans', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -110,9 +109,6 @@ body {
   color: var(--gray-900);
   line-height: 1.6;
   overflow-x: hidden;
-}
-
-body {
   background-image: url('/page-bg.svg');
   background-size: cover;
   background-repeat: no-repeat;
@@ -156,9 +152,16 @@ p {
   color: var(--gray-700);
 }
 
+a,
+a:hover,
+a:focus,
+a:active,
+a:visited {
+  text-decoration: none !important;
+}
+
 a {
   color: var(--primary-color);
-  text-decoration: none;
   transition: color var(--transition-base);
 }
 
@@ -170,7 +173,6 @@ a:hover {
    UTILITY CLASSES
    ======================================== */
 
-/* App Wrapper */
 .app-wrapper {
   min-height: 100vh;
   display: flex;
@@ -378,7 +380,6 @@ main {
    HEADER STYLES
    ======================================== */
 
-/* Top Bar */
 .top-bar {
   background: var(--primary-gradient);
   color: var(--white);
@@ -415,7 +416,6 @@ main {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Logo Bar */
 .logo-bar {
   background: var(--white);
   padding: 1.5rem 0;
@@ -447,7 +447,6 @@ main {
   transform: scale(1.05);
 }
 
-/* Navigation Bar */
 .navbar {
   position: sticky;
   top: 0;
@@ -489,7 +488,6 @@ main {
   color: var(--primary-color) !important;
 }
 
-/* Dropdown Menu */
 .dropdown-menu {
   border: 1px solid var(--gray-200);
   box-shadow: var(--shadow-lg);
@@ -528,7 +526,6 @@ main {
   cursor: pointer;
 }
 
-/* Nested Dropdown Menu */
 .dropdown-toggle-nested {
   position: relative;
   display: flex;
@@ -562,7 +559,6 @@ main {
   display: none;
 }
 
-/* External Link Icon */
 .nav-link span,
 .dropdown-item span {
   font-size: 0.75em;
@@ -594,7 +590,6 @@ main {
   z-index: 10;
 }
 
-/* Statistics Section */
 .stats-section {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
   padding: 3rem 0;
@@ -640,7 +635,6 @@ main {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* News Section */
 .news-list {
   max-height: 400px;
   overflow-y: auto;
@@ -681,7 +675,6 @@ main {
   color: var(--primary-color);
 }
 
-/* Minister Card */
 .minister-card {
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
 }
@@ -712,7 +705,6 @@ main {
   overflow-y: auto;
 }
 
-/* Updates Section */
 .updates-list {
   max-height: 400px;
   overflow-y: auto;
@@ -748,7 +740,6 @@ main {
   color: white !important;
 }
 
-/* Important Links Grid */
 .important-links-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -788,7 +779,6 @@ main {
    ADMIN DASHBOARD STYLES
    ======================================== */
 
-/* Admin Wrapper */
 .admin-wrapper {
   display: flex;
   flex-direction: column;
@@ -796,7 +786,6 @@ main {
   background: #f8f9fa;
 }
 
-/* Top Navbar */
 .admin-navbar {
   background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
   color: white;
@@ -868,14 +857,12 @@ main {
   font-weight: 500;
 }
 
-/* Admin Layout */
 .admin-layout {
   display: flex;
   margin-top: 60px;
   min-height: calc(100vh - 60px);
 }
 
-/* Sidebar */
 .admin-sidebar {
   width: 260px;
   background: white;
@@ -978,7 +965,6 @@ main {
   padding: 0.875rem 0.5rem;
 }
 
-/* Main Content */
 .admin-main-content {
   flex: 1;
   margin-left: 260px;
@@ -1182,7 +1168,6 @@ main {
 
 .custom-breadcrumb .breadcrumb-item a:hover {
   color: #0a58ca;
-  text-decoration: underline;
 }
 
 .custom-breadcrumb .breadcrumb-item.active {
@@ -1298,23 +1283,12 @@ main {
 
 .content-area a:hover {
   color: var(--secondary-color);
-  text-decoration: underline;
 }
 
 /* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
-/* ===============================
    FORCE SCROLLABLE ADMIN SIDEBAR
-   =============================== */
+   ======================================== */
 
-/* Body must NOT block vertical scroll */
-body {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-/* Admin wrapper full height */
 .admin-wrapper {
   height: 100vh;
   overflow: hidden;
@@ -2247,7 +2221,6 @@ body {
   opacity: 1;
 }
 
-/* Top bar gradient */
 .top-main-color {
   background: linear-gradient(90deg, #0d6efd, #002147);
   color: #fff;
@@ -2281,8 +2254,7 @@ body {
 
 .section-title {
   font-weight: 500;
-   font-size: 23px;
-  /* margin-bottom: 15px; */
+  font-size: 23px;
   color: #097258;
 }
 

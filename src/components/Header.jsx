@@ -19,7 +19,7 @@ const styles = `
   .top-link:hover { text-decoration:underline; }
   .ctrl-badge { cursor:pointer; user-select:none; padding:3px 7px !important; }
 
-  .site-navbar { border-bottom:3px solid #1a3a6b; position:sticky; top:0; z-index:1030; }
+  .site-navbar { border-bottom:3px solid #1a3a6b; }
   .nav-link-btn { background:none; border:none; padding:8px 10px; font-size:.88rem; font-weight:600; color:#1a3a6b; cursor:pointer; display:inline-flex; align-items:center; gap:3px; border-radius:4px; white-space:nowrap; }
   .nav-link-btn:hover, .nav-link-plain:hover { background:#eef2fa; }
   .nav-link-plain { padding:8px 10px; font-size:.88rem; font-weight:600; color:#1a3a6b; text-decoration:none; display:inline-flex; align-items:center; gap:4px; border-radius:4px; white-space:nowrap; }
