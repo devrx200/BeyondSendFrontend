@@ -475,7 +475,7 @@ function SiteFooter() {
         <Container>
           <Row>
             {/* Contact */}
-            <Col lg={3} md={6} className="mb-4">
+            <Col xs={12} sm={6} lg={3} className="mb-4">
               <div style={styles.footerHeading}>Contact Information</div>
               <p style={styles.footerText}>Department of Higher Education Chhattisgarh.</p>
               <p style={styles.footerText}>
@@ -487,7 +487,7 @@ function SiteFooter() {
             </Col>
 
             {/* Quick Links */}
-            <Col lg={3} md={6} className="mb-4">
+            <Col xs={12} sm={6} lg={3} className="mb-4">
               <div style={styles.footerHeading}>Quick Links</div>
               {quickLinks.map((l) => (
                 <span key={l} style={styles.footerLink}>→ {l}</span>
@@ -495,7 +495,7 @@ function SiteFooter() {
             </Col>
 
             {/* Important Links */}
-            <Col lg={3} md={6} className="mb-4">
+            <Col xs={12} sm={6} lg={3} className="mb-4">
               <div style={styles.footerHeading}>Important Links</div>
               {importantLinks.map((l) => (
                 <span key={l} style={styles.footerLink}>→ {l}</span>
@@ -503,7 +503,7 @@ function SiteFooter() {
             </Col>
 
             {/* Follow + Visitors */}
-            <Col lg={3} md={6} className="mb-4">
+            <Col xs={12} sm={6} lg={3} className="mb-4">
               <div style={styles.footerHeading}>Follow Us</div>
               <div style={{ marginBottom: "16px" }}>
                 {["▶", "📷", "👍", "in"].map((icon, i) => (

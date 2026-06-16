@@ -69,7 +69,7 @@ const Contact = () => {
 
       {/* ================= TOP INFO ================= */}
       <Row className="g-4 mb-4">
-        <Col md={4}>
+        <Col xs={12} md={4}>
           <Card className="border-0 shadow-sm h-100">
             <CardBody>
               <h6 className="fw-semibold mb-2">
@@ -85,20 +85,20 @@ const Contact = () => {
           </Card>
         </Col>
 
-        <Col md={4}>
+        <Col xs={12} md={4}>
           <Card className="border-0 shadow-sm h-100">
             <CardBody>
               <h6 className="fw-semibold mb-2">
                 <FaPhone className="me-2 text-success" />
                 {isHindi ? "संपर्क विवरण" : "Contact Details"}
               </h6>
-              <p className="small mb-1 text-muted">{address.phone}</p>
-              <p className="small text-muted mb-0">{address.email}</p>
+              <p className="small mb-1 text-muted text-break">{address.phone}</p>
+              <p className="small text-muted mb-0 text-break">{address.email}</p>
             </CardBody>
           </Card>
         </Col>
 
-        <Col md={4}>
+        <Col xs={12} md={4}>
           <Card className="border-0 shadow-sm h-100">
             <CardBody>
               <h6 className="fw-semibold mb-2">
@@ -137,7 +137,7 @@ const Contact = () => {
               </p>
 
               {/* COLUMN HEADERS */}
-              <Row className="fw-semibold small text-muted border-bottom pb-2 mb-2">
+              <Row className="fw-semibold small text-muted border-bottom pb-2 mb-2 d-none d-md-flex">
                 <Col md={2} className="text-center">{isHindi ? "प्रोफाइल छवि" : "Profile Picture"}</Col>
                 <Col md={4}>{isHindi ? "नाम और पदनाम" : "Name & Designation"}</Col>
                 <Col md={3}>{isHindi ? "संपर्क विवरण" : "Contact Details"}</Col>
@@ -148,10 +148,10 @@ const Contact = () => {
               {officials.map((official) => (
                 <Row
                   key={official._id}
-                  className="align-items-center py-3 border-bottom"
+                  className="align-items-center py-3 border-bottom g-2"
                 >
                   {/* IMAGE */}
-                  <Col md={2} className="text-center">
+                  <Col xs={12} sm={3} md={2} className="text-center">
                     <img
                       src={
                         official.image
@@ -170,7 +170,7 @@ const Contact = () => {
                   </Col>
 
                   {/* NAME + DESIGNATION */}
-                  <Col md={4}>
+                  <Col xs={12} sm={9} md={4} className="text-center text-sm-start">
                     <div className="fw-semibold">{official.name}</div>
                     <div className="small text-muted">
                       {official.designation}
@@ -178,7 +178,7 @@ const Contact = () => {
                   </Col>
 
                   {/* CONTACT */}
-                  <Col md={3} className="small">
+                  <Col xs={12} sm={6} md={3} className="small text-break">
                     {official.phone && (
                       <div>
                         <FaPhone size={12} className="me-1" />
@@ -194,8 +194,8 @@ const Contact = () => {
                   </Col>
 
                   {/* SOCIAL */}
-                  <Col md={3}>
-                    <div className="d-flex gap-2">
+                  <Col xs={12} sm={6} md={3}>
+                    <div className="d-flex gap-2 flex-wrap justify-content-sm-start">
                       {official.facebook && (
                         <a
                           href={official.facebook}

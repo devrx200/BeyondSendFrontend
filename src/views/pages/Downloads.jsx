@@ -122,7 +122,7 @@ const Downloads = () => {
       <tbody>
         {loading ? (
           <tr>
-            <td colSpan="5" className="text-center py-4">
+            <td colSpan="6" className="text-center py-4">
               {isHindi ? "लोड हो रहा है..." : "Loading..."}
             </td>
           </tr>

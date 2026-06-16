@@ -228,7 +228,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
                     🔄 <strong>Updated:</strong> {updateDate}
                   </Badge>
                 </Col>
-                <Col xs="auto" className="ms-auto text-end">
+                <Col xs={12} md className="text-start text-md-end ms-md-auto">
                   <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold px-3">
                     ← Back To Home
                   </Button>

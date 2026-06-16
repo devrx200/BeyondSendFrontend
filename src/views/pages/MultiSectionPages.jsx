@@ -398,7 +398,7 @@ const MultiSectionPages = () => {
               {listTitle}
             </Link>
           </BreadcrumbItem>
-          <BreadcrumbItem active className="fw-semibold text-secondary text-truncate" style={{ maxWidth: 260 }}>
+          <BreadcrumbItem active className="fw-semibold text-secondary text-truncate" style={{ maxWidth: "100%" }}>
             {detailTitle}
           </BreadcrumbItem>
         </Breadcrumb>
@@ -432,7 +432,7 @@ const MultiSectionPages = () => {
                     <strong>{isHindi ? "अपडेट:" : "Updated:"}</strong> {updateDate}
                   </Badge>
                 </Col>
-                <Col xs="auto" className="ms-auto">
+                <Col xs={12} md className="d-flex justify-content-start justify-content-md-end ms-md-auto">
                   <Button tag={Link} to={currentPath} color="dark" size="sm" className="fw-semibold px-3 d-flex align-items-center gap-2">
                     <FaChevronLeft size={11} />
                     {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
@@ -458,7 +458,8 @@ const MultiSectionPages = () => {
                   </h4>
                   <hr className="my-3" />
                   {contentDetail.documentsUpdate.map((doc, i) => (
-                    <table key={i} className="table table-bordered align-middle mb-3">
+                    <div key={i} className="table-responsive mb-3">
+                    <table className="table table-bordered align-middle mb-0">
                       <tbody>
                         <tr>
                           <td style={{ width: 180 }} className="fw-semibold bg-light">
@@ -505,6 +506,7 @@ const MultiSectionPages = () => {
                         </tr>
                       </tbody>
                     </table>
+                    </div>
                   ))}
                   <div className="mt-4 pt-3 text-center border-top">
                     <small className="fw-bold text-secondary">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Container, Row, Col, Card, CardBody, CardTitle,
   CardSubtitle, CardText, Badge, Button, Spinner,
@@ -300,8 +300,8 @@ const Gallery = () => {
               {galleryList.map((item) => {
                 const isActive = activeId === item._id;
                 return (
-                  <>
-                    <Col key={item._id} xs={12} sm={6} xl={4}>
+                  <Fragment key={item._id}>
+                    <Col xs={12} sm={6} xl={4}>
                       <Card
                         className="border-0 h-100 overflow-hidden"
                         style={{
@@ -417,7 +417,7 @@ const Gallery = () => {
 
                     {/* ── INLINE DETAIL (full-width row) ── */}
                     {isActive && (
-                      <Col key={`det-${item._id}`} xs={12}>
+                      <Col xs={12}>
                         <Card
                           className="border-0"
                           style={{
@@ -601,7 +601,7 @@ const Gallery = () => {
                         </Card>
                       </Col>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </Row>
@@ -614,8 +614,8 @@ const Gallery = () => {
                 const isActive = activeId === item._id;
                 const firstImg = item.images?.[0];
                 return (
-                  <>
-                    <Col key={item._id} xs={12}>
+                  <Fragment key={item._id}>
+                    <Col xs={12}>
                       <Card
                         className="border-0 overflow-hidden"
                         style={{
@@ -707,7 +707,7 @@ const Gallery = () => {
 
                     {/* Inline detail in list view */}
                     {isActive && (
-                      <Col key={`ldet-${item._id}`} xs={12}>
+                      <Col xs={12}>
                         <Card
                           className="border-0"
                           style={{
@@ -789,7 +789,7 @@ const Gallery = () => {
                         </Card>
                       </Col>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </Row>

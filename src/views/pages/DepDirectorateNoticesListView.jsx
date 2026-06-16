@@ -383,7 +383,7 @@ const DepDirectorateNoticesListView = () => {
             <BreadcrumbItem
               active
               className="fw-semibold text-secondary text-truncate"
-              style={{ maxWidth: 300 }}
+              style={{ maxWidth: "100%" }}
             >
               {detailTitle}
             </BreadcrumbItem>
@@ -429,7 +429,7 @@ const DepDirectorateNoticesListView = () => {
                     </Badge>
                   </Col>
                 )}
-                <Col className="d-flex justify-content-end">
+                <Col xs={12} md className="d-flex justify-content-start justify-content-md-end">
                   <Button tag={Link} to={listRoute} size="sm" outline className="d-flex align-items-center gap-1 fw-semibold text-white bg-dark py-1">
                     <FaChevronLeft size={11} />
                     {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
@@ -442,12 +442,12 @@ const DepDirectorateNoticesListView = () => {
             <CardBody className="p-4">
               <div className="lh-lg text-secondary" dangerouslySetInnerHTML={{ __html: isHindi ? detail.descriptionHi : detail.descriptionEn }} />
 
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div className="d-flex gap-2 fw-bold">
                   Official Documents Download And Read : 👉
                 </div>
                 {detail.file && (
-                  <div className="d-flex gap-2">
+                  <div className="d-flex flex-wrap gap-2">
                     <Button
                       tag="a"
                       href={`${API}${detail.file}`}

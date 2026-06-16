@@ -192,7 +192,7 @@ const FeedbackForm = () => {
                   <form onSubmit={handleSubmit} noValidate>
                     {/* Name + Email */}
                     <Row className="g-3 mb-3">
-                      <Col md={6}>
+                      <Col xs={12} md={6}>
                         <label className="form-label fw-semibold">
                           {isHindi ? "पूरा नाम" : "Full Name"}
                         </label>
@@ -207,7 +207,7 @@ const FeedbackForm = () => {
                         <div className="invalid-feedback">{errors.fullName}</div>
                       </Col>
 
-                      <Col md={6}>
+                      <Col xs={12} md={6}>
                         <label className="form-label fw-semibold">Email</label>
                         <input
                           type="email"

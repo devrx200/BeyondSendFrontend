@@ -63,98 +63,104 @@ const InfoRow = ({ icon, label, value, badge, badgeColor }) => (
 
 /* ─── University Card ─────────────────────────────────────────── */
 const UniversityCard = ({ university }) => (
-  <div className="border rounded-3 bg-white d-flex align-items-stretch overflow-hidden"
+  <div className="border rounded-3 bg-white overflow-hidden"
     style={{ transition: "box-shadow .2s", cursor: "default" }}
     onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(99,102,241,.13)"}
     onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
   >
-    {/* Logo */}
-    <div
-      className="d-flex align-items-center justify-content-center flex-shrink-0 border-end"
-      style={{ width: 72, background: "linear-gradient(135deg,#f0e8ff,#e8f4fd)" }}
-    >
-      <UniversityLogo
-        src={university.profileImgUrl || university.universityLogo}
-        alt={university.name}
-      />
-    </div>
-
-    {/* Main info */}
-    <div className="flex-grow-1 border-end px-3 py-2" style={{ minWidth: 0 }}>
-      <p
-        className="fw-bold mb-2 d-flex align-items-center flex-wrap gap-1"
-        style={{
-          fontSize: "13px",
-          color: "#1e1b4b",
-          lineHeight: 1.5,
-        }}
+    <Row className="g-0 align-items-stretch">
+      {/* Logo */}
+      <Col
+        xs={3} sm={2} md="auto"
+        className="d-flex align-items-center justify-content-center border-end"
+        style={{ minWidth: 72, background: "linear-gradient(135deg,#f0e8ff,#e8f4fd)" }}
       >
-        <span>{university.name}</span>
+        <UniversityLogo
+          src={university.profileImgUrl || university.universityLogo}
+          alt={university.name}
+        />
+      </Col>
 
-        <span
-          className="px-2 py-1 rounded-pill"
+      {/* Main info */}
+      <Col xs={9} sm={10} md className="border-end px-3 py-2" style={{ minWidth: 0 }}>
+        <p
+          className="fw-bold mb-2 d-flex align-items-center flex-wrap gap-1"
           style={{
-            background: "#c7f1fe",
-            color: "#793004",
-            fontSize: "11px",
-            fontWeight: 700,
+            fontSize: "13px",
+            color: "#1e1b4b",
+            lineHeight: 1.5,
           }}
         >
-          ⭐ NAAC: {university.naacGrade || "N/A"}
-        </span>
-      </p>
-      <div className="d-flex flex-column gap-1 ">
-        <InfoRow icon="🎓" label="Mode" value={university.educationMode} />
-        <InfoRow icon="📍" label="Address" value={university.address} />
-        <InfoRow icon="📅" label="Est." value={university.establishYear} badge badgeColor="primary" />
-        {/* <InfoRow icon="⭐" label="NAAC"    value={university.naacGrade || "N/A"} badge badgeColor="success" /> */}
-      </div>
-    </div>
+          <span>{university.name}</span>
 
-    {/* Contact & Location */}
-    <div className="border-end px-3 py-2 flex-shrink-0" style={{ width: 350 }}>
-      <p
-        className="text-uppercase text-muted fw-bold mb-2"
-        style={{ fontSize: 9.5, letterSpacing: ".07em" }}
+          <span
+            className="px-2 py-1 rounded-pill"
+            style={{
+              background: "#c7f1fe",
+              color: "#793004",
+              fontSize: "11px",
+              fontWeight: 700,
+            }}
+          >
+            ⭐ NAAC: {university.naacGrade || "N/A"}
+          </span>
+        </p>
+        <div className="d-flex flex-column gap-1 ">
+          <InfoRow icon="🎓" label="Mode" value={university.educationMode} />
+          <InfoRow icon="📍" label="Address" value={university.address} />
+          <InfoRow icon="📅" label="Est." value={university.establishYear} badge badgeColor="primary" />
+          {/* <InfoRow icon="⭐" label="NAAC"    value={university.naacGrade || "N/A"} badge badgeColor="success" /> */}
+        </div>
+      </Col>
+
+      {/* Contact & Location */}
+      <Col xs={12} md={4} lg={4} xl={3}
+        className="border-end px-3 py-2"
+        style={{ maxWidth: 350 }}
       >
-        Contact &amp; Location
-      </p>
-      <div className="d-flex flex-column gap-1">
-        <InfoRow icon="✉️" label="Email" value={university.universityEmail} />
-        <InfoRow icon="📞" label="Phone" value={university.contactNumber} />
-        <InfoRow icon="🏙" label="District" value={university.districtName} />
-        <InfoRow icon="🏛" label="Assembly" value={university.vidhansabhaName} />
-      </div>
-    </div>
+        <p
+          className="text-uppercase text-muted fw-bold mb-2"
+          style={{ fontSize: 9.5, letterSpacing: ".07em" }}
+        >
+          Contact &amp; Location
+        </p>
+        <div className="d-flex flex-column gap-1">
+          <InfoRow icon="✉️" label="Email" value={university.universityEmail} />
+          <InfoRow icon="📞" label="Phone" value={university.contactNumber} />
+          <InfoRow icon="🏙" label="District" value={university.districtName} />
+          <InfoRow icon="🏛" label="Assembly" value={university.vidhansabhaName} />
+        </div>
+      </Col>
 
-    {/* Actions */}
-    <div
-      className="d-flex flex-column align-items-center justify-content-center gap-2 px-3 flex-shrink-0"
-      style={{ width: 150 }}
-    >
-      {university.googleLocation && (
-        <a
-          href={university.googleLocation}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-sm btn-warning px-3 fw-semibold text-danger border border-dark"
-          style={{ fontSize: 11.5, borderRadius: 20 }}
-        >
-          <FaMapLocation /> Map
-        </a>
-      )}
-      {university.universityUrl && (
-        <a
-          href={university.universityUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-sm btn-primary px-3 fw-semibold"
-          style={{ fontSize: 11.5, borderRadius: 20 }}
-        >
-          🌐 Website
-        </a>
-      )}
-    </div>
+      {/* Actions */}
+      <Col xs={12} md="auto"
+        className="d-flex flex-row flex-md-column align-items-center justify-content-center gap-2 px-3 py-2"
+        style={{ minWidth: 150 }}
+      >
+        {university.googleLocation && (
+          <a
+            href={university.googleLocation}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-warning px-3 fw-semibold text-danger border border-dark"
+            style={{ fontSize: 11.5, borderRadius: 20 }}
+          >
+            <FaMapLocation /> Map
+          </a>
+        )}
+        {university.universityUrl && (
+          <a
+            href={university.universityUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-primary px-3 fw-semibold"
+            style={{ fontSize: 11.5, borderRadius: 20 }}
+          >
+            🌐 Website
+          </a>
+        )}
+      </Col>
+    </Row>
   </div>
 );
 

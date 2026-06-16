@@ -111,7 +111,7 @@ const SchemesDetails = () => {
           {isHindi ? data.titleHi : data.titleEn}
         </h3>
         <hr />
-        <div className="text-muted small fw-bold mb-3 d-flex justify-content-between">
+        <div className="text-muted small fw-bold mb-3 d-flex flex-wrap justify-content-between gap-2">
           <i><FaCalendarAlt className="me-1" /> Created At {new Date(data.createdAt).toLocaleDateString()}</i>
           <i> <FaCalendarAlt className="me-1" /> Updated At {new Date(data.updatedAt).toLocaleDateString()}</i>
         </div>

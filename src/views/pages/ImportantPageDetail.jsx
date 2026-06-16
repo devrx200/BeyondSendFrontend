@@ -241,7 +241,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
                   <FaCalendarPlus size={11} /> {isHindi ? "अपडेट" : "Updated"} : {formatDateTime(detail.updatedAt)}
                 </Badge>
               </Col>
-              <Col className="text-end">
+              <Col xs={12} md className="text-start text-md-end">
                 <Badge tag={Link} to="/" color="dark" className="text-white px-3 py-2">
                   <FaChevronLeft size={12} /> {isHindi ? "वापस जाएं मुख्य पृष्ठ पर" : "Back To Home"}
                 </Badge>
@@ -256,13 +256,13 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
               dangerouslySetInnerHTML={{ __html: isHindi ? detail.descriptionHi : detail.descriptionEn }}
             />
             <hr />
-            <div className="d-flex justify-content-between align-items-center mt-3">
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
               {detail.file && (
                 <Button tag="a" href={`${API}${detail.file}`} download color="danger" size="sm">
                   <FaDownload size={14} /> {isHindi ? "डाउनलोड" : "Download"}
                 </Button>
               )}
-              <Button onClick={handlePrint} color="primary" size="sm">
+              <Button onClick={handlePrint} color="primary" size="sm" className="ms-auto">
                 <FaPrint size={14} /> {isHindi ? "प्रिंट करें" : "Print"}
               </Button>
             </div>

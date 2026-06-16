@@ -48,7 +48,7 @@ const About = () => {
       {/* Vision & Mission */}
       <Row className="g-4 mb-5">
 
-        <Col md={6}>
+        <Col xs={12} md={6}>
           <Card className="h-100 border-0 shadow-sm hover-card">
             <CardBody className="p-4">
 
@@ -70,7 +70,7 @@ const About = () => {
           </Card>
         </Col>
 
-        <Col md={6}>
+        <Col xs={12} md={6}>
           <Card className="h-100 border-0 shadow-sm hover-card">
             <CardBody className="p-4">
 
@@ -137,7 +137,7 @@ const About = () => {
             descHi: "आधुनिक सुविधाओं का विकास"
           }
         ].map((item, i) => (
-          <Col md={3} sm={6} key={i}>
+          <Col xs={12} sm={6} md={3} key={i}>
             <Card className="text-center h-100 border-0 shadow-sm hover-card">
               <CardBody>
 

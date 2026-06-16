@@ -102,8 +102,8 @@ function CollegeCardList({ college, isHindi }) {
           {/* Logo */}
           <Col
             xs="auto"
-            className="d-flex align-items-center justify-content-center p-3"
-            style={{ minWidth: 88, background: "linear-gradient(145deg,#eef2ff,#dbe4ff)", borderRight: "1px solid #e9ecef" }}
+            className="d-flex align-items-center justify-content-center p-3 border-end"
+            style={{ minWidth: 88, background: "linear-gradient(145deg,#eef2ff,#dbe4ff)" }}
           >
             {college.profileImgUrl ? (
               <img
@@ -122,7 +122,7 @@ function CollegeCardList({ college, isHindi }) {
           </Col>
 
           {/* Main Info */}
-          <Col className="p-3" style={{ borderRight: "1px solid #f0f0f0" }}>
+          <Col className="p-3 border-end" style={{ minWidth: 0 }}>
             <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
               <span className="fw-bold text-dark" style={{ fontSize: 14.5, lineHeight: 1.3 }}>
                 {college.name}
@@ -173,7 +173,7 @@ function CollegeCardList({ college, isHindi }) {
 
           {/* University Info */}
           {uni.universityName && (
-            <Col xs={12} md={3} className="p-3" style={{ borderRight: "1px solid #f0f0f0", background: "#fafbff" }}>
+            <Col xs={12} md={3} className="p-3 border-end" style={{ background: "#fafbff", minWidth: 0 }}>
               <p className="text-uppercase fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: "0.09em", color: "#6c757d" }}>
                 🏫 {isHindi ? "संबद्ध विश्वविद्यालय" : "Affiliated University"}
               </p>

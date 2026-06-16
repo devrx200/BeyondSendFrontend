@@ -22,7 +22,6 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
-import "../../css/Footer.css";
 
 const API = import.meta.env.VITE_API_URL;
  const token = sessionStorage.getItem("authToken");

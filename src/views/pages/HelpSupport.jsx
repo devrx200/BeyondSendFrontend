@@ -98,7 +98,7 @@ const HelpSupport = () => {
     if (pages <= 1) return null;
 
     return (
-      <div className="d-flex justify-content-center gap-2 mt-3">
+      <div className="d-flex flex-wrap justify-content-center gap-2 mt-3">
         <Button
           size="sm"
           disabled={page === 1}
@@ -137,48 +137,50 @@ const HelpSupport = () => {
     return (
       <Card className="mb-3 shadow border-0">
         <CardBody className="p-3">
-          <Row className="align-items-center">
+          <Row className="align-items-center g-2">
 
             {/* ACTIONS */}
-            <Col xs="auto" className="d-flex gap-2">
-              {isPdf ? (
-                <>
-                  <Button
-                    size="sm"
-                    color="primary"
-                    onClick={() => openPreview(API + item.pdfUrl, item.title)}
-                  >
-                    <FaEye /> Previews
-                  </Button>
-
-                  <a href={API + item.pdfUrl} target="_blank" rel="noreferrer">
-                    <Button size="sm" color="danger">
-                      <FaDownload /> Downloads
+            <Col xs={12} md="auto">
+              <div className="d-flex flex-wrap gap-2">
+                {isPdf ? (
+                  <>
+                    <Button
+                      size="sm"
+                      color="primary"
+                      onClick={() => openPreview(API + item.pdfUrl, item.title)}
+                    >
+                      <FaEye /> Previews
                     </Button>
-                  </a>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size="sm"
-                    color="primary"
-                    onClick={() =>
-                      embedUrl
-                        ? openPreview(embedUrl, item.title)
-                        : window.open(item.videoUrl, "_blank")
-                    }
-                  >
-                    <FaPlayCircle />Previews
-                  </Button>
 
-                  <a href={item.videoUrl} target="_blank" rel="noreferrer">
-                    <Button size="sm" color="danger">
-                      <FaExternalLinkAlt /> YouTube
+                    <a href={API + item.pdfUrl} target="_blank" rel="noreferrer">
+                      <Button size="sm" color="danger">
+                        <FaDownload /> Downloads
+                      </Button>
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="sm"
+                      color="primary"
+                      onClick={() =>
+                        embedUrl
+                          ? openPreview(embedUrl, item.title)
+                          : window.open(item.videoUrl, "_blank")
+                      }
+                    >
+                      <FaPlayCircle />Previews
                     </Button>
-                  </a>
-                </>
-              )}
-              <div className="d-flex gap-2 mt-1 flex-wrap">
+
+                    <a href={item.videoUrl} target="_blank" rel="noreferrer">
+                      <Button size="sm" color="danger">
+                        <FaExternalLinkAlt /> YouTube
+                      </Button>
+                    </a>
+                  </>
+                )}
+              </div>
+              <div className="d-flex gap-2 mt-2 flex-wrap">
                 <Badge color="light" className="border small text-dark">
                   Crerated At =: {formatDate(item.createdAt)}
                 </Badge>
@@ -190,9 +192,9 @@ const HelpSupport = () => {
                 )}
               </div>
             </Col>
-            <hr className=" my-1" />
+
             {/* CONTENT */}
-            <Col>
+            <Col xs={12} md style={{ minWidth: 0 }}>
               <div className="fw-semibold text-truncate" title={item.title}>
                 {item.title}
               </div>
