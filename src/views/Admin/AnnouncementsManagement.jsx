@@ -55,11 +55,7 @@ const AnnouncementsManagement = () => {
     image: null,
     fromDate: "",
     expiryDate: "",
-    isExternal: false,
-    openInNewTab: false,
-    link: "",
     displayOrder: 0,
-    isNew: false,
     isSchemes: false,
     isActive: true
   };
@@ -96,10 +92,7 @@ const AnnouncementsManagement = () => {
         expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
         categoryId: item.categoryId || null,
         isActive: item.isActive !== false,
-        isExternal: !!item.isExternal,
-        isNew: !!item.isNew,
         isSchemes: !!item.isSchemes,
-        openInNewTab: !!item.openInNewTab
       }));
 
       setAnnouncements(list);
@@ -173,11 +166,7 @@ const AnnouncementsManagement = () => {
       image: null,
       fromDate: item.fromDate,
       expiryDate: item.expiryDate,
-      isExternal: !!item.isExternal,
-      openInNewTab: !!item.openInNewTab,
-      link: item.link || "",
       displayOrder: item.displayOrder !== undefined && item.displayOrder !== null ? String(item.displayOrder) : "",
-      isNew: !!item.isNew,
       isSchemes: !!item.isSchemes,
       isActive: item.isActive !== false
     });
@@ -300,7 +289,7 @@ const AnnouncementsManagement = () => {
           {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
         </h4>
         {activeTab === "list" && (
-          <Button color="light"  onClick={handleAddNew} className="d-flex align-items-center text-success">
+          <Button color="light" onClick={handleAddNew} className="d-flex align-items-center text-success">
             <FaPlus className="me-2" />
             {isHindi ? "नई घोषणा" : "Add Announcement"}
           </Button>
@@ -532,16 +521,51 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
-
               <Row>
                 <Col md={6}>
+                  <FormGroup>
+                    <Label className="fw-semibold">
+                      Short Description (English) <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      type="textarea"
+                      required
+                      rows="3"
+                      value={formData.shortDescriptionEn}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shortDescriptionEn: e.target.value })
+                      }
+                      placeholder="Brief description in English"
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label className="fw-semibold">
+                      Short Description (Hindi) <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      type="textarea"
+                      required
+                      rows="3"
+                      value={formData.shortDescriptionHi}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shortDescriptionHi: e.target.value })
+                      }
+                      placeholder="हिंदी में संक्षिप्त विवरण"
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">Slug (Auto-generated)</Label>
                     <Input name="slug" value={formData.slug} disabled className="bg-light" />
                   </FormGroup>
                 </Col>
 
-                <Col md={6}>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
                       Category <span className="text-danger">*</span>
@@ -561,90 +585,7 @@ const AnnouncementsManagement = () => {
                     </Input>
                   </FormGroup>
                 </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      Short Description (English) <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="textarea"
-                      required
-                      rows="3"
-                      value={formData.shortDescriptionEn}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionEn: e.target.value })
-                      }
-                      placeholder="Brief description in English"
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      Short Description (Hindi) <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="textarea"
-                      required
-                      rows="3"
-                      value={formData.shortDescriptionHi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionHi: e.target.value })
-                      }
-                      placeholder="हिंदी में संक्षिप्त विवरण"
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* DynamicContentEditor */}
-              <Row>
-                <Col md={12}>
-                  <FormGroup className="mb-3">
-                    <Label className="fw-semibold mb-2">
-                      Description (English & Hindi) <span className="text-danger">*</span>
-                    </Label>
-                    <DynamicContentEditor
-                      engField="descriptionEn"
-                      hinField="descriptionHi"
-                      height={460}
-                      initialEn={formData.descriptionEn}
-                      initialHi={formData.descriptionHi}
-                      onChange={(contentObj) => {
-                        setFormData(prev => ({
-                          ...prev,
-                          descriptionEn: contentObj.descriptionEn,
-                          descriptionHi: contentObj.descriptionHi,
-                        }));
-                      }}
-                      instanceId="content_editor"
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      <FaLink className="me-2" />
-                      Link <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="url"
-                      required
-                      placeholder="https://example.com"
-                      value={formData.link}
-                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
                       <FaImage className="me-2" />
@@ -660,7 +601,37 @@ const AnnouncementsManagement = () => {
                 </Col>
               </Row>
 
+
+
               <Row>
+
+                <Col md={4}>
+                  <FormGroup>
+                    <Label className="fw-semibold">Display Order</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.displayOrder}
+                      name="displayOrder"
+                      placeholder="Auto"
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (!val) {
+                          setFormData({ ...formData, displayOrder: "" });
+                          return;
+                        }
+                        const nextOrder = getNextAvailableOrder(val, usedOrders);
+                        setFormData({
+                          ...formData,
+                          displayOrder: String(nextOrder)
+                        });
+                      }}
+                    />
+                    <small className="text-muted">
+                      If entered order exists, next available order is auto-selected
+                    </small>
+                  </FormGroup>
+                </Col>
                 <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
@@ -690,35 +661,8 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
 
-                <Col md={4}>
-                  <FormGroup>
-                    <Label className="fw-semibold">Display Order</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.displayOrder}
-                      name="displayOrder"
-                      placeholder="Auto"
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        if (!val) {
-                          setFormData({ ...formData, displayOrder: "" });
-                          return;
-                        }
-                        const nextOrder = getNextAvailableOrder(val, usedOrders);
-                        setFormData({
-                          ...formData,
-                          displayOrder: String(nextOrder)
-                        });
-                      }}
-                    />
-                    <small className="text-muted">
-                      If entered order exists, next available order is auto-selected
-                    </small>
-                  </FormGroup>
-                </Col>
-              </Row>
 
+              </Row>
               <hr className="my-4" />
               <h6 className="mb-3 text-primary">Options</h6>
 
@@ -735,33 +679,9 @@ const AnnouncementsManagement = () => {
                       Is Active
                     </Label>
                   </FormGroup>
-
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="isNew"
-                      checked={formData.isNew}
-                      onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
-                    />
-                    <Label check for="isNew" className="fw-semibold">
-                      Mark as New
-                    </Label>
-                  </FormGroup>
                 </Col>
 
                 <Col md={4}>
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="isExternal"
-                      checked={formData.isExternal}
-                      onChange={(e) => setFormData({ ...formData, isExternal: e.target.checked })}
-                    />
-                    <Label check for="isExternal" className="fw-semibold">
-                      Is External Link
-                    </Label>
-                  </FormGroup>
-
                   <FormGroup check className="mb-3">
                     <Input
                       type="checkbox"
@@ -775,22 +695,35 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
 
-                <Col md={4}>
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="openInNewTab"
-                      checked={formData.openInNewTab}
-                      onChange={(e) =>
-                        setFormData({ ...formData, openInNewTab: e.target.checked })
-                      }
-                    />
-                    <Label check for="openInNewTab" className="fw-semibold">
-                      Open in New Tab
+
+              </Row>
+              {/* DynamicContentEditor */}
+              <Row>
+                <Col md={12}>
+                  <FormGroup className="mb-3">
+                    <Label className="fw-semibold mb-2">
+                      Description (English & Hindi) <span className="text-danger">*</span>
                     </Label>
+                    <DynamicContentEditor
+                      engField="descriptionEn"
+                      hinField="descriptionHi"
+                      height={360}
+                      initialEn={formData.descriptionEn}
+                      initialHi={formData.descriptionHi}
+                      onChange={(contentObj) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          descriptionEn: contentObj.descriptionEn,
+                          descriptionHi: contentObj.descriptionHi,
+                        }));
+                      }}
+                      instanceId="content_editor"
+                    />
                   </FormGroup>
                 </Col>
               </Row>
+
+
             </div>
           </TabPane>
         </TabContent>

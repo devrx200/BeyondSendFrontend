@@ -4,10 +4,6 @@ import {
   CardBody,
   Button,
   Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Form,
   FormGroup,
   Label,
@@ -19,9 +15,14 @@ import {
   CardHeader,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane
 } from "reactstrap";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import ReactQuill from "react-quill";
@@ -30,14 +31,19 @@ import "react-quill/dist/quill.snow.css";
 const DirectorateNoticeManagement = () => {
   const API = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("authToken");
-  const [modal, setModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [list, setList] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem("directorateActiveTab") || "1";
+  });
+  const [editingId, setEditingId] = useState(() => {
+    const saved = sessionStorage.getItem("directorateEditingId");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   // Pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -58,7 +64,20 @@ const DirectorateNoticeManagement = () => {
     isActive: true
   };
 
-  const [formData, setFormData] = useState(initialState);
+  // Get saved form data from sessionStorage
+  const [formData, setFormData] = useState(() => {
+    const saved = sessionStorage.getItem("directorateFormData");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Don't restore file from sessionStorage
+        return { ...parsed, file: null };
+      } catch {
+        return initialState;
+      }
+    }
+    return initialState;
+  });
 
   const generateSlug = (text) =>
     text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
@@ -107,25 +126,76 @@ const DirectorateNoticeManagement = () => {
     setCurrentPage(1);
   }, [list.length]);
 
-  /* ================= MODAL ================= */
-  const toggleModal = () => {
-    setModal(!modal);
-    if (modal) {
-      setEditingId(null);
-      setFormData(initialState);
+  // Save active tab to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem("directorateActiveTab", activeTab);
+  }, [activeTab]);
+
+  // Save editing ID to sessionStorage
+  useEffect(() => {
+    if (editingId) {
+      sessionStorage.setItem("directorateEditingId", JSON.stringify(editingId));
+    } else {
+      sessionStorage.removeItem("directorateEditingId");
     }
-  };
+  }, [editingId]);
 
-  const handleOpenCreate = () => {
+  // Save form data to sessionStorage whenever it changes (except file)
+  useEffect(() => {
+    // Only save if there's data to save (not empty form) or in edit mode
+    const hasData = formData.titleEn || formData.titleHi || formData.slug ||
+      formData.shortDescriptionEn || formData.shortDescriptionHi ||
+      formData.descriptionEn || formData.descriptionHi ||
+      formData.categoryId;
+
+    if (hasData || editingId) {
+      const dataToSave = { ...formData };
+      delete dataToSave.file; // Don't save file object
+      sessionStorage.setItem("directorateFormData", JSON.stringify(dataToSave));
+    } else {
+      sessionStorage.removeItem("directorateFormData");
+    }
+  }, [formData, editingId]);
+
+  /* ================= RESET FORM ================= */
+  const resetForm = () => {
+    // Clear editing state
     setEditingId(null);
-    setFormData(initialState);
-    setModal(true);
+    // Reset form to initial state
+    setFormData({ ...initialState });
+    // Clear session storage
+    sessionStorage.removeItem("directorateEditingId");
+    sessionStorage.removeItem("directorateFormData");
   };
 
+  /* ================= BACK TO LIST ================= */
+  const goBackToList = () => {
+    resetForm();
+    setActiveTab("1");
+  };
+
+  /* ================= ADD NEW NOTICE ================= */
+  // const handleAddNew = () => {
+  //   // First reset everything
+  //   setEditingId(null);
+  //   setFormData({ ...initialState });
+  //   sessionStorage.removeItem("directorateEditingId");
+  //   sessionStorage.removeItem("directorateFormData");
+  //   // Then switch to form tab
+  //   setActiveTab("2");
+
+  // };
+  const handleAddNew = () => {
+    sessionStorage.removeItem("directorateEditingId");
+    sessionStorage.removeItem("directorateFormData");
+
+    window.location.reload();
+    setActiveTab("2");
+  };
   /* ================= EDIT ================= */
   const handleEdit = (item) => {
     setEditingId(item._id);
-    setFormData({
+    const newFormData = {
       titleEn: item.titleEn || "",
       titleHi: item.titleHi || "",
       slug: item.slug || "",
@@ -136,8 +206,9 @@ const DirectorateNoticeManagement = () => {
       categoryId: item.categoryId?._id || "",
       file: null,
       isActive: item.isActive !== false
-    });
-    setModal(true);
+    };
+    setFormData(newFormData);
+    setActiveTab("2");
   };
 
   /* ================= DELETE ================= */
@@ -212,7 +283,8 @@ const DirectorateNoticeManagement = () => {
         Swal.fire("Created!", "Notice created successfully", "success");
       }
 
-      toggleModal();
+      resetForm();
+      setActiveTab("1");
       fetchList();
     } catch (err) {
       Swal.fire(
@@ -223,6 +295,19 @@ const DirectorateNoticeManagement = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  /* ================= HANDLE TAB CHANGE ================= */
+  const handleTabChange = (tab) => {
+    if (tab === "1") {
+      resetForm();
+    } else if (tab === "2") {
+      // If switching to form tab and not editing, reset form
+      if (!editingId) {
+        resetForm();
+      }
+    }
+    setActiveTab(tab);
   };
 
   /* ================= PAGINATION RENDER ================= */
@@ -250,17 +335,14 @@ const DirectorateNoticeManagement = () => {
     return (
       <div className="d-flex justify-content-center mt-3">
         <Pagination className="mb-0" size="md">
-          {/* First Page */}
           <PaginationItem disabled={currentPage === 1}>
             <PaginationLink first onClick={() => handlePageChange(1)} />
           </PaginationItem>
 
-          {/* Previous Page */}
           <PaginationItem disabled={currentPage === 1}>
             <PaginationLink previous onClick={() => handlePageChange(currentPage - 1)} />
           </PaginationItem>
 
-          {/* First page ellipsis */}
           {startPage > 1 && (
             <>
               <PaginationItem>
@@ -274,7 +356,6 @@ const DirectorateNoticeManagement = () => {
             </>
           )}
 
-          {/* Page numbers */}
           {pages.map((page) => (
             <PaginationItem key={page} active={page === currentPage}>
               <PaginationLink onClick={() => handlePageChange(page)}>
@@ -283,7 +364,6 @@ const DirectorateNoticeManagement = () => {
             </PaginationItem>
           ))}
 
-          {/* Last page ellipsis */}
           {endPage < totalPages && (
             <>
               {endPage < totalPages - 1 && (
@@ -299,12 +379,10 @@ const DirectorateNoticeManagement = () => {
             </>
           )}
 
-          {/* Next Page */}
           <PaginationItem disabled={currentPage === totalPages}>
             <PaginationLink next onClick={() => handlePageChange(currentPage + 1)} />
           </PaginationItem>
 
-          {/* Last Page */}
           <PaginationItem disabled={currentPage === totalPages}>
             <PaginationLink last onClick={() => handlePageChange(totalPages)} />
           </PaginationItem>
@@ -324,317 +402,387 @@ const DirectorateNoticeManagement = () => {
       <CardHeader>
         <div className="d-flex justify-content-between align-items-center">
           <h4 className="text-white mb-0">Directorate Notices</h4>
-          <Button color="light" className="text-success" onClick={handleOpenCreate}>
-            <FaPlus /> Add Notice
-          </Button>
+          {activeTab === "1" && (
+            <Button color="light" className="text-success" onClick={handleAddNew}>
+              <FaPlus /> Add Notice
+            </Button>
+          )}
         </div>
       </CardHeader>
-      <CardBody>
-        {/* Stats and Items Per Page */}
-        <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-          <div className="text-muted small">
-            Showing {list.length === 0 ? 0 : indexOfFirstItem + 1} - 
-            {Math.min(indexOfLastItem, list.length)} of {list.length} notices
-          </div>
-          <div className="d-flex align-items-center gap-2">
-            <small className="text-muted">Show:</small>
-            <select
-              className="form-select form-select-sm"
-              style={{ width: "auto" }}
-              value={itemsPerPage}
-              onChange={handleItemsPerPageChange}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-        </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="text-center py-5">
-            <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-            <p className="mt-3 text-muted">Loading notices...</p>
-          </div>
-        ) : (
-          <>
-            <Table bordered hover responsive>
-              <thead className="table-light">
-                <tr>
-                  <th style={{ width: "50px" }}>#</th>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th style={{ width: "100px" }}>Status</th>
-                  <th style={{ width: "120px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentData.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-5">
-                      <div className="py-4 text-muted">
-                        <span className="display-4 d-block mb-3">📢</span>
-                        <p className="mb-0">No notices found</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  currentData.map((item, i) => (
-                    <tr key={item._id}>
-                      <td>{indexOfFirstItem + i + 1}</td>
-                      <td>
-                        <div className="fw-semibold">{item.titleEn}</div>
-                        <small className="text-muted">{item.slug}</small>
-                      </td>
-                      <td>
-                        <Badge color="info" pill>
-                          {item.categoryId?.categoryNameEn || "N/A"}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge color={item.isActive ? "success" : "secondary"}>
-                          {item.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className="d-flex gap-2">
-                          <Button
-                            size="sm"
-                            color="warning"
-                            onClick={() => handleEdit(item)}
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDelete(item._id)}
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </Button>
-                        </div>
-                      </td>
+      {/* TABS */}
+      <Nav tabs className="px-3 pt-3">
+        <NavItem>
+          <NavLink
+            active={activeTab === "1"}
+            onClick={() => handleTabChange("1")}
+            style={{ cursor: "pointer" }}
+          >
+            <FaList className="me-2" />
+            List View
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
+            active={activeTab === "2"}
+            onClick={() => handleTabChange("2")}
+            style={{ cursor: "pointer" }}
+          >
+            <FaPlusCircle className="me-2" />
+            {editingId ? "Edit Notice" : "Add Notice"}
+          </NavLink>
+        </NavItem>
+      </Nav>
+
+      <TabContent activeTab={activeTab}>
+        {/* TAB 1 - LIST VIEW */}
+        <TabPane tabId="1">
+          <CardBody>
+            {/* Stats and Items Per Page */}
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <div className="text-muted small">
+                Showing {list.length === 0 ? 0 : indexOfFirstItem + 1} -
+                {Math.min(indexOfLastItem, list.length)} of {list.length} notices
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <small className="text-muted">Show:</small>
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: "auto" }}
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Table */}
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
+                <p className="mt-3 text-muted">Loading notices...</p>
+              </div>
+            ) : (
+              <>
+                <Table bordered hover responsive>
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th>Title</th>
+                      <th>Category</th>
+                      <th style={{ width: "100px" }}>Status</th>
+                      <th style={{ width: "120px" }}>Actions</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
+                  </thead>
+                  <tbody>
+                    {currentData.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-5">
+                          <div className="py-4 text-muted">
+                            <span className="display-4 d-block mb-3">📢</span>
+                            <p className="mb-0">No notices found</p>
+                            <Button
+                              color="primary"
+                              className="mt-3"
+                              onClick={handleAddNew}
+                            >
+                              <FaPlus className="me-2" />
+                              Add Your First Notice
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      currentData.map((item, i) => (
+                        <tr key={item._id}>
+                          <td>{indexOfFirstItem + i + 1}</td>
+                          <td>
+                            <div className="fw-semibold">{item.titleEn}</div>
+                            <small className="text-muted">{item.slug}</small>
+                          </td>
+                          <td>
+                            <Badge color="info" pill>
+                              {item.categoryId?.categoryNameEn || "N/A"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Badge color={item.isActive ? "success" : "secondary"}>
+                              {item.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <div className="d-flex gap-2">
+                              <Button
+                                size="sm"
+                                color="warning"
+                                onClick={() => handleEdit(item)}
+                                title="Edit"
+                              >
+                                <FaEdit />
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="danger"
+                                onClick={() => handleDelete(item._id)}
+                                title="Delete"
+                              >
+                                <FaTrash />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </Table>
 
-            {/* Pagination */}
-            {renderPagination()}
-          </>
-        )}
+                {/* Pagination */}
+                {renderPagination()}
+              </>
+            )}
+          </CardBody>
+        </TabPane>
 
-        {/* ================= MODAL ================= */}
-        <Modal isOpen={modal} toggle={toggleModal} size="xl" backdrop="static">
-          <ModalHeader toggle={toggleModal}>
-            {editingId ? "✏️ Edit Notice" : "➕ Create Notice"}
-          </ModalHeader>
-
-          <Form onSubmit={handleSubmit}>
-            <ModalBody style={{ maxHeight: "75vh", overflowY: "auto" }}>
-              {/* Titles */}
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Title (English) <span className="text-danger">*</span></Label>
-                    <Input
-                      required
-                      value={formData.titleEn}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          titleEn: e.target.value,
-                          slug: generateSlug(e.target.value)
-                        })
-                      }
-                      placeholder="Enter English title"
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Title (Hindi) <span className="text-danger">*</span></Label>
-                    <Input
-                      required
-                      value={formData.titleHi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, titleHi: e.target.value })
-                      }
-                      placeholder="Enter Hindi title"
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* Slug + Category */}
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Slug</Label>
-                    <Input value={formData.slug} disabled className="bg-light" />
-                    <small className="text-muted">Auto-generated from title</small>
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Category <span className="text-danger">*</span></Label>
-                    <Input
-                      type="select"
-                      required
-                      value={formData.categoryId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, categoryId: e.target.value })
-                      }
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.categoryNameEn}
-                        </option>
-                      ))}
-                    </Input>
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* Short Description */}
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Short Description (English)</Label>
-                    <Input
-                      type="textarea"
-                      rows="3"
-                      value={formData.shortDescriptionEn}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          shortDescriptionEn: e.target.value
-                        })
-                      }
-                      placeholder="Brief description in English"
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Short Description (Hindi)</Label>
-                    <Input
-                      type="textarea"
-                      rows="3"
-                      value={formData.shortDescriptionHi}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          shortDescriptionHi: e.target.value
-                        })
-                      }
-                      placeholder="Brief description in Hindi"
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* Description */}
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Description (English)</Label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.descriptionEn}
-                      onChange={(value) =>
-                        setFormData({ ...formData, descriptionEn: value })
-                      }
-                      modules={quillModules}
-                      placeholder="Write detailed description in English..."
-                      style={{ height: "200px", marginBottom: "50px" }}
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Description (Hindi)</Label>
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.descriptionHi}
-                      onChange={(value) =>
-                        setFormData({ ...formData, descriptionHi: value })
-                      }
-                      modules={quillModules}
-                      placeholder="Write detailed description in Hindi..."
-                      style={{ height: "200px", marginBottom: "50px" }}
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* File */}
-              <Row className="mt-4">
-                <Col md={12}>
-                  <FormGroup>
-                    <Label>Upload File (PDF/DOC/DOCX - Max 5MB)</Label>
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) =>
-                        setFormData({ ...formData, file: e.target.files[0] })
-                      }
-                    />
-                    <small className="text-muted">
-                      {editingId && "Leave empty to keep existing file"}
-                    </small>
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              {/* Active */}
-              <Row className="mt-3">
-                <Col md={12}>
-                  <FormGroup check>
-                    <Input
-                      type="checkbox"
-                      id="isActive"
-                      checked={formData.isActive}
-                      onChange={(e) =>
-                        setFormData({ ...formData, isActive: e.target.checked })
-                      }
-                    />
-                    <Label check for="isActive" className="fw-semibold">
-                      Is Active
-                    </Label>
-                  </FormGroup>
-                </Col>
-              </Row>
-            </ModalBody>
-
-            <ModalFooter>
-              <Button color="secondary" onClick={toggleModal} disabled={submitting}>
-                Cancel
+        {/* TAB 2 - FORM VIEW */}
+        <TabPane tabId="2">
+          <CardBody>
+            {/* Back to List Button */}
+            <div className="mb-4 d-flex justify-content-between align-items-center">
+              <Button
+                color="link"
+                onClick={goBackToList}
+                className="text-decoration-none p-0"
+                style={{ fontWeight: 500 }}
+              >
+                <FaArrowLeft className="me-2" />
+                Back to List
               </Button>
-              <Button color="primary" type="submit" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Spinner size="sm" className="me-1" />
-                    {editingId ? "Updating..." : "Saving..."}
-                  </>
-                ) : (
-                  editingId ? "Update" : "Create"
-                )}
-              </Button>
-            </ModalFooter>
-          </Form>
-        </Modal>
-      </CardBody>
+              {editingId && (
+                <Button
+                  color="primary"
+                  size="sm"
+                  onClick={handleAddNew}
+                >
+                  <FaPlus className="me-1" />
+                  Add New
+                </Button>
+              )}
+            </div>
+
+            <Form onSubmit={handleSubmit}>
+              <div className="p-3">
+                <h5 className="mb-4">
+                  {editingId ? "✏️ Edit Notice" : "➕ Create Notice"}
+                </h5>
+
+                {/* Titles */}
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Title (English) <span className="text-danger">*</span></Label>
+                      <Input
+                        required
+                        value={formData.titleEn}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            titleEn: e.target.value,
+                            slug: generateSlug(e.target.value)
+                          })
+                        }
+                        placeholder="Enter English title"
+                      />
+                    </FormGroup>
+                  </Col>
+
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Title (Hindi) <span className="text-danger">*</span></Label>
+                      <Input
+                        required
+                        value={formData.titleHi}
+                        onChange={(e) =>
+                          setFormData({ ...formData, titleHi: e.target.value })
+                        }
+                        placeholder="Enter Hindi title"
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* Slug + Category */}
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Slug</Label>
+                      <Input value={formData.slug} disabled className="bg-light" />
+                      <small className="text-muted">Auto-generated from title</small>
+                    </FormGroup>
+                  </Col>
+
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Category <span className="text-danger">*</span></Label>
+                      <Input
+                        type="select"
+                        required
+                        value={formData.categoryId}
+                        onChange={(e) =>
+                          setFormData({ ...formData, categoryId: e.target.value })
+                        }
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.categoryNameEn}
+                          </option>
+                        ))}
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* Short Description */}
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Short Description (English)</Label>
+                      <Input
+                        type="textarea"
+                        rows="3"
+                        value={formData.shortDescriptionEn}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            shortDescriptionEn: e.target.value
+                          })
+                        }
+                        placeholder="Brief description in English"
+                      />
+                    </FormGroup>
+                  </Col>
+
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Short Description (Hindi)</Label>
+                      <Input
+                        type="textarea"
+                        rows="3"
+                        value={formData.shortDescriptionHi}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            shortDescriptionHi: e.target.value
+                          })
+                        }
+                        placeholder="Brief description in Hindi"
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* Description */}
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Description (English)</Label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.descriptionEn}
+                        onChange={(value) =>
+                          setFormData({ ...formData, descriptionEn: value })
+                        }
+                        modules={quillModules}
+                        placeholder="Write detailed description in English..."
+                        style={{ height: "200px", marginBottom: "50px" }}
+                      />
+                    </FormGroup>
+                  </Col>
+
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Description (Hindi)</Label>
+                      <ReactQuill
+                        theme="snow"
+                        value={formData.descriptionHi}
+                        onChange={(value) =>
+                          setFormData({ ...formData, descriptionHi: value })
+                        }
+                        modules={quillModules}
+                        placeholder="Write detailed description in Hindi..."
+                        style={{ height: "200px", marginBottom: "50px" }}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* File */}
+                <Row className="mt-4">
+                  <Col md={12}>
+                    <FormGroup>
+                      <Label>Upload File (PDF/DOC/DOCX - Max 5MB)</Label>
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) =>
+                          setFormData({ ...formData, file: e.target.files[0] })
+                        }
+                      />
+                      <small className="text-muted">
+                        {editingId && "Leave empty to keep existing file"}
+                      </small>
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* Active */}
+                <Row className="mt-3">
+                  <Col md={12}>
+                    <FormGroup check>
+                      <Input
+                        type="checkbox"
+                        id="isActive"
+                        checked={formData.isActive}
+                        onChange={(e) =>
+                          setFormData({ ...formData, isActive: e.target.checked })
+                        }
+                      />
+                      <Label check for="isActive" className="fw-semibold">
+                        Is Active
+                      </Label>
+                    </FormGroup>
+                  </Col>
+                </Row>
+
+                {/* Form Actions */}
+                <div className="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                  <Button color="secondary" onClick={goBackToList} disabled={submitting}>
+                    <FaTimes className="me-2" />
+                    Cancel
+                  </Button>
+                  <Button color="primary" type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Spinner size="sm" className="me-1" />
+                        {editingId ? "Updating..." : "Saving..."}
+                      </>
+                    ) : (
+                      <>
+                        <FaSave className="me-2" />
+                        {editingId ? "Update" : "Create"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Form>
+          </CardBody>
+        </TabPane>
+      </TabContent>
     </Card>
   );
 };

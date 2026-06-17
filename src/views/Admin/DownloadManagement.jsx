@@ -129,8 +129,21 @@ const DownloadManagement = () => {
       toggleModal();
       fetchDownloads();
     } catch (err) {
-      Swal.fire("Error", err.message, "error");
-    }
+  // Check if error has response from backend
+  if (err.response) {
+    // Backend returned an error response
+    const errorMessage = err.response.data?.message || 
+                        err.response.data?.error || 
+                        "Something went wrong";
+    Swal.fire("Error", errorMessage, "error");
+  } else if (err.request) {
+    // Request was made but no response received
+    Swal.fire("Error", "No response from server", "error");
+  } else {
+    // Something else happened
+    Swal.fire("Error", err.message, "error");
+  }
+}
   };
 
 
@@ -248,7 +261,7 @@ const DownloadManagement = () => {
       </Card>
 
       {/* ================= MODAL ================= */}
-      <Modal isOpen={modal} toggle={toggleModal} centered size="lg">
+      <Modal isOpen={modal} toggle={toggleModal} centered size="lg" backdrop="static">
         <ModalHeader toggle={toggleModal}>
           {editing ? "Edit Download" : "Add Download"}
         </ModalHeader>

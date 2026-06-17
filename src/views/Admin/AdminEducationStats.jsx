@@ -23,7 +23,7 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaPlus, FaEdit, FaTrash, FaSave } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSave ,FaTimes ,FaSearch ,FaFilter  } from "react-icons/fa";
 
 
 /* ---------- CURRENT ACADEMIC YEAR ---------- */
@@ -354,56 +354,132 @@ const AdminEducationStats = () => {
       </CardHeader>
       <CardBody>
         {/* Filters */}
-        <div className="mb-4">
-          <Row>
-            <Col md={4}>
-              <FormGroup>
-                <Label>Search by Academic Year</Label>
-                <Input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </FormGroup>
-            </Col>
-            <Col md={3}>
-              <FormGroup>
-                <Label>Filter by Status</Label>
-                <Input
-                  type="select"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">All</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </Input>
-              </FormGroup>
-            </Col>
-            <Col md={3} className="d-flex align-items-end">
-              <Button color="secondary" onClick={handleResetFilters} className="w-100">
-                Reset Filters
-              </Button>
-            </Col>
-            <Col md={2} className="d-flex align-items-end">
-              <div className="d-flex align-items-center gap-2 w-100">
-                <small className="text-muted">Show:</small>
-                <select
-                  className="form-select form-select-sm"
-                  style={{ width: "auto" }}
-                  value={itemsPerPage}
-                  onChange={handleItemsPerPageChange}
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-            </Col>
-          </Row>
-        </div>
+ <div className="mb-4 p-3 bg-light rounded-3">
+  <Row className="g-3 align-items-end">
+    <Col lg={4} md={6} sm={12}>
+      <FormGroup className="mb-0">
+        <Label className="fw-semibold mb-1 text-secondary">
+          <FaSearch className="me-1 text-primary" size={14} />
+          Search by Academic Year
+        </Label>
+        <Input
+          type="text"
+          placeholder="Search notices..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border-2 rounded-3"
+          style={{ 
+            borderColor: "#e2e8f0", 
+            height: "42px",
+            transition: "all 0.3s ease"
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#0d6efd";
+            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#e2e8f0";
+            e.target.style.boxShadow = "none";
+          }}
+        />
+      </FormGroup>
+    </Col>
+    
+    <Col lg={3} md={6} sm={12}>
+      <FormGroup className="mb-0">
+        <Label className="fw-semibold mb-1 text-secondary">
+          <FaFilter className="me-1 text-primary" size={14} />
+          Filter by Status
+        </Label>
+        <Input
+          type="select"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border-2 rounded-3"
+          style={{ 
+            borderColor: "#e2e8f0", 
+            height: "42px",
+            transition: "all 0.3s ease"
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#0d6efd";
+            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#e2e8f0";
+            e.target.style.boxShadow = "none";
+          }}
+        >
+          <option value="all">📋 All</option>
+          <option value="active">✅ Active</option>
+          <option value="inactive">⛔ Inactive</option>
+        </Input>
+      </FormGroup>
+    </Col>
+    
+    <Col lg={3} md={6} sm={12} className="d-flex">
+      <Button 
+        color="secondary" 
+        onClick={handleResetFilters}
+        className="w-100 rounded-3 fw-semibold"
+        style={{ 
+          height: "42px",
+          padding: "0 20px",
+          background: "linear-gradient(135deg, #6c757d 0%, #495057 100%)",
+          border: "none",
+          transition: "all 0.3s ease",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = "0 4px 15px rgba(108, 117, 125, 0.4)";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "none";
+        }}
+      >
+        <FaTimes className="me-2" size={14} />
+        Reset Filters
+      </Button>
+    </Col>
+    
+    <Col lg={2} md={6} sm={12}>
+      <div className="d-flex align-items-center gap-2 justify-content-md-end justify-content-start" style={{ height: "42px" }}>
+        <small className="text-muted fw-semibold">Show:</small>
+        <select
+          className="form-select form-select-sm border-2 rounded-3"
+          style={{ 
+            width: "auto",
+            borderColor: "#e2e8f0",
+            padding: "6px 12px",
+            fontWeight: 500,
+            height: "42px",
+            cursor: "pointer",
+            transition: "all 0.3s ease"
+          }}
+          value={itemsPerPage}
+          onChange={handleItemsPerPageChange}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#0d6efd";
+            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#e2e8f0";
+            e.target.style.boxShadow = "none";
+          }}
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
+      </div>
+    </Col>
+  </Row>
+</div>
 
         {/* Stats Info */}
         <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">

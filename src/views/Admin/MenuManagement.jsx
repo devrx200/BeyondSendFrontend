@@ -559,7 +559,7 @@ const MenuManagement = () => {
         </Table>
 
         {/* MODAL */}
-        <Modal isOpen={modal} toggle={toggleModal} size="lg">
+        <Modal isOpen={modal} toggle={toggleModal} size="lg"  backdrop="static">
           <ModalHeader toggle={toggleModal}>
             {editing ? "Edit Menu" : "Add Menu"}
           </ModalHeader>

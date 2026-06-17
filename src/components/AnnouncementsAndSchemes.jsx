@@ -425,19 +425,7 @@ const AnnouncementsAndSchemes = () => {
               </CardBody>
             </Card>
 
-            {/* QUICK INFO */}
-            <Card className="shadow-sm border-0 mt-3">
-              <CardBody className="bg-light">
-                <h6 className="fw-bold mb-2">
-                  {isHindi ? "त्वरित जानकारी" : "Quick Info"}
-                </h6>
-                <p className="small text-muted mb-0">
-                  {isHindi
-                    ? "नवीनतम घोषणाओं और योजनाओं के बारे में सूचित रहें।"
-                    : "Stay informed about the latest announcements and schemes."}
-                </p>
-              </CardBody>
-            </Card>
+
           </div>
         </Col>
       </Row>
