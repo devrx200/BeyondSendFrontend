@@ -2023,7 +2023,7 @@ main {
 /* CMS Content Tables (frontend) */
 .cms-content table {
   border-collapse: collapse;
-  border: 2px solid #010b14; 
+  border: 2px solid #010b14;
   width: 100%;
   padding: 3px;
   font-size: 0.9375rem;
@@ -2269,6 +2269,61 @@ main {
 
 .table-header th {
   font-weight: 600;
-   background-color: #e4ab69; 
+   background-color: #e4ab69;
   vertical-align: middle;
+}
+
+
+/* ========================================
+   SERVER DOWN PAGE
+   ======================================== */
+
+.server-down-page {
+  min-height: 100vh;
+  background: var(--gray-50);
+  display: flex;
+  flex-direction: column;
+}
+
+.server-down-topbar {
+  height: 6px;
+  background: var(--primary-gradient);
+  border-bottom: 3px solid var(--secondary-color);
+}
+
+.server-down-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
+}
+
+.server-down-header {
+  background: var(--primary-color);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 4px solid var(--secondary-color);
+}
+
+.server-down-body {
+  background: var(--white);
+}
+
+.server-down-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.server-down-info-icon {
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
 }
