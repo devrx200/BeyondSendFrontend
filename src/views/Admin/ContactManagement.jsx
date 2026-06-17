@@ -5,6 +5,7 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { FaSave } from "react-icons/fa";
 import {
   ENGLISH_TEXT_ONLY,
   URL_REGEX
@@ -320,9 +321,29 @@ const handleDelete = (o) => {
 
       <Card>
         <CardBody>
-          <h4 className="mb-4 fw-bold">Contact Management</h4>
+            <Form onSubmit={saveContact}>
+        <div
+  className="d-flex justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm"
+  style={{
+    background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
+  }}
+>
+  <div>
+    <h4 className="mb-1 text-white fw-bold">
+      📞 Contact Management
+    </h4>
+    <small className="text-white-50">
+      Manage contact details, address, email and communication information
+    </small>
+  </div>
 
-          <Form onSubmit={saveContact}>
+  <Button color="light" disabled={loading}>
+    <FaSave className="me-2" />
+    {loading ? "Saving..." : "Save Changes"}
+  </Button>
+</div>
+
+        
             {/* -------- Address Section -------- */}
             <Card className="border mb-4">
               <CardBody>
@@ -498,11 +519,7 @@ const handleDelete = (o) => {
               </CardBody>
             </Card>
 
-            <div className="text-end">
-              <Button color="primary" disabled={loading}>
-                {loading ? "Saving..." : "Save Contact Information"}
-              </Button>
-            </div>
+          
           </Form>
         </CardBody>
       </Card>

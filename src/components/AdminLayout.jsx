@@ -42,9 +42,9 @@ const AdminLayout = () => {
         <BreadcrumbBar />
 
         <div className="adm-content-scroll">
-          <div className="adm-content-card">
+          {/* <div className="adm-content-card"> */}
             <Outlet />
-          </div>
+          {/* </div> */}
         </div>
 
         <AdminFooter />

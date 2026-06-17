@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter,
-  Form, FormGroup, Label, Input, Container, Badge, Row, Col
+  Form, FormGroup, Label, Input, Container, Badge, Row, Col,
+  CardHeader
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
 import axios from "axios";
@@ -128,8 +129,21 @@ const DownloadManagement = () => {
       toggleModal();
       fetchDownloads();
     } catch (err) {
-      Swal.fire("Error", err.message, "error");
-    }
+  // Check if error has response from backend
+  if (err.response) {
+    // Backend returned an error response
+    const errorMessage = err.response.data?.message || 
+                        err.response.data?.error || 
+                        "Something went wrong";
+    Swal.fire("Error", errorMessage, "error");
+  } else if (err.request) {
+    // Request was made but no response received
+    Swal.fire("Error", "No response from server", "error");
+  } else {
+    // Something else happened
+    Swal.fire("Error", err.message, "error");
+  }
+}
   };
 
 
@@ -190,17 +204,18 @@ const DownloadManagement = () => {
   return (
     <Container className="mt-4">
       <Card className="shadow-lg border-0">
-        <CardBody>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-bold text-primary">
+        <CardHeader>
+           <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4 className="fw-bold text-white">
               <FaFileAlt className="me-2" />
               Download Management
             </h4>
-            <Button color="primary" onClick={toggleModal}>
+            <Button color="light" className="text-success" onClick={toggleModal}>
               <FaPlus className="me-2" /> Add Download
             </Button>
           </div>
-
+        </CardHeader>
+        <CardBody>
           <Table hover responsive className="align-middle">
             <thead className="table-light">
               <tr>
@@ -246,7 +261,7 @@ const DownloadManagement = () => {
       </Card>
 
       {/* ================= MODAL ================= */}
-      <Modal isOpen={modal} toggle={toggleModal} centered size="lg">
+      <Modal isOpen={modal} toggle={toggleModal} centered size="lg" backdrop="static">
         <ModalHeader toggle={toggleModal}>
           {editing ? "Edit Download" : "Add Download"}
         </ModalHeader>

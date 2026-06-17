@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Row, Col, Card, CardBody, CardHeader,
   Button, Badge, Modal, ModalHeader, ModalBody,
-  Spinner, Collapse,Container,
+  Spinner, Collapse, Container,
 } from "reactstrap";
 import {
   FaFilePdf, FaPlayCircle, FaDownload,
@@ -386,7 +386,7 @@ const HelpTutorials = () => {
 
     return (
       <Card className="border-0 shadow rounded-4 h-100">
-        <CardHeader className="bg-white border-0 rounded-top-4 pb-0 pt-3 px-3">
+        <CardHeader className="bg-primary border-0 rounded-top-4 pb-0 pt-3 px-3">
           <div
             className={`d-flex align-items-center gap-2 border-bottom pb-2 ${isPdf ? "border-danger" : "border-primary"}`}>
             <div
@@ -446,69 +446,72 @@ const HelpTutorials = () => {
 
   return (
     <Container>
-    <div className="bg-light min-vh-100 py-4">
-      <div className="container-fluid px-3 px-md-4">
+      <div className=" min-vh-100 py-4">
+        <div className="container-fluid px-3 px-md-4">
 
-        {/* ── PAGE HEADER ── */}
-        <div className="bg-white rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-3">
-          <div
-            className="bg-primary bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-            style={{ width: 46, height: 46 }}>
-            <span style={{ fontSize: "1.4rem" }}>📘</span>
-          </div>
-          <div>
-            <h5 className="fw-bold mb-0">
-              {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
-            </h5>
-            <small className="text-muted">
-              {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
-            </small>
-          </div>
-          <div className="ms-auto d-flex gap-2">
-            <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1">
-              <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
-            </Badge>
-            <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1">
-              <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
-            </Badge>
-          </div>
+          {/* ── PAGE HEADER ── */}
+          <CardHeader className="shadow rounded ">
+            <div className=" rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-3">
+              <div
+                className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                style={{ width: 46, height: 46 }}>
+                <span style={{ fontSize: "1.4rem" }}>📘</span>
+              </div>
+              <div>
+                <h5 className="fw-bold mb-0">
+                  {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
+                </h5>
+                <small className="text-muted">
+                  {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
+                </small>
+              </div>
+              <div className="ms-auto d-flex gap-2">
+                <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1">
+                  <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
+                </Badge>
+                <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1">
+                  <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+
+
+          {/* ── SECTIONS ── */}
+          <Row className="g-4">
+            <Col xs={12} lg={6}>
+              <Section type="pdf" arr={pdfData} page={pdfPage} setPage={setPdfPage} />
+            </Col>
+            <Col xs={12} lg={6}>
+              <Section type="video" arr={videoData} page={videoPage} setPage={setVideoPage} />
+            </Col>
+          </Row>
+
         </div>
 
-        {/* ── SECTIONS ── */}
-        <Row className="g-4">
-          <Col xs={12} lg={6}>
-            <Section type="pdf" arr={pdfData} page={pdfPage} setPage={setPdfPage} />
-          </Col>
-          <Col xs={12} lg={6}>
-            <Section type="video" arr={videoData} page={videoPage} setPage={setVideoPage} />
-          </Col>
-        </Row>
-
-      </div>
-
-      {/* ── PREVIEW MODAL ── */}
-      <Modal
-        isOpen={previewModal}
-        toggle={() => setPreviewModal(false)}
-        size="xl"
-        centered>
-        <ModalHeader
+        {/* ── PREVIEW MODAL ── */}
+        <Modal
+          isOpen={previewModal}
           toggle={() => setPreviewModal(false)}
-          className="border-0 fw-bold">
-          👁️ {previewTitle}
-        </ModalHeader>
-        <ModalBody className="p-0" style={{ height: "75vh" }}>
-          <iframe
-            src={previewUrl}
-            width="100%"
-            height="100%"
-            style={{ border: "none", display: "block" }}
-            title="Preview"
-            allowFullScreen
-          />
-        </ModalBody>
-      </Modal>
-    </div>
+          size="xl"
+          centered>
+          <ModalHeader
+            toggle={() => setPreviewModal(false)}
+            className="border-0 fw-bold">
+            👁️ {previewTitle}
+          </ModalHeader>
+          <ModalBody className="p-0" style={{ height: "75vh" }}>
+            <iframe
+              src={previewUrl}
+              width="100%"
+              height="100%"
+              style={{ border: "none", display: "block" }}
+              title="Preview"
+              allowFullScreen
+            />
+          </ModalBody>
+        </Modal>
+      </div>
     </Container>
   );
 };

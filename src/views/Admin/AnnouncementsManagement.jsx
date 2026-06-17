@@ -1,42 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   CardBody,
   Button,
   Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Form,
   FormGroup,
   Label,
   Input,
   Badge,
   Row,
   Col,
-  Spinner
+  Spinner,
+  Nav,
+  NavItem,
+  NavLink,
+  TabContent,
+  TabPane,
+  CardHeader
 } from "reactstrap";
-import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaLink } from "react-icons/fa";
+import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaLink, FaArrowLeft, FaList } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-// import DynamicContentEditor from "../../utilies/DynamicContentEditor";
+import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
   const API = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("authToken");
-  const [modal, setModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const isSubmittingRef = useRef(false);
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = sessionStorage.getItem("announcements_active_tab");
+    return savedTab || "list";
+  });
+
   const [announcements, setAnnouncements] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [usedOrders, setUsedOrders] = useState([]);
-  const initEditor = () => { try { const s = sessionStorage.getItem(SS_EDITOR); return s ? JSON.parse(s) : [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } catch { return [{ id: 1, descriptionEn: "", descriptionHi: "" }]; } };
+  const [editingId, setEditingId] = useState(null);
+
+  // ── descriptionEn / descriptionHi now live inside formData ──
   const initialState = {
     titleEn: "",
     titleHi: "",
@@ -49,37 +55,13 @@ const AnnouncementsManagement = () => {
     image: null,
     fromDate: "",
     expiryDate: "",
-    isExternal: false,
-    openInNewTab: false,
-    link: "",
     displayOrder: 0,
-    isNew: false,
     isSchemes: false,
     isActive: true
   };
-  const [editorContents, setEditorContents] = useState(initEditor);
+
   const [formData, setFormData] = useState(initialState);
 
-  /* ================= QUILL MODULES ================= */
-  const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ color: [] }, { background: [] }],
-      ["link"],
-      ["clean"]
-    ]
-  };
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      descriptionEn: editorContents.descriptionEn,
-      descriptionHi: editorContents.descriptionHi
-    }));
-  }, [editorContents]);
-  //  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_EDITOR, JSON.stringify(editorContents)); }, [editorContents, view]);
-  /* ================= SLUG AUTO ================= */
   const generateSlug = (text) =>
     text
       .toLowerCase()
@@ -87,7 +69,6 @@ const AnnouncementsManagement = () => {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-  /* ================= FETCH CATEGORIES ================= */
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/api/get-categories`);
@@ -97,49 +78,48 @@ const AnnouncementsManagement = () => {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/api/get-announcements-list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const list = (res.data.data || []).map((item) => ({
+        ...item,
+        _id: item.id || item._id,
+        fromDate: item.fromDate ? item.fromDate.split("T")[0] : "",
+        expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
+        categoryId: item.categoryId || null,
+        isActive: item.isActive !== false,
+        isSchemes: !!item.isSchemes,
+      }));
+
+      setAnnouncements(list);
+      const orders = list
+        .map((a) => Number(a.displayOrder))
+        .filter((o) => !isNaN(o));
+      setUsedOrders(orders);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: err.response?.data?.message || "Failed to load announcements"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API}/api/get-announcements-list`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const list = (res.data.data || []).map((item) => ({
-          ...item,
-          _id: item.id || item._id,
-          fromDate: item.fromDate ? item.fromDate.split("T")[0] : "",
-          expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
-          categoryId: item.categoryId || null,
-          isActive: item.isActive !== false,
-          isExternal: !!item.isExternal,
-          isNew: !!item.isNew,
-          isSchemes: !!item.isSchemes,
-          openInNewTab: !!item.openInNewTab
-        }));
-
-        setAnnouncements(list);
-        const orders = list
-          .map((a) => Number(a.displayOrder))
-          .filter((o) => !isNaN(o));
-
-        setUsedOrders(orders);
-      } catch (err) {
-        Swal.fire({
-          icon: "error",
-          title: isHindi ? "त्रुटि" : "Error",
-          text: err.response?.data?.message || "Failed to load announcements"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-
-
     fetchAnnouncements();
     fetchCategories();
   }, [API, token]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    sessionStorage.setItem("announcements_active_tab", tab);
+  };
 
   const getNextAvailableOrder = (requested, usedOrders) => {
     let order = requested;
@@ -152,36 +132,28 @@ const AnnouncementsManagement = () => {
       .filter(a => a.isSchemes === formData.isSchemes)
       .map(a => Number(a.displayOrder))
       .filter(Boolean);
-
     setUsedOrders(schemeOrders);
   }, [formData.isSchemes, announcements]);
 
-  /* ================= MODAL ================= */
-  const toggleModal = () => {
-    setModal(!modal);
-    if (modal) {
-      // Reset when closing modal
-      setEditingId(null);
-      setFormData(initialState);
-    }
-  };
-
-  /* ================= OPEN CREATE MODAL ================= */
-  const handleCreate = () => {
+  const handleAddNew = () => {
     setEditingId(null);
     setFormData(initialState);
-    setModal(true);
+    handleTabChange("form");
   };
 
-  /* ================= EDIT ================= */
+  const handleBackToList = () => {
+    handleTabChange("list");
+    setEditingId(null);
+    setFormData(initialState);
+    fetchAnnouncements();
+  };
+
   const handleEdit = (item) => {
     if (!item) return;
-    console.log(item, "getting this data");
     const itemId = item._id;
     if (!itemId) return;
 
     setEditingId(itemId);
-
     setFormData({
       titleEn: item.titleEn || "",
       titleHi: item.titleHi || "",
@@ -194,23 +166,13 @@ const AnnouncementsManagement = () => {
       image: null,
       fromDate: item.fromDate,
       expiryDate: item.expiryDate,
-      isExternal: !!item.isExternal,
-      openInNewTab: !!item.openInNewTab,
-      link: item.link || "",
-      displayOrder:
-        item.displayOrder !== undefined && item.displayOrder !== null
-          ? String(item.displayOrder)
-          : "",
-      isNew: !!item.isNew,
+      displayOrder: item.displayOrder !== undefined && item.displayOrder !== null ? String(item.displayOrder) : "",
       isSchemes: !!item.isSchemes,
       isActive: item.isActive !== false
     });
-
-    setModal(true);
+    handleTabChange("form");
   };
 
-
-  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
     const confirm = await Swal.fire({
       title: isHindi ? "क्या आप निश्चित हैं?" : "Are you sure?",
@@ -226,17 +188,17 @@ const AnnouncementsManagement = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API}/api/delete-announcement/${id}`, {
+      await axios.delete(`${API}/api/delete-announcement/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       Swal.fire({
         icon: "success",
         title: isHindi ? "हटाया गया!" : "Deleted!",
-        text: res.data?.message || "Announcement deleted successfully",
+        text: "Announcement deleted successfully",
         timer: 2000,
         showConfirmButton: false
       });
-      window.location.reload();
+      fetchAnnouncements();
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -246,51 +208,36 @@ const AnnouncementsManagement = () => {
     }
   };
 
-  /* ================= SUBMIT ================= */
+  // ── handleSubmit: guarded against double-fires + uses formData.descriptionEn/Hi ──
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    // Prevent duplicate/auto submissions firing back-to-back
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setSubmitting(true);
 
     const fd = new FormData();
 
-    // Add all fields except image (handle separately)
     Object.keys(formData).forEach((key) => {
       if (key === "image") return;
-
       const value = formData[key];
-
       if (value === null || value === undefined) return;
-
       if (typeof value === "boolean") {
         fd.append(key, value.toString());
       } else {
         fd.append(key, value);
       }
-
     });
 
-
-    // Only add image if a new file was selected
     if (formData.image && formData.image instanceof File) {
       fd.append('image', formData.image);
     }
 
-
-
-    // Debug logging
-    console.log("=== FORM SUBMISSION DEBUG ===");
-    console.log("Editing ID:", editingId);
-    console.log("Form Data Object:", formData);
-    console.log("FormData entries:");
-    for (let [key, value] of fd.entries()) {
-      console.log(`  ${key}:`, value, `(${typeof value})`);
-    }
-    console.log("============================");
-
     try {
       let res;
       if (editingId) {
-        console.log("🔄 Updating announcement with ID:", editingId);
         res = await axios.put(`${API}/api/update-announcement/${editingId}`, fd, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -305,7 +252,6 @@ const AnnouncementsManagement = () => {
           showConfirmButton: false
         });
       } else {
-        console.log("✨ Creating new announcement");
         res = await axios.post(`${API}/api/create-announcement`, fd, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -320,11 +266,10 @@ const AnnouncementsManagement = () => {
           showConfirmButton: false
         });
       }
-      toggleModal();
-      window.location.reload();
+
+      handleBackToList();
     } catch (err) {
-      console.error("❌ Submit error:", err.response?.data || err.message);
-      console.error("Full error:", err);
+      console.error("Submit error:", err.response?.data || err.message);
       Swal.fire({
         icon: "error",
         title: isHindi ? "त्रुटि" : "Error",
@@ -332,118 +277,213 @@ const AnnouncementsManagement = () => {
       });
     } finally {
       setSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardBody className="p-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="mb-0 d-flex align-items-center">
-            <FaBullhorn className="me-2 text-primary" />
-            {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
-          </h4>
-          <Button color="primary" onClick={handleCreate} className="d-flex align-items-center">
+    <Card className=" ">
+      <CardHeader className="d-flex justify-content-between align-items-center mb-4">
+        <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3" >
+          <FaBullhorn className="me-2 " />
+          {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
+        </h4>
+        {activeTab === "list" && (
+          <Button color="light" onClick={handleAddNew} className="d-flex align-items-center text-success">
             <FaPlus className="me-2" />
             {isHindi ? "नई घोषणा" : "Add Announcement"}
           </Button>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-5">
-            <Spinner color="primary" />
-            <p className="mt-3 text-muted">{isHindi ? "लोड हो रहा है..." : "Loading..."}</p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <Table hover className="align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th style={{ width: "50px" }}>#</th>
-                  <th>Title (EN)</th>
-                  <th>Category</th>
-                  <th>From Date</th>
-                  <th>Expiry Date</th>
-                  <th>Status</th>
-                  <th style={{ width: "120px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {announcements.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center text-muted py-4">
-                      {isHindi ? "कोई घोषणा नहीं मिली" : "No announcements found"}
-                    </td>
-                  </tr>
-                ) : (
-                  announcements.map((item, i) => (
-                    <tr key={item._id || item.id}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <div className="fw-semibold">{item.titleEn}</div>
-                        <small className="text-muted">{item.slug}</small>
-                      </td>
-                      <td>
-                        <Badge color="info" pill>
-                          {item.categoryId?.nameEn || "N/A"}
-                        </Badge>
-                      </td>
-                      <td>
-                        <small className="text-muted">
-                          <FaCalendar className="me-1" />
-                          {item.fromDate ? new Date(item.fromDate).toLocaleDateString() : "N/A"}
-                        </small>
-                      </td>
-                      <td>
-                        <small className="text-muted">
-                          <FaCalendar className="me-1" />
-                          {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A"}
-                        </small>
-                      </td>
-                      <td>
-                        <Badge color={item.isActive ? "success" : "secondary"}>
-                          {item.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </td>
-                      <td >
-                        <div className="d-flex align-items-center mb-2" style={{ gap: "2px" }}>
-                          <Button
-                            size="sm"
-                            color="info"
-                            className="me-2"
-                            onClick={() => handleEdit(item)}
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDelete(item._id || item.id)}
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </Button>
-                        </div>
-
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          </div>
         )}
+      </CardHeader>
+      <CardBody className="p-4">
 
-        {/* ================= MODAL ================= */}
-        <Modal isOpen={modal} toggle={toggleModal} size="xl">
-          <ModalHeader toggle={toggleModal} className="bg-light">
-            <FaBullhorn className="me-2" />
-            {editingId ? (isHindi ? "घोषणा संपादित करें" : "Edit Announcement") : (isHindi ? "नई घोषणा बनाएं" : "Create Announcement")}
-          </ModalHeader>
+        <Nav tabs className="mb-3">
+          <NavItem>
+            <NavLink
+              active={activeTab === "list"}
+              onClick={() => {
+                handleTabChange("list");
+                fetchAnnouncements();
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <FaList className="me-2" />
+              {isHindi ? "घोषणाओं की सूची" : "Announcements List"}
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink
+              active={activeTab === "form"}
+              onClick={() => {
+                if (!editingId) {
+                  setFormData(initialState);
+                }
+                handleTabChange("form");
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <FaBullhorn className="me-2" />
+              {editingId ? (isHindi ? "घोषणा संपादित करें" : "Edit Announcement") : (isHindi ? "नई घोषणा" : "New Announcement")}
+            </NavLink>
+          </NavItem>
+        </Nav>
 
-          <Form onSubmit={handleSubmit}>
-            <ModalBody className="p-4" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+        <TabContent activeTab={activeTab}>
+          {/* LIST TAB */}
+          <TabPane tabId="list">
+            {loading ? (
+              <div className="text-center py-5">
+                <Spinner color="primary" />
+                <p className="mt-3 text-muted">{isHindi ? "लोड हो रहा है..." : "Loading..."}</p>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <Table hover className="align-middle">
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th>Title (EN)</th>
+                      <th>Category</th>
+                      <th>From Date</th>
+                      <th>Expiry Date</th>
+                      <th>Status</th>
+                      <th style={{ width: "120px" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {announcements.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="text-center text-muted py-4">
+                          {isHindi ? "कोई घोषणा नहीं मिली" : "No announcements found"}
+                        </td>
+                      </tr>
+                    ) : (
+                      announcements.map((item, i) => (
+                        <tr key={item._id || item.id}>
+                          <td>{i + 1}</td>
+                          <td>
+                            <div className="fw-semibold">{item.titleEn}</div>
+                            <small className="text-muted">{item.slug}</small>
+                          </td>
+                          <td>
+                            <Badge color="info" pill>
+                              {item.categoryId?.nameEn || "N/A"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              <FaCalendar className="me-1" />
+                              {item.fromDate ? new Date(item.fromDate).toLocaleDateString() : "N/A"}
+                            </small>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              <FaCalendar className="me-1" />
+                              {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A"}
+                            </small>
+                          </td>
+                          <td>
+                            <Badge color={item.isActive ? "success" : "secondary"}>
+                              {item.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center" style={{ gap: "8px" }}>
+                              <Button
+                                size="sm"
+                                color="info"
+                                onClick={() => handleEdit(item)}
+                                title="Edit"
+                                type="button"
+                              >
+                                <FaEdit />
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="danger"
+                                onClick={() => handleDelete(item._id || item.id)}
+                                title="Delete"
+                                type="button"
+                              >
+                                <FaTrash />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </Table>
+              </div>
+            )}
+          </TabPane>
+
+          {/* FORM TAB */}
+          <TabPane tabId="form">
+
+            <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+              <Button
+                color="link"
+                onClick={handleBackToList}
+                className="p-0 text-decoration-none fw-semibold"
+                type="button"
+              >
+                <FaArrowLeft className="me-2" />
+                {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
+              </Button>
+
+              <div className="d-flex gap-2">
+                <Button
+                  color="light"
+                  className="border"
+                  onClick={handleBackToList}
+                  disabled={submitting}
+                  type="button"
+                >
+                  {isHindi ? "रद्द करें" : "Cancel"}
+                </Button>
+                <Button
+                  color="primary"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  type="button"
+                >
+                  {submitting ? (
+                    <>
+                      <Spinner size="sm" className="me-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {editingId ? "Update" : "Create"}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/*
+              IMPORTANT FIX:
+              Changed <Form> (a native <form> tag with no onSubmit handler)
+              to a plain <div>. Any internal button inside
+              DynamicContentEditor (e.g. an EN/HI language toggle) that
+              doesn't set type="button" was previously treated as a
+              type="submit" button. Inside a real <form> with no onSubmit
+              handler, clicking it triggered the browser's native form
+              submission -> full page reload, wiping all state.
+              Using a <div> here removes the native <form> element
+              entirely, so no nested button can ever trigger that
+              native submit/reload behavior. The actual save still
+              happens only via the explicit "Create"/"Update" button's
+              onClick={handleSubmit} above.
+            */}
+            <div onKeyDown={(e) => {
+              // Extra safety: pressing Enter anywhere in the form
+              // (e.g. inside an input or the editor) should never submit.
+              if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+                e.preventDefault();
+              }
+            }}>
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -481,16 +521,51 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
-
               <Row>
                 <Col md={6}>
+                  <FormGroup>
+                    <Label className="fw-semibold">
+                      Short Description (English) <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      type="textarea"
+                      required
+                      rows="3"
+                      value={formData.shortDescriptionEn}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shortDescriptionEn: e.target.value })
+                      }
+                      placeholder="Brief description in English"
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup>
+                    <Label className="fw-semibold">
+                      Short Description (Hindi) <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      type="textarea"
+                      required
+                      rows="3"
+                      value={formData.shortDescriptionHi}
+                      onChange={(e) =>
+                        setFormData({ ...formData, shortDescriptionHi: e.target.value })
+                      }
+                      placeholder="हिंदी में संक्षिप्त विवरण"
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">Slug (Auto-generated)</Label>
                     <Input name="slug" value={formData.slug} disabled className="bg-light" />
                   </FormGroup>
                 </Col>
 
-                <Col md={6}>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
                       Category <span className="text-danger">*</span>
@@ -510,100 +585,7 @@ const AnnouncementsManagement = () => {
                     </Input>
                   </FormGroup>
                 </Col>
-                {/* <Card title="Page Main Content Area">
-                  <DynamicContentEditor contents={editorContents} setContents={setEditorContents} engField="descriptionEn" hinField="descriptionHi" />
-                </Card> */}
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      Short Description (English) <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="textarea"
-                      required
-                      rows="3"
-                      value={formData.shortDescriptionEn}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionEn: e.target.value })
-                      }
-                      placeholder="Brief description in English"
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      Short Description (Hindi) <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="textarea"
-                      required
-                      rows="3"
-                      value={formData.shortDescriptionHi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionHi: e.target.value })
-                      }
-                      placeholder="हिंदी में संक्षिप्त विवरण"
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-
-              <FormGroup className="mb-3">
-                <Label className="fw-semibold">
-                  Description (English) <span className="text-danger">*</span>
-                </Label>
-                <div style={{ height: "200px" }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.descriptionEn}
-                    onChange={(value) => setFormData({ ...formData, descriptionEn: value })}
-                    modules={quillModules}
-                    placeholder="Write detailed description in English..."
-                    style={{ height: "150px" }}
-                  />
-                </div>
-              </FormGroup>
-
-              <FormGroup className="mb-3">
-                <Label className="fw-semibold">
-                  Description (Hindi) <span className="text-danger">*</span>
-                </Label>
-                <div style={{ height: "200px" }}>
-                  <ReactQuill
-                    theme="snow"
-                    value={formData.descriptionHi}
-                    name="descriptionHi"
-                    onChange={(value) => setFormData({ ...formData, descriptionHi: value })}
-                    modules={quillModules}
-                    placeholder="हिंदी में विस्तृत विवरण लिखें..."
-                    style={{ height: "150px" }}
-                  />
-                </div>
-              </FormGroup>
-
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label className="fw-semibold">
-                      <FaLink className="me-2" />
-                      Link <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="url"
-                      required
-                      placeholder="https://example.com"
-                      value={formData.link}
-                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                    />
-                  </FormGroup>
-                </Col>
-
-                <Col md={6}>
+                <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
                       <FaImage className="me-2" />
@@ -619,7 +601,37 @@ const AnnouncementsManagement = () => {
                 </Col>
               </Row>
 
+
+
               <Row>
+
+                <Col md={4}>
+                  <FormGroup>
+                    <Label className="fw-semibold">Display Order</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.displayOrder}
+                      name="displayOrder"
+                      placeholder="Auto"
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (!val) {
+                          setFormData({ ...formData, displayOrder: "" });
+                          return;
+                        }
+                        const nextOrder = getNextAvailableOrder(val, usedOrders);
+                        setFormData({
+                          ...formData,
+                          displayOrder: String(nextOrder)
+                        });
+                      }}
+                    />
+                    <small className="text-muted">
+                      If entered order exists, next available order is auto-selected
+                    </small>
+                  </FormGroup>
+                </Col>
                 <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
@@ -634,7 +646,6 @@ const AnnouncementsManagement = () => {
                     />
                   </FormGroup>
                 </Col>
-
                 <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">
@@ -650,45 +661,10 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
 
-                <Col md={4}>
-                  <FormGroup>
-                    <Label className="fw-semibold">Display Order</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.displayOrder}
-                      name="displayOrder"
-                      placeholder="Auto"
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
 
-                        if (!val) {
-                          setFormData({ ...formData, displayOrder: "" });
-                          return;
-                        }
-
-                        const nextOrder = getNextAvailableOrder(val, usedOrders);
-
-                        setFormData({
-                          ...formData,
-                          displayOrder: String(nextOrder)
-                        });
-                      }}
-                    />
-
-                    <small className="text-muted">
-                      If entered order exists, next available order is auto-selected
-                    </small>
-
-                    {/* <small className="text-muted">Lower numbers appear first</small> */}
-                  </FormGroup>
-                </Col>
               </Row>
-
               <hr className="my-4" />
-              <h6 className="mb-3 text-primary">
-                <i className="bi bi-gear me-2"></i>Options
-              </h6>
+              <h6 className="mb-3 text-primary">Options</h6>
 
               <Row>
                 <Col md={4}>
@@ -703,33 +679,9 @@ const AnnouncementsManagement = () => {
                       Is Active
                     </Label>
                   </FormGroup>
-
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="isNew"
-                      checked={formData.isNew}
-                      onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
-                    />
-                    <Label check for="isNew" className="fw-semibold">
-                      Mark as New
-                    </Label>
-                  </FormGroup>
                 </Col>
 
                 <Col md={4}>
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="isExternal"
-                      checked={formData.isExternal}
-                      onChange={(e) => setFormData({ ...formData, isExternal: e.target.checked })}
-                    />
-                    <Label check for="isExternal" className="fw-semibold">
-                      Is External Link
-                    </Label>
-                  </FormGroup>
-
                   <FormGroup check className="mb-3">
                     <Input
                       type="checkbox"
@@ -743,43 +695,38 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
 
-                <Col md={4}>
-                  <FormGroup check className="mb-3">
-                    <Input
-                      type="checkbox"
-                      id="openInNewTab"
-                      checked={formData.openInNewTab}
-                      onChange={(e) =>
-                        setFormData({ ...formData, openInNewTab: e.target.checked })
-                      }
-                    />
-                    <Label check for="openInNewTab" className="fw-semibold">
-                      Open in New Tab
+
+              </Row>
+              {/* DynamicContentEditor */}
+              <Row>
+                <Col md={12}>
+                  <FormGroup className="mb-3">
+                    <Label className="fw-semibold mb-2">
+                      Description (English & Hindi) <span className="text-danger">*</span>
                     </Label>
+                    <DynamicContentEditor
+                      engField="descriptionEn"
+                      hinField="descriptionHi"
+                      height={360}
+                      initialEn={formData.descriptionEn}
+                      initialHi={formData.descriptionHi}
+                      onChange={(contentObj) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          descriptionEn: contentObj.descriptionEn,
+                          descriptionHi: contentObj.descriptionHi,
+                        }));
+                      }}
+                      instanceId="content_editor"
+                    />
                   </FormGroup>
                 </Col>
               </Row>
-            </ModalBody>
 
-            <ModalFooter className="bg-light">
-              <Button color="secondary" onClick={toggleModal} disabled={submitting}>
-                {isHindi ? "रद्द करें" : "Cancel"}
-              </Button>
-              <Button color="primary" type="submit" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Spinner size="sm" className="me-2" />
-                    {isHindi ? "प्रोसेसिंग..." : "Processing..."}
-                  </>
-                ) : (
-                  <>
-                    {editingId ? (isHindi ? "अपडेट करें" : "Update") : (isHindi ? "बनाएं" : "Create")}
-                  </>
-                )}
-              </Button>
-            </ModalFooter>
-          </Form>
-        </Modal>
+
+            </div>
+          </TabPane>
+        </TabContent>
       </CardBody>
     </Card>
   );

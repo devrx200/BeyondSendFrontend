@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Card, CardBody, Button, Table, Modal, ModalHeader, ModalBody, ModalFooter,
-  Form, FormGroup, Label, Input, Row, Col, Container, Badge, Spinner
+  Form, FormGroup, Label, Input, Row, Col, Container, Badge, Spinner,CardHeader
 } from 'reactstrap';
 import { FaImages, FaPlus, FaEdit, FaTrash, FaDownload } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -206,32 +206,30 @@ const SliderManagement = () => {
 
   return (
     <Container className="py-3">
-
+      <CardHeader>
+        {/* Header */}
+        <Row className="align-items-center mb-3">
+          <Col>
+            <h5 className="fw-bold mb-1 text-white">
+              <FaImages className="me-2 text-primary" />
+              {isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}
+            </h5>
+            <p className="text-white small mb-0">
+              {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
+            </p>
+          </Col>
+          <Col xs="auto">
+            <Button color="success" size="sm" onClick={toggleModal}>
+              <FaPlus className="me-1" />
+              {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
+            </Button>
+          </Col>
+        </Row>
+      </CardHeader>
       {/* ── Active Slides Card ── */}
       <Card className="border-0 shadow-sm mb-4">
         <CardBody className="p-4">
-
-          {/* Header */}
-          <Row className="align-items-center mb-3">
-            <Col>
-              <h5 className="fw-bold mb-1">
-                <FaImages className="me-2 text-primary" />
-                {isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}
-              </h5>
-              <p className="text-muted small mb-0">
-                {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
-              </p>
-            </Col>
-            <Col xs="auto">
-              <Button color="primary" size="sm" onClick={toggleModal}>
-                <FaPlus className="me-1" />
-                {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
-              </Button>
-            </Col>
-          </Row>
-
           <hr className="mb-3" />
-
           {/* Active Table */}
           {loading ? (
             <div className="text-center py-4"><Spinner color="primary" /></div>

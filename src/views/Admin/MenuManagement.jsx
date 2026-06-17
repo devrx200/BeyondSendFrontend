@@ -13,12 +13,12 @@ import {
   FormGroup,
   Label,
   Input,
-  Badge, Row, Col
+  Badge, Row, Col, CardHeader
 } from "reactstrap";
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from "../../contexts/LanguageContext";
 import Swal from "sweetalert2";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -524,14 +524,16 @@ const MenuManagement = () => {
 
   /* ================= UI ================= */
   return (
-    <Card className="shadow">
-      <CardBody>
-        <div className="d-flex justify-content-between mb-3">
-          <h4>Menu Management</h4>
-          <Button color="primary" onClick={toggleModal}>
-            Add Menu
+    <Card className="shadow-sm">
+      <CardHeader>
+        <div className="d-flex justify-content-between">
+          <h4 className="text-white">Menu Management</h4>
+          <Button color="light" className="text-success" onClick={toggleModal}>
+            <FaPlus className="me-2 " /> Add Menu
           </Button>
         </div>
+      </CardHeader>
+      <CardBody>
 
         <Table bordered hover responsive>
           <thead>
@@ -557,7 +559,7 @@ const MenuManagement = () => {
         </Table>
 
         {/* MODAL */}
-        <Modal isOpen={modal} toggle={toggleModal} size="lg">
+        <Modal isOpen={modal} toggle={toggleModal} size="lg"  backdrop="static">
           <ModalHeader toggle={toggleModal}>
             {editing ? "Edit Menu" : "Add Menu"}
           </ModalHeader>

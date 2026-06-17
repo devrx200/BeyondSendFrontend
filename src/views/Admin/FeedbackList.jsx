@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Container, Table, Button, Modal, ModalHeader, ModalBody } from "reactstrap";
+import { Container, Table, Button, Modal, ModalHeader, ModalBody, CardHeader } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
 const AdminFeedbackList = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,7 +107,10 @@ const AdminFeedbackList = () => {
 
   return (
     <Container className="py-4">
-      <h4 className="mb-4">All Users Feedback List</h4>
+      <CardHeader className="shadow rounded">
+      <h4 className="mb-4 text-white">All Users Feedback List</h4>
+
+      </CardHeader>
 
       <Table bordered hover responsive>
         <thead className="table-light">
