@@ -1,17 +1,38 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
   Container,
+  Row,
+  Col,
+  Breadcrumb,
+  BreadcrumbItem,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
   Badge,
-  Spinner
+  Button,
+  Spinner,
 } from "reactstrap";
 import axios from "axios";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { FaCalendarAlt } from "react-icons/fa";
+import {
+  FaHome,
+  FaNewspaper,
+  FaCalendarAlt,
+  FaCalendarPlus,
+  FaTag,
+  FaChevronLeft,
+} from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = "Department of Higher Education, Government of Chhattisgarh India.";
+
+const formatDateTime = (date) => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString();
+};
 
 const AnnouncementDetails = () => {
   const { slug } = useParams();
@@ -20,6 +41,9 @@ const AnnouncementDetails = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const listRoute = "/announcements";
+  const listTitle = isHindi ? "घोषणाएं" : "Announcements";
 
   useEffect(() => {
     fetchDetails();
@@ -73,9 +97,13 @@ const AnnouncementDetails = () => {
           <title>{isHindi ? "घोषणा नहीं मिली" : "Announcement Not Found"} - {SITE_TITLE_SUFFIX}</title>
           <meta name="description" content={isHindi ? "अनुरोधित घोषणा उपलब्ध नहीं है" : "The requested announcement is not available"} />
         </Helmet>
-        <div className="text-center py-5 text-danger">
-          {isHindi ? "घोषणा उपलब्ध नहीं है" : "Announcement not found"}
-        </div>
+        <Container className="py-5 px-2">
+          <Row className="justify-content-center">
+            <Col xs={12} md={8} lg={6} className="text-center text-danger">
+              {isHindi ? "घोषणा उपलब्ध नहीं है" : "Announcement not found"}
+            </Col>
+          </Row>
+        </Container>
       </>
     );
   }
@@ -83,6 +111,7 @@ const AnnouncementDetails = () => {
   const pageTitle = `${isHindi ? data.titleHi : data.titleEn} - ${SITE_TITLE_SUFFIX}`;
   const descriptionHtml = isHindi ? data.descriptionHi : data.descriptionEn;
   const metaDescription = getMetaDescription(descriptionHtml, isHindi ? data.shortDescriptionHi : data.shortDescriptionEn);
+  const detailTitle = isHindi ? data.titleHi : data.titleEn;
 
   return (
     <>
@@ -95,47 +124,120 @@ const AnnouncementDetails = () => {
         <meta property="og:type" content="article" />
       </Helmet>
 
-      <Container className="py-4 bg-white rounded my-3 border border-3 border-white shadow">
-        <div className="mb-2">
-          <Badge color="primary">
-            {isHindi ? data.categoryId?.nameHi : data.categoryId?.nameEn}
-          </Badge>
-          {data.isNew && (
-            <Badge color="danger" className="ms-2" pill>
-              NEW
-            </Badge>
-          )}
-        </div>
+      <Container className="py-4">
+        {/* Breadcrumb */}
+        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
+          <BreadcrumbItem>
+            <Link
+              to="/"
+              className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
+            >
+              <FaHome size={13} />
+              {isHindi ? "होम" : "Home"}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            <Link
+              to={listRoute}
+              className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
+            >
+              <FaNewspaper size={13} />
+              {listTitle}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbItem
+            active
+            className="fw-semibold text-secondary text-truncate"
+            style={{ maxWidth: "100%" }}
+          >
+            {detailTitle}
+          </BreadcrumbItem>
+        </Breadcrumb>
 
-        <h3 className="fw-bold mb-2">
-          {isHindi ? data.titleHi : data.titleEn}
-        </h3>
-        <hr />
-        <div className="text-muted small fw-bold mb-3 d-flex flex-wrap justify-content-between gap-2">
-          <i><FaCalendarAlt className="me-1" /> Created At {new Date(data.createdAt).toLocaleDateString()}</i>
-          <i> <FaCalendarAlt className="me-1" /> Updated At {new Date(data.updatedAt).toLocaleDateString()}</i>
-        </div>
-        <hr />
+        {/* Detail Card */}
+        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+          {/* ── Gradient Header ── */}
+          <CardHeader
+            className="text-white border-0 p-4"
+            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
+          >
+            <div className="d-flex align-items-center gap-2 mb-2">
+              {data.isNew && (
+                <Badge color="danger" pill>
+                  NEW
+                </Badge>
+              )}
+            </div>
 
-        <p className="lead text-muted mb-4">
-          {isHindi ? data.shortDescriptionHi : data.shortDescriptionEn}
-        </p>
+            <h4 className="fw-bold mb-3 lh-base text-white">
+              {detailTitle}
+            </h4>
+            <hr className="border-white opacity-25 my-3" />
+            <Row className="g-2 align-items-center">
+              <Col xs="auto">
+                <Badge color="light" className="text-dark d-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
+                  <FaCalendarAlt size={11} className="text-primary" />
+                  {isHindi ? "प्रकाशन तिथि" : "Created At"} : {formatDateTime(data.createdAt)}
+                </Badge>
+              </Col>
+              <Col xs="auto">
+                <Badge
+                  color="light"
+                  className="text-dark d-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill"
+                >
+                  <FaCalendarPlus size={11} className="text-success" />
+                  {isHindi ? "अपडेट किया गया" : "Updated At"} : {formatDateTime(data.updatedAt)}
+                </Badge>
+              </Col>
+              {data.categoryId && (
+                <Col xs="auto">
+                  <Badge
+                    color="warning"
+                    className="text-dark d-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill"
+                  >
+                    <FaTag size={11} />
+                    {isHindi
+                      ? data.categoryId?.nameHi
+                      : data.categoryId?.nameEn}
+                  </Badge>
+                </Col>
+              )}
+              <Col xs={12} md className="d-flex justify-content-start justify-content-md-end">
+                <Button tag={Link} to={listRoute} size="sm" outline className="d-flex align-items-center gap-1 fw-semibold text-white bg-dark py-1">
+                  <FaChevronLeft size={11} />
+                  {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
+                </Button>
+              </Col>
+            </Row>
+          </CardHeader>
 
-        {data.image && (
-          <img
-            src={`${API_URL}${data.image}`}
-            alt={data.titleEn}
-            className="img-fluid rounded shadow-sm mb-4"
-            style={{ maxHeight: "420px", objectFit: "cover" }}
-          />
-        )}
+          {/* ── Announcement Body ── */}
+          <CardBody className="p-4">
+            {(data.shortDescriptionEn || data.shortDescriptionHi) && (
+              <p className="lead text-muted mb-4 fs-6 fs-md-5">
+                {isHindi ? data.shortDescriptionHi : data.shortDescriptionEn}
+              </p>
+            )}
 
-        <div
-          className="announcement-content"
-          dangerouslySetInnerHTML={{
-            __html: descriptionHtml
-          }}
-        />
+            {data.image && (
+              <img
+                src={`${API_URL}${data.image}`}
+                alt={data.titleEn}
+                className="img-fluid rounded shadow-sm mb-4 w-100"
+                style={{ maxHeight: "420px", objectFit: "cover" }}
+              />
+            )}
+
+            <div
+              className="lh-lg text-secondary announcement-content"
+              dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+            />
+          </CardBody>
+
+          <CardFooter className="bg-light fw-bold border-top px-4 py-3 text-center">
+            {isHindi ? "पढ़ने के लिए धन्यवाद !.." : "Thanks For Reading !.."}
+          </CardFooter>
+        </Card>
       </Container>
     </>
   );

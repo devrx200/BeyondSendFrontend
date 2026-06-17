@@ -23,8 +23,6 @@ const SlugResolver = ({ preview = false }) => {
 
   const [status, setStatus] = useState("loading");
   const [pageData, setPageData] = useState(null);
-  
-  // 1. Add a state to store the error details from the backend
   const [errorDetails, setErrorDetails] = useState("");
 
   useEffect(() => {

@@ -75,7 +75,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
       name: isHindi ? "उच्च शिक्षा विभाग, छत्तीसगढ़" : "Higher Education Department, Chhattisgarh",
       logo: {
         "@type": "ImageObject",
-        url: `${baseUrl}/logo.png`,
+        url: `${baseUrl}/Chhattisgarh.svg`,
       },
     },
     mainEntityOfPage: {
