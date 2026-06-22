@@ -56,7 +56,17 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
         <Helmet>
           <html lang={isHindi ? "hi" : "en"} />
           <title>{`${listTitle} - ${SITE_TITLE_SUFFIX}`}</title>
-          <meta name="description" content={`${listTitle} list`} />
+          <meta name="description" content={`${listTitle} list and announcements from ${SITE_TITLE_SUFFIX}`} />
+          <meta name="keywords" content={`${listTitle}, announcements, official, ${SITE_TITLE_SUFFIX}`} />
+          <meta name="robots" content="index, follow" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="canonical" href={`${window.location.origin}/${baseSlug}/${mainSlug}`} />
+          <meta property="og:title" content={`${listTitle} - ${SITE_TITLE_SUFFIX}`} />
+          <meta property="og:description" content={`${listTitle} list and announcements from ${SITE_TITLE_SUFFIX}`} />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content={`${window.location.origin}/${baseSlug}/${mainSlug}`} />
+          <meta property="og:site_name" content={SITE_TITLE_SUFFIX} />
+          <meta name="author" content={SITE_TITLE_SUFFIX} />
         </Helmet>
         <Container className="py-4 my-4">
           <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center">
@@ -100,7 +110,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
                         <div className="me-3 rounded-pill flex-shrink-0" style={{ width: 6, alignSelf: "stretch", background: "linear-gradient(180deg, #0d6efd, #6610f2)" }} />
                         <div className="flex-grow-1">
                           <h6 className="fw-bold mb-2 text-dark">
-                            {isHindi ? item.titleHin || item.titleEng : item.titleEng}
+                            {isHindi ? item.titleHi || item.titleEn : item.titleEn}
                           </h6>
                           <div className="small text-muted mb-3">
                             {isHindi ? (item.shortDescriptionHi || item.shortDescriptionEn) : item.shortDescriptionEn}
@@ -163,7 +173,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
   const page = prefetchedData;
   if (!page) return null;
 
-  const title = isHindi ? (page.titleHin || page.titleEng) : page.titleEng;
+  const title = isHindi ? (page.titleHi || page.titleEn) : page.titleEn;
   const htmlContent = isHindi
     ? (page.htmlContentHi || page.descriptionHi || page.descriptionEn)
     : (page.htmlContent || page.descriptionEn);
@@ -196,6 +206,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
 
   const pageTitle = `${title} - ${SITE_TITLE_SUFFIX}`;
   const metaDescription = (isHindi ? page.shortDescriptionHi : page.shortDescriptionEn) || "";
+  const canonicalUrl = `${window.location.origin}/${page.baseSlug}/${page.mainSlug}/${page.slug}`;
 
   return (
     <>
@@ -203,9 +214,16 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
         <html lang={isHindi ? "hi" : "en"} />
         <title>{pageTitle}</title>
         {metaDescription && <meta name="description" content={metaDescription} />}
+        <meta name="keywords" content={`${title}, ${page.mainSlug?.replace(/-/g, ' ')}, official announcement`} />
+        <meta name="robots" content="index, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href={canonicalUrl} />
         <meta property="og:title" content={pageTitle} />
         {metaDescription && <meta property="og:description" content={metaDescription} />}
         <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content={SITE_TITLE_SUFFIX} />
+        <meta name="author" content={SITE_TITLE_SUFFIX} />
       </Helmet>
 
       <Container className="py-4">
@@ -227,7 +245,10 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
 
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           <CardHeader className="text-white border-0 p-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}>
-            <h4 className="fw-bold mb-3 text-white">{title}</h4>
+            <h1 className="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+              <FaNewspaper size={28} />
+              {title}
+            </h1>
             <hr className="border-white opacity-25 my-3" />
             <Row className="g-2 align-items-center">
               {page.categoryId && (
@@ -288,7 +309,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
                             <div className="d-flex align-items-center gap-2 flex-wrap">
                               <a href={`${API}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="fw-bold text-decoration-none">
                                 {getFileIcon(doc.fileType)}
-                                {isHindi ? doc.titleHin || doc.titleEng : doc.titleEng}
+                                {isHindi ? doc.titleHi || doc.titleEn : doc.titleEn}
                               </a>
                               <strong className="text-danger small fw-bold">
                                 {isHindi ? "फाइल विवरण" : "File Details"}:

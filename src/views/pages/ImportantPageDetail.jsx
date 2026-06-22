@@ -29,6 +29,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { FaTicketSimple } from "react-icons/fa6";
 
 const API = import.meta.env.VITE_API_URL;
+const SITE_TITLE_SUFFIX = "Department of Higher Education, Government of Chhattisgarh India.";
 
 const ImportantPageDetail = ({ prefetchedData = null }) => {
   const { slug } = useParams();
@@ -198,16 +199,24 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
   // Normal view with SEO
   const pageTitle = (isHindi ? detail.titleHi : detail.titleEn) || "";
   const metaDescription = getMetaDescription();
+  const canonicalUrl = `${window.location.origin}/important-page/${slug}`;
 
   return (
     <>
       <Helmet>
         <html lang={isHindi ? "hi" : "en"} />
-        <title>{`${pageTitle} - Department of Higher Education, Government of Chhattisgarh India.`}</title>
+        <title>{`${pageTitle} - ${SITE_TITLE_SUFFIX}`}</title>
         {metaDescription && <meta name="description" content={metaDescription} />}
-        <meta property="og:title" content={pageTitle} />
+        <meta name="keywords" content={`${isHindi ? detail.titleHi : detail.titleEn}, important page, official announcement`} />
+        <meta name="robots" content="index, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={`${pageTitle} - ${SITE_TITLE_SUFFIX}`} />
         {metaDescription && <meta property="og:description" content={metaDescription} />}
         <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:site_name" content={SITE_TITLE_SUFFIX} />
+        <meta name="author" content={SITE_TITLE_SUFFIX} />
       </Helmet>
 
       <Container className="py-4">
@@ -218,9 +227,9 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
               {isHindi ? "होम" : "Home"}
             </Link>
           </BreadcrumbItem>
-          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
-            <FaList size={13} />
-            {pageTitle}
+          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary text-truncate" style={{ maxWidth: "100%" }}>
+            <FaList size={13} className="flex-shrink-0" />
+            <span className="text-truncate">{isHindi ? detail.titleHi : detail.titleEn}</span>
           </BreadcrumbItem>
         </Breadcrumb>
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
@@ -228,7 +237,10 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
             className="text-white border-0 p-4"
             style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
           >
-            <h1 className="fw-bold mb-3 text-white">{pageTitle}</h1>
+            <h1 className="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+              <FaTicketSimple size={24} />
+              {isHindi ? detail.titleHi : detail.titleEn}
+            </h1>
             <hr />
             <Row className="g-2 align-items-center">
               <Col xs="auto">

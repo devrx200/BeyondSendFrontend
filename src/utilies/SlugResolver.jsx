@@ -22,6 +22,7 @@ const SlugResolver = ({ preview = false }) => {
 
   const [status, setStatus] = useState("loading");
   const [pageData, setPageData] = useState(null);
+  const [pageTitle, setPageTitle] = useState("");
   const [errorDetails, setErrorDetails] = useState("");
 
   const fetchData = useCallback(async (page = 1, limit = 10) => {
@@ -37,6 +38,13 @@ const SlugResolver = ({ preview = false }) => {
       if (data?.success) {
         setPageData(data.data);
         setStatus(data.type);
+        // Extract title for SEO
+        if (data.data) {
+          const title = isHindi 
+            ? (data.data.titleHi || data.data.titleEn) 
+            : (data.data.titleEn || data.data.titleHi);
+          setPageTitle(title || "");
+        }
       } else {
         setStatus("404");
         if (data?.details) setErrorDetails(data.details);
@@ -47,7 +55,7 @@ const SlugResolver = ({ preview = false }) => {
         setErrorDetails(error.response.data.details);
       }
     }
-  }, [slugForApi, isPreview]);
+  }, [slugForApi, isPreview, isHindi]);
 
   useEffect(() => {
     if (!slugForApi) {
