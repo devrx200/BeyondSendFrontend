@@ -14,7 +14,10 @@ import {
   Badge,
 } from "reactstrap";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { FaHome, FaNewspaper } from "react-icons/fa";
+import { FaHome, FaNewspaper, FaFileAlt } from "react-icons/fa";
+
+const API = import.meta.env.VITE_API_URL;
+const SITE_TITLE_SUFFIX = "Department of Higher Education, Government of Chhattisgarh India.";
 
 const RichContentPages = ({ prefetchedData, preview = false }) => {
   const { isHindi } = useLanguage();
@@ -40,7 +43,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
     tempDiv.innerHTML = html;
     return tempDiv.textContent?.trim() || "";
   };
-  const title = isHindi ? prefetchedData.titleHi : prefetchedData.titleEn;
+  const title = (isHindi ? prefetchedData.titleHi : prefetchedData.titleEn) || "";
   const shortDesc = isHindi ? prefetchedData.shortDescriptionHi : prefetchedData.shortDescriptionEn;
   const descriptionHtml = isHindi ? prefetchedData.descriptionHi : prefetchedData.descriptionEn;
   const publishDate = formatDateTime(prefetchedData.publishDate);
@@ -89,21 +92,24 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
     <>
       {/* ---------- SEO Meta Tags (invisible to UI) ---------- */}
       <Helmet>
-        <title>{title} - Department of Higher Education, Government of Chhattisgarh India.</title>
+        <html lang={isHindi ? "hi" : "en"} />
+        <title>{`${title} - ${SITE_TITLE_SUFFIX}`}</title>
         <meta name="description" content={metaDescription} />
         {keywordsString && <meta name="keywords" content={keywordsString} />}
         {preview && <meta name="robots" content="noindex, nofollow" />}
-
+        <meta name="robots" content="index, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="canonical" href={canonicalUrl} />
 
         {/* Open Graph */}
-        <meta property="og:title" content={title} />
+        <meta property="og:title" content={`${title} - ${SITE_TITLE_SUFFIX}`} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:site_name" content="Higher Education Department, Chhattisgarh" />
+        <meta property="og:site_name" content={SITE_TITLE_SUFFIX} />
         <meta property="article:published_time" content={prefetchedData.publishDate} />
         <meta property="article:modified_time" content={prefetchedData.updatedAt} />
+        <meta name="author" content={SITE_TITLE_SUFFIX} />
         {prefetchedData.tags?.map((tag, idx) => (
           <meta property="article:tag" content={tag} key={idx} />
         ))}
@@ -113,7 +119,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={metaDescription} />
 
-        {/* Language alternatives (optional but good for multilingual) */}
+        {/* Language alternatives */}
         <link rel="alternate" href={`${baseUrl}/${prefetchedData.slug}`} hrefLang="en" />
         <link rel="alternate" href={`${baseUrl}/${prefetchedData.slug}`} hrefLang="hi" />
         <link rel="alternate" href={`${baseUrl}/${prefetchedData.slug}`} hrefLang="x-default" />
@@ -204,9 +210,9 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
                 {isHindi ? "होम" : "Home"}
               </Link>
             </BreadcrumbItem>
-            <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary">
-              <FaNewspaper size={13} />
-              {title}
+            <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary text-truncate" style={{ maxWidth: "100%" }}>
+              <FaFileAlt size={13} className="flex-shrink-0" />
+              <span className="text-truncate">{title}</span>
             </BreadcrumbItem>
           </Breadcrumb>
 
@@ -215,7 +221,10 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
               className="text-white border-0 p-4"
               style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)" }}
             >
-              <h4 className="fw-bold mb-3 text-white">{title}</h4>
+              <h1 className="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+                <FaFileAlt size={28} />
+                {title}
+              </h1>
               <hr className="border-white opacity-25 my-3" />
               <Row className="g-2 align-items-center">
                 <Col xs="auto">

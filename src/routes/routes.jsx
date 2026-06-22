@@ -110,7 +110,9 @@ const AppRoutes = () => {
       {/* ── Public Routes ─────────────────────────────────────────────────── */}
       <Route path="/" element={<MainLayout><Home /></MainLayout>} />
       <Route path="/about" element={<MainLayout><About /></MainLayout>} />
+      <Route path="/about-us" element={<MainLayout><About /></MainLayout>} />
       <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+      <Route path="/contact-us" element={<MainLayout><Contact /></MainLayout>} />
       <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
       <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
       <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
@@ -128,17 +130,8 @@ const AppRoutes = () => {
       <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
       <Route path="/department-notice/:slug" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
 
-
-
-      {/* Multi-Section Pages (/:mainslug/:slug) */}
-      {staticPages.filter((p) => !p.isExternal).map((p) => (
-        <Route key={p._id} path={`${p.path}/:slug?`} element={<MainLayout><MultiSectionPages /></MainLayout>} />
-      ))}
-
-      {/* Important + Rich Content Pages – supports any nested path */}
+      {/* Important + Rich Content Pages +  Multi-Section Pages  – supports any nested path */}
       <Route path="*" element={<MainLayout> <SlugResolver key={location.pathname} /></MainLayout>} />
-
-
 
       {/* ── Admin: Login (Public) ──────────────────────────────────────────── */}
       <Route element={<PublicAdminRoute />}>

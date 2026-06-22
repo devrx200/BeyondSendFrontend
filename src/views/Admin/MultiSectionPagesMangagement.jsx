@@ -1,61 +1,171 @@
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardBody,
-  Button,
-  Table,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Form,
-  FormGroup,
-  Label,
-  Input,
-  Row,
-  Col,
-  Spinner,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
-  CardHeader
-} from "reactstrap";
-import {
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaSave,
-  FaTimes,
-  FaFilePdf,
-  FaSearch,
-  FaFileWord,
-  FaFileExcel,
-  FaEye
-} from "react-icons/fa";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-import Swal from "sweetalert2";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
-import { Navigate } from "react-router-dom";
-import { useLanguage } from "../../contexts/LanguageContext";
+import { Spinner } from "reactstrap";
+import Swal from "sweetalert2";
+import {
+  FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
+  FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand, FaCompress, FaTimes,
+  FaPlus, FaFilePdf, FaFileWord, FaFileExcel
+} from "react-icons/fa";
+import DynamicContentEditor from "../../utilies/DynamicContentEditor";
 
+const API = import.meta.env.VITE_API_URL;
+const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
+const getToken = () => sessionStorage.getItem("authToken");
+const authH = () => ({ Authorization: `Bearer ${getToken()}` });
 
+// --- WordPress styles (same as RichContentPage) ---
+const WP = {
+  bg: "#f0f0f1", white: "#fff", text: "#1d2327", textMid: "#50575e",
+  textLight: "#787c82", border: "#c3c4c7", line: "#dcdcde",
+  blue: "#2271b1", blueHov: "#135e96", blueBg: "#f0f6fc",
+  green: "#00a32a", greenDark: "#007017", greenBg: "#edfaef",
+  red: "#d63638", redDark: "#b32d2e", redBg: "#fcf0f1",
+  orange: "#dba617", orangeBg: "#fcf9e8", amber: "#996800",
+  black: "#1d2327", blackHov: "#2c3338", focus: "#2271b1", menuBg: "#1d2327",
+};
 
-/* ================= INITIAL FORM STATE ================= */
-const initialFormData = {
+const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
+
+// --- Utilities ---
+const titleToSlug = (text) => {
+  if (!text) return "";
+  return text.toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+const validateSlug = (value) => {
+  if (!value) return "Slug is required";
+  if (/[^a-z0-9-]/.test(value)) return "Only lowercase letters, numbers, and hyphens allowed";
+  if (value.startsWith("-") || value.endsWith("-")) return "Slug cannot start or end with a hyphen";
+  return "";
+};
+
+// Builds the real, full public URL path for a page: baseSlug/mainSlug/slug
+// Empty/undefined segments are skipped and extra slashes are cleaned up.
+const buildFullPath = ({ baseSlug, mainSlug, slug }) => {
+  const segments = [baseSlug, mainSlug, slug]
+    .map((s) => (s || "").toString().trim().replace(/^\/+|\/+$/g, ""))
+    .filter(Boolean);
+  return segments.join("/");
+};
+
+const buildFullUrl = (item) => `${SITE_URL}/${buildFullPath(item)}`;
+
+// --- Reusable styled components (same as RichContentPage) ---
+const btnBase = { display: "inline-flex", alignItems: "center", gap: 4, border: "1px solid transparent", borderRadius: 3, fontSize: 13, fontWeight: 400, lineHeight: "2.15384615", padding: "0 10px", cursor: "pointer", fontFamily: FF, textDecoration: "none", whiteSpace: "nowrap" };
+const smPad = { fontSize: 11, padding: "0 8px", lineHeight: "1.9" };
+
+const BtnBlue = ({ children, onClick, disabled, size }) => { const [hov, setHov] = useState(false); return <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.blueHov : WP.blue, borderColor: hov ? WP.blueHov : WP.blue, color: "#fff", opacity: disabled ? .6 : 1, cursor: disabled ? "not-allowed" : "pointer" }}>{children}</button>; };
+const BtnGreen = ({ children, onClick, disabled, size }) => { const [hov, setHov] = useState(false); return <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.greenDark : WP.green, borderColor: hov ? WP.greenDark : WP.green, color: "#fff", opacity: disabled ? .6 : 1, cursor: disabled ? "not-allowed" : "pointer" }}>{children}</button>; };
+const BtnBlack = ({ children, onClick, disabled, size }) => { const [hov, setHov] = useState(false); return <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.blackHov : WP.black, borderColor: hov ? WP.blackHov : WP.black, color: "#fff", opacity: disabled ? .6 : 1, cursor: disabled ? "not-allowed" : "pointer" }}>{children}</button>; };
+const BtnSecondary = ({ children, onClick, disabled, size }) => { const [hov, setHov] = useState(false); return <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: WP.white, borderColor: hov ? WP.blue : WP.border, color: hov ? WP.blue : WP.text, opacity: disabled ? .5 : 1, cursor: disabled ? "not-allowed" : "pointer" }}>{children}</button>; };
+const BtnDanger = ({ children, onClick, disabled, size }) => { const [hov, setHov] = useState(false); return <button onClick={onClick} disabled={disabled} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{ ...btnBase, ...(size === "sm" ? smPad : {}), background: hov ? WP.redBg : WP.white, borderColor: WP.red, color: WP.red, opacity: disabled ? .5 : 1, cursor: disabled ? "not-allowed" : "pointer" }}>{children}</button>; };
+
+const LinkBtn = ({ children, onClick, color }) => (
+  <button onClick={onClick} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: color || WP.blue, fontFamily: FF, textDecoration: "none" }}
+    onMouseEnter={e => e.currentTarget.style.color = color ? WP.redDark : WP.blueHov}
+    onMouseLeave={e => e.currentTarget.style.color = color || WP.blue}>
+    {children}
+  </button>
+);
+
+const StatusBadge = ({ active }) => (
+  <span style={{ display: "inline-block", padding: "1px 7px", borderRadius: 3, fontSize: 11, fontWeight: 600, background: active ? WP.greenBg : "#f8d7da", color: active ? WP.greenDark : "#a30000", border: `1px solid ${active ? WP.green : "#f5c6cb"}`, whiteSpace: "nowrap" }}>
+    {active ? "Active" : "Inactive"}
+  </span>
+);
+
+const CopyBtn = ({ text, label }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={e => {
+        e.stopPropagation();
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); });
+      }}
+      disabled={!text}
+      title={text || "Nothing to copy"}
+      style={{ background: "none", border: "none", padding: "0 2px", cursor: text ? "pointer" : "not-allowed", color: copied ? WP.green : WP.textLight, fontSize: 11, fontFamily: FF, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0, opacity: text ? 1 : .5 }}>
+      {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
+      {copied ? "Copied" : (label || "Copy")}
+    </button>
+  );
+};
+
+const fi = { border: `1px solid ${WP.border}`, borderRadius: 4, padding: "5px 8px", fontSize: 14, color: WP.text, outline: "none", fontFamily: FF, width: "100%", boxSizing: "border-box", background: WP.white, lineHeight: 1.5 };
+const lbl = { fontSize: 13, fontWeight: 600, color: WP.text, marginBottom: 4, display: "block" };
+const focus = { onFocus: e => { e.target.style.borderColor = WP.focus; e.target.style.boxShadow = `0 0 0 1px ${WP.focus}`; }, onBlur: e => { e.target.style.borderColor = WP.border; e.target.style.boxShadow = "none"; } };
+
+const Card = ({ title, children, action }) => (
+  <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, boxShadow: "0 1px 1px rgba(0,0,0,.04)", width: "100%", boxSizing: "border-box" }}>
+    {title && <div style={{ padding: "8px 12px", borderBottom: `1px solid ${WP.line}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}><h2 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: WP.text }}>{title}</h2>{action}</div>}
+    <div style={{ padding: 12 }}>{children}</div>
+  </div>
+);
+
+const FlashMsg = ({ msg }) => msg ? (
+  <div style={{ margin: "8px 0", padding: "8px 12px", borderLeft: `4px solid ${msg.type === "success" ? WP.green : WP.red}`, background: msg.type === "success" ? WP.greenBg : WP.redBg, fontSize: 13, color: msg.type === "success" ? WP.greenDark : WP.red }}>
+    {msg.text}
+  </div>
+) : null;
+
+const Pagination = ({ currentPage, totalPages, totalItems, shown, onPrev, onNext }) => (
+  <div style={{ padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${WP.line}`, background: "#f6f7f7", flexWrap: "wrap", gap: 6 }}>
+    <span style={{ fontSize: 12, color: WP.textMid }}>{shown} of {totalItems} items</span>
+    {totalPages > 1 && (
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <button disabled={currentPage === 1} onClick={onPrev} style={{ ...btnBase, fontSize: 11, padding: "1px 6px", background: WP.white, borderColor: WP.border, color: WP.text, opacity: currentPage === 1 ? .4 : 1 }}>‹</button>
+        <span style={{ fontSize: 12, color: WP.textMid }}>{currentPage}/{totalPages}</span>
+        <button disabled={currentPage === totalPages} onClick={onNext} style={{ ...btnBase, fontSize: 11, padding: "1px 6px", background: WP.white, borderColor: WP.border, color: WP.text, opacity: currentPage === totalPages ? .4 : 1 }}>›</button>
+      </div>
+    )}
+  </div>
+);
+
+const getFileIcon = (fileType) => {
+  if (!fileType) return <FaFilePdf />;
+  const type = fileType.toLowerCase();
+  if (type.includes("pdf")) return <FaFilePdf className="text-danger" />;
+  if (type.includes("word") || type.includes("doc")) return <FaFileWord className="text-primary" />;
+  if (type.includes("excel") || type.includes("xls") || type.includes("sheet")) return <FaFileExcel className="text-success" />;
+  return <FaFilePdf />;
+};
+
+const resolveFileHref = (doc) => {
+  if (!doc?.fileUrl) return "";
+  if (/^https?:\/\//i.test(doc.fileUrl)) return doc.fileUrl;
+  return `${API}${doc.fileUrl}`;
+};
+
+// --- Session storage keys ---
+const SS_VIEW = "mspm_view";
+const SS_EDITING_ID = "mspm_editingId";
+const SS_FORM = "mspm_form";
+const SS_FULLSCREEN = "mspm_fullscreen";
+
+// --- Default list page size ---
+const DEFAULT_PAGE_SIZE = 100;
+
+// --- Initial form state ---
+const emptyForm = () => ({
   titleEng: "",
   titleHin: "",
-  slug: "",
+  baseSlug: "",
   mainSlug: "",
-  menuId: "",
+  slug: "",
   department: "",
   htmlContent: "",
   htmlContentHi: "",
+  isActive: true,
   documentsUpdate: [],
-  isActive: true
-};
+});
 
-const initialDocumentData = {
+const emptyDocument = () => ({
   titleEng: "",
   titleHin: "",
   fileUrl: "",
@@ -65,256 +175,215 @@ const initialDocumentData = {
   file: null,
   shortDescriptionEn: "",
   shortDescriptionHin: "",
+  isActive: true,
+});
+
+// --- Media query hook ---
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    setMatches(media.matches);
+    const listener = (e) => setMatches(e.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, [query]);
+  return matches;
 };
 
-const MultiSectionPagesMangagement = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const token = sessionStorage.getItem("authToken");
-  const { isHindi } = useLanguage();
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
+const MultiSectionPagesManagement = () => {
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
-  // Main state
-  const [list, setList] = useState([]);
-  const [menuList, setMenuList] = useState([]);
-  const [modal, setModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState(initialFormData);
+  // --- Session initialisation ---
+  const initView = () => sessionStorage.getItem(SS_VIEW) || "list";
+  const initEditingId = () => sessionStorage.getItem(SS_EDITING_ID) || null;
+  const initForm = () => {
+    try {
+      const s = sessionStorage.getItem(SS_FORM);
+      return s ? JSON.parse(s) : emptyForm();
+    } catch { return emptyForm(); }
+  };
+  const initFullscreen = () => sessionStorage.getItem(SS_FULLSCREEN) === "true";
+
+  // --- State ---
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Pagination state
+  const [saving, setSaving] = useState(false);
+  const [pages, setPages] = useState([]);
+  const [editingId, setEditingId] = useState(initEditingId);
+  const [view, setView] = useState(initView);
+  const [message, setMessage] = useState(null);
+  const [form, setForm] = useState(initForm);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalDocuments, setTotalDocuments] = useState(0);
-  const [limit] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [counts, setCounts] = useState({ all: 0, active: 0, inactive: 0 });
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [slugError, setSlugError] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initEditingId());
+  const [hoveredRow, setHoveredRow] = useState(null);
+  const [isFormFullscreen, setIsFormFullscreen] = useState(initFullscreen);
 
-  // Filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("");
-  const [filterMenuId, setFilterMenuId] = useState("");
-
-  // Document form state
-  const [documentModal, setDocumentModal] = useState(false);
-  const [currentDocument, setCurrentDocument] = useState(initialDocumentData);
+  // Document inline form state
+  const [showDocForm, setShowDocForm] = useState(false);
   const [editingDocIndex, setEditingDocIndex] = useState(null);
+  const [currentDocument, setCurrentDocument] = useState(emptyDocument());
 
-  /* ================= LOAD DATA WITH PAGINATION ================= */
-  const loadData = async (page = 1) => {
+  const slugDebounceRef = useRef(null);
+
+  // --- Persist state to session ---
+  useEffect(() => { sessionStorage.setItem(SS_VIEW, view); }, [view]);
+  useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
+  useEffect(() => { if (view === "form") sessionStorage.setItem(SS_FORM, JSON.stringify(form)); }, [form, view]);
+  useEffect(() => { sessionStorage.setItem(SS_FULLSCREEN, isFormFullscreen ? "true" : "false"); }, [isFormFullscreen]);
+
+  // --- Load counts for the All / Active / Inactive tabs (independent of current filter/search) ---
+  const loadCounts = useCallback(async () => {
+    try {
+      const [allRes, activeRes, inactiveRes] = await Promise.all([
+        axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1 } }),
+        axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isActive: true } }),
+        axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isActive: false } }),
+      ]);
+      setCounts({
+        all: allRes.data?.pagination?.totalDocuments || 0,
+        active: activeRes.data?.pagination?.totalDocuments || 0,
+        inactive: inactiveRes.data?.pagination?.totalDocuments || 0,
+      });
+    } catch (err) {
+      console.error("Failed to load counts", err);
+    }
+  }, []);
+
+  // --- Load data ---
+  const loadData = useCallback(async (page = currentPage) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString()
-      });
+      const params = { page, limit: pageSize, search, sortBy, sortOrder };
+      if (filterStatus === "active") params.isActive = true;
+      else if (filterStatus === "inactive") params.isActive = false;
 
-      if (searchTerm?.trim()) params.append("search", searchTerm.trim());
-      if (filterDepartment?.trim()) params.append("department", filterDepartment.trim());
-      if (filterMenuId?.trim()) params.append("menuId", filterMenuId.trim());
-
-      const response = await axios.get(
-        `${API_URL}/api/get-all-content?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data?.success) {
-        setList(response.data.data || []);
-        setCurrentPage(response.data.pagination?.currentPage || 1);
-        setTotalPages(response.data.pagination?.totalPages || 1);
-        setTotalDocuments(response.data.pagination?.totalDocuments || 0);
+      const res = await axios.get(`${API}/api/get-all-content`, { headers: authH(), params });
+      if (res.data?.success) {
+        setPages(res.data.data || []);
+        setTotalItems(res.data.pagination?.totalDocuments || 0);
+        setTotalPages(res.data.pagination?.totalPages || 1);
       } else {
-        throw new Error(response.data?.message || "Failed to load pages");
+        throw new Error(res.data?.message || "Failed to load pages");
       }
-    } catch (error) {
-      console.error("Error loading pages:", error);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load pages. Please try again.";
-
-      await Swal.fire({
-        icon: "error",
-        title: "Error Loading Pages",
-        text: errorMessage,
-        confirmButtonText: "OK"
-      });
-
-      setList([]);
-      setTotalPages(1);
-      setTotalDocuments(0);
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: "danger", text: err.message || "Error loading pages" });
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, filterStatus, sortBy, sortOrder, currentPage, pageSize]);
 
-  const loadMenus = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/menu-list`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data?.success !== false) {
-        setMenuList(response.data?.data || []);
-      } else {
-        throw new Error(response.data?.message || "Failed to load menus");
-      }
-    } catch (error) {
-      console.error("Error loading menus:", error);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load menus";
-
-      await Swal.fire({
-        icon: "warning",
-        title: "Menu Load Error",
-        text: errorMessage,
-        timer: 3000,
-        showConfirmButton: false
-      });
-
-      setMenuList([]);
-    }
-  };
-
+  // Auto-load the list whenever we're on the list view and any relevant
+  // filter/sort/page/search/pageSize value changes — this is what makes the
+  // table populate on its own instead of only after pressing "Search".
   useEffect(() => {
+    if (view !== "list") return;
     loadData(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchTerm, filterDepartment, filterMenuId]);
+  }, [view, currentPage, filterStatus, sortBy, sortOrder, search, pageSize]);
 
+  // Load the tab counts once, and again whenever the list view is shown
+  // (e.g. after coming back from add/edit, or after a delete).
   useEffect(() => {
-    loadMenus();
+    if (view === "list") loadCounts();
+  }, [view, loadCounts]);
+
+  // Debounce the search box: only update the real `search` state (which
+  // triggers loadData above) 400ms after the user stops typing.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // --- Form handlers ---
+  const resetForm = useCallback(() => {
+    setEditingId(null);
+    setForm(emptyForm());
+    setSlugManuallyEdited(false);
+    setSlugError("");
+    setIsFormFullscreen(false);
+    setShowDocForm(false);
+    setEditingDocIndex(null);
+    setCurrentDocument(emptyDocument());
+    [SS_EDITING_ID, SS_FORM, SS_FULLSCREEN].forEach(k => sessionStorage.removeItem(k));
   }, []);
 
-  /* ================= HELPER FUNCTIONS ================= */
-  const toggleModal = () => {
-    if (modal) {
-      resetForm();
+  const goToList = useCallback(() => {
+    resetForm();
+    setView("list");
+  }, [resetForm]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const handleTitleChange = (e) => {
+    const title = e.target.value;
+    if (!slugManuallyEdited) {
+      const newSlug = titleToSlug(title);
+      setForm(prev => ({ ...prev, titleEng: title, slug: newSlug }));
+      setSlugError(validateSlug(newSlug));
+    } else {
+      setForm(prev => ({ ...prev, titleEng: title }));
     }
-    setModal(!modal);
   };
 
-  const resetForm = () => {
-    setEditingId(null);
-    setFormData(initialFormData);
+  const handleSlugChange = (e) => {
+    setSlugManuallyEdited(true);
+    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-");
+    setForm(prev => ({ ...prev, slug: clean }));
+    setSlugError(validateSlug(clean));
   };
 
-  const generateSlug = (text) => {
-    if (!text) return "";
-    return text
+  const handleSlugBlur = () => {
+    const clean = form.slug.replace(/^-+|-+$/g, "");
+    setForm(prev => ({ ...prev, slug: clean }));
+    setSlugError(validateSlug(clean));
+  };
+
+  const handleBaseSlugChange = (e) => {
+    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").replace(/^-+/, "");
+    setForm(prev => ({ ...prev, baseSlug: clean }));
+  };
+
+  const handleMainSlugChange = (e) => {
+    // Allow one extra "/" so two-segment grouping like seniority/head-office works.
+    const clean = e.target.value
       .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "");
+      .replace(/[^a-z0-9/-]/g, "")
+      .replace(/-{2,}/g, "-")
+      .replace(/\/{2,}/g, "/")
+      .replace(/^[/-]+/, "");
+    setForm(prev => ({ ...prev, mainSlug: clean }));
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-    loadData(1);
+  // --- Document inline form ---
+  const resetDocForm = () => {
+    setCurrentDocument(emptyDocument());
+    setEditingDocIndex(null);
+    setShowDocForm(false);
   };
 
-  const handleResetFilters = () => {
-    setSearchTerm("");
-    setFilterDepartment("");
-    setFilterMenuId("");
-    setCurrentPage(1);
-  };
-
-  const getFileIcon = (fileType) => {
-    if (!fileType) return <FaFilePdf />;
-
-    const type = fileType.toLowerCase();
-    if (type.includes("pdf")) return <FaFilePdf className="text-danger" />;
-    if (type.includes("word") || type.includes("doc")) return <FaFileWord className="text-primary" />;
-    if (type.includes("excel") || type.includes("xls") || type.includes("sheet"))
-      return <FaFileExcel className="text-success" />;
-
-    return <FaFilePdf />;
-  };
-
-  /* ================= PAGINATION ================= */
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const pages = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-
-    if (endPage - startPage < maxPagesToShow - 1) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return (
-      <Pagination className="mt-3">
-        <PaginationItem disabled={currentPage === 1}>
-          <PaginationLink first onClick={() => setCurrentPage(1)} />
-        </PaginationItem>
-        <PaginationItem disabled={currentPage === 1}>
-          <PaginationLink previous onClick={() => setCurrentPage(currentPage - 1)} />
-        </PaginationItem>
-
-        {startPage > 1 && (
-          <>
-            <PaginationItem>
-              <PaginationLink onClick={() => setCurrentPage(1)}>1</PaginationLink>
-            </PaginationItem>
-            {startPage > 2 && (
-              <PaginationItem disabled>
-                <PaginationLink>...</PaginationLink>
-              </PaginationItem>
-            )}
-          </>
-        )}
-
-        {pages.map((page) => (
-          <PaginationItem key={page} active={page === currentPage}>
-            <PaginationLink onClick={() => setCurrentPage(page)}>
-              {page}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-
-        {endPage < totalPages && (
-          <>
-            {endPage < totalPages - 1 && (
-              <PaginationItem disabled>
-                <PaginationLink>...</PaginationLink>
-              </PaginationItem>
-            )}
-            <PaginationItem>
-              <PaginationLink onClick={() => setCurrentPage(totalPages)}>
-                {totalPages}
-              </PaginationLink>
-            </PaginationItem>
-          </>
-        )}
-
-        <PaginationItem disabled={currentPage === totalPages}>
-          <PaginationLink next onClick={() => setCurrentPage(currentPage + 1)} />
-        </PaginationItem>
-        <PaginationItem disabled={currentPage === totalPages}>
-          <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
-        </PaginationItem>
-      </Pagination>
-    );
-  };
-
-  /* ================= DOCUMENT MANAGEMENT ================= */
-  const toggleDocumentModal = () => {
-    if (documentModal) {
-      setCurrentDocument(initialDocumentData);
-      setEditingDocIndex(null);
-    }
-    setDocumentModal(!documentModal);
+  const handleDocChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setCurrentDocument(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleFileUpload = (e) => {
@@ -322,498 +391,148 @@ const MultiSectionPagesMangagement = () => {
     if (!file) return;
     const MAX_SIZE = 30 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      Swal.fire({
-        icon: "warning",
-        title: "File Too Large 📁",
-        text: "File size should not exceed 30 MB.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#3085d6"
-      });
-
-      e.target.value = null; // Reset file input
+      Swal.fire({ icon: "warning", title: "File Too Large", text: "Max 30 MB", confirmButtonText: "OK" });
+      e.target.value = null;
       return;
     }
-
-    // Calculate file size
     const fileSizeKB = (file.size / 1024).toFixed(2);
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-    const displaySize =
-      file.size < 1024 * 1024
-        ? `${fileSizeKB} KB`
-        : `${fileSizeMB} MB`;
-
-    // Update document state
-    setCurrentDocument((prev) => ({
+    const displaySize = file.size < 1024 * 1024 ? `${fileSizeKB} KB` : `${fileSizeMB} MB`;
+    setCurrentDocument(prev => ({
       ...prev,
-      file: file,
+      file,
       fileName: file.name,
       fileSize: displaySize,
-      fileType: file.type.split("/").pop() || file.name.split(".").pop()
+      fileType: file.type.split("/").pop() || file.name.split(".").pop(),
     }));
   };
 
-  const handleAddDocument = async () => {
-    // Validation
-    if (!currentDocument.titleEng?.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please enter document title in English",
-        confirmButtonText: "OK"
-      });
+  const saveDocument = async () => {
+    if (!currentDocument.titleEng?.trim() || !currentDocument.titleHin?.trim()) {
+      Swal.fire({ icon: "warning", title: "Required", text: "Title in both languages required" });
       return;
     }
-
-    if (!currentDocument.titleHin?.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please enter document title in Hindi",
-        confirmButtonText: "OK"
-      });
-      return;
-    }
-
-    // For new documents, file is required
     if (editingDocIndex === null && !currentDocument.file) {
-      Swal.fire({
-        icon: "warning",
-        title: "Required Field",
-        text: "Please upload a file",
-        confirmButtonText: "OK"
-      });
+      Swal.fire({ icon: "warning", title: "Required", text: "Please upload a file" });
       return;
     }
 
-    // If content doesn't exist yet (creating new content), manage locally
+    // For new content (no editingId) – manage locally
     if (!editingId) {
-      const updatedDocs = [...formData.documentsUpdate];
-
+      const updatedDocs = [...form.documentsUpdate];
       if (editingDocIndex !== null) {
-        // Update existing document locally
-        updatedDocs[editingDocIndex] = {
-          ...updatedDocs[editingDocIndex],
-          ...currentDocument
-        };
-        Swal.fire({
-          icon: "success",
-          title: "Updated",
-          text: "Document updated successfully",
-          timer: 1500,
-          showConfirmButton: false
-        });
+        updatedDocs[editingDocIndex] = { ...updatedDocs[editingDocIndex], ...currentDocument };
       } else {
-        // Add new document locally
         updatedDocs.push({ ...currentDocument });
-        Swal.fire({
-          icon: "success",
-          title: "Added",
-          text: "Document added successfully",
-          timer: 1500,
-          showConfirmButton: false
-        });
       }
-
-      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-      toggleDocumentModal();
+      setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
+      resetDocForm();
       return;
     }
 
-    // If content exists (editing mode), use API
+    // For existing content – use API
     try {
       const fd = new FormData();
       fd.append("titleEng", currentDocument.titleEng);
       fd.append("titleHin", currentDocument.titleHin);
       fd.append("shortDescriptionEn", currentDocument.shortDescriptionEn || "");
       fd.append("shortDescriptionHin", currentDocument.shortDescriptionHin || "");
-
+      fd.append("isActive", currentDocument.isActive !== false);
       if (currentDocument.file) {
         fd.append("file", currentDocument.file);
-        // Calculate file size
-        const fileSizeKB = (currentDocument.file.size / 1024).toFixed(2);
-        const fileSizeMB = (currentDocument.file.size / (1024 * 1024)).toFixed(2);
-        const displaySize = currentDocument.file.size < 1024 * 1024
-          ? `${fileSizeKB} KB`
-          : `${fileSizeMB} MB`;
-
-        fd.append("fileSize", displaySize);
-        fd.append("fileType", currentDocument.file.type.split("/").pop() || currentDocument.file.name.split(".").pop());
+        fd.append("fileSize", currentDocument.fileSize);
+        fd.append("fileType", currentDocument.fileType);
       }
 
       if (editingDocIndex !== null) {
-        // Update existing document via API
-        const docId = formData.documentsUpdate[editingDocIndex]._id;
-
-        if (!docId) {
-          throw new Error("Document ID not found");
-        }
-
-        const response = await axios.put(
-          `${API_URL}/api/update-single-document/${editingId}/${docId}`,
-          fd,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Update local state with the updated document
-        const updatedDocs = [...formData.documentsUpdate];
-        updatedDocs[editingDocIndex] = {
-          ...updatedDocs[editingDocIndex],
-          ...response.data.data
-        };
-        setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-
-        Swal.fire({
-          icon: "success",
-          title: "Updated",
-          text: response.data?.message || "Document updated successfully",
-          timer: 1500,
-          showConfirmButton: false
+        const docId = form.documentsUpdate[editingDocIndex]._id;
+        if (!docId) throw new Error("Document ID missing");
+        const res = await axios.put(`${API}/api/update-single-document/${editingId}/${docId}`, fd, {
+          headers: { ...authH(), "Content-Type": "multipart/form-data" },
         });
+        const updatedDocs = [...form.documentsUpdate];
+        updatedDocs[editingDocIndex] = { ...updatedDocs[editingDocIndex], ...res.data.data };
+        setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
       } else {
-        // Add new document via API
-        const response = await axios.post(
-          `${API_URL}/api/add-document-to-content/${editingId}`,
-          fd,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Add the new document to local state
-        const newDocument = response.data.data;
-        setFormData((prev) => ({
-          ...prev,
-          documentsUpdate: [...prev.documentsUpdate, newDocument]
-        }));
-
-        Swal.fire({
-          icon: "success",
-          title: "Added",
-          text: response.data?.message || "Document added successfully",
-          timer: 1500,
-          showConfirmButton: false
+        const res = await axios.post(`${API}/api/add-document-to-content/${editingId}`, fd, {
+          headers: { ...authH(), "Content-Type": "multipart/form-data" },
         });
+        setForm(prev => ({ ...prev, documentsUpdate: [...prev.documentsUpdate, res.data.data] }));
       }
-
-      toggleDocumentModal();
-    } catch (error) {
-      console.error("Error saving document:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || error.message || "Failed to save document",
-        confirmButtonText: "OK"
-      });
+      resetDocForm();
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.message || err.message });
     }
   };
 
-  const handleEditDocument = (index) => {
-    const doc = formData.documentsUpdate[index];
-    setCurrentDocument({
-      ...doc,
-      file: null // Don't carry over file object when editing
-    });
+  const editDocument = (index) => {
+    const doc = form.documentsUpdate[index];
+    setCurrentDocument({ ...doc, file: null, isActive: doc.isActive !== false });
     setEditingDocIndex(index);
-    setDocumentModal(true);
+    setShowDocForm(true);
   };
 
-  const handleDeleteDocument = async (index) => {
-    const result = await Swal.fire({
-      title: "Delete Document?",
-      text: "This action cannot be undone",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, Delete",
-      cancelButtonText: "Cancel"
-    });
+  const toggleDocumentActive = async (index) => {
+    const doc = form.documentsUpdate[index];
+    const nextActive = !(doc.isActive !== false);
 
-    if (!result.isConfirmed) return;
-
-    // If content doesn't exist yet (creating new content), manage locally
-    if (!editingId) {
-      const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
-      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-
-      Swal.fire({
-        icon: "success",
-        title: "Deleted",
-        text: "Document removed successfully",
-        timer: 1500,
-        showConfirmButton: false
-      });
+    // Local-only content (not yet saved)
+    if (!editingId || !doc._id) {
+      const updatedDocs = [...form.documentsUpdate];
+      updatedDocs[index] = { ...updatedDocs[index], isActive: nextActive };
+      setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
       return;
     }
 
-    // If content exists (editing mode), use API
     try {
-      const docId = formData.documentsUpdate[index]._id;
-
-      if (!docId) {
-        throw new Error("Document ID not found");
-      }
-
-      const response = await axios.delete(
-        `${API_URL}/api/delete-document/${editingId}/${docId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Update local state by removing the deleted document
-      const updatedDocs = formData.documentsUpdate.filter((_, i) => i !== index);
-      setFormData((prev) => ({ ...prev, documentsUpdate: updatedDocs }));
-
-      Swal.fire({
-        icon: "success",
-        title: "Deleted",
-        text: response.data?.message || "Document deleted successfully",
-        timer: 1500,
-        showConfirmButton: false
+      const fd = new FormData();
+      fd.append("titleEng", doc.titleEng || "");
+      fd.append("titleHin", doc.titleHin || "");
+      fd.append("shortDescriptionEn", doc.shortDescriptionEn || "");
+      fd.append("shortDescriptionHin", doc.shortDescriptionHin || "");
+      fd.append("isActive", nextActive);
+      await axios.put(`${API}/api/update-single-document/${editingId}/${doc._id}`, fd, {
+        headers: { ...authH(), "Content-Type": "multipart/form-data" },
       });
-    } catch (error) {
-      console.error("Error deleting document:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: error.response?.data?.message || error.message || "Failed to delete document",
-        confirmButtonText: "OK"
-      });
+      const updatedDocs = [...form.documentsUpdate];
+      updatedDocs[index] = { ...updatedDocs[index], isActive: nextActive };
+      setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.message || err.message });
     }
   };
 
-  /* ================= CRUD OPERATIONS ================= */
-  const handleEdit = (item) => {
-    setEditingId(item._id);
-
-    setFormData({
-      titleEng: item.titleEng || "",
-      titleHin: item.titleHin || "",
-      slug: item.slug || "",
-      mainSlug: item.mainSlug || "",
-      menuId: item.menuId?._id || item.menuId || "",
-      department: item.department || "",
-      htmlContent: item.htmlContent || "",
-      htmlContentHi: item.htmlContentHi || "",
-      isActive: item.isActive !== false,
-      documentsUpdate: Array.isArray(item.documentsUpdate)
-        ? item.documentsUpdate.map((doc) => ({
-          ...doc,
-          file: null // Don't include file object for existing documents
-        }))
-        : []
-    });
-
-    setModal(true);
-  };
-
-  const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      title: "Delete Page?",
-      text: "This action cannot be undone",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, Delete",
-      cancelButtonText: "Cancel"
-    });
-
+  const deleteDocument = async (index) => {
+    const result = await Swal.fire({ title: "Delete Document?", text: "This cannot be undone", icon: "warning", showCancelButton: true, confirmButtonColor: WP.red, cancelButtonColor: WP.textMid, confirmButtonText: "Delete" });
     if (!result.isConfirmed) return;
-
+    if (!editingId) {
+      const updatedDocs = form.documentsUpdate.filter((_, i) => i !== index);
+      setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
+      return;
+    }
     try {
-      const response = await axios.delete(`${API_URL}/api/delete-content/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const successMessage =
-        response.data?.message || "Page deleted successfully";
-
-      await Swal.fire({
-        icon: "success",
-        title: "Deleted",
-        text: successMessage,
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      // Reload data - if current page is empty, go to previous page
-      const newTotal = totalDocuments - 1;
-      const newTotalPages = Math.ceil(newTotal / limit) || 1;
-
-      if (currentPage > newTotalPages) {
-        setCurrentPage(newTotalPages);
-        loadData(newTotalPages);
-      } else {
-        loadData(currentPage);
-      }
-    } catch (error) {
-      console.error("Delete error:", error);
-
-      const errorMessage =
-        error.response?.data?.message || error.message || "Delete failed";
-
-      Swal.fire({
-        icon: "error",
-        title: "Error Deleting Page",
-        text: errorMessage,
-        confirmButtonText: "OK"
-      });
+      const docId = form.documentsUpdate[index]._id;
+      if (!docId) throw new Error("Document ID missing");
+      await axios.delete(`${API}/api/delete-document/${editingId}/${docId}`, { headers: authH() });
+      const updatedDocs = form.documentsUpdate.filter((_, i) => i !== index);
+      setForm(prev => ({ ...prev, documentsUpdate: updatedDocs }));
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.message || err.message });
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setSubmitting(true);
-
-    try {
-      const apiUrl = editingId
-        ? `${API_URL}/api/update-content/${editingId}`
-        : `${API_URL}/api/create-content`;
-
-      const multipart = hasNewFiles();
-      const payload = multipart ? buildFormData() : buildJsonPayload();
-      const config = {
-        ...getAxiosConfig(multipart),
-        headers: {
-          ...getAxiosConfig(multipart)?.headers,
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      const response = editingId
-        ? await axios.put(apiUrl, payload, config)
-        : await axios.post(apiUrl, payload, config);
-
-      await Swal.fire({
-        icon: "success",
-        title: editingId ? "Updated" : "Created",
-        text: response.data?.message || "Saved successfully",
-        timer: 2000,
-        showConfirmButton: false
-      });
-
-      toggleModal();
-      loadData(currentPage);
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error Saving Page",
-        text:
-          error.response?.data?.message ||
-          "Server error. Please try again."
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  /* ================= HELPERS ================= */
-
-  const validateForm = () => {
-    const requiredFields = {
-      titleEng: "Title (English)",
-      titleHin: "Title (Hindi)",
-      slug: "Slug",
-      mainSlug: "Main Slug",
-      menuId: "Menu",
-      department: "Department",
-    };
-
-    for (const [key, label] of Object.entries(requiredFields)) {
-      if (!formData[key]?.toString().trim()) {
-        Swal.fire({
-          icon: "warning",
-          title: "Required Field",
-          text: `Please fill: ${label}`
-        });
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const hasNewFiles = () =>
-    formData.documentsUpdate?.some(doc => doc.file instanceof File);
-
-  const buildFormData = () => {
-    const fd = new FormData();
-
-    // Append basic content fields
-    [
-      "titleEng",
-      "titleHin",
-      "slug",
-      "mainSlug",
-      "menuId",
-      "department",
-    ].forEach(key => fd.append(key, formData[key]));
-
-    fd.append("htmlContent", formData.htmlContent || "");
-    fd.append("htmlContentHi", formData.htmlContentHi || "");
-    fd.append("isActive", formData.isActive);
-    let fileIndex = 0;
-
-    const documents = formData.documentsUpdate.map(doc => {
-      const obj = {
-        titleEng: doc.titleEng || "",
-        titleHin: doc.titleHin || "",
-        fileUrl: doc.fileUrl || "",
-        fileName: doc.fileName || "",
-        fileSize: doc.fileSize || "",
-        fileType: doc.fileType || "",
-        fileIndex: -1,
-        shortDescriptionEn: doc.shortDescriptionEn || "",
-        shortDescriptionHin: doc.shortDescriptionHin || "",
-
-      };
-
-      // Append file with field name "file" (matches backend middleware)
-      if (doc.file instanceof File) {
-        obj.fileIndex = fileIndex;
-        fd.append("file", doc.file);  // Changed from "files" to "file"
-        fileIndex++;
-      }
-
-      return obj;
-    });
-
-    fd.append("documentsUpdate", JSON.stringify(documents));
-
-    console.log("FormData being sent:");
-    console.log("- Documents:", documents);
-    console.log("- Total files:", fileIndex);
-
-    return fd;
-  };
-
-  const buildJsonPayload = () => ({
-    titleEng: formData.titleEng.trim(),
-    titleHin: formData.titleHin.trim(),
-    slug: formData.slug.trim(),
-    mainSlug: formData.mainSlug.trim(),
-    menuId: formData.menuId,
-    department: formData.department.trim(),
-    htmlContent: formData.htmlContent || "",
-    htmlContentHi: formData.htmlContentHi || "",
-    isActive: formData.isActive,
-    documentsUpdate: formData.documentsUpdate.map(doc => ({
+  // --- Submit form ---
+  const buildPayload = useCallback(() => ({
+    titleEng: form.titleEng.trim(),
+    titleHin: form.titleHin.trim(),
+    baseSlug: form.baseSlug.trim(),
+    mainSlug: form.mainSlug.trim(),
+    slug: form.slug.trim(),
+    department: form.department.trim(),
+    htmlContent: form.htmlContent,
+    htmlContentHi: form.htmlContentHi,
+    isActive: form.isActive,
+    documentsUpdate: form.documentsUpdate.map(doc => ({
       titleEng: doc.titleEng || "",
       titleHin: doc.titleHin || "",
       fileUrl: doc.fileUrl || "",
@@ -821,719 +540,580 @@ const MultiSectionPagesMangagement = () => {
       fileSize: doc.fileSize || "",
       fileType: doc.fileType || "",
       shortDescriptionEn: doc.shortDescriptionEn || "",
-      shortDescriptionHin: doc.shortDescriptionHin || ""
+      shortDescriptionHin: doc.shortDescriptionHin || "",
+      isActive: doc.isActive !== false,
+    })),
+  }), [form]);
 
-    }))
-  });
+  const hasNewFiles = () => form.documentsUpdate.some(doc => doc.file instanceof File);
 
-  const getAxiosConfig = (isMultipart) =>
-    isMultipart
-      ? {} // IMPORTANT: let axios set multipart headers
-      : { headers: { "Content-Type": "application/json" } };
+  const buildFormData = () => {
+    const fd = new FormData();
+    const fields = ["titleEng", "titleHin", "baseSlug", "mainSlug", "slug", "department", "htmlContent", "htmlContentHi"];
+    fields.forEach(key => fd.append(key, form[key]));
+    fd.append("isActive", form.isActive);
 
+    const docs = form.documentsUpdate.map((doc, idx) => {
+      const obj = {
+        titleEng: doc.titleEng || "",
+        titleHin: doc.titleHin || "",
+        fileUrl: doc.fileUrl || "",
+        fileName: doc.fileName || "",
+        fileSize: doc.fileSize || "",
+        fileType: doc.fileType || "",
+        shortDescriptionEn: doc.shortDescriptionEn || "",
+        shortDescriptionHin: doc.shortDescriptionHin || "",
+        isActive: doc.isActive !== false,
+        fileIndex: doc.file instanceof File ? idx : -1,
+      };
+      if (doc.file instanceof File) fd.append("file", doc.file);
+      return obj;
+    });
+    fd.append("documentsUpdate", JSON.stringify(docs));
+    return fd;
+  };
 
-  /* ================= UI RENDER ================= */
-  return (
-    <div className="container mt-4">
-      <Card>
-        <CardHeader>
-            {/* Header */}
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">📄 Multi Section Pages Management</h4>
-            <Button color="light" className="text-success" onClick={toggleModal} disabled={loading}>
-              <FaPlus className="me-1" /> Add Page
-            </Button>
-          </div>
-        </CardHeader>
-        <CardBody>
-          {/* Filters */}
-          <Card className="mb-3 bg-light">
-            <CardBody>
-              <Row>
-                <Col md={4}>
-                  <FormGroup>
-                    <Label>Search</Label>
-                    <div className="d-flex">
-                      <Input
-                        type="text"
-                        placeholder="Search by title..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleSearch();
-                          }
-                        }}
-                      />
-                      <Button
-                        color="primary"
-                        className="ms-2"
-                        onClick={handleSearch}
-                        disabled={loading}
-                      >
-                        <FaSearch />
-                      </Button>
-                    </div>
-                  </FormGroup>
-                </Col>
-                <Col md={3}>
-                  <FormGroup>
-                    <Label>Filter by Department</Label>
-                    <Input
-                      type="text"
-                      placeholder="Department name"
-                      value={filterDepartment}
-                      onChange={(e) => setFilterDepartment(e.target.value)}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={3}>
-                  <FormGroup>
-                    <Label>Filter by Menu</Label>
-                    <Input
-                      type="select"
-                      value={filterMenuId}
-                      onChange={(e) => setFilterMenuId(e.target.value)}
-                    >
-                      <option value="">All Menus</option>
-                      {menuList.map((menu) => (
-                        <option key={menu._id} value={menu._id}>
-                          {menu.titleEng || menu.name || "Unnamed Menu"}
-                        </option>
-                      ))}
-                    </Input>
-                  </FormGroup>
-                </Col>
-                <Col md={2} className="d-flex align-items-end">
-                  <FormGroup className="w-100">
-                    <Button
-                      color="secondary"
-                      className="w-100"
-                      onClick={handleResetFilters}
-                      disabled={loading}
-                    >
-                      Reset
-                    </Button>
-                  </FormGroup>
-                </Col>
-              </Row>
-            </CardBody>
-          </Card>
+  const handleSubmit = async (publish = false) => {
+    const err = validateSlug(form.slug);
+    if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
 
-          {/* Stats */}
-          <div className="mb-3">
-            <small className="text-muted">
-              Showing {list.length} of {totalDocuments} pages (Page{" "}
-              {currentPage} of {totalPages})
-            </small>
-          </div>
+    setSaving(true);
+    try {
+      const isMultipart = hasNewFiles();
+      const config = {
+        headers: { ...authH(), ...(isMultipart ? { "Content-Type": "multipart/form-data" } : { "Content-Type": "application/json" }) },
+      };
+      const url = editingId ? `${API}/api/update-content/${editingId}` : `${API}/api/create-content`;
+      const res = editingId
+        ? await axios.put(url, isMultipart ? buildFormData() : buildPayload(), config)
+        : await axios.post(url, isMultipart ? buildFormData() : buildPayload(), config);
 
-          {/* Table */}
-          {loading ? (
-            <div className="text-center py-5">
-              <Spinner
-                color="primary"
-                style={{ width: "3rem", height: "3rem" }}
+      const savedId = res.data.data._id;
+      if (!editingId) setEditingId(savedId);
+
+      setMessage({ type: "success", text: publish ? "Page published." : "Draft saved." });
+    } catch (err) {
+      setMessage({ type: "danger", text: err.response?.data?.message || "Something went wrong" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // --- Edit / Delete from list ---
+  const handleEdit = (item) => {
+    setEditingId(item._id);
+    setForm({
+      titleEng: item.titleEng || "",
+      titleHin: item.titleHin || "",
+      baseSlug: item.baseSlug || "",
+      mainSlug: item.mainSlug || "",
+      slug: item.slug || "",
+      department: item.department || "",
+      htmlContent: item.htmlContent || "",
+      htmlContentHi: item.htmlContentHi || "",
+      isActive: item.isActive !== false,
+      documentsUpdate: Array.isArray(item.documentsUpdate) ? item.documentsUpdate.map(doc => ({ ...doc, file: null, isActive: doc.isActive !== false })) : [],
+    });
+    setSlugManuallyEdited(true);
+    setSlugError("");
+    setView("form");
+  };
+
+  const handleDelete = async (id, title) => {
+    const result = await Swal.fire({
+      title: "Delete Content?",
+      html: `<span style="font-size:13px;color:#50575e">Permanently delete <strong>"${title || "Untitled"}"</strong>?<br>This cannot be undone.</span>`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: WP.red,
+      cancelButtonColor: WP.textMid,
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+    });
+    if (!result.isConfirmed) return;
+    try {
+      await axios.delete(`${API}/api/delete-content/${id}`, { headers: authH() });
+      Swal.fire({ title: "Deleted", icon: "success", timer: 1500, showConfirmButton: false });
+      // If we just deleted the last item on this page, step back a page.
+      if (pages.length === 1 && currentPage > 1) {
+        setCurrentPage(p => p - 1);
+      } else {
+        loadData(currentPage);
+      }
+      loadCounts();
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Delete failed", "error");
+    }
+  };
+
+  // --- Sorting ---
+  const handleSort = (col) => {
+    if (sortBy === col) setSortOrder(o => o === "desc" ? "asc" : "desc");
+    else { setSortBy(col); setSortOrder("desc"); }
+    setCurrentPage(1);
+  };
+  const sortIcon = (col) => sortBy !== col ? " ⇅" : sortOrder === "desc" ? " ↓" : " ↑";
+
+  // --- Filter status change (refreshes list + resets to page 1) ---
+  const changeFilter = (key) => {
+    setFilterStatus(key);
+    setCurrentPage(1);
+  };
+
+  const fullPath = buildFullPath(form);
+  const fullUrlForForm = fullPath ? `${SITE_URL}/${fullPath}` : "";
+
+  // --- Top bar for form ---
+  const FormTopBar = ({ fullscreen }) => (
+    <div style={{
+      background: WP.white, borderBottom: `1px solid ${WP.line}`,
+      padding: isMobile ? "8px 12px" : "8px 20px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      gap: 10, flexWrap: "wrap",
+      position: "sticky", top: 0, zIndex: 1000,
+      boxShadow: fullscreen ? "none" : "0 1px 2px rgba(0,0,0,.05)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button onClick={goToList} style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, display: "flex", alignItems: "center", gap: 4, padding: 0 }}>
+          <FaArrowLeft size={11} /> Back To List
+        </button>
+        <span style={{ color: WP.border }}>›</span>
+        <span style={{ fontSize: isMobile ? 12 : 14, color: WP.text, fontWeight: 600 }}>
+          {editingId ? "Edit Page" : "Add New Page"}
+        </span>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <BtnDanger onClick={goToList}><FaTimes size={10} /> Close</BtnDanger>
+        <BtnSecondary size="sm" onClick={() => fullUrlForForm && window.open(fullUrlForForm, "_blank", "noopener,noreferrer")} disabled={!fullUrlForForm}>
+          <FaEye size={10} /> Preview
+        </BtnSecondary>
+        <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}>
+          <FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}
+        </BtnBlack>
+        <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}>
+          <FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}
+        </BtnGreen>
+        {fullscreen ? (
+          <button onClick={() => setIsFormFullscreen(false)} style={{ ...btnBase, background: WP.red, color: "#fff" }}>
+            <FaCompress size={10} /> Exit Full Screen
+          </button>
+        ) : (
+          <button onClick={() => setIsFormFullscreen(true)} style={{ ...btnBase, background: WP.blue, color: "#fff", padding: "0 8px", fontSize: isMobile ? 11 : 13 }}>
+            <FaExpand size={10} /> Full Screen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  // --- Form Body (two‑column layout) ---
+  const FormBody = () => {
+    const gridColumns = isMobile ? "1fr" : "minmax(0, 1fr) 300px";
+    return (
+      <>
+        <FlashMsg msg={message} />
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: gridColumns,
+          gap: isMobile ? 12 : 16,
+          padding: isMobile ? "12px" : "16px 20px",
+          width: "100%",
+          boxSizing: "border-box",
+        }}>
+          {/* Left column: main content */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+            {/* Title */}
+            <Card>
+              <input
+                name="titleEng" value={form.titleEng} onChange={handleTitleChange}
+                placeholder="Add English title"
+                style={{ ...fi, fontSize: isMobile ? 18 : 22, fontWeight: 400, padding: "6px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0, marginBottom: 10 }}
+                onFocus={e => e.target.style.borderBottomColor = WP.focus}
+                onBlur={e => e.target.style.borderBottomColor = WP.line}
               />
-              <p className="mt-3 text-muted">Loading pages...</p>
+              <input
+                name="titleHin" value={form.titleHin} onChange={handleChange}
+                placeholder="शीर्षक दर्ज करें (Hindi title)"
+                style={{ ...fi, fontSize: isMobile ? 14 : 16, padding: "5px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0 }}
+                onFocus={e => e.target.style.borderBottomColor = WP.focus}
+                onBlur={e => e.target.style.borderBottomColor = WP.line}
+              />
+            </Card>
+
+            {/* URL / Slug structure — base, main, slug + live full URL + copy, all in one place */}
+            <Card title="Page URL Structure">
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={lbl}>Base Slug</label>
+                  <input name="baseSlug" value={form.baseSlug} onChange={handleBaseSlugChange} placeholder="e.g., notice-board" style={{ ...fi, fontSize: 13 }} {...focus} />
+                  <p style={{ fontSize: 11, color: WP.textLight, margin: "4px 0 0" }}>First URL segment</p>
+                </div>
+                <div>
+                  <label style={lbl}>Main Slug</label>
+                  <input name="mainSlug" value={form.mainSlug} onChange={handleMainSlugChange} placeholder="e.g., tenders or seniority/head-office" style={{ ...fi, fontSize: 13 }} {...focus} />
+                  <p style={{ fontSize: 11, color: WP.textLight, margin: "4px 0 0" }}>One or two segments (grouping)</p>
+                </div>
+                <div>
+                  <label style={lbl}>Page Slug <span style={{ color: WP.red }}>*</span></label>
+                  <input name="slug" value={form.slug} onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="e.g., annual-report-2026" style={{ ...fi, fontSize: 13, borderColor: slugError ? WP.red : WP.border }} />
+                  {slugError ? (
+                    <p style={{ fontSize: 11, color: WP.red, margin: "4px 0 0" }}>⚠ {slugError}</p>
+                  ) : (
+                    <p style={{ fontSize: 11, color: WP.textLight, margin: "4px 0 0" }}>Final unique segment</p>
+                  )}
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: 12, padding: "8px 10px", background: WP.blueBg, border: `1px solid ${WP.line}`,
+                borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+              }}>
+                <FaLink size={11} style={{ color: WP.blue, flexShrink: 0 }} />
+                {fullUrlForForm ? (
+                  <a href={fullUrlForForm} target="_blank" rel="noopener noreferrer" style={{ color: WP.blue, fontSize: 12, wordBreak: "break-all", flex: 1, minWidth: 120, textDecoration: "none" }}>
+                    {fullUrlForForm}
+                  </a>
+                ) : (
+                  <span style={{ color: WP.textLight, fontSize: 12, flex: 1 }}>Fill base / main / page slug to preview the full URL</span>
+                )}
+                <CopyBtn text={fullUrlForForm} label="Copy URL" />
+                {fullUrlForForm && (
+                  <BtnSecondary size="sm" onClick={() => window.open(fullUrlForForm, "_blank", "noopener,noreferrer")}>
+                    <FaEye size={10} /> Preview
+                  </BtnSecondary>
+                )}
+              </div>
+            </Card>
+
+            {/* Main content editor */}
+            <Card title="Page Main Content Area">
+              <DynamicContentEditor
+                engField="htmlContent"
+                hinField="htmlContentHi"
+                height={460}
+                initialEn={form.htmlContent}
+                initialHi={form.htmlContentHi}
+                onChange={(contentObj) => {
+                  setForm(prev => ({
+                    ...prev,
+                    htmlContent: contentObj.htmlContent,
+                    htmlContentHi: contentObj.htmlContentHi,
+                  }));
+                }}
+                instanceId="multi_section_editor"
+              />
+            </Card>
+
+            {/* Documents section (inline) */}
+            <Card
+              title="📎 Documents"
+              action={
+                <BtnBlue size="sm" onClick={() => { resetDocForm(); setShowDocForm(true); }}>
+                  <FaPlus size={10} /> Add Document
+                </BtnBlue>
+              }
+            >
+              {/* Document list */}
+              {form.documentsUpdate.length > 0 ? (
+                <div style={{ overflowX: "auto", marginBottom: 12 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${WP.line}` }}>
+                        <th style={{ padding: "4px 6px", textAlign: "left" }}>#</th>
+                        <th style={{ padding: "4px 6px", textAlign: "left" }}>Title (EN)</th>
+                        <th style={{ padding: "4px 6px", textAlign: "left" }}>Title (HI)</th>
+                        <th style={{ padding: "4px 6px", textAlign: "left" }}>File</th>
+                        <th style={{ padding: "4px 6px", textAlign: "left" }}>Size</th>
+                        <th style={{ padding: "4px 6px", textAlign: "center" }}>Status</th>
+                        <th style={{ padding: "4px 6px", textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.documentsUpdate.map((doc, idx) => {
+                        const href = resolveFileHref(doc);
+                        return (
+                          <tr key={idx} style={{ borderBottom: `1px solid ${WP.line}` }}>
+                            <td style={{ padding: "4px 6px" }}>{idx + 1}</td>
+                            <td style={{ padding: "4px 6px" }}>{doc.titleEng || <span style={{ color: WP.textLight }}>—</span>}</td>
+                            <td style={{ padding: "4px 6px" }}>{doc.titleHin || <span style={{ color: WP.textLight }}>—</span>}</td>
+                            <td style={{ padding: "4px 6px" }}>
+                              {doc.fileName ? (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{getFileIcon(doc.fileType)} {doc.fileName}</span>
+                              ) : <span style={{ color: WP.textLight }}>No file</span>}
+                            </td>
+                            <td style={{ padding: "4px 6px" }}>{doc.fileSize || "—"}</td>
+                            <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                              <button
+                                onClick={() => toggleDocumentActive(idx)}
+                                title="Click to toggle"
+                                style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                              >
+                                <StatusBadge active={doc.isActive !== false} />
+                              </button>
+                            </td>
+                            <td style={{ padding: "4px 6px", textAlign: "right", whiteSpace: "nowrap" }}>
+                              <BtnSecondary size="sm" onClick={() => href && window.open(href, "_blank", "noopener,noreferrer")} disabled={!href}>
+                                <FaEye size={10} /> View
+                              </BtnSecondary>
+                              {' '}
+                              <BtnSecondary size="sm" onClick={() => editDocument(idx)}><FaEdit size={10} /> Edit</BtnSecondary>
+                              {' '}
+                              <BtnDanger size="sm" onClick={() => deleteDocument(idx)}><FaTrashAlt size={10} /></BtnDanger>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p style={{ color: WP.textLight, margin: "8px 0", fontSize: 13 }}>No documents added yet. Click "Add Document" to attach a file.</p>
+              )}
+
+              {/* Inline document form */}
+              {showDocForm && (
+                <div style={{ marginTop: 12, padding: 12, border: `1px solid ${WP.border}`, borderRadius: 4, background: WP.blueBg }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <label style={lbl}>Title (English) <span style={{ color: WP.red }}>*</span></label>
+                      <input name="titleEng" value={currentDocument.titleEng} onChange={handleDocChange} placeholder="e.g., Recruitment Notice 2026" style={fi} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Title (Hindi) <span style={{ color: WP.red }}>*</span></label>
+                      <input name="titleHin" value={currentDocument.titleHin} onChange={handleDocChange} placeholder="जैसे, भर्ती सूचना 2026" style={fi} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Short Description (English)</label>
+                      <input name="shortDescriptionEn" value={currentDocument.shortDescriptionEn} onChange={handleDocChange} placeholder="Optional short note shown with the file" style={fi} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Short Description (Hindi)</label>
+                      <input name="shortDescriptionHin" value={currentDocument.shortDescriptionHin} onChange={handleDocChange} placeholder="वैकल्पिक संक्षिप्त विवरण" style={fi} />
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={lbl}>File {editingDocIndex === null && <span style={{ color: WP.red }}>*</span>}</label>
+                      <input type="file" onChange={handleFileUpload} accept=".pdf,.doc,.docx,.xls,.xlsx" style={fi} />
+                      {currentDocument.fileName && <small style={{ color: WP.greenDark, display: "block", marginTop: 4 }}>✓ {currentDocument.fileName} ({currentDocument.fileSize})</small>}
+                      {editingDocIndex !== null && !currentDocument.file && currentDocument.fileUrl && (
+                        <small style={{ color: WP.blue, display: "block", marginTop: 4 }}>Current file will be kept if no new file is uploaded</small>
+                      )}
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, color: WP.text }}>
+                        <input type="checkbox" name="isActive" checked={currentDocument.isActive !== false} onChange={handleDocChange} style={{ accentColor: WP.green }} />
+                        Active (visible on site)
+                      </label>
+                    </div>
+                    <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, marginTop: 4 }}>
+                      <BtnGreen onClick={saveDocument}><FaSave size={10} /> {editingDocIndex !== null ? "Update Document" : "Add Document"}</BtnGreen>
+                      <BtnDanger onClick={resetDocForm}><FaTimes size={10} /> Cancel</BtnDanger>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Right sidebar */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
+            <Card title="Status & Actions">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} style={{ accentColor: WP.green }} />
+                  <span>Active (Visible on site)</span>
+                </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <BtnBlack onClick={() => handleSubmit(false)} disabled={saving} size="sm"><FaSave size={10} /> {editingId ? "Update Draft" : "Save Draft"}</BtnBlack>
+                  <BtnGreen onClick={() => handleSubmit(true)} disabled={saving} size="sm"><FaCloudUploadAlt size={10} /> Publish</BtnGreen>
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Department">
+              <input name="department" value={form.department} onChange={handleChange} placeholder="e.g., Higher Education Department" style={{ ...fi, fontSize: 13 }} {...focus} />
+            </Card>
+          </div>
+        </div>
+        <div style={{ height: 24 }} />
+      </>
+    );
+  };
+
+  // Escape key exits full screen as an extra safety hatch
+  useEffect(() => {
+    if (!isFormFullscreen) return;
+    const onKey = (e) => { if (e.key === "Escape") setIsFormFullscreen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFormFullscreen]);
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+  if (view === "form") {
+    return (
+      <div
+        style={{
+          background: WP.bg,
+          fontFamily: FF,
+          boxSizing: "border-box",
+          ...(isFormFullscreen
+            ? {
+                position: "fixed",
+                inset: 0,
+                width: "100vw",
+                height: "100vh",
+                overflowY: "auto",
+                overflowX: "hidden",
+                zIndex: 2000,
+              }
+            : {
+                width: "100%",
+                minHeight: "100vh",
+                overflowX: "hidden",
+              }),
+        }}
+      >
+        <FormTopBar fullscreen={isFormFullscreen} />
+        <FormBody />
+      </div>
+    );
+  }
+
+  // ========== LIST VIEW ==========
+  const thSt = { padding: "8px 10px", fontWeight: 700, color: WP.textMid, fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", background: "#f6f7f7", borderBottom: `1px solid ${WP.line}`, textAlign: "left", cursor: "pointer", userSelect: "none" };
+  const filters = [
+    { k: "all", l: "All", count: counts.all },
+    { k: "active", l: "Active", count: counts.active },
+    { k: "inactive", l: "Inactive", count: counts.inactive },
+  ];
+  const tdStyle = (isAction = false) => ({ padding: isMobile ? "6px 8px" : "8px 10px", verticalAlign: "middle", fontSize: isMobile ? 11 : 13, ...(isAction && { textAlign: "right" }) });
+
+  return (
+    <div style={{ background: WP.bg, minHeight: "100vh", fontFamily: FF }}>
+      {/* Header */}
+      <div style={{ background: WP.white, borderBottom: `1px solid ${WP.line}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <strong style={{ margin: 0, fontSize: isMobile ? 18 : 21, fontWeight: 400, color: WP.text }}>Multi‑Section Pages</strong>
+        </div>
+        <BtnBlue onClick={() => { resetForm(); setView("form"); }} size="sm"><FaPlus size={12} /> Add New Page</BtnBlue>
+      </div>
+      <div style={{ padding: "0 16px" }}><FlashMsg msg={message} /></div>
+
+      {/* Filters */}
+      <div style={{ padding: "10px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 0, fontSize: 13, flexWrap: "wrap" }}>
+          {filters.map((f, i) => (
+            <React.Fragment key={f.k}>
+              {i > 0 && <span style={{ color: WP.border, margin: "0 4px" }}>|</span>}
+              <button onClick={() => changeFilter(f.k)}
+                style={{ background: "none", border: "none", padding: "0 2px", cursor: "pointer", fontSize: isMobile ? 11 : 13, fontFamily: FF, color: filterStatus === f.k ? WP.text : WP.blue, fontWeight: filterStatus === f.k ? 600 : 400, textDecoration: "none", whiteSpace: "nowrap" }}
+                onMouseEnter={e => { if (filterStatus !== f.k) e.currentTarget.style.color = WP.blueHov; }}
+                onMouseLeave={e => { if (filterStatus !== f.k) e.currentTarget.style.color = WP.blue; }}>
+                {f.l} <span style={{ color: WP.textLight }}>({f.count})</span>
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end", flexWrap: "wrap" }}>
+          <input
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            placeholder="Search by title…"
+            style={{ ...fi, width: isMobile ? "calc(100% - 70px)" : 220, padding: "4px 8px", fontSize: 13 }}
+            {...focus}
+          />
+          <BtnBlue size="sm" onClick={() => { setSearch(searchInput); setCurrentPage(1); }}>Search</BtnBlue>
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+            style={{ ...fi, width: "auto", padding: "4px 6px", fontSize: 12 }}
+            title="Items per page"
+          >
+            {[10, 25, 50, 100, 200].map(n => <option key={n} value={n}>{n} / page</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ margin: "8px 16px" }}>
+        <div style={{ background: WP.white, border: `1px solid ${WP.line}`, borderRadius: 4, boxShadow: "0 1px 1px rgba(0,0,0,.04)" }}>
+          <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => Math.max(1, p - 1))} onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+          {loading ? (
+            <div style={{ padding: 40, textAlign: "center" }}><Spinner size="sm" /></div>
+          ) : pages.length === 0 ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", color: WP.textMid }}>
+              <p style={{ fontSize: 15, marginBottom: 12 }}>No pages found.</p>
+              <BtnBlue onClick={() => { resetForm(); setView("form"); }}>Add New Page</BtnBlue>
             </div>
           ) : (
-            <>
-              <div className="table-responsive shadow-sm rounded">
-                <Table
-                  responsive
-                  hover
-                  bordered
-                  className="align-middle mb-0"
-                >
-                  <thead
-                    className="sticky-top"
-                    
-                  >
-                    <tr className="text-uppercase fw-semibold small" style={{
-                      backgroundColor: "#134d48",
-                      color: "#fff",
-                      // zIndex: 1,
-                    }}>
-                      <th className="py-3 ps-3">S.No</th>
-                      <th className="py-3">Title</th>
-                      <th className="py-3">Menu</th>
-                      <th className="py-3">Main Slug</th>
-                      <th className="py-3">Slug</th>
-                      <th className="py-3">Department</th>
-                      <th className="py-3 text-center">Status</th>
-                      <th className="py-3 text-center">Docs</th>
-                      <th className="py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {list.length === 0 ? (
-                      <tr>
-                        <td colSpan="8" className="text-center py-4">
-                          <p className="mb-0 text-muted">
-                            No pages found. Try adjusting your filters.
-                          </p>
+            <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 11 : 13, minWidth: 820 }}>
+                <thead>
+                  <tr>
+                    <th style={thSt}>#</th>
+                    <th style={thSt} onClick={() => handleSort("titleEng")}>Title{sortIcon("titleEng")}</th>
+                    <th style={thSt}>Permalink</th>
+                    <th style={thSt}>Department</th>
+                    <th style={{ ...thSt, textAlign: "center" }}>Docs</th>
+                    <th style={thSt} onClick={() => handleSort("isActive")}>Status{sortIcon("isActive")}</th>
+                    <th style={{ ...thSt, textAlign: "right", cursor: "default" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pages.map((item, idx) => {
+                    const path = buildFullPath(item);
+                    const fullUrl = buildFullUrl(item);
+                    return (
+                      <tr key={item._id} onMouseEnter={() => setHoveredRow(item._id)} onMouseLeave={() => setHoveredRow(null)} style={{ borderBottom: `1px solid ${WP.line}`, background: hoveredRow === item._id ? "#f9f9f9" : WP.white }}>
+                        <td style={tdStyle()}>{(currentPage - 1) * pageSize + idx + 1}</td>
+                        <td style={tdStyle()}>
+                          <strong>{item.titleEng || "Untitled"}</strong>
+                          {item.titleHin && <div style={{ fontSize: 11, color: WP.textLight, marginTop: 2 }}>{item.titleHin}</div>}
+                        </td>
+                        <td style={tdStyle()}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, maxWidth: 320 }}>
+                            <FaLink size={9} style={{ color: WP.textLight, flexShrink: 0 }} />
+                            {path ? (
+                              <a href={fullUrl} target="_blank" rel="noopener noreferrer" title={fullUrl} style={{ color: WP.blue, textDecoration: "none", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                /{path}
+                              </a>
+                            ) : (
+                              <span style={{ color: WP.textLight, fontSize: 11 }}>No slug set</span>
+                            )}
+                            <CopyBtn text={path ? fullUrl : ""} />
+                          </div>
+                        </td>
+                        <td style={tdStyle()}>{item.department || <span style={{ color: WP.textLight }}>—</span>}</td>
+                        <td style={{ ...tdStyle(), textAlign: "center" }}>
+                          <span style={{ display: "inline-block", minWidth: 20, padding: "1px 6px", borderRadius: 10, fontSize: 11, fontWeight: 600, background: WP.blueBg, color: WP.blue }}>
+                            {item.documentsUpdate?.length || 0}
+                          </span>
+                        </td>
+                        <td style={tdStyle()}><StatusBadge active={item.isActive} /></td>
+                        <td style={{ ...tdStyle(true) }}>
+                          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                            <BtnSecondary size="sm" onClick={() => path && window.open(fullUrl, "_blank", "noopener,noreferrer")} disabled={!path}>
+                              <FaEye size={11} /> {!isMobile && "View"}
+                            </BtnSecondary>
+                            <BtnSecondary size="sm" onClick={() => handleEdit(item)}><FaEdit size={11} /> {!isMobile && "Edit"}</BtnSecondary>
+                            <BtnDanger size="sm" onClick={() => handleDelete(item._id, item.titleEng)}><FaTrashAlt size={11} /> {!isMobile && "Delete"}</BtnDanger>
+                          </div>
                         </td>
                       </tr>
-                    ) : (
-                      list.map((item, i) => (
-                        <tr key={item._id || i}>
-                          <td>{(currentPage - 1) * limit + i + 1}</td>
-                          <td>{item.titleEng || "N/A"}</td>
-                          <td>
-                            {item.menuId?.titleEng ||
-                              item.menuId?.name ||
-                              "N/A"}
-                          </td>
-                          <td>
-                            <code className="text-primary">
-                              {item.mainSlug || "N/A"}
-                            </code>
-                          </td>
-                          <td>
-                            <code className="text-primary">
-                              {item.slug || "N/A"}
-                            </code>
-                          </td>
-                          <td>{item.department || "N/A"}</td>
-                          <td className="text-center">
-                            <span
-                              className={`badge rounded-pill px-3 py-2 ${item.isActive
-                                  ? "bg-success-subtle text-success"
-                                  : "bg-danger-subtle text-danger"
-                                }`}
-                            >
-                              {item.isActive ? "ACTIVE" : "INACTIVE"}
-                            </span>
-                          </td>
-
-                          <td className="text-center">
-                            <span className="badge bg-info">
-                              {item.documentsUpdate?.length || 0}
-                            </span>
-                          </td>
-                          <td className="py-3 px-3 align-middle text-center">
-                            <div className="btn-group gap-2">
-                              <Button
-                                size="sm"
-                                color="warning"
-                                className="rounded-circle p-0 border-0"
-                                style={{ width: "32px", height: "32px" }}
-                                onClick={() => handleEdit(item)}
-                                title="Edit"
-                              >
-                                <FaEdit size={14} />
-                              </Button>
-
-                              <Button
-                                size="sm"
-                                color="danger"
-                                className="rounded-circle p-0 border-0"
-                                style={{ width: "32px", height: "32px" }}
-                                onClick={() => handleDelete(item._id)}
-                                title="Delete"
-                              >
-                                <FaTrash size={14} />
-                              </Button>
-
-                              <Button
-                                size="sm"
-                                style={{ backgroundColor: "#3c63e4", padding: "6px 12px" }}
-                                className="rounded-pill"
-                                onClick={() =>
-                                  window.open(
-                                    `${item.menuId?.path}/${item.mainSlug}`,
-                                    "_blank"
-                                  )
-                                }
-                                title="Visit Page"
-                              >
-                                <FaEye size={12} />
-
-                              </Button>
-                            </div>
-                          </td>
-
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              {renderPagination()}
-            </>
-          )}
-
-        </CardBody>
-      </Card>
-
-      {/* Main Form Modal */}
-      <Modal isOpen={modal} toggle={toggleModal} size="xl" backdrop="static">
-        <ModalHeader toggle={toggleModal}>
-          {editingId ? "✏️ Edit Page" : "➕ Create Page"}
-        </ModalHeader>
-        <Form onSubmit={handleSubmit}>
-          <ModalBody style={{ maxHeight: "70vh", overflowY: "auto" }}>
-            {/* Title Fields */}
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <Label>
-                    Title (English) <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="Enter title in English"
-                    value={formData.titleEng}
-                    onChange={(e) => {
-                      const title = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        titleEng: title,
-                        slug: generateSlug(title)
-                      }));
-                    }}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <Label>
-                    Title (Hindi) <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="शीर्षक हिंदी में दर्ज करें"
-                    value={formData.titleHin}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        titleHin: e.target.value
-                      }))
-                    }
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-
-            {/* Slug Fields */}
-            <Row>
-              <Col md={4}>
-                <FormGroup>
-                  <Label>
-                    Menu <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="select"
-                    required
-                    value={formData.menuId}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        menuId: e.target.value
-                      }))
-                    }
-                  >
-                    <option value="">-- Select Menu --</option>
-                    {menuList.map((menu) => (
-                      <option key={menu._id} value={menu._id}>
-                        {menu.titleEng || menu.name || "Unnamed Menu"}
-                      </option>
-                    ))}
-                  </Input>
-                </FormGroup>
-              </Col>
-              <Col md={4}>
-                <FormGroup>
-                  <Label>
-                    Main Slug (Main List Page ) <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="main-slug"
-                    value={formData.mainSlug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        mainSlug: e.target.value
-                      }))
-                    }
-                  />
-                </FormGroup>
-              </Col>
-              <Col md={4}>
-                <FormGroup>
-                  <Label>
-                    Slug <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="auto-generated-slug"
-                    value={formData.slug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        slug: generateSlug(e.target.value)
-                      }))
-                    }
-                    disabled={editingId}
-                  />
-                  <small className="text-muted">
-                    Auto-generated from title
-                  </small>
-                </FormGroup>
-              </Col>
-
-            </Row>
-            {/* Menu and Department */}
-            <Row>
-              <Col md={8}>
-                <FormGroup>
-                  <Label>
-                    Department <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="Enter department name"
-                    value={formData.department}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        department: e.target.value
-                      }))
-                    }
-                  />
-                </FormGroup>
-              </Col>
-              <Col md={4} className="mt-5 ml-3">
-                <FormGroup check className="mb-3">
-                  <Input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        isActive: e.target.checked   // 🔥 THIS IS IMPORTANT
-                      })
-                    }
-                  />
-                  <Label check for="isActive" className="fw-semibold">
-                    Is Active
-                  </Label>
-                </FormGroup>
-              </Col>
-            </Row>
-
-
-            {/* Documents Section */}
-            <hr className="my-4" />
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="mb-0">
-                📎 Documents For Sub Page Content (
-                {formData.documentsUpdate.length})
-              </h5>
-              <Button
-                color="success"
-                size="sm"
-                onClick={toggleDocumentModal}
-                type="button"
-              >
-                <FaPlus className="me-1" /> Add Document
-              </Button>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-
-            {formData.documentsUpdate.length > 0 ? (
-              <div className="table-responsive">
-                <Table size="sm" bordered hover>
-                  <thead className="table-light">
-                    <tr>
-                      <th style={{ width: "50px" }}>#</th>
-                      <th>Title (EN)</th>
-                      <th>Title (HI)</th>
-                      <th>File</th>
-                      <th style={{ width: "100px" }}>Size</th>
-                      <th style={{ width: "120px" }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {formData.documentsUpdate.map((doc, idx) => (
-                      <tr key={idx}>
-                        <td>{idx + 1}</td>
-                        <td>{doc.titleEng || "N/A"}</td>
-                        <td>{doc.titleHin || "N/A"}</td>
-                        <td>
-                          {doc.fileUrl ? (
-                            <a
-                              href={`${API_URL}${doc.fileUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-decoration-none"
-                            >
-                              {getFileIcon(doc.fileType)}{" "}
-                              {doc.fileName || "View"}
-                            </a>
-                          ) : doc.fileName ? (
-                            <span className="text-success">
-                              {getFileIcon(doc.fileType)} {doc.fileName}
-                            </span>
-                          ) : (
-                            <span className="text-muted">No file</span>
-                          )}
-                        </td>
-                        <td>{doc.fileSize || "N/A"}</td>
-
-                        <td>
-                          <Button
-                            size="sm"
-                            color="warning"
-                            className="me-1"
-                            onClick={() => handleEditDocument(idx)}
-                            type="button"
-                            title="Edit Document"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="danger"
-                            onClick={() => handleDeleteDocument(idx)}
-                            type="button"
-                            title="Delete Document"
-                          >
-                            <FaTrash />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center text-muted py-3 bg-light rounded">
-                <p className="mb-0">No documents added yet</p>
-              </div>
-            )}
-
-            {/* HTML Content */}
-            <hr className="my-4" />
-            <FormGroup>
-              <Label>HTML Content (English)</Label>
-              <ReactQuill
-                theme="snow"
-                value={formData.htmlContent}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, htmlContent: value }))
-                }
-                style={{ height: "200px", marginBottom: "50px" }}
-                placeholder="Enter page content here..."
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>HTML Content (Hindi)</Label>
-              <ReactQuill
-                theme="snow"
-                value={formData.htmlContentHi}
-                onChange={(value) =>
-                  setFormData((prev) => ({ ...prev, htmlContentHi: value }))
-                }
-                style={{ height: "200px", marginBottom: "50px" }}
-                placeholder="यहाँ पेज की सामग्री दर्ज करें..."
-              />
-            </FormGroup>
-          </ModalBody>
-          <ModalFooter>
-            <Button color="primary" type="submit" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Spinner size="sm" className="me-1" />
-                  {editingId ? "Updating..." : "Saving..."}
-                </>
-              ) : (
-                <>
-                  <FaSave className="me-1" />{" "}
-                  {editingId ? "Update" : "Publish"}
-                </>
-              )}
-            </Button>
-            <Button
-              color="secondary"
-              onClick={toggleModal}
-              type="button"
-              disabled={submitting}
-            >
-              <FaTimes className="me-1" /> Cancel
-            </Button>
-          </ModalFooter>
-        </Form>
-      </Modal>
-
-      {/* Document Modal */}
-      <Modal
-        isOpen={documentModal}
-        toggle={toggleDocumentModal}
-        size="lg"
-        backdrop="static"
-      >
-        <ModalHeader toggle={toggleDocumentModal}>
-          {editingDocIndex !== null ? "✏️ Edit Document" : "➕ Add Document"}
-        </ModalHeader>
-        <ModalBody>
-          <Row>
-            <Col md={6}>
-              <FormGroup>
-                <Label>
-                  Document Title (English){" "}
-                  <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="Enter document title"
-                  value={currentDocument.titleEng}
-                  onChange={(e) =>
-                    setCurrentDocument({
-                      ...currentDocument,
-                      titleEng: e.target.value
-                    })
-                  }
-                />
-              </FormGroup>
-            </Col>
-            <Col md={6}>
-              <FormGroup>
-                <Label>
-                  Document Title (Hindi) <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="दस्तावेज़ शीर्षक दर्ज करें"
-                  value={currentDocument.titleHin}
-                  onChange={(e) =>
-                    setCurrentDocument({
-                      ...currentDocument,
-                      titleHin: e.target.value
-                    })
-                  }
-                />
-              </FormGroup>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <FormGroup>
-                <Label>
-                  Short Description (English)
-                </Label>
-                <Input
-                  type="textarea"
-                  placeholder="Enter Short Description"
-                  value={currentDocument.shortDescriptionEn}
-                  onChange={(e) =>
-                    setCurrentDocument({
-                      ...currentDocument,
-                      shortDescriptionEn: e.target.value
-                    })
-                  }
-                />
-              </FormGroup>
-            </Col>
-            <Col md={6}>
-              <FormGroup>
-                <Label>
-                  Short Description (Hindi)
-                </Label>
-                <Input
-                  type="textarea"
-                  placeholder="संक्षिप्त विवरण दर्ज करें"
-                  value={currentDocument.shortDescriptionHin}
-                  onChange={(e) =>
-                    setCurrentDocument({
-                      ...currentDocument,
-                      shortDescriptionHin: e.target.value
-                    })
-                  }
-                />
-              </FormGroup>
-            </Col>
-            <Col md={6}>
-              <FormGroup>
-                <Label>
-                  Upload File{" "}
-                  {editingDocIndex === null && (
-                    <span className="text-danger">*</span>
-                  )}
-                  <small className="text-muted d-block">
-                    Maximum allowed file size: 30 MB
-                  </small>
-                </Label>
-                <Input
-                  type="file"
-                  onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx,.xls,.xlsx"
-                />
-                {currentDocument.fileName && (
-                  <small className="text-success d-block mt-2">
-                    ✓ File Selected: {currentDocument.fileName}
-                  </small>
-                )}
-                {editingDocIndex !== null &&
-                  !currentDocument.file &&
-                  currentDocument.fileUrl && (
-                    <small className="text-info d-block mt-2">
-                      📎 Current file will be kept if no new file is uploaded
-                    </small>
-                  )}
-              </FormGroup>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <FormGroup>
-                <Label>File Size (auto-filled)</Label>
-                <Input
-                  type="text"
-                  value={currentDocument.fileSize}
-                  readOnly
-                  disabled
-                  className="bg-light"
-                />
-              </FormGroup>
-            </Col>
-            <Col md={6}>
-              <FormGroup>
-                <Label>File Type (auto-filled)</Label>
-                <Input
-                  type="text"
-                  value={currentDocument.fileType}
-                  readOnly
-                  disabled
-                  className="bg-light"
-                />
-              </FormGroup>
-            </Col>
-          </Row>
-        </ModalBody>
-        <ModalFooter>
-          <Button color="primary" onClick={handleAddDocument}>
-            <FaSave className="me-1" />{" "}
-            {editingDocIndex !== null ? "Update" : "Add"}
-          </Button>
-          <Button color="secondary" onClick={toggleDocumentModal}>
-            <FaTimes className="me-1" /> Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
+          )}
+          <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => Math.max(1, p - 1))} onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+        </div>
+      </div>
+      <div style={{ height: 20 }} />
     </div>
   );
 };
 
-export default MultiSectionPagesMangagement;
+export default MultiSectionPagesManagement;
