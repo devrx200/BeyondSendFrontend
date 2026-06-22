@@ -237,10 +237,10 @@ const NewUpdates = () => {
   return (
     <Card>
       {/* HEADER */}
-      <CardHeader className="px-4 py-3">
+      <CardHeader >
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
-            <h3 className="mb-1 fw-semibold text-shadow text-white" style={{ textShadow: "1px 1px 2px rgba(231, 231, 231, 0.96)" }}>
+            <h3 className="mb-1 text-white" >
               <FaBullhorn className="me-2 text-danger" />
               Notice Ticker Management
             </h3>

@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody,
-  Row, Col, Badge, Alert
+  Row, Col, Badge, Alert,
+  CardHeader
 } from "reactstrap";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
@@ -28,7 +29,7 @@ const MediaLibraryMangments = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
   const [error, setError] = useState("");
-  
+
   // New state for manual upload: holds the selected file before upload
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -129,12 +130,12 @@ const MediaLibraryMangments = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-    
+
     const formData = new FormData();
     formData.append("file", selectedFile);
     setUploadProgress(true);
     setError("");
-    
+
     try {
       await axios.post(`${API}/api/files/upload`, formData, {
         headers: { ...authHeader(), "Content-Type": "multipart/form-data" }
@@ -264,7 +265,7 @@ const MediaLibraryMangments = () => {
                   {getFileIcon(file.originalName)}
                   <span className="fw-semibold">{file.originalName}</span>
                 </div>
-               </td>
+              </td>
               <td style={{ padding: "12px 16px" }}><Badge color="secondary" pill>{file.originalName?.split(".").pop().toUpperCase()}</Badge></td>
               <td style={{ padding: "12px 16px" }}>{formatSize(file.fileSize)}</td>
               <td style={{ padding: "12px 16px" }}>{formatDateTime(file.createdAt)}</td>
@@ -292,6 +293,9 @@ const MediaLibraryMangments = () => {
       {/* Upload Area - Now with manual upload button */}
       <div className="p-3 pb-0">
         <Card className="shadow-sm border-0 rounded-3 overflow-hidden">
+          <CardHeader className="p-2">
+            <h4 className="text-white"> Media Library</h4>
+          </CardHeader>
           <CardBody className="p-4">
             <div {...getRootProps()} className={`border-2 border-dashed rounded-3 p-5 text-center transition-all ${isDragActive ? "bg-primary-soft border-primary" : "bg-light border-secondary"}`} style={{ cursor: "pointer", transition: "all 0.2s", borderStyle: "dashed" }}>
               <input {...getInputProps()} />
@@ -326,41 +330,42 @@ const MediaLibraryMangments = () => {
       </div>
 
       {/* Toolbar: Filter Icons + Search + View Toggle */}
-      <div className="bg-white mt-3 mx-3 rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
-        <div className="d-flex flex-wrap align-items-center gap-3">
-          <h4 className="mb-0 fw-bold " style={{ color: "#2271b1" }}>
-            All Media Library
-          </h4>
+     
+        <div className="bg-white mt-3 mx-3 rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+          <div className="d-flex flex-wrap align-items-center gap-3">
+            <h4 className="mb-0 fw-bold " style={{ color: "#2271b1" }}>
+              All Media Library
+            </h4>
+            <div className="d-flex gap-1">
+              <button onClick={() => setFilterType("all")} style={filterBtnStyle(filterType === "all")}>
+                <FaImages /> All
+              </button>
+              <button onClick={() => setFilterType("image")} style={filterBtnStyle(filterType === "image")}>
+                <FaFileImage /> Images
+              </button>
+              <button onClick={() => setFilterType("pdf")} style={filterBtnStyle(filterType === "pdf")}>
+                <FaFilePdf /> PDF
+              </button>
+              <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
+                <FaTable /> Documents
+              </button>
+            </div>
+            <div style={{ width: 1, height: 30, background: "#ddd", margin: "0 4px" }} />
+            <div>
+              <Input type="text" placeholder="Search files On Library..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: 240, fontSize: 13, borderRadius: 15, paddingLeft: 32 }} className="form-control" />
+            </div>
+          </div>
+
           <div className="d-flex gap-1">
-            <button onClick={() => setFilterType("all")} style={filterBtnStyle(filterType === "all")}>
-              <FaImages /> All
+            <button onClick={() => setViewMode("grid")} style={filterBtnStyle(viewMode === "grid")}>
+              <FaTh /> Grid
             </button>
-            <button onClick={() => setFilterType("image")} style={filterBtnStyle(filterType === "image")}>
-              <FaFileImage /> Images
-            </button>
-            <button onClick={() => setFilterType("pdf")} style={filterBtnStyle(filterType === "pdf")}>
-              <FaFilePdf /> PDF
-            </button>
-            <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
-              <FaTable /> Documents
+            <button onClick={() => setViewMode("list")} style={filterBtnStyle(viewMode === "list")}>
+              <FaList /> List
             </button>
           </div>
-          <div style={{ width: 1, height: 30, background: "#ddd", margin: "0 4px" }} />
-          <div>
-            <Input type="text" placeholder="Search files On Library..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: 240, fontSize: 13, borderRadius: 15, paddingLeft: 32 }} className="form-control" />
-          </div>
         </div>
-
-        <div className="d-flex gap-1">
-          <button onClick={() => setViewMode("grid")} style={filterBtnStyle(viewMode === "grid")}>
-            <FaTh /> Grid
-          </button>
-          <button onClick={() => setViewMode("list")} style={filterBtnStyle(viewMode === "list")}>
-            <FaList /> List
-          </button>
-        </div>
-      </div>
-
+      
       {error && <Alert color="danger" className="mx-3 mt-2">{error}</Alert>}
 
       {/* Media Items */}

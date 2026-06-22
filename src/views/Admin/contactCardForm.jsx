@@ -105,14 +105,16 @@ const ContactCardCMS = () => {
 
   return (
     <Container className="mt-4">
-<CardHeader>
-<h4 className="mb-3 text-white">📇 Contact Card Management</h4>
-</CardHeader>
+
       
 
       {/* ================= FORM ================= */}
       <Card className="mb-4 shadow-sm">
+            <CardHeader>
+<h4 className="mb-3 text-white">📇 Contact Card Management</h4>
+</CardHeader>
         <CardBody>
+      
           <Row>
 
             <Col md={3}>

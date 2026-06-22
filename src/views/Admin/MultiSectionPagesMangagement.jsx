@@ -839,7 +839,7 @@ const MultiSectionPagesMangagement = () => {
         <CardHeader>
             {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="mb-0">📄 Multi Section Pages Management</h4>
+            <h4 className="mb-0 text-white">📄 Multi Section Pages Management</h4>
             <Button color="light" className="text-success" onClick={toggleModal} disabled={loading}>
               <FaPlus className="me-1" /> Add Page
             </Button>

@@ -23,7 +23,7 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { FaPlus, FaEdit, FaTrash, FaSave ,FaTimes ,FaSearch ,FaFilter  } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaSearch, FaFilter } from "react-icons/fa";
 
 
 /* ---------- CURRENT ACADEMIC YEAR ---------- */
@@ -41,11 +41,11 @@ const AdminEducationStats = () => {
   const [loading, setLoading] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
   const token = sessionStorage.getItem("authToken");
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -70,7 +70,7 @@ const AdminEducationStats = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${API_URL}/api/education-stats/list-for-admin`, 
+        `${API_URL}/api/education-stats/list-for-admin`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setList(res.data.data || []);
@@ -92,9 +92,9 @@ const AdminEducationStats = () => {
 
   /* ================= FILTERING ================= */
   const filteredList = list.filter(item => {
-    const matchesSearch = searchTerm === "" || 
+    const matchesSearch = searchTerm === "" ||
       item.academicYear?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "all" || 
+    const matchesStatus = filterStatus === "all" ||
       (filterStatus === "active" ? item.isActive : !item.isActive);
     return matchesSearch && matchesStatus;
   });
@@ -345,7 +345,7 @@ const AdminEducationStats = () => {
   return (
     <Card className="shadow-sm border-0">
       <CardHeader>
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center p-2">
           <h4 className="mb-0 text-white">Education Statistics (Admin)</h4>
           <Button color="light" className="text-success" onClick={toggleModal}>
             <FaPlus className="me-2" /> Add Academic Year
@@ -354,137 +354,130 @@ const AdminEducationStats = () => {
       </CardHeader>
       <CardBody>
         {/* Filters */}
- <div className="mb-4 p-3 bg-light rounded-3">
-  <Row className="g-3 align-items-end">
-    <Col lg={4} md={6} sm={12}>
-      <FormGroup className="mb-0">
-        <Label className="fw-semibold mb-1 text-secondary">
-          <FaSearch className="me-1 text-primary" size={14} />
-          Search by Academic Year
-        </Label>
-        <Input
-          type="text"
-          placeholder="Search notices..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border-2 rounded-3"
-          style={{ 
-            borderColor: "#e2e8f0", 
-            height: "42px",
-            transition: "all 0.3s ease"
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = "#0d6efd";
-            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = "#e2e8f0";
-            e.target.style.boxShadow = "none";
-          }}
-        />
-      </FormGroup>
-    </Col>
-    
-    <Col lg={3} md={6} sm={12}>
-      <FormGroup className="mb-0">
-        <Label className="fw-semibold mb-1 text-secondary">
-          <FaFilter className="me-1 text-primary" size={14} />
-          Filter by Status
-        </Label>
-        <Input
-          type="select"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border-2 rounded-3"
-          style={{ 
-            borderColor: "#e2e8f0", 
-            height: "42px",
-            transition: "all 0.3s ease"
-          }}
-          onFocus={(e) => {
-            e.target.style.borderColor = "#0d6efd";
-            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = "#e2e8f0";
-            e.target.style.boxShadow = "none";
-          }}
-        >
-          <option value="all">📋 All</option>
-          <option value="active">✅ Active</option>
-          <option value="inactive">⛔ Inactive</option>
-        </Input>
-      </FormGroup>
-    </Col>
-    
-    <Col lg={3} md={6} sm={12} className="d-flex">
-      <Button 
-        color="secondary" 
-        onClick={handleResetFilters}
-        className="w-100 rounded-3 fw-semibold"
-        style={{ 
-          height: "42px",
-          padding: "0 20px",
-          background: "linear-gradient(135deg, #6c757d 0%, #495057 100%)",
-          border: "none",
-          transition: "all 0.3s ease",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.transform = "translateY(-2px)";
-          e.target.style.boxShadow = "0 4px 15px rgba(108, 117, 125, 0.4)";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = "translateY(0)";
-          e.target.style.boxShadow = "none";
-        }}
-      >
-        <FaTimes className="me-2" size={14} />
-        Reset Filters
-      </Button>
-    </Col>
-    
-    <Col lg={2} md={6} sm={12}>
-      <div className="d-flex align-items-center gap-2 justify-content-md-end justify-content-start" style={{ height: "42px" }}>
-        <small className="text-muted fw-semibold">Show:</small>
-        <select
-          className="form-select form-select-sm border-2 rounded-3"
-          style={{ 
-            width: "auto",
-            borderColor: "#e2e8f0",
-            padding: "6px 12px",
-            fontWeight: 500,
-            height: "42px",
-            cursor: "pointer",
-            transition: "all 0.3s ease"
-          }}
-          value={itemsPerPage}
-          onChange={handleItemsPerPageChange}
-          onFocus={(e) => {
-            e.target.style.borderColor = "#0d6efd";
-            e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = "#e2e8f0";
-            e.target.style.boxShadow = "none";
-          }}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-        </select>
-      </div>
-    </Col>
-  </Row>
-</div>
+        <div className="mb-4 p-3 bg-light rounded-3">
+          <Row className="d-flex">
+            <Col lg={3}>
+              <FormGroup className="mb-0">
+                <Label className="fw-semibold mb-1 text-secondary">
+                  <FaSearch className="me-1 text-primary" size={14} />
+                  Search by Academic Year
+                </Label>
+                <Input
+                  type="text"
+                  placeholder="Search notices..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border-2 rounded-3"
+                  style={{
+                    borderColor: "#e2e8f0",
+                    height: "42px",
+                    transition: "all 0.3s ease"
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#0d6efd";
+                    e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+              </FormGroup>
+            </Col>
+
+            <Col lg={3}>
+              <FormGroup className="mb-0">
+                <Label className="fw-semibold mb-1 text-secondary">
+                  <FaFilter className="me-1 text-primary" size={14} />
+                  Filter by Status
+                </Label>
+                <Input
+                  type="select"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border-2 rounded-3"
+                  style={{
+                    borderColor: "#e2e8f0",
+                    height: "42px",
+                    transition: "all 0.3s ease"
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#0d6efd";
+                    e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  <option value="all">📋 All</option>
+                  <option value="active">✅ Active</option>
+                  <option value="inactive">⛔ Inactive</option>
+                </Input>
+              </FormGroup>
+            </Col>
+
+            <Col lg={3} className="mt-4">
+
+              <Button
+                color="secondary"
+                size="small"
+                onClick={handleResetFilters}
+                className="btn btn-secondary rounded-3 fw-semibold"
+               
+                onMouseEnter={(e) => {
+                  e.target.style.transform = "translateY(-2px)";
+                  e.target.style.boxShadow = "0 4px 15px rgba(108, 117, 125, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = "translateY(0)";
+                  e.target.style.boxShadow = "none";
+                }}
+              >
+                <FaTimes className="me-2" size={14} />
+                Reset 
+              </Button>
+            </Col>
+
+            <Col lg={3}>
+              <div className="d-flex align-items-center gap-2 justify-content-md-end justify-content-start" style={{ height: "42px" }}>
+                <small className="text-muted fw-semibold">Show:</small>
+                <select
+                  className="form-select form-select-sm border-2 rounded-3"
+                  style={{
+                    width: "auto",
+                    borderColor: "#e2e8f0",
+                    padding: "6px 12px",
+                    fontWeight: 500,
+                    height: "42px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease"
+                  }}
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "#0d6efd";
+                    e.target.style.boxShadow = "0 0 0 0.2rem rgba(13, 110, 253, 0.25)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#e2e8f0";
+                    e.target.style.boxShadow = "none";
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </Col>
+          </Row>
+        </div>
 
         {/* Stats Info */}
         <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <div className="text-muted small">
-            Showing {filteredList.length === 0 ? 0 : indexOfFirstItem + 1} - 
+            Showing {filteredList.length === 0 ? 0 : indexOfFirstItem + 1} -
             {Math.min(indexOfLastItem, filteredList.length)} of {filteredList.length} records
           </div>
         </div>
@@ -502,9 +495,9 @@ const AdminEducationStats = () => {
                 <tr>
                   <th style={{ width: "50px" }}>#</th>
                   <th>Academic Year</th>
-                 
+
                   <th>Total Universities</th>
-                  
+
                   <th>Total Colleges</th>
                   <th>Total Students</th>
                   <th>Total Courses</th>
@@ -521,13 +514,13 @@ const AdminEducationStats = () => {
                   </tr>
                 ) : (
                   currentData.map((item, i) => {
-                    const totalUniversities = (item.totalGovernmentUniversities || 0) + 
-                                              (item.totalPrivateUniversities || 0) + 
-                                              (item.totalCentralUniversities || 0);
-                    const totalColleges = (item.governmentColleges || 0) + 
-                                          (item.privateColleges || 0) + 
-                                          (item.aidedColleges || 0);
-                    
+                    const totalUniversities = (item.totalGovernmentUniversities || 0) +
+                      (item.totalPrivateUniversities || 0) +
+                      (item.totalCentralUniversities || 0);
+                    const totalColleges = (item.governmentColleges || 0) +
+                      (item.privateColleges || 0) +
+                      (item.aidedColleges || 0);
+
                     return (
                       <tr key={item._id}>
                         <td>{indexOfFirstItem + i + 1}</td>
@@ -543,17 +536,17 @@ const AdminEducationStats = () => {
                         </td>
                         <td>
                           <div className="d-flex gap-2">
-                            <Button 
-                              size="sm" 
-                              color="warning" 
+                            <Button
+                              size="sm"
+                              color="warning"
                               onClick={() => handleEdit(item)}
                               title="Edit"
                             >
                               <FaEdit />
                             </Button>
-                            <Button 
-                              size="sm" 
-                              color="danger" 
+                            <Button
+                              size="sm"
+                              color="danger"
                               onClick={() => handleDelete(item._id)}
                               title="Delete"
                             >
