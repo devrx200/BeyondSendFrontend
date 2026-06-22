@@ -22,7 +22,7 @@ import {
   TabContent,
   TabPane
 } from "reactstrap";
-import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft , FaBullhorn} from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import ReactQuill from "react-quill";
@@ -400,8 +400,9 @@ const DirectorateNoticeManagement = () => {
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <div className="d-flex justify-content-between align-items-center">
-          <h4 className="text-white mb-0">Directorate Notices</h4>
+        <div className="d-flex justify-content-between align-items-center p-2">
+           
+          <h4 className="text-white "> <FaBullhorn className="me-2 " /> Directorate Notices</h4>
           {activeTab === "1" && (
             <Button color="light" className="text-success" onClick={handleAddNew}>
               <FaPlus /> Add Notice

@@ -283,19 +283,22 @@ const AnnouncementsManagement = () => {
 
   return (
     <Card className=" ">
-      <CardHeader className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3" >
-          <FaBullhorn className="me-2 " />
-          {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
-        </h4>
-        {activeTab === "list" && (
-          <Button color="light" onClick={handleAddNew} className="d-flex align-items-center text-success">
-            <FaPlus className="me-2" />
-            {isHindi ? "नई घोषणा" : "Add Announcement"}
-          </Button>
-        )}
+      <CardHeader>
+        <div  className="d-flex justify-content-between align-items-center p-2">
+          <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3" >
+            <FaBullhorn className="me-2 " />
+            {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
+          </h4>
+          {activeTab === "list" && (
+            <Button color="light" onClick={handleAddNew} className="d-flex align-items-center text-success">
+              <FaPlus className="me-2" />
+              {isHindi ? "नई घोषणा" : "Add Announcement"}
+            </Button>
+          )}
+        </div>
+
       </CardHeader>
-      <CardBody className="p-4">
+      <CardBody >
 
         <Nav tabs className="mb-3">
           <NavItem>
