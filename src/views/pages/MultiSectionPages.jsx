@@ -110,7 +110,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
                         <div className="me-3 rounded-pill flex-shrink-0" style={{ width: 6, alignSelf: "stretch", background: "linear-gradient(180deg, #0d6efd, #6610f2)" }} />
                         <div className="flex-grow-1">
                           <h6 className="fw-bold mb-2 text-dark">
-                            {isHindi ? item.titleHi || item.titleEn : item.titleEn}
+                            {isHindi ? item.titleHin || item.titleEng : item.titleEng}
                           </h6>
                           <div className="small text-muted mb-3">
                             {isHindi ? (item.shortDescriptionHi || item.shortDescriptionEn) : item.shortDescriptionEn}
@@ -173,7 +173,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange }) => 
   const page = prefetchedData;
   if (!page) return null;
 
-  const title = isHindi ? (page.titleHi || page.titleEn) : page.titleEn;
+  const title = isHindi ? (page.titleHin || page.titleEng) : page.titleEng;
   const htmlContent = isHindi
     ? (page.htmlContentHi || page.descriptionHi || page.descriptionEn)
     : (page.htmlContent || page.descriptionEn);
