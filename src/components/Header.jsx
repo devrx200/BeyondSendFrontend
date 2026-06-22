@@ -12,6 +12,7 @@ import { useAccessibility } from "../contexts/AccessibilityContext";
 import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.BASE_URL;
 
 const styles = `
   .top-bar { background-color: #1a3a6b; }
@@ -226,7 +227,7 @@ const Header = () => {
         <Container>
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div className="d-flex align-items-center gap-3">
-              <img src={headerData?.logo ? `${API_URL}${headerData.logo}` : "/Chhattisgarh.svg"} alt="logo" className="main-logo" height="70" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Chhattisgarh.svg")} />
+              <img src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`} alt="logo" className="main-logo" height="70" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)} />
               <div>
                 <h4 className="mb-0 fw-bold">
                   {isHindi ? (headerData?.titleHin || "उच्च शिक्षा विभाग") : (headerData?.titleEng || "Department of Higher Education")}
@@ -237,8 +238,8 @@ const Header = () => {
               </div>
             </div>
             <div className="d-flex align-items-center gap-2">
-              <img src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : "/Digital_India_logo.svg"} className="right-logo" height="60" alt="Digital India" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Digital_India_logo.svg")} />
-              <img src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : "/Emblem_of_India.svg"} className="right-logo" height="60" alt="Emblem" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = "/Emblem_of_India.svg")} />
+              <img src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : `${BASE_URL}Digital_India_logo.svg`} className="right-logo" height="60" alt="Digital India" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = `${BASE_URL}Digital_India_logo.svg`)} />
+              <img src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : `${BASE_URL}Emblem_of_India.svg`} className="right-logo" height="60" alt="Emblem" style={{ cursor: "pointer" }} onClick={() => navigate("/")} onError={e => (e.target.src = `${BASE_URL}Emblem_of_India.svg`)} />
             </div>
           </div>
         </Container>

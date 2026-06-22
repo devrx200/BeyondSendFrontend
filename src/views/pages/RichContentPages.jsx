@@ -40,7 +40,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
     tempDiv.innerHTML = html;
     return tempDiv.textContent?.trim() || "";
   };
-  const title = isHindi ? prefetchedData.titleHi : prefetchedData.titleEn;
+  const title = (isHindi ? prefetchedData.titleHi : prefetchedData.titleEn) || "";
   const shortDesc = isHindi ? prefetchedData.shortDescriptionHi : prefetchedData.shortDescriptionEn;
   const descriptionHtml = isHindi ? prefetchedData.descriptionHi : prefetchedData.descriptionEn;
   const publishDate = formatDateTime(prefetchedData.publishDate);
@@ -89,7 +89,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
     <>
       {/* ---------- SEO Meta Tags (invisible to UI) ---------- */}
       <Helmet>
-        <title>{title} - Department of Higher Education, Government of Chhattisgarh India.</title>
+        <title>{`${title} - Department of Higher Education, Government of Chhattisgarh India.`}</title>
         <meta name="description" content={metaDescription} />
         {keywordsString && <meta name="keywords" content={keywordsString} />}
         {preview && <meta name="robots" content="noindex, nofollow" />}

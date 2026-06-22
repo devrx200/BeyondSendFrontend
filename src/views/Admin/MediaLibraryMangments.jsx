@@ -300,7 +300,8 @@ const MediaLibraryMangments = () => {
                   <FaUpload size={48} className={`mb-3 ${isDragActive ? "text-primary" : "text-muted"}`} />
                   <h5 className="mb-1">{isDragActive ? "Drop file here" : "Drop files anywhere to upload"}</h5>
                   <p className="text-muted mb-0">or <span className="text-primary fw-semibold">Select Files</span></p>
-                  <small className="text-muted mt-2 d-block">Maximum upload file size: 32 MB. Supported: JPG, PNG, GIF, WebP, PDF, Excel, Word</small>
+                  <small className="fw-bold">Maximum Upload File Size: 32 MB. </small><br/>
+                  <small className="text-muted mt-2 d-block"><strong>Supported:</strong> JPG, JPEG, PNG, GIF, WebP, SVG, PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, PPT, PPTX, ZIP, MP3, MP4, MOV</small>
                 </>
               ) : (
                 <div className="text-center">

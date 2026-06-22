@@ -196,14 +196,14 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
   }
 
   // Normal view with SEO
-  const pageTitle = isHindi ? detail.titleHi : detail.titleEn;
+  const pageTitle = (isHindi ? detail.titleHi : detail.titleEn) || "";
   const metaDescription = getMetaDescription();
 
   return (
     <>
       <Helmet>
         <html lang={isHindi ? "hi" : "en"} />
-        <title>{pageTitle} - Department of Higher Education, Government of Chhattisgarh India. </title>
+        <title>{`${pageTitle} - Department of Higher Education, Government of Chhattisgarh India.`}</title>
         {metaDescription && <meta name="description" content={metaDescription} />}
         <meta property="og:title" content={pageTitle} />
         {metaDescription && <meta property="og:description" content={metaDescription} />}

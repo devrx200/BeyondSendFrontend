@@ -10,7 +10,7 @@ const About = () => {
     <PageLayout
       title={isHindi ? 'हमारे बारे में' : 'About Us'}
       titleHi="हमारे बारे में"
-      showBreadcrumb={false}
+      showBreadcrumb={true}
     >
       {/* About Content */}
       <Row className="mb-5">

@@ -17,7 +17,8 @@ import {
   Spinner,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  CardHeader
 } from "reactstrap";
 import {
   FaPlus,
@@ -835,15 +836,16 @@ const MultiSectionPagesMangagement = () => {
   return (
     <div className="container mt-4">
       <Card>
-        <CardBody>
-          {/* Header */}
+        <CardHeader>
+            {/* Header */}
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="mb-0">📄 Multi Section Pages Management</h4>
-            <Button color="primary" onClick={toggleModal} disabled={loading}>
+            <Button color="light" className="text-success" onClick={toggleModal} disabled={loading}>
               <FaPlus className="me-1" /> Add Page
             </Button>
           </div>
-
+        </CardHeader>
+        <CardBody>
           {/* Filters */}
           <Card className="mb-3 bg-light">
             <CardBody>
