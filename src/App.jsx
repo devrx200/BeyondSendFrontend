@@ -9,7 +9,7 @@ import GlobalLinkHandler from "./utilies/GlobalLinkHandler";
 import "./App.css";
 function App() {
   return (
-    <Router basename="/hesite">
+    <Router basename="/">
       <AuthProvider>
         <LanguageProvider>
           <AccessibilityProvider>

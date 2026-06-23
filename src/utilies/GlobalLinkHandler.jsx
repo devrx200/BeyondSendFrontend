@@ -16,7 +16,7 @@ const GlobalLinkHandler = () => {
       ) return;
       if (target === "_blank") return;
       if (href.startsWith("#")) return;
-      const base = window.location.pathname.split("/")[1]; 
+      const base = window.location.pathname.split("/")[0]; 
       const basePath = base ? `/${base}` : "";
 
       if (href.startsWith(basePath)) {
