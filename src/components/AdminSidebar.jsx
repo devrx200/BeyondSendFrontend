@@ -604,7 +604,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
       <div className="adm-side-profile">
         <div className="adm-side-brand d-flex border border-1 border-rounded p-1">
           <img
-            src="/hesite/public/Chhattisgarh.svg"
+            src="/Chhattisgarh.svg"
             alt="Chhattisgarh Government"
             className="adm-side-brand-logo"
           />

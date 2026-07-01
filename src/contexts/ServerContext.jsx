@@ -4,7 +4,7 @@ import ServerDown from "../views/pages/ServerDown";
 
 const ServerContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL;
-const POLL_INTERVAL = 10000;
+const POLL_INTERVAL = 300000;
 
 export const ServerProvider = ({ children }) => {
   const [serverOnline, setServerOnline] = useState(true);

@@ -1,4 +1,3 @@
-// MediaLibraryMangments.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody,
@@ -11,27 +10,59 @@ import Swal from "sweetalert2";
 import {
   FaTh, FaList, FaCopy, FaEye, FaUpload,
   FaFileImage, FaFilePdf, FaFileExcel, FaFileAlt,
-  FaImages, FaFile, FaTable, FaTimes
+  FaImages, FaFile, FaTable, FaTimes, FaCheckCircle,
+  FaExclamationTriangle, FaMagic, FaInfoCircle
 } from "react-icons/fa";
+//  Universal file viewer – supports 20+ formats
+import { FileViewer } from "@smazeeapps/file-viewer";
 
 const API = import.meta.env.VITE_API_URL;
 const getToken = () => sessionStorage.getItem("authToken");
 const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
+
+// ----------------------------- SEO FILENAME HELPERS -----------------------------
+const splitNameExt = (fileName) => {
+  const lastDot = fileName.lastIndexOf(".");
+  if (lastDot <= 0) return { base: fileName, ext: "" };
+  return { base: fileName.slice(0, lastDot), ext: fileName.slice(lastDot + 1).toLowerCase() };
+};
+
+const toSeoFriendlyName = (fileName) => {
+  const { base, ext } = splitNameExt(fileName);
+  let slug = base
+    .toLowerCase()
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!slug) slug = "file";
+  if (slug.length > 80) slug = slug.slice(0, 80).replace(/-+$/g, "");
+  return ext ? `${slug}.${ext}` : slug;
+};
+
+const isSeoFriendlyName = (fileName) => {
+  const { base } = splitNameExt(fileName);
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(base);
+};
 
 const MediaLibraryMangments = () => {
   // ----------------------------- STATE -----------------------------
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [filterType, setFilterType] = useState("all"); // "all", "image", "pdf", "document"
+  const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [previewFile, setPreviewFile] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewError, setPreviewError] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
   const [error, setError] = useState("");
 
-  // New state for manual upload: holds the selected file before upload
   const [selectedFile, setSelectedFile] = useState(null);
+  const [editableName, setEditableName] = useState("");
+  const [fileExt, setFileExt] = useState("");
+  const [nameIsSeoFriendly, setNameIsSeoFriendly] = useState(true);
 
   // ----------------------------- FETCH FILES -----------------------------
   const fetchFiles = async () => {
@@ -67,51 +98,48 @@ const MediaLibraryMangments = () => {
     });
   };
 
-  // ----------------------------- PREVIEW MODAL -----------------------------
+  // ----------------------------- PREVIEW MODAL (UPDATED) -----------------------------
   const openPreview = (file) => {
     setPreviewFile(file);
+    setPreviewError(false);
     setPreviewOpen(true);
   };
 
   const getPreviewContent = () => {
     if (!previewFile) return null;
     const fileUrl = `${API}${previewFile.filePath}`;
-    const ext = previewFile.originalName?.split(".").pop().toLowerCase();
 
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-      return <img src={fileUrl} alt="preview" style={{ maxWidth: "100%", maxHeight: "80vh" }} />;
-    }
-    if (ext === "pdf") {
-      return <iframe src={fileUrl} title="PDF Preview" width="100%" height="600px" />;
-    }
-    if (["xls", "xlsx", "doc", "docx"].includes(ext)) {
+    if (previewError) {
       return (
         <div className="text-center p-5">
-          <FaFileAlt size={80} className="text-muted mb-3" />
-          <p>Preview not available for this file type.</p>
-          <Button color="primary" href={fileUrl} target="_blank" rel="noopener">
-            Download file
+          <FaFileAlt size={90} className="text-muted mb-3" />
+          <p>Cannot preview this file.</p>
+          <Button color="primary" href={fileUrl} target="_blank" rel="noopener noreferrer">
+            Download
           </Button>
         </div>
       );
     }
+
     return (
-      <div className="text-center p-5">
-        <FaFileAlt size={80} className="text-muted mb-3" />
-        <p>Cannot preview this file.</p>
-        <Button color="primary" href={fileUrl} target="_blank">
-          Download
-        </Button>
-      </div>
+      <FileViewer
+        src={fileUrl}
+        fileName={previewFile.originalName}
+        height="600px"
+        onError={() => setPreviewError(true)}
+      />
     );
   };
 
   // ----------------------------- MANUAL UPLOAD HANDLERS -----------------------------
-  // Handle file drop or selection: just store the file, do NOT upload automatically
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (!file) return;
+    const { ext } = splitNameExt(file.name);
     setSelectedFile(file);
+    setFileExt(ext);
+    setEditableName("");
+    setNameIsSeoFriendly(true);
     setError("");
   }, []);
 
@@ -128,10 +156,28 @@ const MediaLibraryMangments = () => {
     }
   });
 
+  const handleNameChange = (val) => {
+    setEditableName(val);
+    setNameIsSeoFriendly(val.trim() === "" ? true : isSeoFriendlyName(`${val}.${fileExt}`));
+  };
+
+  const handleAutoFixName = () => {
+    if (!selectedFile) return;
+    const activeBase = editableName.trim() || splitNameExt(selectedFile.name).base;
+    const seoName = toSeoFriendlyName(fileExt ? `${activeBase}.${fileExt}` : activeBase);
+    const { base } = splitNameExt(seoName);
+    setEditableName(base);
+    setNameIsSeoFriendly(true);
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) return;
 
+    const originalBase = splitNameExt(selectedFile.name).base;
+    const finalBase = editableName.trim() || originalBase;
+
     const formData = new FormData();
+    formData.append("fileName", finalBase);
     formData.append("file", selectedFile);
     setUploadProgress(true);
     setError("");
@@ -142,7 +188,7 @@ const MediaLibraryMangments = () => {
       });
       await fetchFiles();
       Swal.fire("Uploaded!", "File uploaded successfully", "success");
-      setSelectedFile(null); // Clear selected file after successful upload
+      handleCancelUpload();
     } catch (err) {
       setError("Upload failed. Check file type/size.");
     } finally {
@@ -152,6 +198,9 @@ const MediaLibraryMangments = () => {
 
   const handleCancelUpload = () => {
     setSelectedFile(null);
+    setEditableName("");
+    setFileExt("");
+    setNameIsSeoFriendly(true);
     setError("");
   };
 
@@ -167,7 +216,7 @@ const MediaLibraryMangments = () => {
     const seconds = String(date.getSeconds()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
+    hours = hours ? hours : 12;
     const strHours = String(hours).padStart(2, '0');
     return `${day}/${month}/${year} ${strHours}:${minutes}:${seconds} ${ampm}`;
   };
@@ -200,7 +249,6 @@ const MediaLibraryMangments = () => {
     return `${(kb / 1024).toFixed(1)} MB`;
   };
 
-  // Filter button styling
   const filterBtnStyle = (active) => ({
     background: active ? "#2271b1" : "transparent",
     color: active ? "#fff" : "#1d2327",
@@ -232,6 +280,7 @@ const MediaLibraryMangments = () => {
             <CardBody className="p-2">
               <div className="small text-truncate fw-bold" title={file.originalName}>{file.originalName}</div>
               <div className="text-muted small">{formatSize(file.fileSize)}</div>
+              <div className="text-muted small">{formatDateTime(file.createdAt)}</div>
               <div className="d-flex justify-content-between mt-2">
                 <Button size="sm" color="link" className="p-0" onClick={() => openPreview(file)}><FaEye /></Button>
                 <Button size="sm" color="link" className="p-0 text-success" onClick={() => copyLink(file.filePath)}><FaCopy /></Button>
@@ -243,7 +292,7 @@ const MediaLibraryMangments = () => {
     </Row>
   );
 
-  // ----------------------------- RENDER LIST VIEW (enhanced: created, updated, file URL) -----------------------------
+  // ----------------------------- RENDER LIST VIEW -----------------------------
   const renderListView = () => (
     <div className="table-responsive">
       <table className="table table-hover align-middle bg-white rounded-3 overflow-hidden" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
@@ -290,7 +339,7 @@ const MediaLibraryMangments = () => {
   // ----------------------------- MAIN RENDER -----------------------------
   return (
     <div style={{ background: "#f0f0f1", minHeight: "100vh", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto" }}>
-      {/* Upload Area - Now with manual upload button */}
+      {/* Upload Area */}
       <div className="p-3 pb-0">
         <Card className="shadow-sm border-0 rounded-3 overflow-hidden">
           <CardHeader className="p-2">
@@ -304,15 +353,56 @@ const MediaLibraryMangments = () => {
                   <FaUpload size={48} className={`mb-3 ${isDragActive ? "text-primary" : "text-muted"}`} />
                   <h5 className="mb-1">{isDragActive ? "Drop file here" : "Drop files anywhere to upload"}</h5>
                   <p className="text-muted mb-0">or <span className="text-primary fw-semibold">Select Files</span></p>
-                  <small className="fw-bold">Maximum Upload File Size: 32 MB. </small><br/>
+                  <small className="fw-bold">Maximum Upload File Size: 32 MB. </small><br />
                   <small className="text-muted mt-2 d-block"><strong>Supported:</strong> JPG, JPEG, PNG, GIF, WebP, SVG, PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, PPT, PPTX, ZIP, MP3, MP4, MOV</small>
                 </>
               ) : (
-                <div className="text-center">
+                <div className="text-center" style={{ maxWidth: 480, margin: "0 auto" }} onClick={(e) => e.stopPropagation()}>
                   <FaFile size={48} className="text-primary mb-3" />
-                  <h6 className="mb-1">Selected file:</h6>
-                  <p className="mb-1 fw-bold">{selectedFile.name}</p>
-                  <p className="text-muted small mb-3">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                  <h6 className="mb-2">Selected File      <Button color="link" size="sm" className="p-0 align-baseline" onClick={(e) => { e.stopPropagation(); handleAutoFixName(); }}>
+                    <FaMagic className="me-1" />Auto Fix Name
+                  </Button></h6>
+
+                  <div className="text-start">
+                    <label className="small fw-semibold text-danger mb-1 d-block ">
+                      File Name <span className="fw-normal text-warning">(optional — leave blank to keep original)</span>
+                    </label>
+                    <div className="d-flex align-items-center gap-2">
+                      <Input
+                        type="text"
+                        placeholder={splitNameExt(selectedFile.name).base}
+                        value={editableName}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ fontSize: 13 }}
+                        invalid={editableName.trim() !== "" && !nameIsSeoFriendly}
+                      />
+                      <span className="text-danger small text-nowrap">.{fileExt} - {(selectedFile.size / 1024).toFixed(1)}KB</span>
+                    </div>
+
+                    {(() => {
+                      const activeBase = editableName.trim() || splitNameExt(selectedFile.name).base;
+                      const previewName = toSeoFriendlyName(fileExt ? `${activeBase}.${fileExt}` : activeBase);
+                      const alreadyClean = editableName.trim() !== "" && nameIsSeoFriendly;
+                      return (
+                        <div className={`small mt-1 d-flex align-items-start gap-1 ${alreadyClean ? "text-success" : "text-warning"}`}>
+                          {alreadyClean ? <FaCheckCircle className="mt-1" /> : <FaExclamationTriangle className="mt-1" />}
+                          <span>
+                            {alreadyClean ? "Looks SEO-friendly. " : "Will be auto-converted to: "}
+                            <code>{previewName}</code>
+                          </span>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="small text-muted mt-2 d-flex align-items-start gap-1">
+                      <FaInfoCircle className="mt-1" />
+                      <span>
+                        Tip: keep names short and descriptive, e.g. <code>annual-report-2026.pdf</code> instead of <code>Scan_001 (2).pdf</code> — this improves search visibility and page load performance. Hindi names are automatically transliterated too.
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="d-flex gap-2 justify-content-center">
                     <Button color="primary" onClick={handleUpload} disabled={uploadProgress}>
                       {uploadProgress ? <Spinner size="sm" className="me-1" /> : <FaUpload className="me-1" />}
@@ -330,43 +420,42 @@ const MediaLibraryMangments = () => {
         </Card>
       </div>
 
-      {/* Toolbar: Filter Icons + Search + View Toggle */}
-     
-        <div className="bg-white mt-3 mx-3 rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
-          <div className="d-flex flex-wrap align-items-center gap-3">
-            <h4 className="mb-0 fw-bold " style={{ color: "#2271b1" }}>
-              All Media Library
-            </h4>
-            <div className="d-flex gap-1">
-              <button onClick={() => setFilterType("all")} style={filterBtnStyle(filterType === "all")}>
-                <FaImages /> All
-              </button>
-              <button onClick={() => setFilterType("image")} style={filterBtnStyle(filterType === "image")}>
-                <FaFileImage /> Images
-              </button>
-              <button onClick={() => setFilterType("pdf")} style={filterBtnStyle(filterType === "pdf")}>
-                <FaFilePdf /> PDF
-              </button>
-              <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
-                <FaTable /> Documents
-              </button>
-            </div>
-            <div style={{ width: 1, height: 30, background: "#ddd", margin: "0 4px" }} />
-            <div>
-              <Input type="text" placeholder="Search files On Library..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: 240, fontSize: 13, borderRadius: 15, paddingLeft: 32 }} className="form-control" />
-            </div>
-          </div>
-
+      {/* Toolbar */}
+      <div className="bg-white mt-3 mx-3 rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+        <div className="d-flex flex-wrap align-items-center gap-3">
+          <h4 className="mb-0 fw-bold " style={{ color: "#2271b1" }}>
+            All Media Library
+          </h4>
           <div className="d-flex gap-1">
-            <button onClick={() => setViewMode("grid")} style={filterBtnStyle(viewMode === "grid")}>
-              <FaTh /> Grid
+            <button onClick={() => setFilterType("all")} style={filterBtnStyle(filterType === "all")}>
+              <FaImages /> All
             </button>
-            <button onClick={() => setViewMode("list")} style={filterBtnStyle(viewMode === "list")}>
-              <FaList /> List
+            <button onClick={() => setFilterType("image")} style={filterBtnStyle(filterType === "image")}>
+              <FaFileImage /> Images
             </button>
+            <button onClick={() => setFilterType("pdf")} style={filterBtnStyle(filterType === "pdf")}>
+              <FaFilePdf /> PDF
+            </button>
+            <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
+              <FaTable /> Documents
+            </button>
+          </div>
+          <div style={{ width: 1, height: 30, background: "#ddd", margin: "0 4px" }} />
+          <div>
+            <Input type="text" placeholder="Search files On Library..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: 240, fontSize: 13, borderRadius: 15, paddingLeft: 32 }} className="form-control" />
           </div>
         </div>
-      
+
+        <div className="d-flex gap-1">
+          <button onClick={() => setViewMode("grid")} style={filterBtnStyle(viewMode === "grid")}>
+            <FaTh /> Grid
+          </button>
+          <button onClick={() => setViewMode("list")} style={filterBtnStyle(viewMode === "list")}>
+            <FaList /> List
+          </button>
+        </div>
+      </div>
+
       {error && <Alert color="danger" className="mx-3 mt-2">{error}</Alert>}
 
       {/* Media Items */}
@@ -392,7 +481,9 @@ const MediaLibraryMangments = () => {
         <ModalBody className="text-center">
           {getPreviewContent()}
           <div className="mt-3">
-            <Button color="primary" onClick={() => copyLink(previewFile?.filePath)}><FaCopy className="me-1" /> Copy Link</Button>
+            <Button color="success" onClick={() => copyLink(previewFile?.filePath)}>
+              <FaCopy className="me-1" /> Copy Link
+            </Button>
           </div>
         </ModalBody>
       </Modal>

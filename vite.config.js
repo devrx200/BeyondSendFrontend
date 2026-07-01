@@ -1,8 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  define: {
+    __BUILD_TIMESTAMP__: Date.now(),
+  },
+  base: "/",
   server: {
     port: 5175,
     strictPort: true,
@@ -12,13 +16,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'bootstrap-vendor': ['reactstrap', 'bootstrap'],
-          'editor-vendor': ['react-quill'],
-          'icons-vendor': ['react-icons'],
-          'utils-vendor': ['axios', 'sweetalert2'],
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "bootstrap-vendor": ["reactstrap", "bootstrap"],
+          "editor-vendor": ["react-quill"],
+          "icons-vendor": ["react-icons"],
+          "utils-vendor": ["axios", "sweetalert2"],
         },
       },
     },
   },
-})
+});

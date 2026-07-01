@@ -468,7 +468,7 @@ const token = sessionStorage.getItem("authToken");
                 <Col xs={6}>
                   <Label className="fw-semibold small">Access By</Label>
                   <Input type="select" name="accessBy" value={form.accessBy} onChange={handleChange}>
-                    <option value="USER">👤 User</option>
+                    <option value="USER">👤 Public User On Site</option>
                     <option value="OFFICER">🧑‍💼 Officer</option>
                     <option value="ADMIN">🛡️ Admin</option>
                   </Input>
@@ -476,8 +476,8 @@ const token = sessionStorage.getItem("authToken");
 
               </Row>
             </ModalBody>
-            <ModalFooter className="border-0 pt-0">
-              <Button type="button" color="light" className="rounded-3 px-4" onClick={toggleModal}>Cancel</Button>
+            <ModalFooter className="border-0 pt-0 d-flex justify-content-between">
+              <Button type="button" color="dark" className="rounded-3 px-4" onClick={toggleModal}>Cancel</Button>
               <Button type="submit" color="primary" className="rounded-3 px-4 fw-semibold">
                 {editingId ? "Update" : "Save"}
               </Button>

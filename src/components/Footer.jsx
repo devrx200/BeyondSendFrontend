@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col } from "reactstrap";
 import {
@@ -14,6 +14,7 @@ import {
 import { useLanguage } from "../contexts/LanguageContext";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
+const BUILD_TIMESTAMP = import.meta.env.VITE_BUILD_TIMESTAMP || Date.now();
 /* ================= ICON MAP ================= */
 const iconMap = {
   facebook: <FaFacebook />,
@@ -28,7 +29,17 @@ const Footer = () => {
 
   const [footer, setFooter] = useState(null);
   const [visitorCount, setVisitorCount] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState("");
+  const lastUpdated = useMemo(() => {
+    const buildDate = new Date(BUILD_TIMESTAMP);
+    return buildDate.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }, [isHindi]);
 
   /* ================= FETCH FOOTER ================= */
   useEffect(() => {
@@ -37,15 +48,6 @@ const Footer = () => {
         const res = await axios.get(`${API_URL}/api/get-all-footer`);
         if (res.data) {
           setFooter(res.data);
-
-          if (res.data.updatedAt) {
-            const date = new Date(res.data.updatedAt);
-            setLastUpdated(
-              isHindi
-                ? date.toLocaleString("hi-IN")
-                : date.toLocaleString("en-IN")
-            );
-          }
         }
       } catch (err) {
         console.error("Footer fetch error", err);
@@ -199,12 +201,12 @@ const Footer = () => {
               <br />
               <strong>Managed By National Informatics Centre</strong>
               <br />
-            <img
-  src={`${API_URL}${contactInfo.organizerLogo}`}
-  height="50"
-  className="mb-2"
-  alt="Organizer Logo"
-/>
+              <img
+                src={`${API_URL}${contactInfo.organizerLogo}`}
+                height="50"
+                className="mb-2"
+                alt="Organizer Logo"
+              />
             </Col>
             <hr />
             <Col md={6} className="text-center text-md-start">
