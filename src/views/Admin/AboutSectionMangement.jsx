@@ -322,16 +322,17 @@ const AboutSectionMangement = () => {
   };
 
   return (
-    <Card className="shadow-sm border-0">
-      <CardHeader>
-          <div className="d-flex justify-content-between align-items-center mb-3 ">
-          <h4 className="mb-0 text-white">
+    <Card className="adm-card mb-4">
+      <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h4 className="adm-page-title mb-1">
             <FaImage className="me-2" /> About Section
           </h4>
-          <Button color="light" className="text-success" onClick={toggleModal}>
-            <FaPlus className="me-2 " /> Add
-          </Button>
+          <p className="adm-page-subtitle mb-0 text-white">Manage the public about section content</p>
         </div>
+        <Button color="light" className="text-success" onClick={toggleModal}>
+          <FaPlus className="me-2" /> Add
+        </Button>
       </CardHeader>
       <CardBody>
       

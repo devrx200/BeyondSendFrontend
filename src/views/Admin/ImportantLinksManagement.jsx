@@ -169,19 +169,19 @@ const ImportantLinksManagement = () => {
     return (
         <>
             {/* PAGE HEADER */}
-            <CardHeader className="rounded border">
-                <div className="adm-page-head">
+            <Card className="adm-card mb-4">
+                <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
                         <h3 className="adm-page-title"><FaLink className="" /> Important Links Management</h3>
-                        <p className="adm-page-subtitle text-white">Manage quick-access links shown on the public site.</p>
+                        <p className="adm-page-subtitle mb-0 text-white">Manage quick-access links shown on the public site.</p>
                     </div>
                     {!modal && (
                         <Button color="primary" onClick={openAdd}>
                             <FaPlus className="me-1" /> Add Link
                         </Button>
                     )}
-                </div>
-            </CardHeader>
+                </CardHeader>
+            </Card>
 
 
             {/* INLINE FORM CARD (replaces modal) */}

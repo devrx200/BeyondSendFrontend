@@ -153,6 +153,14 @@ const ManageBrands = () => {
 
   return (
     <div className="container-fluid py-4">
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h4 className="adm-page-title mb-1"><FaList className="me-2" /> Footer Brands</h4>
+            <p className="adm-page-subtitle mb-0 text-white">Manage footer brand logos and display order</p>
+          </div>
+        </CardHeader>
+      </Card>
       <Row>
         <Col md={4}>
           <Card>

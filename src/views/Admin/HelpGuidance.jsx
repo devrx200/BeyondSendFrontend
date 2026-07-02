@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  Card, CardBody, Button,
+  Card, CardBody, CardHeader, Button,
   Modal, ModalHeader, ModalBody, ModalFooter,
   Form, Label, Input, Badge, Spinner,
   Container, Row, Col, Collapse
@@ -12,11 +12,12 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
-
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const HelpGuidance = () => {
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+  const { isHindi } = useLanguage();
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -44,7 +45,7 @@ const token = sessionStorage.getItem("authToken");
   });
 
   /* ── LOAD ── */
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -76,9 +77,9 @@ const token = sessionStorage.getItem("authToken");
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL, accessFilter, page, search, statusFilter, token]);
 
-  useEffect(() => { loadData(); }, [page, search, statusFilter, accessFilter, token, API_URL]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   /* ── HELPERS ── */
   const getEmbedUrl = (url) => {
@@ -178,87 +179,99 @@ const token = sessionStorage.getItem("authToken");
 
   const toggleDesc = (id) => setOpenDesc(prev => prev === id ? null : id);
 
+  const t = (en, hi) => (isHindi ? (hi || en) : en);
   const accessBadgeColor = { USER: "primary", OFFICER: "warning", ADMIN: "danger" };
 
   return (
-    <div className="bg-light min-vh-100 py-4">
+ 
       <Container fluid="xl">
 
         {/* ── HEADER ── */}
-        <div className="d-flex align-items-center justify-content-between bg-white rounded-4 shadow-sm p-3 mb-4">
-          <div>
-            <h4 className="fw-bold mb-0">📘 Help &amp; Tutorials</h4>
-            <small className="text-muted">Manage guides, videos and PDF resources</small>
-          </div>
-          <Button color="primary" className="d-flex align-items-center gap-2 rounded-3 fw-semibold" onClick={toggleModal}>
-            <FaPlus size={12} /> Add New
-          </Button>
-        </div>
+        <Card className="adm-card mb-4">
+          <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h4 className="adm-page-title  mb-1">
+                <FaFilePdf className="text-white" size={18} /> {t("Help & Guidance", "सहायता और मार्गदर्शन")}
+              </h4>
+              <p className="adm-page-subtitle mb-0 text-white">{t("Manage guides, videos and PDF resources", "गाइड, वीडियो और PDF संसाधनों का प्रबंधन करें")}</p>
+            </div>
+            <Button color="light border-dark" className="d-flex align-items-center gap-2 rounded-3 fw-semibold" onClick={toggleModal}>
+              <FaPlus className="text-dark" size={12} /> {t("Add New Resource", "नया जोड़ें")}
+            </Button>
+          </CardHeader>
+        </Card>
 
         {/* ── FILTERS ── */}
-        <div className="bg-white rounded-4 shadow-sm p-3 mb-4">
-          <Row className="g-2 align-items-center">
-            <Col xs={12} md={5}>
-              <div className="input-group">
-                <span className="input-group-text bg-light border-end-0 text-muted">
-                  <FaSearch size={13} />
-                </span>
-                <Input
-                  placeholder="Search..."
-                  className="border-start-0 bg-light"
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                />
-              </div>
-            </Col>
-            <Col xs={6} md={3}>
-              <Input type="select" className="bg-light" onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Input>
-            </Col>
-            <Col xs={6} md={3}>
-              <Input type="select" className="bg-light" onChange={(e) => { setAccessFilter(e.target.value); setPage(1); }}>
-                <option value="">All Access</option>
-                <option value="USER">User</option>
-                <option value="OFFICER">Officer</option>
-                <option value="ADMIN">Admin</option>
-              </Input>
-            </Col>
+        <Card className="adm-card mb-4">
+          <CardHeader className="adm-card-header">
+            <h5 className="adm-card-title">{t("Search & Filters", "खोज और फ़िल्टर")}</h5>
+          </CardHeader>
+          <CardBody className="adm-card-body">
+            <Row className="g-2 align-items-center">
+              <Col xs={12} md={5}>
+                <div className="input-group">
+                  <span className="input-group-text bg-light border-end-0 text-muted">
+                    <FaSearch size={13} />
+                  </span>
+                  <Input
+                    placeholder={t("Search...", "खोजें...")}
+                    className="border-start-0 bg-light"
+                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  />
+                </div>
+              </Col>
+              <Col xs={6} md={3}>
+                <Input type="select" className="bg-light" onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+                  <option value="">{t("All Status", "सभी स्थिति")}</option>
+                  <option value="active">{t("Active", "सक्रिय")}</option>
+                  <option value="inactive">{t("Inactive", "निष्क्रिय")}</option>
+                </Input>
+              </Col>
+              <Col xs={6} md={3}>
+                <Input type="select" className="bg-light" onChange={(e) => { setAccessFilter(e.target.value); setPage(1); }}>
+                  <option value="">{t("All Access", "सभी पहुँच")}</option>
+                  <option value="USER">{t("User", "उपयोगकर्ता")}</option>
+                  <option value="OFFICER">{t("Officer", "अधिकारी")}</option>
+                  <option value="ADMIN">{t("Admin", "प्रशासन")}</option>
+                </Input>
+              </Col>
 
-            {/* view toggle */}
-            <Col xs={12} md={1} className="d-flex justify-content-end">
-              <div className="btn-group">
-                <Button size="sm" color={viewMode === "grid" ? "primary" : "light"} className="border px-3" onClick={() => setViewMode("grid")} title="Grid view">
-                  <FaTh size={12} />
-                </Button>
-                <Button size="sm" color={viewMode === "list" ? "primary" : "light"} className="border px-3" onClick={() => setViewMode("list")} title="List view">
-                  <FaList size={12} />
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        </div>
+              {/* view toggle */}
+              <Col xs={12} md={1} className="d-flex justify-content-end">
+                <div className="btn-group">
+                  <Button size="sm" color={viewMode === "grid" ? "primary" : "light"} className="border px-3" onClick={() => setViewMode("grid")} title={t("Grid view", "ग्रिड दृश्य")}>
+                    <FaTh size={12} />
+                  </Button>
+                  <Button size="sm" color={viewMode === "list" ? "primary" : "light"} className="border px-3" onClick={() => setViewMode("list")} title={t("List view", "सूची दृश्य")}>
+                    <FaList size={12} />
+                  </Button>
+                </div>
+              </Col>
+            </Row>
+          </CardBody>
+        </Card>
 
         {/* ── CONTENT ── */}
         {loading ? (
           <div className="text-center py-5">
             <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-            <p className="text-muted mt-3 mb-0">Loading resources...</p>
+            <p className="text-muted mt-3 mb-0">{t("Loading resources...", "संसाधन लोड हो रहे हैं...")}</p>
           </div>
         ) : list.length === 0 ? (
-          <div className="text-center py-5 bg-white rounded-4 shadow-sm">
-            <div className="display-4 mb-3">📭</div>
-            <h5 className="text-muted">No resources found</h5>
-            <p className="text-muted small mb-0">Try adjusting your filters or add a new item.</p>
-          </div>
+          <Card className="adm-card text-center py-5">
+            <CardBody>
+              <div className="display-4 mb-3">📭</div>
+              <h5 className="text-muted">No resources found</h5>
+              <p className="text-muted small mb-0">{t("Try adjusting your filters or add a new item.", "अपने फ़िल्टर बदलें या कोई नया आइटम जोड़ें।")}</p>
+            </CardBody>
+          </Card>
 
         ) : viewMode === "grid" ? (
           /* ── GRID VIEW ── */
           <Row className="g-3">
             {list.map(item => (
               <Col xs={12} sm={6} lg={4} key={item._id}>
-                <Card className="h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <Card className="h-100 adm-card">
                   <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 4 }} />
                   <CardBody className="d-flex flex-column p-3">
 
@@ -294,24 +307,24 @@ const token = sessionStorage.getItem("authToken");
                         style={{ fontSize: "0.72rem" }}
                         onClick={() => toggleDesc(item._id)}
                       >
-                        <span className="flex-grow-1 text-start">Description</span>
+                        <span className="flex-grow-1 text-start">{t("Description", "विवरण")}</span>
                         {openDesc === item._id ? <FaChevronUp size={9} /> : <FaChevronDown size={9} />}
                       </Button>
                       <Collapse isOpen={openDesc === item._id}>
                         <div className="bg-light border rounded-3 p-2 mt-1 text-muted small" style={{ fontSize: "0.78rem" }}>
-                          {item.description || "No description provided."}
+                          {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
                         </div>
                       </Collapse>
                     </div>
 
                     <div className="d-flex gap-1 mt-auto">
                       <Button size="sm" color="info" outline className="flex-fill rounded-3 fw-semibold" style={{ fontSize: "0.75rem" }} onClick={() => openPreview(item)}>
-                        <FaEye size={10} className="me-1" /> Preview
+                        <FaEye size={10} className="me-1" /> {t("Preview", "पूर्वावलोकन")}
                       </Button>
-                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title="Edit" onClick={() => handleEdit(item)}>
+                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
                         <FaEdit size={10} />
                       </Button>
-                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title="Delete" onClick={() => handleDelete(item._id)}>
+                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
                         <FaTrash size={10} />
                       </Button>
                     </div>
@@ -326,7 +339,7 @@ const token = sessionStorage.getItem("authToken");
           /* ── LIST VIEW ── */
           <div>
             {list.map(item => (
-              <Card key={item._id} className="border-0 shadow-sm rounded-3 overflow-hidden mb-2">
+              <Card key={item._id} className="adm-card mb-2">
                 <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 3 }} />
                 <CardBody className="p-2 px-3">
 
@@ -349,7 +362,7 @@ const token = sessionStorage.getItem("authToken");
                       </div>
                       <Collapse isOpen={openDesc === item._id}>
                         <p className="text-muted mb-0 mt-1" style={{ fontSize: "0.78rem" }}>
-                          {item.description || "No description provided."}
+                          {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
                         </p>
                       </Collapse>
                     </div>
@@ -366,16 +379,16 @@ const token = sessionStorage.getItem("authToken");
 
                     {/* actions */}
                     <div className="d-flex gap-1 flex-shrink-0">
-                      <Button size="sm" color="light" className="border rounded-3 px-2" title="Description" onClick={() => toggleDesc(item._id)}>
+                      <Button size="sm" color="light" className="border rounded-3 px-2" title={t("Description", "विवरण")} onClick={() => toggleDesc(item._id)}>
                         {openDesc === item._id ? <FaChevronUp size={10} className="text-muted" /> : <FaChevronDown size={10} className="text-muted" />}
                       </Button>
-                      <Button size="sm" color="info" outline className="rounded-3 px-2" title="Preview" onClick={() => openPreview(item)}>
+                      <Button size="sm" color="info" outline className="rounded-3 px-2" title={t("Preview", "पूर्वावलोकन")} onClick={() => openPreview(item)}>
                         <FaEye size={11} />
                       </Button>
-                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title="Edit" onClick={() => handleEdit(item)}>
+                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
                         <FaEdit size={11} />
                       </Button>
-                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title="Delete" onClick={() => handleDelete(item._id)}>
+                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
                         <FaTrash size={11} />
                       </Button>
                     </div>
@@ -392,7 +405,7 @@ const token = sessionStorage.getItem("authToken");
         {totalPages > 1 && (
           <div className="d-flex justify-content-center align-items-center flex-wrap gap-2 mt-4">
             <Button size="sm" color="light" className="rounded-3" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-              ‹ Prev
+              ‹ {t("Prev", "पिछला")}
             </Button>
             {[...Array(totalPages)].map((_, i) => (
               <Button
@@ -406,7 +419,7 @@ const token = sessionStorage.getItem("authToken");
               </Button>
             ))}
             <Button size="sm" color="light" className="rounded-3" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-              Next ›
+              {t("Next", "अगला")} ›
             </Button>
           </div>
         )}
@@ -414,72 +427,72 @@ const token = sessionStorage.getItem("authToken");
         {/* ── ADD / EDIT MODAL ── */}
         <Modal isOpen={modal} toggle={toggleModal} centered size="md">
           <ModalHeader toggle={toggleModal} className="border-0 pb-1 fw-bold">
-            {editingId ? "✏️ Edit Resource" : "➕ Add New Resource"}
+            {editingId ? `✏️ ${t("Edit Resource", "संसाधन संपादित करें")}` : `➕ ${t("Add New Resource", "नया संसाधन जोड़ें")}`}
           </ModalHeader>
           <Form onSubmit={handleSubmit}>
             <ModalBody className="pt-1">
               <Row className="g-3">
 
                 <Col xs={12}>
-                  <Label className="fw-semibold small">Title <span className="text-danger">*</span></Label>
-                  <Input name="title" value={form.title} onChange={handleChange} placeholder="Enter a clear title..." />
+                  <Label className="fw-semibold small">{t("Title", "शीर्षक")} <span className="text-danger">*</span></Label>
+                  <Input name="title" value={form.title} onChange={handleChange} placeholder={t("Enter a clear title...", "स्पष्ट शीर्षक दर्ज करें...")} />
                 </Col>
 
                 <Col xs={12}>
-                  <Label className="fw-semibold small">Description</Label>
-                  <Input type="textarea" rows={3} name="description" value={form.description} onChange={handleChange} placeholder="Short description..." />
+                  <Label className="fw-semibold small">{t("Description", "विवरण")}</Label>
+                  <Input type="textarea" rows={3} name="description" value={form.description} onChange={handleChange} placeholder={t("Short description...", "संक्षिप्त विवरण...")} />
                 </Col>
 
                 <Col xs={6}>
-                  <Label className="fw-semibold small">Content Type</Label>
+                  <Label className="fw-semibold small">{t("Content Type", "सामग्री प्रकार")}</Label>
                   <Input type="select" name="contentType" value={form.contentType} onChange={handleChange}>
-                    <option value="VIDEO">🎬 Video</option>
+                    <option value="VIDEO">🎬 {t("Video", "वीडियो")}</option>
                     <option value="PDF">📄 PDF</option>
                   </Input>
                 </Col>
 
                 <Col xs={6}>
-                  <Label className="fw-semibold small">Order</Label>
+                  <Label className="fw-semibold small">{t("Order", "क्रम")}</Label>
                   <Input type="number" name="order" value={form.order} onChange={handleChange} placeholder="e.g. 1" min={1} />
                 </Col>
 
                 {form.contentType === "VIDEO" && (
                   <Col xs={12}>
-                    <Label className="fw-semibold small">Video URL</Label>
+                    <Label className="fw-semibold small">{t("Video URL", "वीडियो URL")}</Label>
                     <Input name="videoUrl" value={form.videoUrl} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." />
                   </Col>
                 )}
 
                 {form.contentType === "PDF" && (
                   <Col xs={12}>
-                    <Label className="fw-semibold small">Upload PDF</Label>
+                    <Label className="fw-semibold small">{t("Upload PDF", "PDF अपलोड करें")}</Label>
                     <Input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
                   </Col>
                 )}
 
                 <Col xs={6}>
-                  <Label className="fw-semibold small">Status</Label>
+                  <Label className="fw-semibold small">{t("Status", "स्थिति")}</Label>
                   <Input type="select" name="status" value={form.status} onChange={handleChange}>
-                    <option value="active">✅ Active</option>
-                    <option value="inactive">⛔ Inactive</option>
+                    <option value="active">✅ {t("Active", "सक्रिय")}</option>
+                    <option value="inactive">⛔ {t("Inactive", "निष्क्रिय")}</option>
                   </Input>
                 </Col>
 
                 <Col xs={6}>
-                  <Label className="fw-semibold small">Access By</Label>
+                  <Label className="fw-semibold small">{t("Access By", "द्वारा पहुँच")}</Label>
                   <Input type="select" name="accessBy" value={form.accessBy} onChange={handleChange}>
-                    <option value="USER">👤 Public User On Site</option>
-                    <option value="OFFICER">🧑‍💼 Officer</option>
-                    <option value="ADMIN">🛡️ Admin</option>
+                    <option value="USER">👤 {t("Public User On Site", "साइट पर सार्वजनिक उपयोगकर्ता")}</option>
+                    <option value="OFFICER">🧑‍💼 {t("Officer", "अधिकारी")}</option>
+                    <option value="ADMIN">🛡️ {t("Admin", "प्रशासन")}</option>
                   </Input>
                 </Col>
 
               </Row>
             </ModalBody>
             <ModalFooter className="border-0 pt-0 d-flex justify-content-between">
-              <Button type="button" color="dark" className="rounded-3 px-4" onClick={toggleModal}>Cancel</Button>
+              <Button type="button" color="dark" className="rounded-3 px-4" onClick={toggleModal}>{t("Cancel", "रद्द करें")}</Button>
               <Button type="submit" color="primary" className="rounded-3 px-4 fw-semibold">
-                {editingId ? "Update" : "Save"}
+                {editingId ? t("Update", "अपडेट करें") : t("Save", "सहेजें")}
               </Button>
             </ModalFooter>
           </Form>
@@ -503,7 +516,6 @@ const token = sessionStorage.getItem("authToken");
         </Modal>
 
       </Container>
-    </div>
   );
 };
 

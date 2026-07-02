@@ -206,26 +206,25 @@ const SliderManagement = () => {
 
   return (
     <Container className="py-3">
-      <CardHeader>
-        {/* Header */}
-        <Row className="align-items-center mb-3">
-          <Col>
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
             <h5 className="adm-page-title fw-bold mb-1">
               <FaImages className="me-2 text-primary" />
               {isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}
             </h5>
-            <p className="adm-page-subtitle small mb-0">
+            <p className="adm-page-subtitle small mb-0 text-white">
               {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
             </p>
-          </Col>
-          <Col xs="auto">
+          </div>
+          <Col xs="auto" className="ps-0">
             <Button color="success" size="sm" onClick={toggleModal}>
               <FaPlus className="me-1" />
               {isHindi ? 'नया स्लाइड जोड़ें' : 'Add New Slide'}
             </Button>
           </Col>
-        </Row>
-      </CardHeader>
+        </CardHeader>
+      </Card>
       {/* ── Active Slides Card ── */}
       <Card className="border-0 shadow-sm mb-4">
         <CardBody className="p-4">

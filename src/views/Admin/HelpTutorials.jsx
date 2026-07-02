@@ -111,7 +111,7 @@ const HelpTutorials = () => {
   const toggleExpand = (id) =>
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const t = (en, hi) => (isHindi ? hi : en);
+  const t = (en, hi) => (isHindi ? (hi || en) : en);
 
   /* ── PAGINATION ── */
   const Pagination = ({ page, setPage, arr }) => {
@@ -385,10 +385,9 @@ const HelpTutorials = () => {
     const items = paginate(arr, page);
 
     return (
-      <Card className="border-0 shadow rounded-4 h-100">
-        <CardHeader className="bg-primary border-0 rounded-top-4 pb-0 pt-3 px-3">
-          <div
-            className={`d-flex align-items-center gap-2 border-bottom pb-2 ${isPdf ? "border-danger" : "border-primary"}`}>
+      <Card className="adm-card h-100">
+        <CardHeader className="adm-card-header">
+          <div className="d-flex align-items-center gap-2 flex-grow-1">
             <div
               className={`rounded-3 d-flex align-items-center justify-content-center ${isPdf ? "bg-danger" : "bg-primary"}`}
               style={{ width: 32, height: 32 }}>
@@ -396,18 +395,18 @@ const HelpTutorials = () => {
                 ? <FaFilePdf size={14} />
                 : <FaPlayCircle size={14} />}
             </div>
-            <span className="fw-bold text-dark">
+            <span className="fw-bold">
               {isPdf
                 ? t("PDF Documents", "PDF दस्तावेज़")
                 : t("Video Tutorials", "वीडियो ट्यूटोरियल")}
             </span>
-            <Badge color={isPdf ? "danger" : "primary"} pill className="ms-auto px-2">
-              {arr.length}
-            </Badge>
           </div>
+          <Badge color={isPdf ? "danger" : "primary"} pill className="px-2">
+            {arr.length}
+          </Badge>
         </CardHeader>
 
-        <CardBody className="p-3" style={{ maxHeight: 520, overflowY: "auto" }}>
+        <CardBody className="adm-card-body p-3" style={{ maxHeight: 520, overflowY: "auto" }}>
           {items.length === 0 ? (
             <div className="text-center text-muted py-5">
               {isPdf
@@ -445,37 +444,30 @@ const HelpTutorials = () => {
   }
 
   return (
-    <Container>
-      <div className=" min-vh-100 py-4">
-        <div className="container-fluid px-3 px-md-4">
+    <Container fluid="xl" className="py-4">
+      <div className="min-vh-100">
+        <div className="px-3 px-md-4">
 
           {/* ── PAGE HEADER ── */}
-          <CardHeader className="shadow rounded ">
-            <div className=" rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center gap-3">
-              <div
-                className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                style={{ width: 46, height: 46 }}>
-                <span style={{ fontSize: "1.4rem" }}>📘</span>
-              </div>
-              <div>
-                <h5 className="fw-bold mb-0">
-                  {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
-                </h5>
-                <small className="text-muted">
-                  {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
-                </small>
-              </div>
-              <div className="ms-auto d-flex gap-2">
-                <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1">
-                  <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
-                </Badge>
-                <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1">
-                  <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
-                </Badge>
-              </div>
+          <div className="adm-page-head">
+            <div>
+              <h4 className="adm-page-title">
+                <span style={{ fontSize: "1.2rem" }}>📘</span>
+                {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
+              </h4>
+              <p className="adm-page-subtitle">
+                {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
+              </p>
             </div>
-          </CardHeader>
-
+            <div className="d-flex flex-wrap gap-2">
+              <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1">
+                <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
+              </Badge>
+              <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1">
+                <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
+              </Badge>
+            </div>
+          </div>
 
           {/* ── SECTIONS ── */}
           <Row className="g-4">

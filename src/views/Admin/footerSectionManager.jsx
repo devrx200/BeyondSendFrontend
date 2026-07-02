@@ -489,24 +489,24 @@ const FooterSection = () => {
 
     return (
         <Container className="footer-admin-page">
-            <CardHeader className="rounded border">
-            <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                <div>
-                    <h4 className="mb-1 fw-bold text-white">
-                        Footer Section Manager
-                    </h4>
-                    <small className="text-light">
-                        Manage footer links, contact details, social media and footer content
-                    </small>
-                </div>
+            <Card className="adm-card mb-4">
+                <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h4 className="adm-page-title mb-1 text-white">
+                            Footer Section Manager
+                        </h4>
+                        <p className="adm-page-subtitle mb-0 text-white">
+                            Manage footer links, contact details, social media and footer content
+                        </p>
+                    </div>
 
-                <Button color="light" className="text-success" onClick={saveFooter}>
-                    <FaSave className="me-2" />
-                    Save Footer Content
-                </Button>
-            </div>
-            </CardHeader>
-            <Card className="admin-card">
+                    <Button color="light" className="border border-dark text-dark d-flex align-items-center gap-2 rounded-3 fw-semibold" onClick={saveFooter}>
+                        <FaSave className="" />
+                        Save Footer Content
+                    </Button>
+                </CardHeader>
+            </Card>
+            <Card className="adm-card">
                 <CardBody>
                     <h3 className="section-title">Contact Information</h3>
 
@@ -852,7 +852,7 @@ const FooterSection = () => {
                                 onClick={addOrUpdateLink}
                                 size="sm"
                             >
-                                {editRow.data ? "Update" : <FaPlus />}
+                              {editRow.data ? "Update" : <><FaPlus className="me-1" /> Add</>}
                             </Button>
 
                             {editRow.data && (

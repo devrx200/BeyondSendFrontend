@@ -524,14 +524,15 @@ const MenuManagement = () => {
 
   /* ================= UI ================= */
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <div className="d-flex justify-content-between">
-          <h4 className="mb-0">Menu Management</h4>
-          <Button color="light" className="text-success" onClick={toggleModal}>
-            <FaPlus className="me-2 " /> Add Menu
-          </Button>
+    <Card className="adm-card mb-4">
+      <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h4 className="adm-page-title mb-1">Menu Management</h4>
+          <p className="adm-page-subtitle mb-0 text-white">Manage website navigation structure and menu items</p>
         </div>
+        <Button color="light" className="text-success" onClick={toggleModal}>
+          <FaPlus className="me-2" /> Add Menu
+        </Button>
       </CardHeader>
       <CardBody>
 
