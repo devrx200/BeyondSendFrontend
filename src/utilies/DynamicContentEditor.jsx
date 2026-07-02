@@ -1006,6 +1006,8 @@ const DynamicContentEditor = forwardRef(({
   const [selText, setSelText] = useState("");
   const [toast, setToast] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+// Keep a stable editor instance while typing.
+  // editorKey is only used for rare resets/clears.
   const [editorKey, setEditorKey] = useState(`${instanceId}_${activeTab}`);
   const [liveContent, setLiveContent] = useState("");
 
@@ -1240,7 +1242,7 @@ const DynamicContentEditor = forwardRef(({
 
         <div style={{ background: WP.white }} role="region" aria-label={`Content editor – ${activeTab === "en" ? "English" : "Hindi"}`}>
           <JoditEditor
-            key={editorKey}
+            key={instanceId} // stable key prevents re-mount while typing
             config={joditConfig}
             onBlur={handleBlur}
             onChange={handleChange}

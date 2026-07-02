@@ -220,7 +220,9 @@ const FormBody = React.memo(({
         <div style={{ display: "flex", flexDirection: "column", gap: isMobile ? 12 : 14 }}>
           <Card>
             <input
+              type="text"
               name="titleEn" value={form.titleEn} onChange={handleChange}
+              autoComplete="off"
               placeholder="Add English title"
               style={{ ...fi, fontSize: isMobile ? 18 : 22, fontWeight: 400, padding: "6px 0", border: "none", borderBottom: `1px solid ${WP.line}`, borderRadius: 0, marginBottom: 10 }}
               onFocus={e => (e.target.style.borderBottomColor = WP.focus)}
@@ -237,7 +239,7 @@ const FormBody = React.memo(({
               <span style={{ color: WP.textMid, fontWeight: 600 }}>Permalink:</span>
               <span style={{ color: WP.textMid }}>{SITE_URL}/</span>
               <div style={{ display: "flex", alignItems: "stretch", border: `1px solid ${slugError ? WP.red : WP.border}`, borderRadius: 3, overflow: "hidden", flex: 1 }}>
-                <input name="slug" value={form.slug} onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="page-slug" style={{ ...fi, border: "none", borderRadius: 0, padding: "3px 6px", fontSize: 13 }} />
+                <input type="text" name="slug" value={form.slug} autoComplete="off" onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="page-slug" style={{ ...fi, border: "none", borderRadius: 0, padding: "3px 6px", fontSize: 13 }} />
               </div>
               {!slugError && form.slug && <CopyBtn text={fullSlugURL} />}
               {slugError && <span style={{ fontSize: 11, color: WP.red }}>⚠ {slugError}</span>}
@@ -426,8 +428,21 @@ const ImportantPageManagement = () => {
   };
 
   const handleSubmit = async (publishAfter = false) => {
+    if (!form.titleEn?.trim()) {
+      setMessage({ type: "danger", text: "English title is required before saving." });
+      return;
+    }
+    if (!form.slug?.trim()) {
+      setSlugError("Slug is required");
+      setMessage({ type: "danger", text: "Page slug is required before saving." });
+      return;
+    }
     const err = validateSlug(form.slug);
-    if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
+    if (err) {
+      setSlugError(err);
+      setMessage({ type: "danger", text: "Fix slug errors before saving." });
+      return;
+    }
     try {
       setSaving(true);
       const fd = buildPayload(form);

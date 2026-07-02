@@ -45,7 +45,6 @@ const validateSlug = (value) => {
 };
 
 // Builds the real, full public URL path for a page: baseSlug/mainSlug/slug
-// Empty/undefined segments are skipped and extra slashes are cleaned up.
 const buildFullPath = ({ baseSlug, mainSlug, slug }) => {
   const segments = [baseSlug, mainSlug, slug]
     .map((s) => (s || "").toString().trim().replace(/^\/+|\/+$/g, ""))
@@ -73,10 +72,16 @@ const LinkBtn = ({ children, onClick, color }) => (
   </button>
 );
 
-const StatusBadge = ({ active }) => (
-  <span style={{ display: "inline-block", padding: "1px 7px", borderRadius: 3, fontSize: 11, fontWeight: 600, background: active ? WP.greenBg : "#f8d7da", color: active ? WP.greenDark : "#a30000", border: `1px solid ${active ? WP.green : "#f5c6cb"}`, whiteSpace: "nowrap" }}>
-    {active ? "Active" : "Inactive"}
-  </span>
+// Now shows BOTH publish state (Published / Draft) and active state (Active / Inactive)
+const StatusBadge = ({ published, active }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <span style={{ display: "inline-block", padding: "1px 7px", borderRadius: 3, fontSize: 11, fontWeight: 600, background: published ? WP.greenBg : WP.orangeBg, color: published ? WP.greenDark : WP.amber, border: `1px solid ${published ? WP.green : WP.orange}`, whiteSpace: "nowrap" }}>
+      {published ? "Published" : "Draft"}
+    </span>
+    <span style={{ display: "inline-block", padding: "1px 7px", borderRadius: 3, fontSize: 11, fontWeight: 600, background: active ? WP.greenBg : "#f8d7da", color: active ? WP.greenDark : "#a30000", border: `1px solid ${active ? WP.green : "#f5c6cb"}`, whiteSpace: "nowrap" }}>
+      {active ? "Active" : "Inactive"}
+    </span>
+  </div>
 );
 
 const CopyBtn = ({ text, label }) => {
@@ -178,6 +183,10 @@ const emptyDocument = () => ({
   isActive: true,
 });
 
+// Publish-state is tracked separately from `form` because it's server-controlled
+// (only the dedicated publish/draft endpoints are allowed to change it).
+const emptyPageStatus = () => ({ isPublished: false, isDraft: true });
+
 // --- Media query hook ---
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -216,6 +225,7 @@ const MultiSectionPagesManagement = () => {
   const [view, setView] = useState(initView);
   const [message, setMessage] = useState(null);
   const [form, setForm] = useState(initForm);
+  const [pageStatus, setPageStatus] = useState(emptyPageStatus); // { isPublished, isDraft }
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -223,7 +233,7 @@ const MultiSectionPagesManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const [counts, setCounts] = useState({ all: 0, active: 0, inactive: 0 });
+  const [counts, setCounts] = useState({ all: 0, published: 0, draft: 0, active: 0, inactive: 0 });
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [slugError, setSlugError] = useState("");
@@ -243,17 +253,22 @@ const MultiSectionPagesManagement = () => {
   useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
   useEffect(() => { if (view === "form") sessionStorage.setItem(SS_FORM, JSON.stringify(form)); }, [form, view]);
   useEffect(() => { sessionStorage.setItem(SS_FULLSCREEN, isFormFullscreen ? "true" : "false"); }, [isFormFullscreen]);
+  useEffect(() => { if (!message) return; const t = setTimeout(() => setMessage(null), 4500); return () => clearTimeout(t); }, [message]);
 
-  // --- Load counts for the All / Active / Inactive tabs (independent of current filter/search) ---
+  // --- Load counts for the tabs (independent of current filter/search) ---
   const loadCounts = useCallback(async () => {
     try {
-      const [allRes, activeRes, inactiveRes] = await Promise.all([
+      const [allRes, publishedRes, draftRes, activeRes, inactiveRes] = await Promise.all([
         axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1 } }),
+        axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isPublished: true } }),
+        axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isPublished: false } }),
         axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isActive: true } }),
         axios.get(`${API}/api/get-all-content`, { headers: authH(), params: { page: 1, limit: 1, isActive: false } }),
       ]);
       setCounts({
         all: allRes.data?.pagination?.totalDocuments || 0,
+        published: publishedRes.data?.pagination?.totalDocuments || 0,
+        draft: draftRes.data?.pagination?.totalDocuments || 0,
         active: activeRes.data?.pagination?.totalDocuments || 0,
         inactive: inactiveRes.data?.pagination?.totalDocuments || 0,
       });
@@ -269,6 +284,8 @@ const MultiSectionPagesManagement = () => {
       const params = { page, limit: pageSize, search, sortBy, sortOrder };
       if (filterStatus === "active") params.isActive = true;
       else if (filterStatus === "inactive") params.isActive = false;
+      else if (filterStatus === "published") params.isPublished = true;
+      else if (filterStatus === "draft") params.isPublished = false;
 
       const res = await axios.get(`${API}/api/get-all-content`, { headers: authH(), params });
       if (res.data?.success) {
@@ -286,23 +303,16 @@ const MultiSectionPagesManagement = () => {
     }
   }, [search, filterStatus, sortBy, sortOrder, currentPage, pageSize]);
 
-  // Auto-load the list whenever we're on the list view and any relevant
-  // filter/sort/page/search/pageSize value changes — this is what makes the
-  // table populate on its own instead of only after pressing "Search".
   useEffect(() => {
     if (view !== "list") return;
     loadData(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, currentPage, filterStatus, sortBy, sortOrder, search, pageSize]);
 
-  // Load the tab counts once, and again whenever the list view is shown
-  // (e.g. after coming back from add/edit, or after a delete).
   useEffect(() => {
     if (view === "list") loadCounts();
   }, [view, loadCounts]);
 
-  // Debounce the search box: only update the real `search` state (which
-  // triggers loadData above) 400ms after the user stops typing.
   useEffect(() => {
     const t = setTimeout(() => {
       setSearch(searchInput);
@@ -315,6 +325,7 @@ const MultiSectionPagesManagement = () => {
   const resetForm = useCallback(() => {
     setEditingId(null);
     setForm(emptyForm());
+    setPageStatus(emptyPageStatus());
     setSlugManuallyEdited(false);
     setSlugError("");
     setIsFormFullscreen(false);
@@ -364,7 +375,6 @@ const MultiSectionPagesManagement = () => {
   };
 
   const handleMainSlugChange = (e) => {
-    // Allow one extra "/" so two-segment grouping like seniority/head-office works.
     const clean = e.target.value
       .toLowerCase()
       .replace(/[^a-z0-9/-]/g, "")
@@ -417,7 +427,6 @@ const MultiSectionPagesManagement = () => {
       return;
     }
 
-    // For new content (no editingId) – manage locally
     if (!editingId) {
       const updatedDocs = [...form.documentsUpdate];
       if (editingDocIndex !== null) {
@@ -430,7 +439,6 @@ const MultiSectionPagesManagement = () => {
       return;
     }
 
-    // For existing content – use API
     try {
       const fd = new FormData();
       fd.append("titleEng", currentDocument.titleEng);
@@ -476,7 +484,6 @@ const MultiSectionPagesManagement = () => {
     const doc = form.documentsUpdate[index];
     const nextActive = !(doc.isActive !== false);
 
-    // Local-only content (not yet saved)
     if (!editingId || !doc._id) {
       const updatedDocs = [...form.documentsUpdate];
       updatedDocs[index] = { ...updatedDocs[index], isActive: nextActive };
@@ -573,9 +580,25 @@ const MultiSectionPagesManagement = () => {
     return fd;
   };
 
+  // publish = true  -> Save (create/update) then call the dedicated publish endpoint
+  // publish = false -> Save only. If the page is already published, this just
+  //                     updates its content and DOES NOT touch publish/draft state.
   const handleSubmit = async (publish = false) => {
+    if (!form.titleEng?.trim()) {
+      setMessage({ type: "danger", text: "English title is required before saving." });
+      return;
+    }
+    if (!form.slug?.trim()) {
+      setSlugError("Slug is required");
+      setMessage({ type: "danger", text: "Page slug is required before saving." });
+      return;
+    }
     const err = validateSlug(form.slug);
-    if (err) { setSlugError(err); setMessage({ type: "danger", text: "Fix slug errors before saving." }); return; }
+    if (err) {
+      setSlugError(err);
+      setMessage({ type: "danger", text: "Fix slug errors before saving." });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -591,11 +614,42 @@ const MultiSectionPagesManagement = () => {
       const savedId = res.data.data._id;
       if (!editingId) setEditingId(savedId);
 
-      setMessage({ type: "success", text: publish ? "Page published." : "Draft saved." });
+      if (publish) {
+        await axios.post(`${API}/api/publish-content/${savedId}`, {}, { headers: authH() });
+        setPageStatus({ isPublished: true, isDraft: false });
+        setMessage({ type: "success", text: "Page published successfully." });
+      } else {
+        setMessage({ type: "success", text: pageStatus.isPublished ? "Published page updated." : "Draft saved." });
+      }
     } catch (err) {
       setMessage({ type: "danger", text: err.response?.data?.message || "Something went wrong" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  // --- Publish / Draft (used both from the list and from inside the form) ---
+  const handlePublish = async (id) => {
+    try {
+      await axios.post(`${API}/api/publish-content/${id}`, {}, { headers: authH() });
+      if (id === editingId) setPageStatus({ isPublished: true, isDraft: false });
+      setMessage({ type: "success", text: "Page published." });
+      loadData(currentPage);
+      loadCounts();
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.message || err.message });
+    }
+  };
+
+  const handleDraft = async (id) => {
+    try {
+      await axios.post(`${API}/api/draft-content/${id}`, {}, { headers: authH() });
+      if (id === editingId) setPageStatus({ isPublished: false, isDraft: true });
+      setMessage({ type: "success", text: "Page moved to draft." });
+      loadData(currentPage);
+      loadCounts();
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.response?.data?.message || err.message });
     }
   };
 
@@ -614,6 +668,7 @@ const MultiSectionPagesManagement = () => {
       isActive: item.isActive !== false,
       documentsUpdate: Array.isArray(item.documentsUpdate) ? item.documentsUpdate.map(doc => ({ ...doc, file: null, isActive: doc.isActive !== false })) : [],
     });
+    setPageStatus({ isPublished: !!item.isPublished, isDraft: item.isDraft !== false });
     setSlugManuallyEdited(true);
     setSlugError("");
     setView("form");
@@ -635,7 +690,6 @@ const MultiSectionPagesManagement = () => {
     try {
       await axios.delete(`${API}/api/delete-content/${id}`, { headers: authH() });
       Swal.fire({ title: "Deleted", icon: "success", timer: 1500, showConfirmButton: false });
-      // If we just deleted the last item on this page, step back a page.
       if (pages.length === 1 && currentPage > 1) {
         setCurrentPage(p => p - 1);
       } else {
@@ -683,17 +737,33 @@ const MultiSectionPagesManagement = () => {
           {editingId ? "Edit Page" : "Add New Page"}
         </span>
       </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
         <BtnDanger onClick={goToList}><FaTimes size={10} /> Close</BtnDanger>
         <BtnSecondary size="sm" onClick={() => fullUrlForForm && window.open(fullUrlForForm, "_blank", "noopener,noreferrer")} disabled={!fullUrlForForm}>
           <FaEye size={10} /> Preview
         </BtnSecondary>
+
+        {/* Save / Update button — label changes based on publish state */}
         <BtnBlack onClick={() => handleSubmit(false)} disabled={saving}>
-          <FaSave size={10} /> {saving ? "Saving…" : "Save Draft"}
+          <FaSave size={10} /> {saving ? "Saving…" : pageStatus.isPublished ? "Update Page" : "Save Draft"}
         </BtnBlack>
-        <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}>
-          <FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}
-        </BtnGreen>
+
+        {/* Publish button hides once published; a status pill + Move to Draft take its place */}
+        {pageStatus.isPublished ? (
+          <>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: WP.greenDark, background: WP.greenBg, border: `1px solid ${WP.green}`, borderRadius: 3, padding: "0 10px", lineHeight: "2.15384615" }}>
+              <FaCheck size={10} /> Published
+            </span>
+            <BtnSecondary size="sm" onClick={() => handleDraft(editingId)} disabled={saving || !editingId}>
+              <FaFileAlt size={10} /> Move to Draft
+            </BtnSecondary>
+          </>
+        ) : (
+          <BtnGreen onClick={() => handleSubmit(true)} disabled={saving}>
+            <FaCloudUploadAlt size={10} /> {saving ? "…" : "Publish"}
+          </BtnGreen>
+        )}
+
         {fullscreen ? (
           <button onClick={() => setIsFormFullscreen(false)} style={{ ...btnBase, background: WP.red, color: "#fff" }}>
             <FaCompress size={10} /> Exit Full Screen
@@ -741,22 +811,22 @@ const MultiSectionPagesManagement = () => {
               />
             </Card>
 
-            {/* URL / Slug structure — base, main, slug + live full URL + copy, all in one place */}
+            {/* URL / Slug structure */}
             <Card title="Page URL Structure">
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 10 }}>
                 <div>
                   <label style={lbl}>Base Slug</label>
-                  <input name="baseSlug" value={form.baseSlug} onChange={handleBaseSlugChange} placeholder="e.g., notice-board" style={{ ...fi, fontSize: 13 }} {...focus} />
+                  <input name="baseSlug" value={form.baseSlug} onChange={handleBaseSlugChange} placeholder="e.g., notice-board" autoComplete="off" style={{ ...fi, fontSize: 13 }} {...focus} />
                   <p style={{ fontSize: 11, color: WP.textLight, margin: "4px 0 0" }}>First URL segment</p>
                 </div>
                 <div>
                   <label style={lbl}>Main Slug</label>
-                  <input name="mainSlug" value={form.mainSlug} onChange={handleMainSlugChange} placeholder="e.g., tenders or seniority/head-office" style={{ ...fi, fontSize: 13 }} {...focus} />
+                  <input name="mainSlug" value={form.mainSlug} onChange={handleMainSlugChange} placeholder="e.g., tenders or seniority/head-office" autoComplete="off" style={{ ...fi, fontSize: 13 }} {...focus} />
                   <p style={{ fontSize: 11, color: WP.textLight, margin: "4px 0 0" }}>One or two segments (grouping)</p>
                 </div>
                 <div>
                   <label style={lbl}>Page Slug <span style={{ color: WP.red }}>*</span></label>
-                  <input name="slug" value={form.slug} onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="e.g., annual-report-2026" style={{ ...fi, fontSize: 13, borderColor: slugError ? WP.red : WP.border }} />
+                  <input name="slug" value={form.slug} autoComplete="off" onChange={handleSlugChange} onBlur={handleSlugBlur} placeholder="e.g., annual-report-2026" style={{ ...fi, fontSize: 13, borderColor: slugError ? WP.red : WP.border }} />
                   {slugError ? (
                     <p style={{ fontSize: 11, color: WP.red, margin: "4px 0 0" }}>⚠ {slugError}</p>
                   ) : (
@@ -814,7 +884,6 @@ const MultiSectionPagesManagement = () => {
                 </BtnBlue>
               }
             >
-              {/* Document list */}
               {form.documentsUpdate.length > 0 ? (
                 <div style={{ overflowX: "auto", marginBottom: 12 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -849,7 +918,9 @@ const MultiSectionPagesManagement = () => {
                                 title="Click to toggle"
                                 style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
                               >
-                                <StatusBadge active={doc.isActive !== false} />
+                                <span style={{ display: "inline-block", padding: "1px 7px", borderRadius: 3, fontSize: 11, fontWeight: 600, background: doc.isActive !== false ? WP.greenBg : "#f8d7da", color: doc.isActive !== false ? WP.greenDark : "#a30000", border: `1px solid ${doc.isActive !== false ? WP.green : "#f5c6cb"}` }}>
+                                  {doc.isActive !== false ? "Active" : "Inactive"}
+                                </span>
                               </button>
                             </td>
                             <td style={{ padding: "4px 6px", textAlign: "right", whiteSpace: "nowrap" }}>
@@ -871,17 +942,16 @@ const MultiSectionPagesManagement = () => {
                 <p style={{ color: WP.textLight, margin: "8px 0", fontSize: 13 }}>No documents added yet. Click "Add Document" to attach a file.</p>
               )}
 
-              {/* Inline document form */}
               {showDocForm && (
                 <div style={{ marginTop: 12, padding: 12, border: `1px solid ${WP.border}`, borderRadius: 4, background: WP.blueBg }}>
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
                     <div>
                       <label style={lbl}>Title (English) <span style={{ color: WP.red }}>*</span></label>
-                      <input name="titleEng" value={currentDocument.titleEng} onChange={handleDocChange} placeholder="e.g., Recruitment Notice 2026" style={fi} />
+                      <input name="titleEng"   type="text" autoComplete="off" value={currentDocument.titleEng} onChange={handleDocChange} placeholder="e.g., Recruitment Notice 2026" style={fi} />
                     </div>
                     <div>
                       <label style={lbl}>Title (Hindi) <span style={{ color: WP.red }}>*</span></label>
-                      <input name="titleHin" value={currentDocument.titleHin} onChange={handleDocChange} placeholder="जैसे, भर्ती सूचना 2026" style={fi} />
+                      <input name="titleHin"  type="text" autoComplete="off" value={currentDocument.titleHin} onChange={handleDocChange} placeholder="जैसे, भर्ती सूचना 2026" style={fi} />
                     </div>
                     <div>
                       <label style={lbl}>Short Description (English)</label>
@@ -919,13 +989,23 @@ const MultiSectionPagesManagement = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
             <Card title="Status & Actions">
               <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 6, borderBottom: `1px solid ${WP.line}` }}>
+                  <span>Status: <strong style={{ color: pageStatus.isPublished ? WP.greenDark : WP.amber }}>{pageStatus.isPublished ? "Published" : "Draft"}</strong></span>
+                </div>
                 <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} style={{ accentColor: WP.green }} />
                   <span>Active (Visible on site)</span>
                 </label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <BtnBlack onClick={() => handleSubmit(false)} disabled={saving} size="sm"><FaSave size={10} /> {editingId ? "Update Draft" : "Save Draft"}</BtnBlack>
-                  <BtnGreen onClick={() => handleSubmit(true)} disabled={saving} size="sm"><FaCloudUploadAlt size={10} /> Publish</BtnGreen>
+                  <BtnBlack onClick={() => handleSubmit(false)} disabled={saving} size="sm">
+                    <FaSave size={10} /> {saving ? "Saving…" : pageStatus.isPublished ? "Update Published Page" : editingId ? "Update Draft" : "Save Draft"}
+                  </BtnBlack>
+                  {!pageStatus.isPublished && (
+                    <BtnGreen onClick={() => handleSubmit(true)} disabled={saving} size="sm"><FaCloudUploadAlt size={10} /> Publish</BtnGreen>
+                  )}
+                  {pageStatus.isPublished && editingId && (
+                    <BtnSecondary onClick={() => handleDraft(editingId)} disabled={saving} size="sm"><FaFileAlt size={10} /> Move to Draft</BtnSecondary>
+                  )}
                 </div>
               </div>
             </Card>
@@ -959,20 +1039,8 @@ const MultiSectionPagesManagement = () => {
           fontFamily: FF,
           boxSizing: "border-box",
           ...(isFormFullscreen
-            ? {
-                position: "fixed",
-                inset: 0,
-                width: "100vw",
-                height: "100vh",
-                overflowY: "auto",
-                overflowX: "hidden",
-                zIndex: 2000,
-              }
-            : {
-                width: "100%",
-                minHeight: "100vh",
-                overflowX: "hidden",
-              }),
+            ? { position: "fixed", inset: 0, width: "100vw", height: "100vh", overflowY: "auto", overflowX: "hidden", zIndex: 2000 }
+            : { width: "100%", minHeight: "100vh", overflowX: "hidden" }),
         }}
       >
         <FormTopBar fullscreen={isFormFullscreen} />
@@ -985,6 +1053,8 @@ const MultiSectionPagesManagement = () => {
   const thSt = { padding: "8px 10px", fontWeight: 700, color: WP.textMid, fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", background: "#f6f7f7", borderBottom: `1px solid ${WP.line}`, textAlign: "left", cursor: "pointer", userSelect: "none" };
   const filters = [
     { k: "all", l: "All", count: counts.all },
+    { k: "published", l: "Published", count: counts.published },
+    { k: "draft", l: "Draft", count: counts.draft },
     { k: "active", l: "Active", count: counts.active },
     { k: "inactive", l: "Inactive", count: counts.inactive },
   ];
@@ -1049,7 +1119,7 @@ const MultiSectionPagesManagement = () => {
             </div>
           ) : (
             <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 11 : 13, minWidth: 820 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: isMobile ? 11 : 13, minWidth: 900 }}>
                 <thead>
                   <tr>
                     <th style={thSt}>#</th>
@@ -1057,7 +1127,7 @@ const MultiSectionPagesManagement = () => {
                     <th style={thSt}>Permalink</th>
                     <th style={thSt}>Department</th>
                     <th style={{ ...thSt, textAlign: "center" }}>Docs</th>
-                    <th style={thSt} onClick={() => handleSort("isActive")}>Status{sortIcon("isActive")}</th>
+                    <th style={thSt} onClick={() => handleSort("isPublished")}>Status{sortIcon("isPublished")}</th>
                     <th style={{ ...thSt, textAlign: "right", cursor: "default" }}>Actions</th>
                   </tr>
                 </thead>
@@ -1091,13 +1161,16 @@ const MultiSectionPagesManagement = () => {
                             {item.documentsUpdate?.length || 0}
                           </span>
                         </td>
-                        <td style={tdStyle()}><StatusBadge active={item.isActive} /></td>
+                        <td style={tdStyle()}><StatusBadge published={item.isPublished} active={item.isActive} /></td>
                         <td style={{ ...tdStyle(true) }}>
                           <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
                             <BtnSecondary size="sm" onClick={() => path && window.open(fullUrl, "_blank", "noopener,noreferrer")} disabled={!path}>
                               <FaEye size={11} /> {!isMobile && "View"}
                             </BtnSecondary>
                             <BtnSecondary size="sm" onClick={() => handleEdit(item)}><FaEdit size={11} /> {!isMobile && "Edit"}</BtnSecondary>
+                            {item.isPublished
+                              ? <BtnSecondary size="sm" onClick={() => handleDraft(item._id)}><FaFileAlt size={11} /> {!isMobile && "Draft"}</BtnSecondary>
+                              : <BtnGreen size="sm" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={11} /> {!isMobile && "Publish"}</BtnGreen>}
                             <BtnDanger size="sm" onClick={() => handleDelete(item._id, item.titleEng)}><FaTrashAlt size={11} /> {!isMobile && "Delete"}</BtnDanger>
                           </div>
                         </td>
