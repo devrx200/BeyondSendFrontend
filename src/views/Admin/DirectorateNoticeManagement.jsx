@@ -402,7 +402,7 @@ const DirectorateNoticeManagement = () => {
       <CardHeader>
         <div className="d-flex justify-content-between align-items-center p-2">
            
-          <h4 className="text-white "> <FaBullhorn className="me-2 " /> Directorate Notices</h4>
+          <h4 className="mb-0"> <FaBullhorn className="me-2 " /> Directorate Notices</h4>
           {activeTab === "1" && (
             <Button color="light" className="text-success" onClick={handleAddNew}>
               <FaPlus /> Add Notice

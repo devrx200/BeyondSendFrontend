@@ -393,8 +393,8 @@ const HelpTutorials = () => {
               className={`rounded-3 d-flex align-items-center justify-content-center ${isPdf ? "bg-danger" : "bg-primary"}`}
               style={{ width: 32, height: 32 }}>
               {isPdf
-                ? <FaFilePdf className="text-white" size={14} />
-                : <FaPlayCircle className="text-white" size={14} />}
+                ? <FaFilePdf size={14} />
+                : <FaPlayCircle size={14} />}
             </div>
             <span className="fw-bold text-dark">
               {isPdf

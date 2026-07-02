@@ -508,6 +508,17 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && mobileOpen && onCloseMobile) {
+        onCloseMobile();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen, onCloseMobile]);
+
   // ── Session countdown ───────────────────────────────────
   useEffect(() => {
     if (!decoded?.exp) return;

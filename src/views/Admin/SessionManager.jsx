@@ -408,7 +408,7 @@ const SessionManager = () => {
         <CardBody className="py-4">
           <Row className="align-items-center">
             <Col md={6}>
-              <h3 className="text-white mb-1 fw-bold">🔐 Session Management</h3>
+              <h3 className="mb-1 fw-bold">🔐 Session Management</h3>
               <p className="text-white-50 mb-0 small">
                 Monitor and manage all user sessions in real-time
               </p>

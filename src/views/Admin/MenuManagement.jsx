@@ -527,7 +527,7 @@ const MenuManagement = () => {
     <Card className="shadow-sm">
       <CardHeader>
         <div className="d-flex justify-content-between">
-          <h4 className="text-white">Menu Management</h4>
+          <h4 className="mb-0">Menu Management</h4>
           <Button color="light" className="text-success" onClick={toggleModal}>
             <FaPlus className="me-2 " /> Add Menu
           </Button>

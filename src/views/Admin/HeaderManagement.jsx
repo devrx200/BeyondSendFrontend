@@ -109,12 +109,12 @@ const HeaderManagement = () => {
   return (
     <Container fluid className="mt-4">
       <CardHeader className="rounded shadow-lg">
-        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom text-white">
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
           <div>
-            <h4 className="mb-1 fw-bold text-white">
+            <h4 className="adm-page-title mb-1 fw-bold">
               🌐 Header Management
             </h4>
-            <small className="text-white">
+            <small className="adm-page-subtitle">
               Manage website header menus and settings
             </small>
           </div>

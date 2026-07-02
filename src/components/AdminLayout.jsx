@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
@@ -7,13 +7,29 @@ import BreadcrumbBar from "./AdminBreadcrumbBar";
 import "../css/AdminTheme.css";
 
 const AdminLayout = () => {
-  const [collapsed,  setCollapsed]  = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    const syncLayoutState = () => {
+      if (window.innerWidth > 991) {
+        setMobileOpen(false);
+      }
+    };
+
+    syncLayoutState();
+    window.addEventListener("resize", syncLayoutState);
+
+    return () => window.removeEventListener("resize", syncLayoutState);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const handleToggle = () => {
     if (window.innerWidth <= 991) {
@@ -42,9 +58,9 @@ const AdminLayout = () => {
         <BreadcrumbBar />
 
         <div className="adm-content-scroll">
-          {/* <div className="adm-content-card"> */}
-            <Outlet />
-          {/* </div> */}
+
+          <Outlet />
+
         </div>
 
         <AdminFooter />

@@ -172,7 +172,7 @@ const ImportantLinksManagement = () => {
             <CardHeader className="rounded border">
                 <div className="adm-page-head">
                     <div>
-                        <h3 className="adm-page-title text-white"><FaLink className="text-white" /> Important Links Management</h3>
+                        <h3 className="adm-page-title"><FaLink className="" /> Important Links Management</h3>
                         <p className="adm-page-subtitle text-white">Manage quick-access links shown on the public site.</p>
                     </div>
                     {!modal && (

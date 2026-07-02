@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody,
-  Row, Col, Badge, Alert,
+  Row, Col, Badge,
   CardHeader
 } from "reactstrap";
 import { useDropzone } from "react-dropzone";
@@ -13,12 +13,25 @@ import {
   FaImages, FaFile, FaTable, FaTimes, FaCheckCircle,
   FaExclamationTriangle, FaMagic, FaInfoCircle
 } from "react-icons/fa";
-//  Universal file viewer – supports 20+ formats
 import { FileViewer } from "@smazeeapps/file-viewer";
 
 const API = import.meta.env.VITE_API_URL;
 const getToken = () => sessionStorage.getItem("authToken");
 const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
+
+const acceptedFileTypes = {
+  "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"],
+  "application/pdf": [".pdf"],
+  "application/msword": [".doc", ".docx"],
+  "application/vnd.ms-excel": [".xls", ".xlsx"],
+  "text/plain": [".txt"],
+  "text/csv": [".csv"],
+  "application/vnd.ms-powerpoint": [".ppt", ".pptx"],
+  "application/zip": [".zip"],
+  "audio/mpeg": [".mp3"],
+  "video/mp4": [".mp4"],
+  "video/quicktime": [".mov"]
+};
 
 // ----------------------------- SEO FILENAME HELPERS -----------------------------
 const splitNameExt = (fileName) => {
@@ -57,32 +70,51 @@ const MediaLibraryMangments = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(false);
-  const [error, setError] = useState("");
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [editableName, setEditableName] = useState("");
   const [fileExt, setFileExt] = useState("");
   const [nameIsSeoFriendly, setNameIsSeoFriendly] = useState(true);
 
+  const MAX_UPLOAD_SIZE_BYTES = 32 * 1024 * 1024;
+  const isValidUploadSize = selectedFile?.size <= MAX_UPLOAD_SIZE_BYTES;
+
+  const showToast = useCallback((icon, title, text = "") => {
+    Swal.fire({
+      icon,
+      title,
+      text,
+      toast: true,
+      position: "bottom-end",
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true
+    });
+  }, []);
+
   // ----------------------------- FETCH FILES -----------------------------
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/api/files/list`, {
         headers: authHeader()
       });
       setFiles(res.data?.data || []);
-      setError("");
     } catch (err) {
-      setError("Failed to load media files");
+      const message = err?.response?.data?.message || "Failed to load media files";
+      showToast("error", "Media load failed", message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
-    fetchFiles();
-  }, []);
+    const loadFiles = window.setTimeout(() => {
+      void fetchFiles();
+    }, 0);
+
+    return () => window.clearTimeout(loadFiles);
+  }, [fetchFiles]);
 
   // ----------------------------- COPY LINK -----------------------------
   const copyLink = (filePath) => {
@@ -108,15 +140,48 @@ const MediaLibraryMangments = () => {
   const getPreviewContent = () => {
     if (!previewFile) return null;
     const fileUrl = `${API}${previewFile.filePath}`;
+    const extension = (previewFile.originalName || "").split(".").pop()?.toLowerCase();
+    const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension);
+    const isAudio = ["mp3", "wav", "ogg", "m4a"].includes(extension);
+    const isVideo = ["mp4", "mov", "webm", "avi"].includes(extension);
+    const isText = ["txt", "csv", "json", "md", "xml", "html", "css", "js", "jsx", "ts", "tsx"].includes(extension);
 
     if (previewError) {
       return (
         <div className="text-center p-5">
           <FaFileAlt size={90} className="text-muted mb-3" />
-          <p>Cannot preview this file.</p>
+          <p>Cannot preview this file directly.</p>
           <Button color="primary" href={fileUrl} target="_blank" rel="noopener noreferrer">
-            Download
+            Download / Open File
           </Button>
+        </div>
+      );
+    }
+
+    if (isImage) {
+      return <img src={fileUrl} alt={previewFile.originalName} style={{ maxWidth: "100%", maxHeight: 560, objectFit: "contain" }} />;
+    }
+
+    if (isAudio) {
+      return (
+        <div className="text-center p-4">
+          <audio controls src={fileUrl} style={{ width: "100%" }} />
+        </div>
+      );
+    }
+
+    if (isVideo) {
+      return (
+        <div className="text-center p-4">
+          <video controls src={fileUrl} style={{ width: "100%", maxHeight: 560 }} />
+        </div>
+      );
+    }
+
+    if (isText) {
+      return (
+        <div className="text-start p-3 border rounded bg-light" style={{ maxHeight: 560, overflow: "auto" }}>
+          <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>{previewFile.originalName}</pre>
         </div>
       );
     }
@@ -135,25 +200,34 @@ const MediaLibraryMangments = () => {
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
     if (!file) return;
+
     const { ext } = splitNameExt(file.name);
+    const normalizedExt = `.${ext.toLowerCase()}`;
+    const allowedExtensions = new Set(Object.values(acceptedFileTypes).flat());
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      const message = "Selected file exceeds the 32 MB limit.";
+      showToast("error", "File too large", message);
+      return;
+    }
+
+    if (!allowedExtensions.has(normalizedExt)) {
+      const message = "Unsupported file type. Please choose a supported file.";
+      showToast("error", "Unsupported file", message);
+      return;
+    }
+
     setSelectedFile(file);
     setFileExt(ext);
     setEditableName("");
     setNameIsSeoFriendly(true);
-    setError("");
-  }, []);
+  }, [MAX_UPLOAD_SIZE_BYTES, showToast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
-    accept: {
-      "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
-      "application/pdf": [".pdf"],
-      "application/vnd.ms-excel": [".xls"],
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-      "application/msword": [".doc"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"]
-    }
+    accept: acceptedFileTypes,
+    noClick: false
   });
 
   const handleNameChange = (val) => {
@@ -171,7 +245,17 @@ const MediaLibraryMangments = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      const message = "Please choose a file to upload.";
+      showToast("warning", "No file selected", message);
+      return;
+    }
+
+    if (selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
+      const message = "Selected file exceeds the 32 MB limit.";
+      showToast("error", "File too large", message);
+      return;
+    }
 
     const originalBase = splitNameExt(selectedFile.name).base;
     const finalBase = editableName.trim() || originalBase;
@@ -180,17 +264,18 @@ const MediaLibraryMangments = () => {
     formData.append("fileName", finalBase);
     formData.append("file", selectedFile);
     setUploadProgress(true);
-    setError("");
 
     try {
-      await axios.post(`${API}/api/files/upload`, formData, {
+      const res = await axios.post(`${API}/api/files/upload`, formData, {
         headers: { ...authHeader(), "Content-Type": "multipart/form-data" }
       });
       await fetchFiles();
-      Swal.fire("Uploaded!", "File uploaded successfully", "success");
+      const successMessage = res?.data?.message || "File uploaded successfully";
+      showToast("success", "Uploaded!", successMessage);
       handleCancelUpload();
     } catch (err) {
-      setError("Upload failed. Check file type/size.");
+      const message = err?.response?.data?.message || "Upload failed. Check file type/size.";
+      showToast("error", "Upload failed", message);
     } finally {
       setUploadProgress(false);
     }
@@ -201,7 +286,6 @@ const MediaLibraryMangments = () => {
     setEditableName("");
     setFileExt("");
     setNameIsSeoFriendly(true);
-    setError("");
   };
 
   // ----------------------------- DATE TIME FORMATTER -----------------------------
@@ -224,9 +308,14 @@ const MediaLibraryMangments = () => {
   // ----------------------------- FILTER & SEARCH -----------------------------
   const filteredFiles = files.filter(file => {
     const ext = file.originalName?.split(".").pop().toLowerCase();
-    if (filterType === "image") return ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+    const imageExts = ["jpg", "jpeg", "png", "gif", "webp", "svg"];
+    const documentExts = ["xls", "xlsx", "doc", "docx", "ppt", "pptx", "txt", "csv"];
+    const videoExts = ["mp4", "mov", "webm", "avi"];
+
+    if (filterType === "image") return imageExts.includes(ext);
     if (filterType === "pdf") return ext === "pdf";
-    if (filterType === "document") return ["xls", "xlsx", "doc", "docx"].includes(ext);
+    if (filterType === "document") return documentExts.includes(ext);
+    if (filterType === "video") return videoExts.includes(ext);
     return true;
   }).filter(file =>
     file.originalName?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -235,18 +324,29 @@ const MediaLibraryMangments = () => {
   // ----------------------------- UI HELPERS -----------------------------
   const getFileIcon = (fileName) => {
     const ext = fileName?.split(".").pop().toLowerCase();
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return <FaFileImage size={32} className="text-primary" />;
+    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext)) return <FaFileImage size={32} className="text-primary" />;
     if (ext === "pdf") return <FaFilePdf size={32} className="text-danger" />;
     if (["xls", "xlsx"].includes(ext)) return <FaFileExcel size={32} className="text-success" />;
     if (["doc", "docx"].includes(ext)) return <FaFileAlt size={32} className="text-info" />;
+    if (["ppt", "pptx"].includes(ext)) return <FaTable size={32} className="text-warning" />;
+    if (["zip"].includes(ext)) return <FaFile size={32} className="text-secondary" />;
+    if (["mp3", "mp4", "mov"].includes(ext)) return <FaFile size={32} className="text-purple" />;
     return <FaFileAlt size={32} className="text-secondary" />;
   };
 
   const formatSize = (bytes) => {
-    if (!bytes) return "0 KB";
-    const kb = bytes / 1024;
-    if (kb < 1024) return `${kb.toFixed(1)} KB`;
-    return `${(kb / 1024).toFixed(1)} MB`;
+    if (bytes === null || bytes === undefined || bytes === 0) return "0 B";
+
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    let size = Number(bytes);
+    let unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+
+    return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
   };
 
   const filterBtnStyle = (active) => ({
@@ -338,12 +438,12 @@ const MediaLibraryMangments = () => {
 
   // ----------------------------- MAIN RENDER -----------------------------
   return (
-    <div style={{ background: "#f0f0f1", minHeight: "100vh", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto" }}>
+    <>
       {/* Upload Area */}
       <div className="p-3 pb-0">
         <Card className="shadow-sm border-0 rounded-3 overflow-hidden">
           <CardHeader className="p-2">
-            <h4 className="text-white"> Media Library</h4>
+            <h4 className="mb-0"> Media Library</h4>
           </CardHeader>
           <CardBody className="p-4">
             <div {...getRootProps()} className={`border-2 border-dashed rounded-3 p-5 text-center transition-all ${isDragActive ? "bg-primary-soft border-primary" : "bg-light border-secondary"}`} style={{ cursor: "pointer", transition: "all 0.2s", borderStyle: "dashed" }}>
@@ -351,8 +451,8 @@ const MediaLibraryMangments = () => {
               {!selectedFile ? (
                 <>
                   <FaUpload size={48} className={`mb-3 ${isDragActive ? "text-primary" : "text-muted"}`} />
-                  <h5 className="mb-1">{isDragActive ? "Drop file here" : "Drop files anywhere to upload"}</h5>
-                  <p className="text-muted mb-0">or <span className="text-primary fw-semibold">Select Files</span></p>
+                  <h5 className="mb-1">{isDragActive ? "Drop file here" : "Click or drag files here to upload"}</h5>
+                  <p className="text-muted mb-0">Supported file types: images, documents, audio, video, and archives</p>
                   <small className="fw-bold">Maximum Upload File Size: 32 MB. </small><br />
                   <small className="text-muted mt-2 d-block"><strong>Supported:</strong> JPG, JPEG, PNG, GIF, WebP, SVG, PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, PPT, PPTX, ZIP, MP3, MP4, MOV</small>
                 </>
@@ -377,7 +477,9 @@ const MediaLibraryMangments = () => {
                         style={{ fontSize: 13 }}
                         invalid={editableName.trim() !== "" && !nameIsSeoFriendly}
                       />
-                      <span className="text-danger small text-nowrap">.{fileExt} - {(selectedFile.size / 1024).toFixed(1)}KB</span>
+                      <span className={`small text-nowrap fw-semibold ${isValidUploadSize ? "text-success" : "text-danger"}`}>
+                        .{fileExt} - {formatSize(selectedFile.size)}
+                      </span>
                     </div>
 
                     {(() => {
@@ -439,6 +541,9 @@ const MediaLibraryMangments = () => {
             <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
               <FaTable /> Documents
             </button>
+            <button onClick={() => setFilterType("video")} style={filterBtnStyle(filterType === "video")}>
+              <FaFile /> Videos
+            </button>
           </div>
           <div style={{ width: 1, height: 30, background: "#ddd", margin: "0 4px" }} />
           <div>
@@ -455,8 +560,6 @@ const MediaLibraryMangments = () => {
           </button>
         </div>
       </div>
-
-      {error && <Alert color="danger" className="mx-3 mt-2">{error}</Alert>}
 
       {/* Media Items */}
       <div className="p-3">
@@ -487,7 +590,7 @@ const MediaLibraryMangments = () => {
           </div>
         </ModalBody>
       </Modal>
-    </div>
+    </>
   );
 };
 

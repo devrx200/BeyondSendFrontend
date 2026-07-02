@@ -210,11 +210,11 @@ const SliderManagement = () => {
         {/* Header */}
         <Row className="align-items-center mb-3">
           <Col>
-            <h5 className="fw-bold mb-1 text-white">
+            <h5 className="adm-page-title fw-bold mb-1">
               <FaImages className="me-2 text-primary" />
               {isHindi ? 'होम स्लाइडर प्रबंधन' : 'Home Slider Management'}
             </h5>
-            <p className="text-white small mb-0">
+            <p className="adm-page-subtitle small mb-0">
               {isHindi ? 'होम पेज स्लाइडर छवियों और सामग्री को प्रबंधित करें' : 'Manage home page slider images and content'}
             </p>
           </Col>
