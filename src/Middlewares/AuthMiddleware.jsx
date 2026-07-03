@@ -101,7 +101,7 @@ const AuthMiddleware = ({ allowedRoles = [],
       allowEscapeKey: false
     });
     sessionStorage.clear();
-    navigate("/auth/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const unauthorizedAccess = async (
