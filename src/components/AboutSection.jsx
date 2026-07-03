@@ -7,50 +7,48 @@ import { useLanguage } from "../contexts/LanguageContext";
 const AboutSection = () => {
   const API_URL = import.meta.env.VITE_API_URL;
   const [profiles, setProfiles] = useState([]);
+  const [aboutDepartment, setAboutDepartment] = useState({});
   const [loading, setLoading] = useState(false);
   const { isHindi } = useLanguage();
 
   useEffect(() => {
-    const fetchProfiles = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         const res = await axios.get(`${API_URL}/api/get-about-sections`);
 
-            const filteredAndSorted = (res.data || [])
-        .filter(
-          (item) => item.isActive === true && item.isDeleted === false
-        )
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
+        const filteredAndSorted = (res.data?.departmentLeaderProfiles || [])
+          .filter(item => item.isActive === true)
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
 
-      setProfiles(filteredAndSorted);
+        setProfiles(filteredAndSorted);
+        setAboutDepartment(res.data?.aboutDepartment || {});
       } catch (err) {
-        console.error("Failed to fetch profiles", err);
+        console.error("Failed to fetch about section data", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfiles();
+    fetchData();
   }, []);
-
-  // 👉 About content (first item)
-  const aboutData = profiles[0] || {};
 
   return (
     <Container fluid className="my-0">
-      <section >
+      <section>
         <Container className="py-3 bg-white rounded">
           <Row className="align-items-start">
 
             {/* ================= LEFT CONTENT ================= */}
             <Col lg="9" md="12">
               <h4 className="mb-3 text-dark fw-bold">
-                {isHindi ? "हमारे विभाग के बारे में" : "About Department"}
+                {(isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng) ||
+                  (isHindi ? "हमारे विभाग के बारे में" : "About Department")}
               </h4>
 
               {(isHindi
-                ? aboutData.aboutContentHi
-                : aboutData.aboutContentEn
+                ? aboutDepartment.descriptionHin
+                : aboutDepartment.descriptionEng
               )
                 ?.split("\n")
                 .filter(line => line.trim() !== "")
@@ -81,24 +79,24 @@ const AboutSection = () => {
             </Col>
 
             {/* ================= RIGHT PROFILE LIST ================= */}
-            <Col  lg="3" md="12" className="mt-4   mt-lg-0">
+            <Col lg="3" md="12" className="mt-4 mt-lg-0">
 
               {profiles.map((profile) => (
                 <Card
                   key={profile._id}
-                  className="mb-3 p-3  shadow-sm"
+                  className="mb-3 p-3 shadow-sm"
                   style={{
                     borderRadius: "10px",
                     background: "#f4fffd",
                     border: "2px solid #d8d8d8",
                   }}
                 >
-                  <div className="d-flex  align-items-center">
+                  <div className="d-flex align-items-center">
 
-                    <img
+                    <img title={profile.aboutContentEng}
                       src={
-                        profile.image
-                          ? `${API_URL}${profile.image}`
+                        profile.profileUrl
+                          ? `${API_URL}${profile.profileUrl}`
                           : "/placeholder.png"
                       }
                       alt={profile.imgNameEng}
@@ -113,25 +111,13 @@ const AboutSection = () => {
                       }}
                     />
 
-                    {/* TEXT */}
                     <div>
-                      <h6 className="m-0 text-dark fw-bold d-block"
-                        style={{ fontSize: "1.2rem" }}
-                      >
-                        {isHindi
-                          ? profile.imgNameHin
-                          : profile.imgNameEng}
+                      <h6 className="m-0 text-dark fw-bold d-block" style={{ fontSize: "1.2rem" }}>
+                        {isHindi ? profile.imgNameHin : profile.imgNameEng}
                       </h6>
-                      <small
-                        className=" text-muted fw-bold"
-                        style={{ fontSize: "0.9rem" }}
-                      >
-                        {isHindi
-                          ? profile.designationHin
-                          : profile.designationEng}
+                      <small className="text-muted fw-bold" style={{ fontSize: "0.9rem" }}>
+                        {isHindi ? profile.designationHin : profile.designationEng}
                       </small>
-
-
                     </div>
 
                   </div>

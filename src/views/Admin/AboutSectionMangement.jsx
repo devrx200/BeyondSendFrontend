@@ -22,10 +22,19 @@ import { useLanguage } from "../../contexts/LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
+
 const AboutSectionMangement = () => {
   const { isHindi } = useLanguage();
 
   const [list, setList] = useState([]);
+  const [aboutDepartment, setAboutDepartment] = useState({
+    titleEng: "",
+    titleHin: "",
+    descriptionEng: "",
+    descriptionHin: ""
+  });
+  const [deptSaving, setDeptSaving] = useState(false);
+
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -35,8 +44,8 @@ const AboutSectionMangement = () => {
     imgNameHin: "",
     designationEng: "",
     designationHin: "",
-    aboutContentEn: "",
-    aboutContentHi: "",
+    aboutContentEng: "",
+    aboutContentHin: "",
     order: "",
     image: null,
     isActive: true
@@ -44,9 +53,14 @@ const AboutSectionMangement = () => {
 
   const loadList = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/get-about-sections`, {
+      const res = await axios.get(`${API_URL}/api/get-about-sections`);
+      setList(res.data?.departmentLeaderProfiles || []);
+      setAboutDepartment({
+        titleEng: res.data?.aboutDepartment?.titleEng || "",
+        titleHin: res.data?.aboutDepartment?.titleHin || "",
+        descriptionEng: res.data?.aboutDepartment?.descriptionEng || "",
+        descriptionHin: res.data?.aboutDepartment?.descriptionHin || ""
       });
-      setList(res.data || []);
     } catch {
       Swal.fire("Error", "Failed to load data", "error");
     }
@@ -66,8 +80,8 @@ const AboutSectionMangement = () => {
       imgNameHin: "",
       designationEng: "",
       designationHin: "",
-      aboutContentEn: "",
-      aboutContentHi: "",
+      aboutContentEng: "",
+      aboutContentHin: "",
       order: "",
       image: null,
       isActive: true
@@ -81,7 +95,7 @@ const AboutSectionMangement = () => {
   };
 
   const validateField = (name, value, isHindi) => {
-    const TEXTAREA_FIELDS = ["aboutContentEn", "aboutContentHi"];
+    const TEXTAREA_FIELDS = ["aboutContentEng", "aboutContentHin"];
 
     const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
     const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
@@ -126,10 +140,9 @@ const AboutSectionMangement = () => {
     newErrors.imgNameHin = validateField("imgNameHin", form.imgNameHin, true);
     newErrors.designationEng = validateField("designationEng", form.designationEng, false);
     newErrors.designationHin = validateField("designationHin", form.designationHin, true);
-    newErrors.aboutContentEn = validateField("aboutContentEn", form.aboutContentEn, false);
-    newErrors.aboutContentHi = validateField("aboutContentHi", form.aboutContentHi, true);
+    newErrors.aboutContentEng = validateField("aboutContentEng", form.aboutContentEng, false);
+    newErrors.aboutContentHin = validateField("aboutContentHin", form.aboutContentHin, true);
     newErrors.order = validateField("order", form.order, false);
-    // newErrors.isActive = validateField("isActive", form.isActive, false);
 
     if (!editingId && !form.image) {
       newErrors.image = isHindi ? "छवि आवश्यक है" : "Image is required";
@@ -261,15 +274,11 @@ const AboutSectionMangement = () => {
         res = await axios.put(
           `${API_URL}/api/update-about-section/${editingId}`,
           payload,
-          { headers: {
-             authorization: `Bearer ${token}`
-           } }
+          { headers: { authorization: `Bearer ${token}` } }
         );
       } else {
         res = await axios.post(`${API_URL}/api/create-about-section`, payload, {
-          headers: { 
-            authorization: `Bearer ${token}`
-           }
+          headers: { authorization: `Bearer ${token}` }
         });
       }
 
@@ -288,13 +297,13 @@ const AboutSectionMangement = () => {
       imgNameHin: item.imgNameHin,
       designationEng: item.designationEng,
       designationHin: item.designationHin,
-      aboutContentEn: item.aboutContentEn,
-      aboutContentHi: item.aboutContentHi,
+      aboutContentEng: item.aboutContentEng,
+      aboutContentHin: item.aboutContentHin,
       order: item.order ?? "",
       image: null,
       isActive: item.isActive
     });
-    setImagePreview(item.image ? `${API_URL}${item.image}` : null);
+    setImagePreview(item.profileUrl ? `${API_URL}${item.profileUrl}` : null);
     setModal(true);
   };
 
@@ -321,219 +330,279 @@ const AboutSectionMangement = () => {
     }
   };
 
+  const handleDeptChange = (e) => {
+    const { name, value } = e.target;
+    setAboutDepartment(prev => ({ ...prev, [name]: value }));
+  };
+
+  const saveAboutDepartment = async () => {
+    setDeptSaving(true);
+    try {
+      const res = await axios.put(
+        `${API_URL}/api/update-about-department`,
+        aboutDepartment,
+        { headers: { authorization: `Bearer ${token}` } }
+      );
+      Swal.fire("Success", res.data.msg, "success");
+    } catch (err) {
+      Swal.fire("Error", err?.response?.data?.msg || "Save failed", "error");
+    } finally {
+      setDeptSaving(false);
+    }
+  };
+
   return (
-    <Card className="adm-card mb-4">
-      <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div>
-          <h4 className="adm-page-title mb-1">
-            <FaImage className="me-2" /> About Section
-          </h4>
-          <p className="adm-page-subtitle mb-0 text-white">Manage the public about section content</p>
-        </div>
-        <Button color="light" className="text-success" onClick={toggleModal}>
-          <FaPlus className="me-2" /> Add
-        </Button>
-      </CardHeader>
-      <CardBody>
-      
+    <>
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header">
+          <h4 className="adm-page-title mb-1">About Department Content</h4>
+          <p className="adm-page-subtitle mb-0 text-white">Title & description shown on the public About page</p>
+        </CardHeader>
+        <CardBody>
+          <Row>
+            <Col md={6}>
+              <FormGroup>
+                <Label>Title (English)</Label>
+                <Input name="titleEng" value={aboutDepartment.titleEng} onChange={handleDeptChange} />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup>
+                <Label>Title (Hindi)</Label>
+                <Input name="titleHin" value={aboutDepartment.titleHin} onChange={handleDeptChange} />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup>
+                <Label>Description (English)</Label>
+                <Input type="textarea" rows="5" name="descriptionEng" value={aboutDepartment.descriptionEng} onChange={handleDeptChange} />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup>
+                <Label>Description (Hindi)</Label>
+                <Input type="textarea" rows="5" name="descriptionHin" value={aboutDepartment.descriptionHin} onChange={handleDeptChange} />
+              </FormGroup>
+            </Col>
+          </Row>
+          <Button color="primary" disabled={deptSaving} onClick={saveAboutDepartment}>
+            <FaSave className="me-2" />
+            {deptSaving ? "Saving..." : "Save Department Content"}
+          </Button>
+        </CardBody>
+      </Card>
 
-        <Table responsive bordered striped hover>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Image</th>
-              <th>Name</th>
-              <th>Designation</th>
-              <th>About</th>
-              <th>Order</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.length === 0 ? (
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h4 className="adm-page-title mb-1">
+              <FaImage className="me-2" /> Department Leader Profiles
+            </h4>
+            <p className="adm-page-subtitle mb-0 text-white">Manage the public about section leader profiles</p>
+          </div>
+          <Button color="light" className="text-success" onClick={toggleModal}>
+            <FaPlus className="me-2" /> Add
+          </Button>
+        </CardHeader>
+        <CardBody>
+          <Table responsive bordered striped hover>
+            <thead>
               <tr>
-                <td colSpan="7" className="text-center text-muted">No records found</td>
+                <th>#</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Designation</th>
+                <th>About</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              list.map((item, i) => (
-                <tr key={item._id}>
-                  <td>{i + 1}</td>
-                  <td>
-                    <img src={`${API_URL}${item.image}`} width={60} alt="" />
-                  </td>
-                  <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
-                  <td>{isHindi ? item.designationHin : item.designationEng}</td>
-                  <td style={{ maxWidth: "300px" }}>
-                    {(isHindi ? item.aboutContentHi : item.aboutContentEn)
-                      ?.split("\n")
-                      .filter(line => line.trim() !== "")
-                      .map((line, index) => (
-                        <p key={index} className="mb-1">{line}</p>
-                      ))}
-                  </td>
-                  <td>{item.order}</td>
-                  <td>
-                    <Badge color={item.isActive ? "success" : "danger"}>
-                      {isHindi
-                        ? (item.isActive ? "सक्रिय" : "निष्क्रिय")
-                        : (item.isActive ? "Active" : "Inactive")
-                      }
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button
-                      color="warning"
-                      size="sm"
-                      className="p-0 me-1"
-                      style={{ width: 32, height: 32 }}
-                      onClick={() => handleEdit(item)}
-                    >
-                      <FaEdit size={10} />
-                    </Button>
-                    <Button
-                      color="danger"
-                      size="sm"
-                      className="p-0"
-                      style={{ width: 32, height: 32 }}
-                      onClick={() => handleDelete(item._id)}
-                    >
-                      <FaTrash size={10} />
-                    </Button>
-                  </td>
+            </thead>
+            <tbody>
+              {list.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center text-muted">No records found</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+              ) : (
+                list.map((item, i) => (
+                  <tr key={item._id}>
+                    <td>{i + 1}</td>
+                    <td>
+                      <img src={`${API_URL}${item.profileUrl}`} width={60} alt="" />
+                    </td>
+                    <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
+                    <td>{isHindi ? item.designationHin : item.designationEng}</td>
+                    <td style={{ maxWidth: "300px" }}>
+                      {(isHindi ? item.aboutContentHin : item.aboutContentEng)
+                        ?.split("\n")
+                        .filter(line => line.trim() !== "")
+                        .map((line, index) => (
+                          <p key={index} className="mb-1">{line}</p>
+                        ))}
+                    </td>
+                    <td>{item.order}</td>
+                    <td>
+                      <Badge color={item.isActive ? "success" : "danger"}>
+                        {isHindi
+                          ? (item.isActive ? "सक्रिय" : "निष्क्रिय")
+                          : (item.isActive ? "Active" : "Inactive")
+                        }
+                      </Badge>
+                    </td>
+                    <td>
+                      <Button
+                        color="warning"
+                        size="sm"
+                        className="p-0 me-1"
+                        style={{ width: 32, height: 32 }}
+                        onClick={() => handleEdit(item)}
+                      >
+                        <FaEdit size={10} />
+                      </Button>
+                      <Button
+                        color="danger"
+                        size="sm"
+                        className="p-0"
+                        style={{ width: 32, height: 32 }}
+                        onClick={() => handleDelete(item._id)}
+                      >
+                        <FaTrash size={10} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
 
-        <Modal isOpen={modal} toggle={toggleModal} size="lg">
-          <ModalHeader toggle={toggleModal}>
-            {editingId ? "Edit About Section" : "Add About Section"}
-          </ModalHeader>
+          <Modal isOpen={modal} toggle={toggleModal} size="lg">
+            <ModalHeader toggle={toggleModal}>
+              {editingId ? "Edit Leader Profile" : "Add Leader Profile"}
+            </ModalHeader>
 
-          <Form onSubmit={handleSubmit}>
-            <ModalBody>
-              <Row>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Name (English)</Label>
-                    <Input name="imgNameEng" value={form.imgNameEng} invalid={!!errors.imgNameEng} onChange={(e) => handleChange(e, "en")} />
-                    {errors.imgNameEng && <small className="text-danger">{errors.imgNameEng}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Name (Hindi)</Label>
-                    <Input name="imgNameHin" value={form.imgNameHin} invalid={!!errors.imgNameHin} onChange={(e) => handleChange(e, "hi")} />
-                    {errors.imgNameHin && <small className="text-danger">{errors.imgNameHin}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Designation (English)</Label>
-                    <Input name="designationEng" value={form.designationEng} invalid={!!errors.designationEng} onChange={(e) => handleChange(e, "en")} />
-                    {errors.designationEng && <small className="text-danger">{errors.designationEng}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>Designation (Hindi)</Label>
-                    <Input name="designationHin" value={form.designationHin} invalid={!!errors.designationHin} onChange={(e) => handleChange(e, "hi")} />
-                    {errors.designationHin && <small className="text-danger">{errors.designationHin}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>About (English)</Label>
-                    <Input
-                      type="textarea"
-                      rows="4"
-                      name="aboutContentEn"
-                      value={form.aboutContentEn}
-                      invalid={!!errors.aboutContentEn}
-                      onChange={(e) => handleChange(e, "en")}
-                    />
-                    {errors.aboutContentEn && <small className="text-danger">{errors.aboutContentEn}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup>
-                    <Label>About (Hindi)</Label>
-                    <Input
-                      type="textarea"
-                      rows="4"
-                      name="aboutContentHi"
-                      value={form.aboutContentHi}
-                      invalid={!!errors.aboutContentHi}
-                      onChange={(e) => handleChange(e, "hi")}
-                    />
-                    {errors.aboutContentHi && <small className="text-danger">{errors.aboutContentHi}</small>}
-                  </FormGroup>
-                </Col>
-                <Col md={4}>
-                  <FormGroup>
-                    <Label>Order</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      name="order"
-                      value={form.order}
-                      invalid={!!errors.order}
-                      onChange={(e) => handleChange(e, "en")}
-                    />
-                    {errors.order && <small className="text-danger">{errors.order}</small>}
-                  </FormGroup>
-                </Col>
+            <Form onSubmit={handleSubmit}>
+              <ModalBody>
+                <Row>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Name (English)</Label>
+                      <Input name="imgNameEng" value={form.imgNameEng} invalid={!!errors.imgNameEng} onChange={(e) => handleChange(e, "en")} />
+                      {errors.imgNameEng && <small className="text-danger">{errors.imgNameEng}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Name (Hindi)</Label>
+                      <Input name="imgNameHin" value={form.imgNameHin} invalid={!!errors.imgNameHin} onChange={(e) => handleChange(e, "hi")} />
+                      {errors.imgNameHin && <small className="text-danger">{errors.imgNameHin}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Designation (English)</Label>
+                      <Input name="designationEng" value={form.designationEng} invalid={!!errors.designationEng} onChange={(e) => handleChange(e, "en")} />
+                      {errors.designationEng && <small className="text-danger">{errors.designationEng}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>Designation (Hindi)</Label>
+                      <Input name="designationHin" value={form.designationHin} invalid={!!errors.designationHin} onChange={(e) => handleChange(e, "hi")} />
+                      {errors.designationHin && <small className="text-danger">{errors.designationHin}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>About (English)</Label>
+                      <Input
+                        type="textarea"
+                        rows="4"
+                        name="aboutContentEng"
+                        value={form.aboutContentEng}
+                        invalid={!!errors.aboutContentEng}
+                        onChange={(e) => handleChange(e, "en")}
+                      />
+                      {errors.aboutContentEng && <small className="text-danger">{errors.aboutContentEng}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={6}>
+                    <FormGroup>
+                      <Label>About (Hindi)</Label>
+                      <Input
+                        type="textarea"
+                        rows="4"
+                        name="aboutContentHin"
+                        value={form.aboutContentHin}
+                        invalid={!!errors.aboutContentHin}
+                        onChange={(e) => handleChange(e, "hi")}
+                      />
+                      {errors.aboutContentHin && <small className="text-danger">{errors.aboutContentHin}</small>}
+                    </FormGroup>
+                  </Col>
+                  <Col md={4}>
+                    <FormGroup>
+                      <Label>Order</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        name="order"
+                        value={form.order}
+                        invalid={!!errors.order}
+                        onChange={(e) => handleChange(e, "en")}
+                      />
+                      {errors.order && <small className="text-danger">{errors.order}</small>}
+                    </FormGroup>
+                  </Col>
 
-                <Col md={8}>
-                  <FormGroup>
-                    <Label>Image</Label>
-                    <Input type="file" onChange={handleImageChange} accept="image/jpeg,image/png,image/jpg" />
-                    {errors.image && <small className="text-danger">{errors.image}</small>}
-                    {imagePreview && (
-                      <div className="mt-2">
-                        <img
-                          src={imagePreview}
-                          width={250}
-                          height={300}
-                          style={{
-                            objectFit: "cover",
-                            borderRadius: "0px",
-                            border: "1px solid #ccc",
-                          }}
-                          alt="Preview"
-                        />
-                        <small className="text-muted d-block mt-1">
-                          Final size: 250 × 300 px
-                        </small>
-                      </div>
-                    )}
-                  </FormGroup>
-                </Col>
-                <Col xs={6}>
-                <Label className="fw-semibold small">Status</Label>
-                <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })}>
-                  <option value="true">✅ Active</option>
-                  <option value="false">⛔ Inactive</option>
-                </Input>
-              </Col>
-              </Row>
-            </ModalBody>
+                  <Col md={8}>
+                    <FormGroup>
+                      <Label>Image</Label>
+                      <Input type="file" onChange={handleImageChange} accept="image/jpeg,image/png,image/jpg" />
+                      {errors.image && <small className="text-danger">{errors.image}</small>}
+                      {imagePreview && (
+                        <div className="mt-2">
+                          <img
+                            src={imagePreview}
+                            width={250}
+                            height={300}
+                            style={{
+                              objectFit: "cover",
+                              borderRadius: "0px",
+                              border: "1px solid #ccc",
+                            }}
+                            alt="Preview"
+                          />
+                          <small className="text-muted d-block mt-1">
+                            Final size: 250 × 300 px
+                          </small>
+                        </div>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">Status</Label>
+                    <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })}>
+                      <option value="true">✅ Active</option>
+                      <option value="false">⛔ Inactive</option>
+                    </Input>
+                  </Col>
+                </Row>
+              </ModalBody>
 
-            <ModalFooter>
-              <Button color="primary" type="submit">
-                <FaSave className="me-2" />
-                {editingId ? "Update" : "Save"}
-              </Button>
-              <Button color="secondary" onClick={toggleModal}>
-                Cancel
-              </Button>
-            </ModalFooter>
-          </Form>
-        </Modal>
-      </CardBody>
-    </Card>
+              <ModalFooter>
+                <Button color="primary" type="submit">
+                  <FaSave className="me-2" />
+                  {editingId ? "Update" : "Save"}
+                </Button>
+                <Button color="secondary" onClick={toggleModal}>
+                  Cancel
+                </Button>
+              </ModalFooter>
+            </Form>
+          </Modal>
+        </CardBody>
+      </Card>
+    </>
   );
 };
 

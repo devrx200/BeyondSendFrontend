@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import {
   Card,
   CardBody,
-  CardTitle,
-  CardText,
   Badge,
   Row,
   Col,
   Button,
   Spinner,
   Container,
-  Alert
+  Alert,
+  Nav,
+  NavItem,
+  NavLink
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import { FaArrowRight, FaCalendarAlt, FaBullhorn, FaFileAlt } from "react-icons/fa";
@@ -22,16 +23,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AnnouncementsAndSchemes = () => {
   const { isHindi } = useLanguage();
 
-  const [announcements, setAnnouncements] = useState([]);
-  const [schemes, setSchemes] = useState([]);
-  const [announcementPage, setAnnouncementPage] = useState(1);
-  const [schemePage, setSchemePage] = useState(1);
-  const [announcementPagination, setAnnouncementPagination] = useState({
-    total: 0,
-    limit: 5,
-    totalPages: 0
-  });
-  const [schemePagination, setSchemePagination] = useState({
+  // State Management
+  const [activeTab, setActiveTab] = useState("announcements"); // 'announcements' or 'schemes'
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
     total: 0,
     limit: 5,
     totalPages: 0
@@ -39,56 +35,58 @@ const AnnouncementsAndSchemes = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Fetch data whenever page or active tab changes
   useEffect(() => {
-    fetchAnnouncements();
-  }, [announcementPage]);
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, activeTab]);
 
-  useEffect(() => {
-    fetchSchemes();
-  }, [schemePage]);
-
-  const fetchAnnouncements = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      const isSchemes = activeTab === "schemes";
       const res = await axios.get(
-        `${API_URL}/api/get-announcements?page=${announcementPage}&limit=5&isSchemes=false`
+        `${API_URL}/api/get-announcements?page=${page}&limit=5&isSchemes=${isSchemes}`
       );
 
-      setAnnouncements(res?.data?.data || []);
+      setItems(res?.data?.data || []);
 
-      const pagination = res?.data?.pagination || {};
-      setAnnouncementPagination({
-        total: pagination.total || 0,
-        limit: pagination.limit || 5,
-        totalPages: Math.ceil((pagination.total || 0) / (pagination.limit || 5))
+      const pagData = res?.data?.pagination || {};
+      setPagination({
+        total: pagData.total || 0,
+        limit: pagData.limit || 5,
+        totalPages: Math.ceil((pagData.total || 0) / (pagData.limit || 5))
       });
     } catch (error) {
-      console.error("Error fetching announcements:", error);
-      setError("Failed to load announcements. Please try again later.");
+      console.error("Error fetching data:", error);
+      setError(
+        isHindi
+          ? "डेटा लोड करने में विफल। कृपया बाद में पुनः प्रयास करें।"
+          : "Failed to load data. Please try again later."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSchemes = async () => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/get-announcements?page=${schemePage}&limit=5&isSchemes=true`
-      );
-
-      setSchemes(res?.data?.data || []);
-
-      const pagination = res?.data?.pagination || {};
-      setSchemePagination({
-        total: pagination.total || 0,
-        limit: pagination.limit || 5,
-        totalPages: Math.ceil((pagination.total || 0) / (pagination.limit || 5))
-      });
-    } catch (error) {
-      console.error("Error fetching schemes:", error);
+  // Switch tabs and reset to page 1
+  const handleTabChange = (tab) => {
+    if (activeTab !== tab) {
+      setActiveTab(tab);
+      setPage(1);
+      setItems([]); // Clear current items while loading new ones
     }
+  };
+
+  // Logic: Check if item was created in the last 1 week (7 days)
+  const isRecent = (dateString) => {
+    if (!dateString) return false;
+    const itemDate = new Date(dateString);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return itemDate >= oneWeekAgo;
   };
 
   const formatDate = (dateString) => {
@@ -109,7 +107,7 @@ const AnnouncementsAndSchemes = () => {
     return html.replace(/<[^>]*>/g, "");
   };
 
-  const truncateText = (text, maxLength = 150) => {
+  const truncateText = (text, maxLength = 130) => {
     if (!text) return "";
     const cleanText = stripHtmlTags(text);
     return cleanText.length > maxLength
@@ -118,327 +116,200 @@ const AnnouncementsAndSchemes = () => {
   };
 
   return (
-    <Container className="py-4">
+    <Container className="">
       {error && (
         <Alert color="danger" className="mb-4">
           {error}
         </Alert>
       )}
-      <Row className="g-4">
-        {/* LEFT: ANNOUNCEMENTS */}
-        <Col lg={8}>
-          <div className="d-flex align-items-center mb-4">
-            <FaBullhorn className="text-primary me-2" size={24} />
-            <h4 className="fw-bold mb-0">
-              {isHindi ? "नवीनतम घोषणाएं" : "Latest Announcements"}
-            </h4>
-            {announcementPagination.total > 0 && (
-              <Badge color="primary" pill className="ms-2">
-                {announcementPagination.total}
-              </Badge>
-            )}
+
+      {/* Main Unified Card container */}
+      <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+
+        {/* Header & Filter Tabs */}
+        <div className="bg-white border-bottom px-4 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+          <div className="d-flex align-items-center mb-md-2 py-0">
+            <div className="icon-wrapper bg-primary text-white p-2 rounded-circle me-3">
+              {activeTab === "announcements" ? <FaBullhorn size={20} /> : <FaFileAlt size={20} />}
+            </div>
+            <h3 className="fw-bold mb-0 text-dark">
+              <h4 className="fw-bold mb-0 text-dark">
+                {isHindi ? "घोषणाएं और योजनाएं" : "Announcements & Schemes"}
+              </h4>
+            </h3>
           </div>
 
-          {loading && announcementPage === 1 ? (
+          <Nav tabs className="border-0 font-weight-bold">
+            <NavItem>
+              <NavLink
+                className={`cursor-pointer px-4 py-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "announcements"
+                    ? "active border-primary text-primary fw-bold"
+                    : "border-transparent text-muted"
+                  }`}
+                onClick={() => handleTabChange("announcements")}
+                style={{ cursor: "pointer", background: "none" }}
+              >
+                {isHindi ? "घोषणाएं" : "Announcements"}
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                className={`cursor-pointer px-4 py-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "schemes"
+                    ? "active border-success text-success fw-bold"
+                    : "border-transparent text-muted"
+                  }`}
+                onClick={() => handleTabChange("schemes")}
+                style={{ cursor: "pointer", background: "none" }}
+              >
+                {isHindi ? "योजनाएं" : "Schemes"}
+              </NavLink>
+            </NavItem>
+          </Nav>
+        </div>
+
+        <CardBody className="p-0">
+          {loading && items.length === 0 ? (
             <div className="text-center py-5">
-              <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
+              <Spinner color={activeTab === "announcements" ? "primary" : "success"} />
               <p className="mt-3 text-muted">
-                {isHindi ? "लोड हो रहा है..." : "Loading..."}
+                {isHindi ? "लोड हो रहा है..." : "Loading content..."}
               </p>
             </div>
-          ) : announcements.length === 0 ? (
-            <Card className="border-0 shadow-sm">
-              <CardBody className="text-center py-5">
+          ) : items.length === 0 ? (
+            <div className="text-center py-5">
+              {activeTab === "announcements" ? (
                 <FaBullhorn size={48} className="text-muted mb-3 opacity-25" />
-                <h5 className="text-muted">
-                  {isHindi ? "कोई घोषणा उपलब्ध नहीं है" : "No announcements available"}
-                </h5>
-                <p className="text-muted small">
-                  {isHindi
-                    ? "नई घोषणाओं के लिए बाद में देखें"
-                    : "Check back later for new announcements"}
-                </p>
-              </CardBody>
-            </Card>
+              ) : (
+                <FaFileAlt size={48} className="text-muted mb-3 opacity-25" />
+              )}
+              <h5 className="text-muted">
+                {isHindi ? "कोई डेटा उपलब्ध नहीं है" : "No content available right now"}
+              </h5>
+            </div>
           ) : (
-            <>
-              {announcements.map((a) => (
-                <Card key={a._id} className="mb-3 shadow-sm border-0 hover-shadow">
-                  <Row className="g-0">
-                    {a.image && (
-                      <Col md={4}>
+            <div className="news-list">
+              {items.map((item) => (
+                <div key={item._id} className="news-item border-bottom p-4">
+                  <Row className="g-4 align-items-center">
+                    {/* Image Section */}
+                    {item.image && (
+                      <Col xs={12} md={3} lg={2} className="text-center text-md-start">
                         <img
-                          src={`${API_URL}${a.image}`}
-                          alt={isHindi ? a.titleHi : a.titleEn}
-                          className="img-fluid rounded-start h-100"
-                          style={{
-                            minHeight: "200px",
-                            objectFit: "cover"
-                          }}
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
+                          src={`${API_URL}${item.image}`}
+                          alt={isHindi ? item.titleHi : item.titleEn}
+                          className="img-fluid rounded shadow-sm object-fit-cover w-100"
+                          style={{ height: "100px", maxWidth: "200px" }}
+                          onError={(e) => { e.target.style.display = "none"; }}
                         />
                       </Col>
                     )}
 
-                    <Col md={a.image ? 8 : 12}>
-                      <CardBody className="h-100 d-flex flex-column">
-                        <div className="d-flex justify-content-between align-items-start mb-2">
-                          <div className="d-flex gap-2 flex-wrap">
-                            {a?.categoryId && (
-                              <Badge color="primary" className="text-uppercase">
-                                {isHindi
-                                  ? a.categoryId.categoryNameHi || a.categoryId.categoryNameEn
-                                  : a.categoryId.categoryNameEn}
-                              </Badge>
-                            )}
-
-                            {a.isNew && (
-                              <Badge color="danger" pill>
-                                {isHindi ? "नया" : "NEW"}
-                              </Badge>
-                            )}
-
-                            {a.isExternal && (
-                              <Badge color="info" pill>
-                                {isHindi ? "बाह्य" : "External"}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <CardTitle tag="h5" className="fw-semibold mb-2">
-                          {isHindi ? (a.titleHi || a.titleEn) : a.titleEn}
-                        </CardTitle>
-
-                        <CardText className="text-muted small flex-grow-1 mb-3">
-                          {truncateText(
-                            isHindi
-                              ? (a.shortDescriptionHi || a.shortDescriptionEn)
-                              : a.shortDescriptionEn
-                          )}
-                        </CardText>
-
-                        <div className="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
-                          <small className="text-muted d-flex align-items-center">
-                            <FaCalendarAlt className="me-1" />
-                            {formatDate(a.fromDate || a.createdAt)}
-                          </small>
-
-                          {a.slug && (
-                            <Link
-                              to={`/announcement/${a.slug}`}
-                              className="btn btn-sm btn-outline-primary"
-                            >
-                              {isHindi ? "और पढ़ें" : "Read More"}
-                              <FaArrowRight className="ms-1" />
-                            </Link>
-                          )}
-                        </div>
-
-                        {a.expiryDate && new Date(a.expiryDate) > new Date() && (
-                          <small className="text-danger mt-2">
-                            {isHindi ? "समाप्ति: " : "Expires: "}
-                            {formatDate(a.expiryDate)}
-                          </small>
+                    {/* Content Section */}
+                    <Col xs={12} md={item.image ? 9 : 12} lg={item.image ? 10 : 12}>
+                      <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        {item?.categoryId && (
+                          <Badge color="light" className="text-dark border text-uppercase px-2 py-1">
+                            {isHindi
+                              ? item.categoryId.categoryNameHi || item.categoryId.categoryNameEn
+                              : item.categoryId.categoryNameEn}
+                          </Badge>
                         )}
-                      </CardBody>
+
+                        {/* NEW Logic: Created within last 7 days */}
+                        {isRecent(item.createdAt) && (
+                          <Badge color="danger" pill className="px-2 py-1 shadow-sm pulse-badge">
+                            {isHindi ? "नया" : "NEW"}
+                          </Badge>
+                        )}
+
+                        {item.isExternal && (
+                          <Badge color="info" pill className="px-2 py-1">
+                            {isHindi ? "बाह्य" : "External"}
+                          </Badge>
+                        )}
+
+                        <small className="text-muted ms-auto d-flex align-items-center">
+                          <FaCalendarAlt className="me-2" />
+                          {formatDate(item.fromDate || item.createdAt)}
+                        </small>
+                      </div>
+
+                      <h5 className="fw-bold mb-2 text-dark">
+                        <Link
+                          to={`/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`}
+                          className="text-decoration-none text-dark hover-primary-text"
+                        >
+                          {isHindi ? (item.titleHi || item.titleEn) : item.titleEn}
+                        </Link>
+                      </h5>
+
+                      <p className="text-muted mb-3 fs-6 lh-base">
+                        {truncateText(
+                          isHindi
+                            ? (item.shortDescriptionHi || item.shortDescriptionEn)
+                            : item.shortDescriptionEn
+                        )}
+                      </p>
+
+                      <div className="d-flex justify-content-between align-items-center">
+                        {item.expiryDate && new Date(item.expiryDate) > new Date() ? (
+                          <small className="text-danger fw-semibold bg-danger bg-opacity-10 px-2 py-1 rounded">
+                            {isHindi ? "अंतिम तिथि: " : "Valid till: "}
+                            {formatDate(item.expiryDate)}
+                          </small>
+                        ) : (
+                          <span />
+                        )}
+
+                        {item.slug && (
+                          <Link
+                            to={`/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`}
+                            className={`btn btn-sm text-white fw-medium px-3 rounded-pill ${activeTab === 'announcements' ? 'btn-primary' : 'btn-success'}`}
+                          >
+                            {isHindi ? "और पढ़ें" : "Read More"}
+                            <FaArrowRight className="ms-2" style={{ fontSize: "0.8rem" }} />
+                          </Link>
+                        )}
+                      </div>
                     </Col>
                   </Row>
-                </Card>
-              ))}
-
-              {/* ANNOUNCEMENTS PAGINATION */}
-              {announcementPagination.totalPages > 1 && (
-                <Card className="border-0 shadow-sm">
-                  <CardBody>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div className="text-muted small">
-                        {isHindi ? "पृष्ठ" : "Page"} {announcementPage} {isHindi ? "का" : "of"} {announcementPagination.totalPages}
-                        <span className="ms-2">
-                          ({isHindi ? "कुल" : "Total"}: {announcementPagination.total} {isHindi ? "घोषणाएं" : "announcements"})
-                        </span>
-                      </div>
-                      <div className="d-flex gap-2">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          outline
-                          disabled={announcementPage === 1 || loading}
-                          onClick={() => setAnnouncementPage(announcementPage - 1)}
-                        >
-                          {isHindi ? "पिछला" : "Previous"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="primary"
-                          outline
-                          disabled={announcementPage >= announcementPagination.totalPages || loading}
-                          onClick={() => setAnnouncementPage(announcementPage + 1)}
-                        >
-                          {isHindi ? "अगला" : "Next"}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              )}
-            </>
-          )}
-        </Col>
-
-        {/* RIGHT: SCHEMES */}
-        <Col lg={4}>
-          <div className="position-sticky" style={{ top: "90px" }}>
-            <Card className="shadow-sm border-0">
-              <CardBody>
-                <div className="d-flex align-items-center mb-3">
-                  <FaFileAlt className="text-success me-2" size={20} />
-                  <h5 className="fw-bold mb-0">
-                    {isHindi ? "योजनाएं" : "Schemes"}
-                  </h5>
-                  {schemePagination.total > 0 && (
-                    <Badge color="success" pill className="ms-2">
-                      {schemePagination.total}
-                    </Badge>
-                  )}
                 </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
 
-                {schemes.length === 0 ? (
-                  <div className="text-center py-4">
-                    <FaFileAlt size={32} className="text-muted mb-2 opacity-25" />
-                    <p className="text-muted small mb-0">
-                      {isHindi ? "कोई योजना उपलब्ध नहीं है" : "No schemes available"}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {schemes.map((s) => (
-                      <Card key={s._id} className="mb-3 border shadow-sm hover-shadow">
-                        <CardBody className="p-3">
-                          <Row className="g-2">
-                            {s.image && (
-                              <Col xs={4}>
-                                <img
-                                  src={`${API_URL}${s.image}`}
-                                  alt={isHindi ? s.titleHi : s.titleEn}
-                                  className="img-fluid rounded"
-                                  style={{
-                                    height: "80px",
-                                    width: "100%",
-                                    objectFit: "cover"
-                                  }}
-                                  onError={(e) => {
-                                    e.target.style.display = "none";
-                                  }}
-                                />
-                              </Col>
-                            )}
-
-                            <Col xs={s.image ? 8 : 12}>
-                              <div className="d-flex flex-column h-100">
-                                {s.isNew && (
-                                  <Badge color="danger" pill className="align-self-start mb-1" style={{ fontSize: "0.65rem" }}>
-                                    {isHindi ? "नया" : "NEW"}
-                                  </Badge>
-                                )}
-
-                                <CardTitle className="fw-semibold mb-1" style={{ fontSize: "0.9rem" }}>
-                                  {isHindi ? (s.titleHi || s.titleEn) : s.titleEn}
-                                </CardTitle>
-
-                                <CardText className="text-muted mb-2" style={{ fontSize: "0.75rem" }}>
-                                  {truncateText(
-                                    isHindi
-                                      ? (s.shortDescriptionHi || s.shortDescriptionEn)
-                                      : s.shortDescriptionEn,
-                                    80
-                                  )}
-                                </CardText>
-
-                                <div className="mt-auto">
-                                  <div className="d-flex justify-content-between align-items-center">
-                                    <small className="text-muted" style={{ fontSize: "0.7rem" }}>
-                                      <FaCalendarAlt className="me-1" />
-                                      {formatDate(s.fromDate || s.createdAt)}
-                                    </small>
-
-                                    {s.slug && (
-                                      <Link
-                                        to={`/scheme/${s.slug}`}
-                                        className="btn btn-sm btn-outline-success btn-sm"
-                                        style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-                                      >
-                                        {isHindi ? "देखें" : "View"}
-                                        <FaArrowRight className="ms-1" style={{ fontSize: "0.7rem" }} />
-                                      </Link>
-                                    )}
-                                  </div>
-
-                                  {s.expiryDate && new Date(s.expiryDate) > new Date() && (
-                                    <small className="text-danger d-block mt-1" style={{ fontSize: "0.7rem" }}>
-                                      {isHindi ? "समाप्ति: " : "Expires: "}
-                                      {formatDate(s.expiryDate)}
-                                    </small>
-                                  )}
-                                </div>
-                              </div>
-                            </Col>
-                          </Row>
-                        </CardBody>
-                      </Card>
-                    ))}
-
-                    {/* SCHEMES PAGINATION */}
-                    {schemePagination.totalPages > 1 && (
-                      <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                        <small className="text-muted">
-                          {isHindi ? "पृष्ठ" : "Page"} {schemePage}/{schemePagination.totalPages}
-                        </small>
-                        <div className="d-flex gap-1">
-                          <Button
-                            size="sm"
-                            color="success"
-                            outline
-                            disabled={schemePage === 1}
-                            onClick={() => setSchemePage(schemePage - 1)}
-                            style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-                          >
-                            {isHindi ? "पिछला" : "Prev"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="success"
-                            outline
-                            disabled={schemePage >= schemePagination.totalPages}
-                            onClick={() => setSchemePage(schemePage + 1)}
-                            style={{ fontSize: "0.75rem", padding: "0.25rem 0.5rem" }}
-                          >
-                            {isHindi ? "अगला" : "Next"}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardBody>
-            </Card>
-
-
+        {/* Pagination Section */}
+        {pagination.totalPages > 1 && (
+          <div className="bg-light p-3 border-top d-flex justify-content-between align-items-center">
+            <span className="text-muted small fw-medium">
+              {isHindi ? "पृष्ठ" : "Page"} <strong>{page}</strong> {isHindi ? "का" : "of"} <strong>{pagination.totalPages}</strong>
+            </span>
+            <div className="d-flex gap-2">
+              <Button
+                size="sm"
+                color={activeTab === "announcements" ? "primary" : "success"}
+                outline
+                disabled={page === 1 || loading}
+                onClick={() => setPage(page - 1)}
+                className="px-3"
+              >
+                {isHindi ? "पिछला" : "Previous"}
+              </Button>
+              <Button
+                size="sm"
+                color={activeTab === "announcements" ? "primary" : "success"}
+                outline
+                disabled={page >= pagination.totalPages || loading}
+                onClick={() => setPage(page + 1)}
+                className="px-4"
+              >
+                {isHindi ? "अगला" : "Next"}
+              </Button>
+            </div>
           </div>
-        </Col>
-      </Row>
-
-      <style jsx>{`
-        .hover-shadow {
-          transition: all 0.3s ease;
-        }
-        .hover-shadow:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-        }
-      `}</style>
+        )}
+      </Card>
     </Container>
   );
 };
