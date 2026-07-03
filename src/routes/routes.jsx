@@ -22,8 +22,7 @@ import Colleges from "../views/pages/Colleges";
 import Downloads from "../views/pages/Downloads";
 import FeedbackForm from "../views/pages/FeedbackForm";
 import HelpSupport from "../views/pages/HelpSupport";
-import AnnouncementDetails from "../views/pages/AnnouncementDetails";
-import SchemesDetails from "../views/pages/SchemesDetails";
+import SchemeAnnouncementDetails from "../views/pages/SchemeAnnouncementDetails";
 import MultiSectionPages from "../views/pages/MultiSectionPages";
 import SlugResolver from "../utilies/SlugResolver";
 import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
@@ -121,8 +120,10 @@ const AppRoutes = () => {
       <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
 
       {/* Announcements & Schemes */}
-      <Route path="/announcement/:slug" element={<MainLayout><AnnouncementDetails /></MainLayout>} />
-      <Route path="/scheme/:slug" element={<MainLayout><SchemesDetails /></MainLayout>} />
+      <Route path="/announcements/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
+      <Route path="/announcement/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
+      <Route path="/schemes/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
+      <Route path="/scheme/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
 
       {/* Notices */}
       <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />

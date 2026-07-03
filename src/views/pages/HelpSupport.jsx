@@ -218,7 +218,7 @@ const HelpSupport = () => {
 
     return (
       <Card className="border-0 shadow-sm h-100">
-        <CardHeader className="bg-white fw-bold d-flex justify-content-between">
+        <CardHeader className="bg-white text-white fw-bold d-flex justify-content-between">
           {isPdf ? t("PDF Documents", "PDF दस्तावेज़") : t("Video Tutorials", "वीडियो ट्यूटोरियल")}
           <Badge color="dark">{arr.length}</Badge>
         </CardHeader>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { Container, Row, Col, Button, Card } from "reactstrap";
+import { Container, Row, Col, Button, Card, CardBody } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const AboutSection = () => {
@@ -40,7 +40,7 @@ const AboutSection = () => {
           <Row className="align-items-start">
 
             {/* ================= LEFT CONTENT ================= */}
-            <Col lg="9" md="12">
+            <Col lg="8" md="12">
               <h4 className="mb-3 text-dark fw-bold">
                 {(isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng) ||
                   (isHindi ? "हमारे विभाग के बारे में" : "About Department")}
@@ -79,48 +79,78 @@ const AboutSection = () => {
             </Col>
 
             {/* ================= RIGHT PROFILE LIST ================= */}
-            <Col lg="3" md="12" className="mt-4 mt-lg-0">
+            <Col lg="4" md="12" className="mt-4 mt-lg-0">
 
               {profiles.map((profile) => (
                 <Card
                   key={profile._id}
-                  className="mb-3 p-3 shadow-sm"
+                  className="mb-3 shadow-sm border-0"
                   style={{
-                    borderRadius: "10px",
-                    background: "#f4fffd",
-                    border: "2px solid #d8d8d8",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    borderLeft: "5px solid #0d6efd",
+                    background: "#ffffff",
                   }}
                 >
-                  <div className="d-flex align-items-center">
+                  <CardBody className="py-3 px-3">
+                    <div className="d-flex align-items-center">
 
-                    <img title={profile.aboutContentEng}
-                      src={
-                        profile.profileUrl
-                          ? `${API_URL}${profile.profileUrl}`
-                          : "/placeholder.png"
-                      }
-                      alt={profile.imgNameEng}
-                      style={{
-                        width: "100px",
-                        height: "110px",
-                        borderRadius: "30%",
-                        objectFit: "cover",
-                        marginRight: "15px",
-                        padding: "3px",
-                        border: "2px solid #18181a",
-                      }}
-                    />
+                      {/* Profile Image */}
+                      <div
+                        style={{
+                          width: "110px",
+                          height: "110px",
+                          flexShrink: 0,
+                          marginRight: "18px",
+                        }}
+                      >
+                        <img
+                          title={profile.aboutContentEng}
+                          src={
+                            profile.profileUrl
+                              ? `${API_URL}${profile.profileUrl}`
+                              : "/placeholder.png"
+                          }
+                          alt={profile.imgNameEng}
+                          style={{
+                            width: "110px",
+                            height: "110px",
+                            borderRadius: "10px",
+                            // objectFit: "cover",
+                            border: "3px solid #39b5fd62",
+                            background: "#fff",
+                            padding: "2px",
+                          }}
+                        />
+                      </div>
+                      {/* Details */}
+                      <div className="flex-grow-1">
+                        <h5
+                          className="fw-bold mb-"
+                          style={{
+                            color: "#0B3D91",
+                            fontSize: "1.2rem",
+                          }}
+                        >
+                          {isHindi ? profile.imgNameHin : profile.imgNameEng}
+                        </h5>
 
-                    <div>
-                      <h6 className="m-0 text-dark fw-bold d-block" style={{ fontSize: "1.2rem" }}>
-                        {isHindi ? profile.imgNameHin : profile.imgNameEng}
-                      </h6>
-                      <small className="text-muted fw-bold" style={{ fontSize: "0.9rem" }}>
-                        {isHindi ? profile.designationHin : profile.designationEng}
-                      </small>
+                        <div
+                          className="d-inline-block"
+                          style={{
+                            color: "#14083f",
+                            borderRadius: "20px",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                          }}
+                        >Deg.
+                          {isHindi
+                            ? profile.designationHin
+                            : profile.designationEng}
+                        </div>
+                      </div>
                     </div>
-
-                  </div>
+                  </CardBody>
                 </Card>
               ))}
 
