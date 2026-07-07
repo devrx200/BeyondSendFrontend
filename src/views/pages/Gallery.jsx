@@ -154,114 +154,159 @@ const Gallery = () => {
     <PageLayout  title="Photo Gallery"
       titleHi="चित्र प्रदर्शनी" >
 
-      {/* ══ HERO BANNER ══ */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)",
-          padding: "60px 0 48px",
-          marginBottom: 0,
-        }}
-      >
-        <Container>
-          <Row className="align-items-center">
-            <Col md={8}>
-              <Badge
-                color="info"
-                className="text-uppercase mb-3 px-3 py-2"
-                style={{ letterSpacing: 3, fontSize: 10, borderRadius: 20 }}
-              >
-                <FaCamera className="me-1" />
-                {isHindi ? "संग्रह" : "Collection"}
-              </Badge>
-              <h1
-                className="text-white mb-2"
-                style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 700, lineHeight: 1.1 }}
-              >
-                {isHindi ? "चित्र" : "Photo"}{" "}
-                <span style={{ color: "#4fc3f7" }}>
-                  {isHindi ? "प्रदर्शनी" : "Gallery"}
-                </span>
-              </h1>
-              <p className="mb-0" style={{ color: "rgba(255,255,255,0.6)", fontSize: 15 }}>
-                {isHindi
-                  ? "कार्यक्रमों और गतिविधियों की झलकियां"
-                  : "Glimpses of events & activities captured beautifully"}
-              </p>
-            </Col>
-            <Col md={4} className="text-md-end mt-3 mt-md-0">
-              {/* View toggle */}
-              <div className="d-inline-flex gap-2">
-                <Button
-                  color={viewMode === "grid" ? "info" : "outline-light"}
-                  size="sm"
-                  className="d-flex align-items-center gap-1"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <FaThLarge size={12} />
-                  {isHindi ? "ग्रिड" : "Grid"}
-                </Button>
-                <Button
-                  color={viewMode === "list" ? "info" : "outline-light"}
-                  size="sm"
-                  className="d-flex align-items-center gap-1"
-                  onClick={() => setViewMode("list")}
-                >
-                  <FaList size={12} />
-                  {isHindi ? "सूची" : "List"}
-                </Button>
-              </div>
-            </Col>
-          </Row>
+{/* ═════════════════ HERO BANNER ═════════════════ */}
+<div
+  style={{
+    background:
+      "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)",
+    padding: "60px 0 48px",
+  }}
+>
+  <Container>
+    <Row className="align-items-center gy-4">
+      {/* Left Content */}
+      <Col lg={7}>
+        <h1
+          className="text-white fw-bold mb-2"
+          style={{
+            fontSize: "clamp(32px,5vw,56px)",
+            lineHeight: 1.1,
+          }}
+        >
+          {isHindi ? "चित्र" : "Photo"}{" "}
+          <span style={{ color: "#4fc3f7" }}>
+            {isHindi ? "प्रदर्शनी" : "Gallery"}
+          </span>
+        </h1>
 
-          {/* Stats bar */}
+        <p
+          className="mb-0"
+          style={{
+            color: "rgba(255,255,255,.70)",
+            fontSize: 15,
+            maxWidth: 650,
+          }}
+        >
+          {isHindi
+            ? "उच्च शिक्षा विभाग के कार्यक्रमों, गतिविधियों एवं महत्वपूर्ण आयोजनों की झलकियाँ।"
+            : "Explore memorable moments from events, activities and initiatives of the Higher Education Department."}
+        </p>
+      </Col>
+
+      {/* Right Content */}
+      <Col
+        lg={5}
+        className="d-flex justify-content-lg-end justify-content-start"
+      >
+        <div className="d-flex align-items-center flex-wrap gap-4">
+
+          {/* Total Galleries */}
           {!listLoading && (
-            <Row className="mt-4 g-3">
-              <Col xs="auto">
-                <div className="d-flex align-items-center gap-2">
-                  <div
-                    style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: "rgba(79,195,247,0.15)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    <FaImages color="#4fc3f7" size={16} />
-                  </div>
-                  <div>
-                    <div className="text-white fw-bold" style={{ fontSize: 18, lineHeight: 1 }}>
-                      {galleryList.length}
-                    </div>
-                    <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11 }}>
-                      {isHindi ? "गैलरी" : "Galleries"}
-                    </div>
-                  </div>
+            <div className="d-flex align-items-center">
+              <div
+                className="rounded d-flex align-items-center justify-content-center me-2"
+                style={{
+                  width: 42,
+                  height: 42,
+                  background: "rgba(79,195,247,.15)",
+                }}
+              >
+                <FaImages color="#4fc3f7" size={16} />
+              </div>
+
+              <div>
+                <div
+                  className="text-white fw-bold"
+                  style={{ fontSize: 18, lineHeight: 1 }}
+                >
+                  {galleryList.length}
                 </div>
-              </Col>
-              <Col xs="auto">
-                <div className="d-flex align-items-center gap-2">
-                  <div
-                    style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: "rgba(79,195,247,0.15)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    <FaCamera color="#4fc3f7" size={16} />
-                  </div>
-                  <div>
-                    <div className="text-white fw-bold" style={{ fontSize: 18, lineHeight: 1 }}>
-                      {galleryList.reduce((acc, g) => acc + (g.images?.length || 0), 0)}
-                    </div>
-                    <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 11 }}>
-                      {isHindi ? "कुल फ़ोटो" : "Total Photos"}
-                    </div>
-                  </div>
-                </div>
-              </Col>
-            </Row>
+
+                <small
+                  style={{
+                    color: "rgba(255,255,255,.65)",
+                  }}
+                >
+                  {isHindi ? "कुल गैलरी" : "Galleries"}
+                </small>
+              </div>
+            </div>
           )}
-        </Container>
-      </div>
+
+          {/* Total Photos */}
+          {!listLoading && (
+            <div className="d-flex align-items-center">
+              <div
+                className="rounded d-flex align-items-center justify-content-center me-2"
+                style={{
+                  width: 42,
+                  height: 42,
+                  background: "rgba(79,195,247,.15)",
+                }}
+              >
+                <FaCamera color="#4fc3f7" size={16} />
+              </div>
+
+              <div>
+                <div
+                  className="text-white fw-bold"
+                  style={{ fontSize: 18, lineHeight: 1 }}
+                >
+                  {galleryList.reduce(
+                    (total, gallery) =>
+                      total + (gallery.images?.length || 0),
+                    0
+                  )}
+                </div>
+
+                <small
+                  style={{
+                    color: "rgba(255,255,255,.65)",
+                  }}
+                >
+                  {isHindi ? "कुल फ़ोटो" : "Photos"}
+                </small>
+              </div>
+            </div>
+          )}
+
+          {/* View Toggle */}
+          <div
+            className="btn-group"
+            role="group"
+            aria-label="View Mode"
+          >
+            <Button
+              color={
+                viewMode === "grid"
+                  ? "info"
+                  : "outline-light"
+              }
+              size="sm"
+              onClick={() => setViewMode("grid")}
+            >
+              <FaThLarge className="me-1" size={12} />
+              {isHindi ? "ग्रिड" : "Grid"}
+            </Button>
+
+            <Button
+              color={
+                viewMode === "list"
+                  ? "info"
+                  : "outline-light"
+              }
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <FaList className="me-1" size={12} />
+              {isHindi ? "सूची" : "List"}
+            </Button>
+          </div>
+        </div>
+      </Col>
+    </Row>
+  </Container>
+</div>
 
       {/* ── WAVE DIVIDER ── */}
       <div style={{ background: "linear-gradient(135deg, #0f2027 0%, #2c5364 100%)", lineHeight: 0 }}>
