@@ -13,9 +13,9 @@ import {
 } from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
 import axios from "axios";
+
 const API_URL = import.meta.env.VITE_API_URL;
-const BUILD_TIMESTAMP = import.meta.env.VITE_BUILD_TIMESTAMP || Date.now();
-/* ================= ICON MAP ================= */
+
 const iconMap = {
   facebook: <FaFacebook />,
   twitter: <FaTwitter />,
@@ -26,12 +26,12 @@ const iconMap = {
 
 const Footer = () => {
   const { isHindi } = useLanguage();
-
   const [footer, setFooter] = useState(null);
   const [visitorCount, setVisitorCount] = useState(0);
+
   const lastUpdated = useMemo(() => {
-    const buildDate = new Date(BUILD_TIMESTAMP);
-    return buildDate.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
+    const BUILD_DATE = new Date(__BUILD_TIMESTAMP__);
+    return BUILD_DATE.toLocaleString(isHindi ? "hi-IN" : "en-IN", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -41,7 +41,6 @@ const Footer = () => {
     });
   }, [isHindi]);
 
-  /* ================= FETCH FOOTER ================= */
   useEffect(() => {
     const fetchFooter = async () => {
       try {
@@ -53,11 +52,9 @@ const Footer = () => {
         console.error("Footer fetch error", err);
       }
     };
-
     fetchFooter();
   }, [isHindi]);
 
-  /* ================= VISITOR COUNT ================= */
   useEffect(() => {
     const trackVisitor = async () => {
       try {
@@ -85,34 +82,26 @@ const Footer = () => {
     <footer className="footer">
       <Container className="py-1">
         <Row>
-
-          {/* ================= CONTACT INFO ================= */}
           <Col md={4} className="mb-1">
             <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
-
             <p className="small text-white">
               {isHindi
                 ? contactInfo.departmentNameHi
                 : contactInfo.departmentNameEn}
             </p>
-
             <p className="small text-white">
               <FaMapMarkerAlt className="me-2" />
               {isHindi ? contactInfo.addressHi : contactInfo.addressEn}
             </p>
-
             <p className="small text-white">
               <FaPhone className="me-2" />
               {contactInfo.phone}
             </p>
-
             <p className="small text-white">
               <FaEnvelope className="me-2" />
               {contactInfo.email}
             </p>
           </Col>
-
-          {/* ================= QUICK LINKS ================= */}
           <Col md={3} className="mb-1">
             <h5>{isHindi ? "त्वरित लिंक" : "Quick Links"}</h5>
             <ul className="list-unstyled footer-links">
@@ -125,8 +114,6 @@ const Footer = () => {
               ))}
             </ul>
           </Col>
-
-          {/* ================= IMPORTANT LINKS ================= */}
           <Col md={3} className="mb-1">
             <h5>{isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}</h5>
             <ul className="list-unstyled footer-links">
@@ -139,11 +126,8 @@ const Footer = () => {
               ))}
             </ul>
           </Col>
-
-          {/* ================= SOCIAL + VISITOR ================= */}
           <Col md={2} className="mb-1">
             <h5>{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
-
             <div className="d-flex gap-2 flex-wrap">
               {socialLinks.map((s, i) => (
                 <a
@@ -157,7 +141,6 @@ const Footer = () => {
                 </a>
               ))}
             </div>
-
             <div className="mt-4">
               <h6 className="text-white">
                 {isHindi ? "आगंतुक संख्या" : "Site Visitors"}
@@ -171,7 +154,6 @@ const Footer = () => {
           </Col>
         </Row>
       </Container>
-      {/* ================= BOTTOM BAR ================= */}
       <div className="footer-bottom py-1 bg-black">
         <Container>
           <Row>
@@ -182,7 +164,6 @@ const Footer = () => {
                   : "All Rights Reserved - Department of Higher Education, Government of Chhattisgarh, India"}
               </small>
             </Col>
-
             <Col md={12} className="text-center">
               <small className="text-light">
                 {isHindi
@@ -190,7 +171,6 @@ const Footer = () => {
                   : "Content on this website is published and managed by Directorate of Higher Education, Government of Chhattisgarh"}
               </small>
             </Col>
-
             <Col md={12} className="text-center">
               <small>
                 {isHindi
