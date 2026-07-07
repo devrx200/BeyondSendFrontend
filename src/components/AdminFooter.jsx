@@ -1,6 +1,7 @@
 import { FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
-
+const HEWebCMSVersion  = import.meta.env.VITE_PORTAL_VERSION;
 const AdminFooter = () => {
+
   const now = new Date();
   const year = now.getFullYear();
   const dateLabel = now.toLocaleDateString("en-IN", {
@@ -17,8 +18,8 @@ const AdminFooter = () => {
         © {year} Department of Higher Education, Government of Chhattisgarh.
       </div>
       <div className="adm-footer-center">
-        <span className="adm-footer-pill is-accent">
-          <FaShieldAlt /> Secure Admin Panel
+        <span className="adm-footer-pill is-accent text-white border-white bg-black" >
+          <FaShieldAlt /> HEWebCMS - { HEWebCMSVersion  }
         </span>
       </div>
       <div className="adm-footer-right">

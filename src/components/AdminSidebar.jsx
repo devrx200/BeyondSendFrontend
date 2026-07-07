@@ -40,13 +40,16 @@ import {
   FaClock,
   FaSignOutAlt,
   FaExclamationCircle,
-  FaUserShield
+  FaUserShield,
+  FaShieldAlt
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
 import { FaPager } from "react-icons/fa6";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const HEWebCMSVersion  = import.meta.env.VITE_PORTAL_VERSION;
+
 
 const adminMenu = [
   {
@@ -735,7 +738,12 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
           <FaSignOutAlt />
           <span>Sign Out</span>
         </button>
+        <hr/>
+        <span className="adm-footer-pill is-accent text-white border-white bg-black adm-signout-btn" >
+          <FaShieldAlt /> HEWebCMS - {HEWebCMSVersion}
+        </span>
       </div>
+
     </aside>
   );
 };
