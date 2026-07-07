@@ -14,6 +14,7 @@ import {
   FaExpand, FaCompress, FaCopy, FaCheck,
   FaTh, FaList, FaSearch, FaRegSave,
   FaFileAudio, FaFileVideo, FaFile, FaTrash,
+  FaMagic, FaCheckCircle, FaExclamationTriangle, FaInfoCircle,
 } from "react-icons/fa";
 
 // ─────────────────────────────────────────────
@@ -85,6 +86,31 @@ const getFileCategory = (mimeType) => {
 const fmtSize = (b) =>
   b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" :
     b >= 1024 ? Math.round(b / 1024) + " KB" : b + " B";
+
+// ─────────────────────────────────────────────
+// SEO filename helpers (mirrors backend slugify contract:
+// base name only, no extension, ASCII lowercase + hyphens)
+// ─────────────────────────────────────────────
+const splitNameExt = (fileName = "") => {
+  const lastDot = fileName.lastIndexOf(".");
+  if (lastDot <= 0) return { base: fileName, ext: "" };
+  return { base: fileName.slice(0, lastDot), ext: fileName.slice(lastDot + 1).toLowerCase() };
+};
+
+const toSeoFriendlyBase = (base = "") => {
+  let slug = base
+    .toLowerCase()
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "") // strip accents
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!slug) slug = "file";
+  if (slug.length > 80) slug = slug.slice(0, 80).replace(/-+$/g, "");
+  return slug;
+};
+
+const isSeoFriendlyBase = (base = "") => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(base);
 
 const FILE_ICON_MAP = {
   image: { icon: FaFileImage, color: "#10b981" },
@@ -273,6 +299,11 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
   const [linkText, setLinkText] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
+  // SEO-friendly upload name state (optional field, mirrors MediaLibraryMangments.jsx)
+  const [uploadNameInput, setUploadNameInput] = useState("");
+  const [uploadExt, setUploadExt] = useState("");
+  const [uploadNameIsSeoFriendly, setUploadNameIsSeoFriendly] = useState(true);
+
   const fileInputRef = useRef(null);
   const searchRef = useRef(null);
   const firstFocusRef = useRef(null);
@@ -343,6 +374,11 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     if (!file) return;
     setUploadFile(file);
     setUploadProgress(0);
+    // Reset the SEO name field for the newly selected file (optional — blank = keep original)
+    const { ext } = splitNameExt(file.name);
+    setUploadExt(ext);
+    setUploadNameInput("");
+    setUploadNameIsSeoFriendly(true);
     if (file.type?.startsWith("image/")) {
       const r = new FileReader();
       r.onloadend = () => setUploadPreview(r.result);
@@ -356,11 +392,40 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     setUploadFile(null);
     setUploadPreview(null);
     setUploadProgress(0);
+    setUploadNameInput("");
+    setUploadExt("");
+    setUploadNameIsSeoFriendly(true);
   }, []);
+
+  // Called as the user types a custom upload name (optional field)
+  const handleUploadNameChange = useCallback((val) => {
+    setUploadNameInput(val);
+    setUploadNameIsSeoFriendly(val.trim() === "" ? true : isSeoFriendlyBase(val));
+  }, []);
+
+  // One-click auto-fix: slugifies whatever's currently typed (or the original
+  // file name if the field is still blank) into an SEO-friendly base name.
+  const handleAutoFixUploadName = useCallback(() => {
+    if (!uploadFile) return;
+    const activeBase = uploadNameInput.trim() || splitNameExt(uploadFile.name).base;
+    setUploadNameInput(toSeoFriendlyBase(activeBase));
+    setUploadNameIsSeoFriendly(true);
+  }, [uploadFile, uploadNameInput]);
 
   const handleUpload = useCallback(async () => {
     if (!uploadFile) return;
+
+    // Custom name is OPTIONAL — if left blank, fall back to the original file name.
+    // Base name only (no extension) is sent — the backend re-appends the real
+    // extension itself.
+    const originalBase = splitNameExt(uploadFile.name).base;
+    const finalBase = uploadNameInput.trim() || originalBase;
+
     const fd = new FormData();
+    // IMPORTANT: multer parses multipart fields in stream order — text fields
+    // must be appended BEFORE the file field, otherwise req.body.fileName
+    // isn't populated yet when the backend's filename() callback runs.
+    fd.append("fileName", finalBase);
     fd.append("file", uploadFile);
     try {
       setUploading(true);
@@ -383,7 +448,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     } finally {
       setUploading(false);
     }
-  }, [uploadFile, onShowToast, resetUpload, fetchFiles]);
+  }, [uploadFile, uploadNameInput, onShowToast, resetUpload, fetchFiles]);
 
   const handleFileSelectFromList = useCallback((file) => {
     setSelected(file);
@@ -530,6 +595,69 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                 </button>
               </div>
             </div>
+
+            {/* SEO-friendly upload name (optional) */}
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${WP.line}` }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: WP.textMid, marginBottom: 4 }}>
+                File name <span style={{ fontWeight: 400 }}>(optional — leave blank to keep original)</span>
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="text"
+                  value={uploadNameInput}
+                  onChange={e => handleUploadNameChange(e.target.value)}
+                  placeholder={splitNameExt(uploadFile.name).base}
+                  aria-label="Custom SEO-friendly file name"
+                  disabled={uploading}
+                  style={{
+                    flex: 1, minWidth: 0,
+                    border: `1px solid ${uploadNameInput.trim() && !uploadNameIsSeoFriendly ? WP.red : WP.border}`,
+                    borderRadius: 8, padding: "6px 10px", fontSize: 12,
+                    fontFamily: FF, color: WP.text, outline: "none",
+                    background: WP.white, boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ fontSize: 12, color: WP.textLight, flexShrink: 0 }}>.{uploadExt}</span>
+              </div>
+
+              {/* Always-visible live preview + auto-fix, mirrors MediaLibraryMangments.jsx */}
+              {(() => {
+                const activeBase = uploadNameInput.trim() || splitNameExt(uploadFile.name).base;
+                const previewBase = toSeoFriendlyBase(activeBase);
+                const alreadyClean = uploadNameInput.trim() !== "" && uploadNameIsSeoFriendly;
+                return (
+                  <div style={{
+                    marginTop: 6, fontSize: 11, display: "flex", alignItems: "flex-start", gap: 5,
+                    color: alreadyClean ? WP.green : WP.amber,
+                  }}>
+                    {alreadyClean ? <FaCheckCircle style={{ marginTop: 1 }} /> : <FaExclamationTriangle style={{ marginTop: 1 }} />}
+                    <span>
+                      {alreadyClean ? "Looks SEO-friendly. " : "Will be auto-converted to: "}
+                      <code style={{ background: WP.offWhite, padding: "1px 4px", borderRadius: 4 }}>
+                        {previewBase}.{uploadExt}
+                      </code>{" "}
+                      <button
+                        type="button"
+                        onClick={handleAutoFixUploadName}
+                        disabled={uploading}
+                        style={{
+                          background: "none", border: "none", padding: 0,
+                          color: WP.blue, fontSize: 11, cursor: "pointer",
+                          display: "inline-flex", alignItems: "center", gap: 3,
+                        }}>
+                        <FaMagic size={9} /> Use this name
+                      </button>
+                    </span>
+                  </div>
+                );
+              })()}
+
+              <div style={{ marginTop: 6, fontSize: 10, color: WP.textLight, display: "flex", alignItems: "flex-start", gap: 5 }}>
+                <FaInfoCircle style={{ marginTop: 1 }} />
+                <span>Lowercase letters, numbers and hyphens only — improves search visibility. Hindi names are transliterated automatically.</span>
+              </div>
+            </div>
+
             {uploading && (
               <div style={{ marginTop: 10 }}>
                 <Progress value={uploadProgress} style={{ height: 4, borderRadius: 4 }} />
