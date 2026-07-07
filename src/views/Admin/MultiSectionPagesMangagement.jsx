@@ -168,6 +168,11 @@ const emptyForm = () => ({
   htmlContentHi: "",
   isActive: true,
   documentsUpdate: [],
+  categoryId: "",
+  tags: "",
+  metaKeywords: "",
+  shortDescriptionEn: "",
+  shortDescriptionHin: "",
 });
 
 const emptyDocument = () => ({
@@ -240,14 +245,17 @@ const MultiSectionPagesManagement = () => {
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initEditingId());
   const [hoveredRow, setHoveredRow] = useState(null);
   const [isFormFullscreen, setIsFormFullscreen] = useState(initFullscreen);
-
-  // Document inline form state
+  const [excerptLang, setExcerptLang] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [showDocForm, setShowDocForm] = useState(false);
   const [editingDocIndex, setEditingDocIndex] = useState(null);
   const [currentDocument, setCurrentDocument] = useState(emptyDocument());
 
   const slugDebounceRef = useRef(null);
-
+  const fetchCategories = async () => {
+    try { const res = await axios.get(`${API}/api/get-categories`, { headers: authH() }); setCategories(res.data.data || []); } catch { }
+  };
+  useEffect(() => { fetchCategories(); }, []);
   // --- Persist state to session ---
   useEffect(() => { sessionStorage.setItem(SS_VIEW, view); }, [view]);
   useEffect(() => { if (editingId) sessionStorage.setItem(SS_EDITING_ID, editingId); else sessionStorage.removeItem(SS_EDITING_ID); }, [editingId]);
@@ -363,12 +371,22 @@ const MultiSectionPagesManagement = () => {
     setSlugError(validateSlug(clean));
   };
 
-  const handleSlugBlur = () => {
-    const clean = form.slug.replace(/^-+|-+$/g, "");
-    setForm(prev => ({ ...prev, slug: clean }));
-    setSlugError(validateSlug(clean));
-  };
+const handleSlugBlur = () => {
+  const clean = form.slug
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")       // spaces → -
+    .replace(/[^a-z0-9-]/g, "") // remove invalid characters
+    .replace(/-+/g, "-")        // multiple --- → single -
+    .replace(/^-+|-+$/g, "");   // remove - from start/end
 
+  setForm(prev => ({
+    ...prev,
+    slug: clean,
+  }));
+
+  setSlugError(validateSlug(clean));
+};
   const handleBaseSlugChange = (e) => {
     const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").replace(/^-+/, "");
     setForm(prev => ({ ...prev, baseSlug: clean }));
@@ -539,6 +557,20 @@ const MultiSectionPagesManagement = () => {
     htmlContent: form.htmlContent,
     htmlContentHi: form.htmlContentHi,
     isActive: form.isActive,
+    metaKeywords: form.metaKeywords
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean),
+
+    tags: form.tags
+      .split(",")
+      .map(x => x.trim())
+      .filter(Boolean),
+
+    categoryId: form.categoryId || null,
+
+    shortDescriptionEn: form.shortDescriptionEn || "",
+    shortDescriptionHin: form.shortDescriptionHin || "",
     documentsUpdate: form.documentsUpdate.map(doc => ({
       titleEng: doc.titleEng || "",
       titleHin: doc.titleHin || "",
@@ -549,6 +581,7 @@ const MultiSectionPagesManagement = () => {
       shortDescriptionEn: doc.shortDescriptionEn || "",
       shortDescriptionHin: doc.shortDescriptionHin || "",
       isActive: doc.isActive !== false,
+
     })),
   }), [form]);
 
@@ -666,6 +699,11 @@ const MultiSectionPagesManagement = () => {
       htmlContent: item.htmlContent || "",
       htmlContentHi: item.htmlContentHi || "",
       isActive: item.isActive !== false,
+      categoryId: item.categoryId?._id || item.categoryId || "",
+      tags: Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),
+      metaKeywords: Array.isArray(item.metaKeywords) ? item.metaKeywords.join(", ") : (item.metaKeywords || ""),
+      shortDescriptionEn: item.shortDescriptionEn || "",
+      shortDescriptionHin: item.shortDescriptionHin || "",
       documentsUpdate: Array.isArray(item.documentsUpdate) ? item.documentsUpdate.map(doc => ({ ...doc, file: null, isActive: doc.isActive !== false })) : [],
     });
     setPageStatus({ isPublished: !!item.isPublished, isDraft: item.isDraft !== false });
@@ -673,7 +711,7 @@ const MultiSectionPagesManagement = () => {
     setSlugError("");
     setView("form");
   };
-
+  
   const handleDelete = async (id, title) => {
     const result = await Swal.fire({
       title: "Delete Content?",
@@ -719,7 +757,7 @@ const MultiSectionPagesManagement = () => {
   const fullUrlForForm = fullPath ? `${SITE_URL}/${fullPath}` : "";
 
   // --- Top bar for form ---
-  const FormTopBar = ({ fullscreen }) => (
+  const renderFormTopBar = ({ fullscreen }) => (
     <div style={{
       background: WP.white, borderBottom: `1px solid ${WP.line}`,
       padding: isMobile ? "8px 12px" : "8px 20px",
@@ -778,19 +816,24 @@ const MultiSectionPagesManagement = () => {
   );
 
   // --- Form Body (two‑column layout) ---
-  const FormBody = () => {
-    const gridColumns = isMobile ? "1fr" : "minmax(0, 1fr) 300px";
+  const renderFormBody = () => {
+    // const gridColumns = isMobile ? "1fr" : "minmax(0, 1fr) 300px";
+    const gridColumns = isMobile
+      ? "1fr"
+      : "minmax(0, 1fr) 300px";
     return (
       <>
         <FlashMsg msg={message} />
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: gridColumns,
-          gap: isMobile ? 12 : 16,
-          padding: isMobile ? "12px" : "16px 20px",
-          width: "100%",
-          boxSizing: "border-box",
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: gridColumns,
+            gap: isMobile ? 12 : 16,
+            padding: isMobile ? "12px" : "16px 20px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           {/* Left column: main content */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
             {/* Title */}
@@ -947,11 +990,11 @@ const MultiSectionPagesManagement = () => {
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
                     <div>
                       <label style={lbl}>Title (English) <span style={{ color: WP.red }}>*</span></label>
-                      <input name="titleEng"   type="text" autoComplete="off" value={currentDocument.titleEng} onChange={handleDocChange} placeholder="e.g., Recruitment Notice 2026" style={fi} />
+                      <input name="titleEng" type="text" autoComplete="off" value={currentDocument.titleEng} onChange={handleDocChange} placeholder="e.g., Recruitment Notice 2026" style={fi} />
                     </div>
                     <div>
                       <label style={lbl}>Title (Hindi) <span style={{ color: WP.red }}>*</span></label>
-                      <input name="titleHin"  type="text" autoComplete="off" value={currentDocument.titleHin} onChange={handleDocChange} placeholder="जैसे, भर्ती सूचना 2026" style={fi} />
+                      <input name="titleHin" type="text" autoComplete="off" value={currentDocument.titleHin} onChange={handleDocChange} placeholder="जैसे, भर्ती सूचना 2026" style={fi} />
                     </div>
                     <div>
                       <label style={lbl}>Short Description (English)</label>
@@ -1013,6 +1056,48 @@ const MultiSectionPagesManagement = () => {
             <Card title="Department">
               <input name="department" value={form.department} onChange={handleChange} placeholder="e.g., Higher Education Department" style={{ ...fi, fontSize: 13 }} {...focus} />
             </Card>
+            <Card title={
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 8 }}>
+                <span>Short Description -</span>
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button onClick={() => setExcerptLang("en")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "en" ? 600 : 400, color: excerptLang === "en" ? WP.blue : WP.textMid }}>English</button>
+                  <button onClick={() => setExcerptLang("hi")} style={{ background: "none", border: "none", cursor: "pointer", fontWeight: excerptLang === "hi" ? 600 : 400, color: excerptLang === "hi" ? WP.blue : WP.textMid }}>Hindi</button>
+                </div>
+              </div>
+            }>
+              {excerptLang === "en"
+                ? <textarea name="shortDescriptionEn" placeholder="Short Description English" value={form.shortDescriptionEn} onChange={handleChange} rows={4} style={{ ...fi, resize: "vertical" }} {...focus} />
+                : <textarea
+                  name="shortDescriptionHin"
+                  placeholder="Short Description Hindi"
+                  value={form.shortDescriptionHin}
+                  onChange={handleChange}
+                  rows={4}
+                  style={{ ...fi, resize: "vertical" }}
+                  {...focus}
+                />}
+            </Card>
+
+            <Card title="Category">
+              <select name="categoryId" value={form.categoryId} onChange={handleChange} style={{ ...fi, fontSize: 13 }} {...focus}>
+                <option value="">— No Category —</option>
+                {categories.map(cat => <option key={cat._id} value={cat._id}>{cat.categoryNameEn}</option>)}
+              </select>
+              {form.categoryId && <p style={{ margin: "4px 0 0", fontSize: 11, color: WP.textLight }}>हिंदी: {categories.find(c => c._id === form.categoryId)?.categoryNameHi || "—"}</p>}
+            </Card>
+
+            <Card title="Tags">
+              <input name="tags" value={form.tags} onChange={handleChange} placeholder="tag1, tag2, tag3" style={{ ...fi, fontSize: 13 }} {...focus} />
+              <p style={{ margin: "3px 0 0", fontSize: 11, color: WP.textLight }}>Separate with commas</p>
+            </Card>
+
+            <Card title="SEO & Meta">
+              <div>
+                <label style={{ ...lbl, fontSize: 12 }}>Meta Keywords</label>
+                <input name="metaKeywords" value={form.metaKeywords} onChange={handleChange} placeholder="keyword1, keyword2" style={{ ...fi, fontSize: 12 }} {...focus} />
+                <p style={{ margin: "3px 0 0", fontSize: 11, color: WP.textLight }}>Separate with commas</p>
+              </div>
+            </Card>
           </div>
         </div>
         <div style={{ height: 24 }} />
@@ -1043,8 +1128,9 @@ const MultiSectionPagesManagement = () => {
             : { width: "100%", minHeight: "100vh", overflowX: "hidden" }),
         }}
       >
-        <FormTopBar fullscreen={isFormFullscreen} />
-        <FormBody />
+        {renderFormTopBar(isFormFullscreen)}
+        {/* <FormBody /> */}
+        {renderFormBody()}
       </div>
     );
   }
