@@ -838,7 +838,7 @@ const ImportantPageManagement = () => {
         justifyContent: "space-between",
         gap: 10,
         flexWrap: "wrap",
-        position: "sticky",
+
         top: 0,
         zIndex: 1000,
         boxShadow: fullscreen ? "none" : "0 1px 2px rgba(0,0,0,.05)",
