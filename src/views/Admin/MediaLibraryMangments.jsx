@@ -76,7 +76,7 @@ const MediaLibraryMangments = () => {
   const [fileExt, setFileExt] = useState("");
   const [nameIsSeoFriendly, setNameIsSeoFriendly] = useState(true);
 
-  const MAX_UPLOAD_SIZE_BYTES = 32 * 1024 * 1024;
+  const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024;
   const isValidUploadSize = selectedFile?.size <= MAX_UPLOAD_SIZE_BYTES;
 
   const showToast = useCallback((icon, title, text = "") => {
@@ -206,7 +206,7 @@ const MediaLibraryMangments = () => {
     const allowedExtensions = new Set(Object.values(acceptedFileTypes).flat());
 
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      const message = "Selected file exceeds the 32 MB limit.";
+      const message = "Selected file exceeds the 100 MB limit.";
       showToast("error", "File too large", message);
       return;
     }
@@ -252,7 +252,7 @@ const MediaLibraryMangments = () => {
     }
 
     if (selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
-      const message = "Selected file exceeds the 32 MB limit.";
+      const message = "Selected file exceeds the 100 MB limit.";
       showToast("error", "File too large", message);
       return;
     }
@@ -453,7 +453,7 @@ const MediaLibraryMangments = () => {
                   <FaUpload size={48} className={`mb-3 ${isDragActive ? "text-primary" : "text-muted"}`} />
                   <h5 className="mb-1">{isDragActive ? "Drop file here" : "Click or drag files here to upload"}</h5>
                   <p className="text-muted mb-0">Supported file types: images, documents, audio, video, and archives</p>
-                  <small className="fw-bold">Maximum Upload File Size: 32 MB. </small><br />
+                  <small className="fw-bold">Maximum Upload File Size: 100 MB. </small><br />
                   <small className="text-muted mt-2 d-block"><strong>Supported:</strong> JPG, JPEG, PNG, GIF, WebP, SVG, PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, PPT, PPTX, ZIP, MP3, MP4, MOV</small>
                 </>
               ) : (

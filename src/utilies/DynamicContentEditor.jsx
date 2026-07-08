@@ -51,6 +51,12 @@ const API_URL = import.meta.env.VITE_API_URL;
 const getToken = () => sessionStorage.getItem("authToken");
 
 // ─────────────────────────────────────────────
+// Upload limits
+// ─────────────────────────────────────────────
+const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
+const MAX_UPLOAD_SIZE_LABEL = "100MB";
+
+// ─────────────────────────────────────────────
 // Shared style constants
 // ─────────────────────────────────────────────
 const S = {
@@ -372,6 +378,19 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
 
   const handleSelectFile = useCallback((file) => {
     if (!file) return;
+
+    // Reject oversized files immediately instead of letting them fail
+    // server-side (or during a slow upload) — same guard covers both the
+    // click-to-browse input and drag & drop, since both funnel here.
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      onShowToast?.(
+        `"${file.name}" is ${fmtSize(file.size)} — the maximum allowed size is ${MAX_UPLOAD_SIZE_LABEL}.`,
+        "error"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploadFile(file);
     setUploadProgress(0);
     // Reset the SEO name field for the newly selected file (optional — blank = keep original)
@@ -386,7 +405,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     } else {
       setUploadPreview(null);
     }
-  }, []);
+  }, [onShowToast]);
 
   const resetUpload = useCallback(() => {
     setUploadFile(null);
@@ -415,6 +434,12 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
   const handleUpload = useCallback(async () => {
     if (!uploadFile) return;
 
+    // Belt-and-braces re-check in case uploadFile was ever set some other way.
+    if (uploadFile.size > MAX_UPLOAD_SIZE_BYTES) {
+      onShowToast?.(`File exceeds the ${MAX_UPLOAD_SIZE_LABEL} limit.`, "error");
+      return;
+    }
+
     // Custom name is OPTIONAL — if left blank, fall back to the original file name.
     // Base name only (no extension) is sent — the backend re-appends the real
     // extension itself.
@@ -440,7 +465,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
       const status = err.response?.status;
       const serverMsg = err.response?.data?.message;
       const msg =
-        status === 413 ? "File is too large. Please upload a smaller file." :
+        status === 413 ? `File is too large. Maximum allowed size is ${MAX_UPLOAD_SIZE_LABEL}.` :
         status === 415 ? "File type not allowed. Check supported formats." :
         status === 401 ? "Session expired. Please log in again." :
         serverMsg || "Upload failed. Please try again.";
@@ -546,7 +571,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
               {isDragging ? "Drop to upload" : "Drag & drop or click to upload"}
             </p>
             <p style={{ margin: "4px 0 0", fontSize: 11, color: WP.textLight }}>
-              Images · PDFs · Docs · Spreadsheets · Video · Audio
+              Images · PDFs · Docs · Spreadsheets · Video · Audio · Max {MAX_UPLOAD_SIZE_LABEL}
             </p>
             <input
               type="file"
@@ -1161,6 +1186,20 @@ const DynamicContentEditor = forwardRef(({
   const currentField = activeTab === "en" ? ENG : HIN;
   const externalValue = item?.[currentField] || "";
 
+  // Always-fresh mirror of externalValue, readable from callbacks/timers
+  // (e.g. Jodit's afterInit) without those closures going stale. Updated
+  // on every render — a plain ref write, so it never triggers a re-render
+  // itself.
+  const externalValueRef = useRef(externalValue);
+  externalValueRef.current = externalValue;
+
+  // Tracks the last (field, value) pair WE pushed into state via
+  // updateContent (typing → blur, link insert, clear). When externalValue
+  // changes purely as an echo of our own update, the sync effect below
+  // skips touching the live editor instance — that's what previously threw
+  // the cursor to the end of the content after every save.
+  const lastOwnUpdateRef = useRef({ field: null, value: null });
+
   useEffect(() => { setLiveContent(externalValue); }, [externalValue]);
 
   useEffect(() => {
@@ -1185,6 +1224,7 @@ const DynamicContentEditor = forwardRef(({
   }, [controlledTab, setActiveTab]);
 
   const updateContent = useCallback((field, newValue) => {
+    lastOwnUpdateRef.current = { field, value: newValue };
     if (isControlled) {
       const newObj = { ...(contents?.[0] || {}), id: contents?.[0]?.id || Date.now(), [field]: newValue };
       setContents([newObj]);
@@ -1239,12 +1279,26 @@ const DynamicContentEditor = forwardRef(({
     const editor = editorRef.current;
     if (!editor) return;
     editor.focus();
+
+    // Save the exact cursor/selection position using Jodit's own
+    // marker-based save/restore API. A raw native Range (the previous
+    // approach) can go stale the moment focus moves to the modal, which is
+    // exactly why the link used to land at the end of the content instead
+    // of where the cursor actually was. Jodit's save() inserts invisible
+    // marker spans at the real position, which survive the modal being
+    // open and let restore() put the cursor back exactly.
     try {
-      const sel = editor.selection.sel;
-      savedRangeRef.current = (sel && sel.rangeCount > 0)
-        ? sel.getRangeAt(0).cloneRange()
-        : null;
+      if (typeof editor.selection.save === "function") {
+        editor.selection.save();
+        savedRangeRef.current = "jodit-marker";
+      } else {
+        const sel = editor.selection.sel;
+        savedRangeRef.current = (sel && sel.rangeCount > 0)
+          ? sel.getRangeAt(0).cloneRange()
+          : null;
+      }
     } catch { savedRangeRef.current = null; }
+
     let selected = "";
     try { selected = editor.selection.text() || ""; } catch { /* ignore */ }
     if (!selected.trim()) {
@@ -1264,7 +1318,11 @@ const DynamicContentEditor = forwardRef(({
     const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" data-file-id="${file._id}" data-category="${file.category}">${text}</a>`;
 
     editor.focus();
-    if (savedRangeRef.current) {
+
+    if (savedRangeRef.current === "jodit-marker") {
+      try { editor.selection.restore(); }
+      catch { editor.selection.focus(); }
+    } else if (savedRangeRef.current) {
       try {
         const sel = editor.selection.sel;
         if (sel) { sel.removeAllRanges(); sel.addRange(savedRangeRef.current); }
@@ -1283,55 +1341,82 @@ const DynamicContentEditor = forwardRef(({
     savedRangeRef.current = null;
   }, [handleBlur, showToast]);
 
-  const joditConfig = useMemo(() => ({
-    height: isFullscreen ? "calc(100vh - 210px)" : height,
-    readonly: false,
-    toolbarAdaptive: true,
-    showCharsCounter: false,
-    showWordsCounter: false,
-    showXPathInStatusbar: false,
-    askBeforePasteHTML: false,
-    askBeforePasteFromWord: false,
-    defaultActionOnPaste: "insert_as_html",
-    spellcheck: true,
-    uploader: {
-      insertImageAsBase64URI: true,
-      imagesExtensions: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
-      withCredentials: false,
-    },
-    buttons: [
-      "bold", "italic", "underline", "strikethrough", "|",
-      "superscript", "subscript", "|",
-      "eraser", "|",
-      "ul", "ol", "|",
-      "outdent", "indent", "|",
-      "font", "fontsize", "brush", "paragraph", "|",
-      "align", "|",
-      "table", "link", "image", "video", "|",
-      "hr", "|",
-      "undo", "redo", "|",
-      "copyformat", "|",
-      "find", "|",
-      "fullsize", "source",
-    ],
-    commandToHotkeys: {
-      bold: ["ctrl+b", "cmd+b"],
-      italic: ["ctrl+i", "cmd+i"],
-      underline: ["ctrl+u", "cmd+u"],
-      undo: ["ctrl+z", "cmd+z"],
-      redo: ["ctrl+y", "cmd+y", "ctrl+shift+z", "cmd+shift+z"],
-      selectAll: ["ctrl+a", "cmd+a"],
-      link: ["ctrl+k", "cmd+k"],
-    },
-    style: { fontFamily: "Georgia, 'Times New Roman', serif", fontSize: "16px", lineHeight: "1.8" },
-    defaultValue: externalValue,
-    events: {
-      afterInit(editor) {
-        editorRef.current = editor;
-        if (editor.value !== externalValue) editor.value = externalValue;
+  // Keeps the mounted editor in sync when its value changes for reasons
+  // OTHER than our own typing/blur/insert round-trip — e.g. the parent
+  // finishes an async fetch and populates `contents` after the editor has
+  // already mounted, or the person switches language tabs. It updates the
+  // live instance directly (editor.value = ...) instead of rebuilding the
+  // whole editor, and it explicitly skips our own echoed updates so the
+  // cursor is never disturbed by the user's own edits.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const self = lastOwnUpdateRef.current;
+    const isOwnEcho = self.field === currentField && self.value === externalValue;
+    if (isOwnEcho) return;
+    if (editor.value !== externalValue) {
+      try { editor.value = externalValue; } catch { /* ignore */ }
+    }
+  }, [externalValue, currentField]);
+
+  const joditConfig = useMemo(() => {
+    // Only rebuilt when isFullscreen/height actually change (both require a
+    // real toolbar/layout rebuild). When that happens, seed the new
+    // instance with whatever the currently-mounted editor holds right now
+    // (freshest, even if not yet saved to state) so nothing typed is lost.
+    // On first mount there's no instance yet, so fall back to the latest
+    // known external value.
+    const seed = editorRef.current ? editorRef.current.value : externalValueRef.current;
+    return {
+      height: isFullscreen ? "calc(100vh - 210px)" : height,
+      readonly: false,
+      toolbarAdaptive: true,
+      showCharsCounter: false,
+      showWordsCounter: false,
+      showXPathInStatusbar: false,
+      askBeforePasteHTML: false,
+      askBeforePasteFromWord: false,
+      defaultActionOnPaste: "insert_as_html",
+      spellcheck: true,
+      uploader: {
+        insertImageAsBase64URI: true,
+        imagesExtensions: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
+        withCredentials: false,
       },
-    },
-  }), [isFullscreen, height, externalValue]);
+      buttons: [
+        "bold", "italic", "underline", "strikethrough", "|",
+        "superscript", "subscript", "|",
+        "eraser", "|",
+        "ul", "ol", "|",
+        "outdent", "indent", "|",
+        "font", "fontsize", "brush", "paragraph", "|",
+        "align", "|",
+        "table", "link", "image", "video", "|",
+        "hr", "|",
+        "undo", "redo", "|",
+        "copyformat", "|",
+        "find", "|",
+        "fullsize", "source",
+      ],
+      commandToHotkeys: {
+        bold: ["ctrl+b", "cmd+b"],
+        italic: ["ctrl+i", "cmd+i"],
+        underline: ["ctrl+u", "cmd+u"],
+        undo: ["ctrl+z", "cmd+z"],
+        redo: ["ctrl+y", "cmd+y", "ctrl+shift+z", "cmd+shift+z"],
+        selectAll: ["ctrl+a", "cmd+a"],
+        link: ["ctrl+k", "cmd+k"],
+      },
+      style: { fontFamily: "Georgia, 'Times New Roman', serif", fontSize: "16px", lineHeight: "1.8" },
+      defaultValue: seed,
+      events: {
+        afterInit(editor) {
+          editorRef.current = editor;
+          if (editor.value !== externalValueRef.current) editor.value = externalValueRef.current;
+        },
+      },
+    };
+  }, [isFullscreen, height]);
 
   if (!item) return null;
 
@@ -1384,7 +1469,18 @@ const DynamicContentEditor = forwardRef(({
         <AttachModal
           selection={selText}
           onAttach={handleAttach}
-          onClose={() => { setShowModal(false); setSelText(""); savedRangeRef.current = null; }}
+          onClose={() => {
+            // If the modal is dismissed without inserting anything, still
+            // restore/clean up the saved-position markers so no stray
+            // marker spans are left behind in the content.
+            const editor = editorRef.current;
+            if (editor && savedRangeRef.current === "jodit-marker") {
+              try { editor.selection.restore(); } catch { /* ignore */ }
+            }
+            setShowModal(false);
+            setSelText("");
+            savedRangeRef.current = null;
+          }}
           onShowToast={showToast}
         />
       )}
