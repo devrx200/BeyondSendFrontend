@@ -21,14 +21,23 @@ import Swal from "sweetalert2";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
 const API = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+
+// FIX: previously `const token = sessionStorage.getItem("authToken");` ran
+// once at module load and was reused for every request. If the user logs
+// in / the token refreshes without a full page reload, every call kept
+// sending the stale value. This helper re-reads it on every request.
+const getAuthHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+});
+
 const MenuManagement = () => {
   /* ================= STATE ================= */
-  // const [menus, setMenus] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null); // { type, menuId, submenuId, childId }
@@ -44,17 +53,18 @@ const MenuManagement = () => {
     parentMenuId: "",
     parentSubmenuId: "",
     isDynamic: false,
+    isImportant: false,
   });
 
   /* ================= FETCH ================= */
   const loadMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/api/menu-list`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      // FIX: /menu-list is the public route (getMenus, active-only, no
+      // auth). The admin table needs everything, including inactive
+      // items, which is served by /menu-list-all/get-all (getAllMenus).
+      const res = await axios.get(`${API}/api/menu-list-all/get-all`, {
+        headers: getAuthHeaders(),
       });
       setMenuItems(res.data.data || []);
     } catch (err) {
@@ -70,31 +80,37 @@ const MenuManagement = () => {
 
   const saveMenuOrder = async (updatedMenus) => {
     try {
-      const token = sessionStorage.getItem("authToken");
-
-
-      await axios.post(`${API}/api/menu/reorder`,
+      await axios.post(
+        `${API}/api/menu/reorder`,
         {
           menus: updatedMenus, // <-- full ordered tree
         },
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders(),
         }
       );
 
-      alert("Menu Order Saved Successfully");
+      // FIX: replaced alert() with the same SweetAlert2 pattern used
+      // everywhere else in this component, so feedback is consistent.
+      Swal.fire({
+        icon: "success",
+        title: isHindi ? "मेनू क्रम सहेजा गया" : "Menu order saved",
+        timer: 1200,
+        showConfirmButton: false,
+      });
     } catch (err) {
       console.error(
         "Order save failed",
         err?.response?.data || err.message
       );
-      alert("Failed to save menu order");
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "मेनू क्रम सहेजने में विफल" : "Failed to save menu order",
+        text: err?.response?.data?.message || err.message,
+      });
+      loadMenus(); // re-sync with server since the optimistic reorder may not have saved
     }
   };
-
 
   const reorderArray = (arr, fromIndex, toIndex) => {
     const updated = [...arr];
@@ -156,53 +172,52 @@ const MenuManagement = () => {
   /* ================= FORM ================= */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const nextValue = type === "checkbox" ? checked : value;
+
+    setForm((prev) => {
+      // FIX: switching the parent menu must clear whatever submenu was
+      // previously selected. Otherwise you can end up submitting a child
+      // under a submenu that actually belongs to a different parent menu
+      // than the one currently selected.
+      if (name === "parentMenuId") {
+        return { ...prev, parentMenuId: nextValue, parentSubmenuId: "" };
+      }
+      return { ...prev, [name]: nextValue };
+    });
   };
 
   /* ================= CREATE ================= */
   const createMenu = async () => {
     await axios.post(`${API}/api/menu`, form, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
     });
   };
 
   /* ================= UPDATE ================= */
   const updateMenu = async () => {
+    // FIX: each level now has its own route prefix on the backend
+    // (menu-update / submenu-update / submenuchild-update), instead of
+    // one shared "/menu/..." path.
     if (editing.type === "MENU") {
-      await axios.put(`${API}/api/menu/${editing.menuId}`, form, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.put(`${API}/api/menu-update/${editing.menuId}`, form, {
+        headers: getAuthHeaders(),
       });
     }
     if (editing.type === "SUBMENU") {
       await axios.put(
-        `${API}/api/menu/${editing.menuId}/submenu/${editing.submenuId}`,
+        `${API}/api/submenu-update/${editing.menuId}/submenu/${editing.submenuId}`,
         form,
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders(),
         }
       );
     }
     if (editing.type === "CHILD") {
       await axios.put(
-        `${API}/api/menu/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
+        `${API}/api/submenuchild-update/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
         form,
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders(),
         }
       );
     }
@@ -245,30 +260,25 @@ const MenuManagement = () => {
     try {
       if (type === "MENU") {
         await axios.delete(`${API}/api/menu/${menuId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: getAuthHeaders(),
         });
       }
 
       if (type === "SUBMENU") {
-        await axios.delete(`${API}/api/menu/${menuId}/submenu/${submenuId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        // FIX: submenu delete now lives under "/submenu/...", not "/menu/...".
+        await axios.delete(`${API}/api/submenu/${menuId}/submenu/${submenuId}`, {
+          headers: getAuthHeaders(),
         });
       }
 
       if (type === "CHILD") {
+        // FIX: child delete now lives under "/submenuchild/...". (Earlier
+        // versions of this URL had a duplicate "/api/" segment and later
+        // used the wrong prefix — this now matches the actual route.)
         await axios.delete(
-          `${API}/api/menu/${menuId}/api/submenu/${submenuId}/child/${childId}`,
+          `${API}/api/submenuchild/${menuId}/submenu/${submenuId}/child/${childId}`,
           {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
+            headers: getAuthHeaders(),
           }
         );
       }
@@ -297,10 +307,10 @@ const MenuManagement = () => {
       titleEng: data.titleEng,
       titleHi: data.titleHi,
       path: data.path,
-      isExternal: data.isExternal,
-      openInNewTab: data.openInNewTab,
-      order: data.order,
-      isActive: data.isActive,
+      isExternal: !!data.isExternal,
+      openInNewTab: !!data.openInNewTab,
+      order: data.order ?? 0,
+      isActive: data.isActive ?? true,
       parentMenuId: menuId || "",
       parentSubmenuId: submenuId || "",
       isDynamic: data.isDynamic || false,
@@ -314,7 +324,12 @@ const MenuManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // FIX: guard against double-submit while a save is already in flight
+    // (e.g. user double-clicking "Save").
+    if (saving) return;
+
     try {
+      setSaving(true);
       if (editing) {
         await updateMenu();
         Swal.fire({
@@ -346,6 +361,8 @@ const MenuManagement = () => {
         title: isHindi ? "कुछ गलत हो गया" : "Something went wrong",
         text: err?.response?.data?.message || err.message,
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -354,13 +371,18 @@ const MenuManagement = () => {
     menuItems.map((menu, index) => (
       <Fragment key={menu._id || `menu-${index}`}>
         {/* MAIN MENU */}
-        <tr className="bg-danger">
+        <tr>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "30px" }}>{index + 1}</td>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "200px" }}>{menu.titleEng}</td>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "200px" }}>{menu.titleHi}</td>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "240px" }}>{menu.path}</td>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "140px" }}>
             <Badge color="primary">Menu</Badge>
+            {!menu.isActive && (
+              <Badge color="secondary" className="ms-1">
+                {isHindi ? "निष्क्रिय" : "Inactive"}
+              </Badge>
+            )}
           </td>
           <td style={{ color: "#000000ff", backgroundColor: "#b5fde9ff", fontWeight: "600", fontSize: "14px", width: "300px" }}>
             <div className="d-flex gap-2 flex-wrap">
@@ -422,6 +444,11 @@ const MenuManagement = () => {
               <td>{sub.path}</td>
               <td>
                 <Badge color="info">Submenu</Badge>
+                {!sub.isActive && (
+                  <Badge color="secondary" className="ms-1">
+                    {isHindi ? "निष्क्रिय" : "Inactive"}
+                  </Badge>
+                )}
               </td>
               <td>
                 <div className="d-flex gap-2 flex-wrap">
@@ -483,6 +510,11 @@ const MenuManagement = () => {
                 <td>{child.path}</td>
                 <td>
                   <Badge color="secondary">Child</Badge>
+                  {!child.isActive && (
+                    <Badge color="secondary" className="ms-1">
+                      {isHindi ? "निष्क्रिय" : "Inactive"}
+                    </Badge>
+                  )}
                 </td>
                 <td>
                   <Button
@@ -551,7 +583,14 @@ const MenuManagement = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="4">Loading...</td>
+                {/* FIX: table has 6 columns now, colSpan was still "4" */}
+                <td colSpan="6">Loading...</td>
+              </tr>
+            ) : menuItems.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="text-center text-muted">
+                  {isHindi ? "कोई मेनू नहीं मिला" : "No menus found"}
+                </td>
               </tr>
             ) : (
               renderTree(menuItems)
@@ -625,6 +664,7 @@ const MenuManagement = () => {
                       name="parentMenuId"
                       value={form.parentMenuId}
                       onChange={handleChange}
+                      disabled={editing?.type === "MENU"}
                     >
                       <option value="">None (Main Menu)</option>
                       {menuItems.map((menu, mIndex) => (
@@ -645,6 +685,7 @@ const MenuManagement = () => {
                           name="parentSubmenuId"
                           value={form.parentSubmenuId}
                           onChange={handleChange}
+                          disabled={editing?.type === "MENU" || editing?.type === "SUBMENU"}
                         >
                           <option value="">None (Submenu)</option>
 
@@ -712,10 +753,10 @@ const MenuManagement = () => {
             </ModalBody>
 
             <ModalFooter>
-              <Button color="primary" type="submit">
-                Save
+              <Button color="primary" type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save"}
               </Button>
-              <Button color="secondary" onClick={toggleModal}>
+              <Button color="secondary" onClick={toggleModal} disabled={saving}>
                 Cancel
               </Button>
             </ModalFooter>
