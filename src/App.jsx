@@ -2,10 +2,10 @@ import { BrowserRouter as Router } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import LanguageToggleFloating from "./utilies/LanguageToggleFloating";
-import FeedbackToggleFloating from "./utilies/FeedbackToggleFloating";
+import LanguageToggleFloating from "./utilities/LanguageToggleFloating";
+import FeedbackToggleFloating from "./utilities/FeedbackToggleFloating";
 import AppRoutes from "./routes/routes";
-import GlobalLinkHandler from "./utilies/GlobalLinkHandler";
+import GlobalLinkHandler from "./utilities/GlobalLinkHandler";
 import "./App.css";
 function App() {
   return (

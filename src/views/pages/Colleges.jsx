@@ -430,7 +430,7 @@ const Colleges = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/college/get-all-college-for-hesite`);
+        const res = await axios.get(`${API_URL}/api/college/get-all-college-for-hrmis`);
         const d = res.data;
         setColleges(Array.isArray(d) ? d : d?.data || []);
       } catch (e) {

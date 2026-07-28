@@ -22,7 +22,7 @@ import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaLink, FaArr
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
-import DynamicContentEditor from "../../utilies/DynamicContentEditor";
+import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();

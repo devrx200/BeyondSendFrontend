@@ -24,7 +24,7 @@ import FeedbackForm from "../views/pages/FeedbackForm";
 import HelpSupport from "../views/pages/HelpSupport";
 import SchemeAnnouncementDetails from "../views/pages/SchemeAnnouncementDetails";
 import MultiSectionPages from "../views/pages/MultiSectionPages";
-import SlugResolver from "../utilies/SlugResolver";
+import SlugResolver from "../utilities/SlugResolver";
 import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
 
 /* ─── Admin Pages ─────────────────────────────────────────────────────────── */

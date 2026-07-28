@@ -143,7 +143,7 @@ const AboutSection = () => {
                             fontWeight: 600,
                             fontSize: "0.9rem",
                           }}
-                        >Deg.
+                        >
                           {isHindi
                             ? profile.designationHin
                             : profile.designationEng}

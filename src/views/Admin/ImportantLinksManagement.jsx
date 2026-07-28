@@ -6,12 +6,12 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import IconPicker from "../../components/IconPicker";
-import { ICONS } from "../../utilies/icons";
+import { ICONS } from "../../utilities/icons";
 import {
     FaEdit, FaTrash, FaLink, FaBolt, FaPlus, FaTimes, FaCheck,
     FaGlobe, FaToggleOn, FaImage, FaLanguage, FaFont
 } from "react-icons/fa";
-import { confirmDelete, swalSuccess, swalWarn, swalError } from "../../utilies/swalHelper";
+import { confirmDelete, swalSuccess, swalWarn, swalError } from "../../utilities/swalHelper";
 
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;

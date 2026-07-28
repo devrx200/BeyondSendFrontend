@@ -6,7 +6,7 @@ import {
   ModalHeader,
   Input
 } from "reactstrap";
-import { ICONS } from "../utilies/icons";
+import { ICONS } from "../utilities/icons";
 
 const IconPicker = ({ isOpen, toggle, onSelect }) => {
   const [search, setSearch] = useState("");

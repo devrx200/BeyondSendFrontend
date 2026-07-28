@@ -219,7 +219,7 @@ const Universities = () => {
       if (selectedDistrict) params.district = selectedDistrict;
       if (selectedVidhansabha) params.vidhansabha = selectedVidhansabha;
       const res = await axios.get(
-        `${EXTERNAL_API_URL}/api/university/get-all-university-form-main-hesite`,
+        `${EXTERNAL_API_URL}/api/university/get-all-university-form-main-hrmis`,
         { params }
       );
       setUniversities(res.data.data || []);

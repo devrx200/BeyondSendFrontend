@@ -6,7 +6,7 @@ import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
   FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand, FaCompress, FaTimes,
 } from "react-icons/fa";
-import DynamicContentEditor from "../../utilies/DynamicContentEditor";
+import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 
 const API = import.meta.env.VITE_API_URL;
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;

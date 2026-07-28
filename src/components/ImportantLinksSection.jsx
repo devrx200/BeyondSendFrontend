@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { FaExternalLinkAlt, FaInfoCircle } from "react-icons/fa";
-import { ICONS } from "../utilies/icons";
+import { ICONS } from "../utilities/icons";
 import { useLanguage } from "../contexts/LanguageContext";
 
 // Expanded color variants for a more vibrant, attractive look
