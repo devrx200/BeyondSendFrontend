@@ -31,7 +31,7 @@ const SliderManagement = () => {
   const [imagePreview, setImagePreview] = useState(null);
 
   const MAX_SLIDER_IMAGE_SIZE = 520 * 1024;
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const ALLOWED_IMAGE_TYPES = ["image/jpg","image/jpeg", "image/png", "image/webp"];
   const SLIDER_WIDTH = 1349;
   const SLIDER_HEIGHT = 450;
   const SLIDER_RATIO = SLIDER_WIDTH / SLIDER_HEIGHT;
