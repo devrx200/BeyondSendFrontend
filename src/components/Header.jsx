@@ -161,8 +161,9 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const visibleMenus = menuItems.slice(0, 8);
-  const extraMenus = menuItems.slice(8);
+  // Desktop Navigation: Keep 10 visible items so "Other Links" fits on 1 SINGLE ROW on desktop
+  const visibleMenus = menuItems.slice(0, 10);
+  const extraMenus = menuItems.slice(10);
 
   if (loading) return null;
 

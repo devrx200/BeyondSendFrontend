@@ -3602,8 +3602,11 @@ main {
   box-shadow: 0 0 8px rgba(255, 213, 79, 0.4) !important;
 }
 
-.ham-btn svg {
-  color: inherit !important;
+.desk-nav {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
 }
 
 .nav-link-btn,
