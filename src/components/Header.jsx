@@ -151,10 +151,14 @@ const Header = () => {
     fetchLeaderProfiles();
   }, []);
 
+  const [isSticky, setIsSticky] = useState(false);
+
   useEffect(() => {
-    const onResize = () => { if (window.innerWidth >= 992) setMobileOpen(false); };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > 80);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const visibleMenus = menuItems.slice(0, 8);
@@ -164,38 +168,38 @@ const Header = () => {
 
   return (
     <>
-
+      <span className="nav-pattern-strip" />
       {/* ── TOP BAR ── */}
-      <div className="top-bar fw-bold py-0 text-white border-2 border-warning" role="banner">
+      <div className="top-bar fw-bold py-0 text-white border-2 border-warning " role="banner">
         <Container>
-          {/* flex: phone LEFT · controls RIGHT — always two-sided */}
+          {/* 3-column layout: Phone LEFT · Email CENTER · Language RIGHT */}
           <div
-            className="container-inner d-flex align-items-center"
-            style={{ justifyContent: "space-between", gap: 8, minHeight: 34 }}
+            className="container-inner d-flex align-items-center justify-content-between"
+            style={{ minHeight: 34, gap: 8 }}
           >
-            {/* LEFT — phone + email */}
-            <div className="top-contact-left">
+            {/* LEFT — Phone */}
+            <div className="top-item-left d-flex align-items-center">
               {headerData?.phone && (
                 <a href={`tel:${headerData.phone}`} className="top-link" aria-label={`Call ${headerData.phone}`}>
-                  <FaPhone size={12} aria-hidden="true" />
+                  <FaPhone size={11} aria-hidden="true" />
                   <span>{headerData.phone}</span>
-                </a>
-              )}
-              {headerData?.email && (
-                <a href={`mailto:${headerData.email}`} className="top-link" aria-label={`Email ${headerData.email}`}>
-                  <FaEnvelope size={12} aria-hidden="true" />
-                  <span className="d-none d-sm-inline">{headerData.email}</span>
-                  {/* On xs show icon only but clickable */}
-                  <span className="d-inline d-sm-none" style={{ fontSize: ".72rem", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {headerData.email}
-                  </span>
                 </a>
               )}
             </div>
 
-            {/* RIGHT — font controls · lang toggle · accessibility · sitemap */}
-            <div className="top-controls-right">
-              <div className="d-flex gap-1">
+            {/* CENTER — Email */}
+            <div className="top-item-center d-flex align-items-center justify-content-center text-center">
+              {headerData?.email && (
+                <a href={`mailto:${headerData.email}`} className="top-link" aria-label={`Email ${headerData.email}`}>
+                  <FaEnvelope size={11} aria-hidden="true" />
+                  <span>{headerData.email}</span>
+                </a>
+              )}
+            </div>
+
+            {/* RIGHT — Language button & controls */}
+            <div className="top-item-right d-flex align-items-center justify-content-end gap-1">
+              <div className="d-none d-md-flex gap-1">
                 <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={decreaseFontSize} title="Decrease font size">A-</Badge>
                 <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={resetFontSize} title="Reset font size">A</Badge>
                 <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={increaseFontSize} title="Increase font size">A+</Badge>
@@ -226,9 +230,9 @@ const Header = () => {
       {/* ── LOGO BAR ── */}
       <div className="logo-bar py-2">
         <Container>
-          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-            {/* Left — logo + title */}
-            <div className="d-flex align-items-center gap-3" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+          <div className="d-flex justify-content-between align-items-center flex-nowrap gap-2 gap-xl-3">
+            {/* Left — logo + title (Desktop only) */}
+            <div className="d-none d-lg-flex align-items-center gap-3 flex-shrink-0" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
               <img
                 src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
                 alt="Chhattisgarh Logo"
@@ -251,9 +255,9 @@ const Header = () => {
               </div>
             </div>
 
-            {/* CENTER — NEW: top 3 department leader profiles (fills the blank gap) */}
+            {/* CENTER — top 3 department leader profiles (1 single horizontal row on all devices) */}
             {leaderProfiles.length > 0 && (
-              <div className="d-none d-xl-flex align-items-center justify-content-center gap-4 leader-profiles-wrap">
+              <div className="d-flex align-items-center justify-content-center justify-content-lg-center w-100 w-lg-auto mx-auto leader-profiles-wrap py-1">
                 {leaderProfiles.map(profile => (
                   <div key={profile._id} className="d-flex align-items-center leader-profile-item">
                     <img
@@ -263,14 +267,20 @@ const Header = () => {
                           : "/placeholder.png"
                       }
                       alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
-                      className="leader-profile-img me-2"
+                      className="leader-profile-img me-1 me-md-2"
+                      style={{ objectFit: "contain" }}
                     />
-                    <div>
+                    <div className="leader-profile-text-wrap">
                       <div className="leader-profile-name">
                         {isHindi ? profile.imgNameHin : profile.imgNameEng}
                       </div>
                       <div className="leader-profile-designation">
-                        {isHindi ? profile.designationHin : profile.designationEng}
+                        <span className="d-none d-lg-inline">
+                          {isHindi ? profile.designationHin : profile.designationEng}
+                        </span>
+                        <span className="d-inline d-lg-none">
+                          {profile.designationHin}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -278,11 +288,11 @@ const Header = () => {
               </div>
             )}
 
-            {/* Right — Digital India + Emblem */}
-            <div className="d-flex align-items-center gap-2">
+            {/* Right — Digital India + Emblem (Desktop only) */}
+            <div className="d-none d-lg-flex align-items-center gap-2">
               <img
                 src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : `${BASE_URL}Digital_India_logo.svg`}
-                className="right-logo"
+                className={`right-logo ${!isHindi ? "hide-digital-india-eng" : ""}`}
                 height={52}
                 alt="Digital India"
                 style={{ objectFit: "contain", cursor: "pointer" }}
@@ -304,20 +314,29 @@ const Header = () => {
       </div>
 
       {/* ── MAIN NAV ── */}
-      <nav className="site-navbar shadow-sm py-1" aria-label="Main navigation">
-        <Container className="d-flex align-items-center" style={{ flexWrap: "nowrap" }}>
-          {/* Hamburger — only visible on mobile via CSS */}
-          <button
-            className="ham-btn btn btn-outline-primary btn-sm me-2 py-1 px-2 flex-shrink-0"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation menu"
-            aria-expanded={mobileOpen}
-          >
-            <FaBars />
-          </button>
+      <nav className="site-navbar shadow-sm " aria-label="Main navigation">
+        <Container className="d-flex align-items-center justify-content-between" style={{ flexWrap: "nowrap" }}>
+          {/* Mobile Nav Brand (Emblem + Department Title) — Always visible on mobile view */}
+          <div className="mobile-nav-brand d-flex align-items-center gap-2 d-lg-none py-1" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+            <img
+              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
+              alt="Chhattisgarh Logo"
+              height={40}
+              style={{ objectFit: "contain" }}
+              onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)}
+            />
+            <div className="lh-1">
+              <div className="fw-bold text-white" style={{ fontSize: "0.82rem", lineHeight: "1.1" }}>
+                {isHindi ? (headerData?.titleHin || "उच्च शिक्षा विभाग") : (headerData?.titleEng || "Department of Higher Education")}
+              </div>
+              <small style={{ fontSize: "0.68rem", color: "#ffd54f" }}>
+                {isHindi ? (headerData?.subtitleHin || "छत्तीसगढ़ सरकार") : (headerData?.subtitleEng || "Government of Chhattisgarh")}
+              </small>
+            </div>
+          </div>
 
-          {/* Desktop nav — hidden on mobile via .desk-nav CSS rule */}
-          <div className="desk-nav">
+          {/* Desktop Nav Links — Hidden on mobile */}
+          <div className="desk-nav d-none d-lg-flex align-items-center">
             <Link to="/" className="nav-link-plain">
               <FaHouse className="me-1" aria-hidden="true" />{t("Home", "मुख्य पृष्ठ")}
             </Link>
@@ -343,6 +362,16 @@ const Header = () => {
               />
             )}
           </div>
+
+          {/* Hamburger Menu Button — Positioned on RIGHT SIDE for mobile */}
+          <button
+            className="ham-btn btn btn-outline-primary btn-sm ms-auto py-1 px-2 flex-shrink-0 d-lg-none"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileOpen}
+          >
+            <FaBars />
+          </button>
         </Container>
       </nav>
 
@@ -377,6 +406,7 @@ const Header = () => {
           />
         ))}
       </div>
+
     </>
   );
 };

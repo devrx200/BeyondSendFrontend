@@ -1,0 +1,75 @@
+<svg width="400" height="32" viewBox="0 0 400 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldGrain" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFD54F" />
+      <stop offset="100%" stop-color="#FF8F00" />
+    </linearGradient>
+  </defs>
+
+  <!-- Top Chevron Decorative Border -->
+  <path d="M0 2 L5 6 L10 2 L15 6 L20 2 L25 6 L30 2 L35 6 L40 2 L45 6 L50 2 L55 6 L60 2 L65 6 L70 2 L75 6 L80 2 L85 6 L90 2 L95 6 L100 2 L105 6 L110 2 L115 6 L120 2 L125 6 L130 2 L135 6 L140 2 L145 6 L150 2 L155 6 L160 2 L165 6 L170 2 L175 6 L180 2 L185 6 L190 2 L195 6 L200 2 L205 6 L210 2 L215 6 L220 2 L225 6 L230 2 L235 6 L240 2 L245 6 L250 2 L255 6 L260 2 L265 6 L270 2 L275 6 L280 2 L285 6 L290 2 L295 6 L300 2 L305 6 L310 2 L315 6 L320 2 L325 6 L330 2 L335 6 L340 2 L345 6 L350 2 L355 6 L360 2 L365 6 L370 2 L375 6 L380 2 L385 6 L390 2 L395 6 L400 2" stroke="#153C4D" stroke-opacity="0.6" stroke-width="1.2" fill="none"/>
+
+  <!-- MOTIF 1 (x: 20): Paddy Sheaf (Dhan Ka Katora - Chhattisgarh Rice Bowl) -->
+  <path d="M20 28 L20 12 M20 20 Q14 14 10 10 M20 17 Q13 10 8 6 M20 20 Q26 14 30 10 M20 17 Q27 10 32 6" stroke="url(#goldGrain)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <circle cx="10" cy="10" r="1.5" fill="#FF8F00"/>
+  <circle cx="8" cy="6" r="1.5" fill="#FF8F00"/>
+  <circle cx="30" cy="10" r="1.5" fill="#FF8F00"/>
+  <circle cx="32" cy="6" r="1.5" fill="#FF8F00"/>
+
+  <!-- Divider 1 -->
+  <circle cx="50" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 2 (x: 75): Bastar Adivasi Dholak & Dancer -->
+  <circle cx="75" cy="10" r="2.5" fill="#153C4D"/>
+  <polygon points="75,12 70,19 80,19" fill="#0288D1"/>
+  <ellipse cx="75" cy="18" rx="6" ry="3" fill="#D84315"/>
+  <path d="M72 19 L69 27 M78 19 L81 27" stroke="#153C4D" stroke-width="1.2"/>
+
+  <!-- Divider 2 -->
+  <circle cx="100" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 3 (x: 125): Knowledge Sun & Education Book -->
+  <circle cx="125" cy="15" r="4.5" fill="none" stroke="#F57C00" stroke-width="1.2"/>
+  <path d="M125 7 L125 5 M125 23 L125 25 M117 15 L115 15 M133 15 L135 15" stroke="#F57C00" stroke-width="1"/>
+  <path d="M120 18 Q125 16 130 18 M120 20 Q125 18 130 20" stroke="#153C4D" stroke-width="1.2" fill="none"/>
+
+  <!-- Divider 3 -->
+  <circle cx="150" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 4 (x: 175): Ban Bhainsa Wild Water Buffalo Horns -->
+  <path d="M175 22 C168 12 158 13 155 19 M175 22 C182 12 192 13 195 19" stroke="#153C4D" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="175" cy="23" r="3" fill="#43A047"/>
+
+  <!-- Divider 4 -->
+  <circle cx="200" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 5 (x: 225): Bastar Gada Cart Wheel -->
+  <circle cx="225" cy="16" r="8" stroke="#153C4D" stroke-width="1.5" fill="none"/>
+  <circle cx="225" cy="16" r="2" fill="#FF8F00"/>
+  <path d="M225 8 L225 24 M217 16 L233 16 M219 10 L231 22 M219 22 L231 10" stroke="#0288D1" stroke-width="1"/>
+
+  <!-- Divider 5 -->
+  <circle cx="250" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 6 (x: 275): Adivasi Turhi Horn Musician -->
+  <circle cx="275" cy="10" r="2.5" fill="#153C4D"/>
+  <polygon points="275,12 270,19 280,19" fill="#F57C00"/>
+  <path d="M275 14 C281 12 286 9 290 6" stroke="#FF8F00" stroke-width="1.8" fill="none"/>
+  <path d="M272 19 L269 27 M278 19 L281 27" stroke="#153C4D" stroke-width="1.2"/>
+
+  <!-- Divider 6 -->
+  <circle cx="300" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 7 (x: 325): Sacred Sal Tree Leaf Canopy -->
+  <path d="M325 26 L325 12" stroke="#43A047" stroke-width="1.5"/>
+  <path d="M325 18 Q318 14 315 10 M325 18 Q332 14 335 10 M325 14 Q320 10 318 7 M325 14 Q330 10 332 7" stroke="#43A047" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Divider 7 -->
+  <circle cx="350" cy="16" r="2" fill="#153C4D" fill-opacity="0.5"/>
+
+  <!-- MOTIF 8 (x: 375): Paddy Sheaf -->
+  <path d="M375 28 L375 12 M375 20 Q369 14 365 10 M375 17 Q368 10 363 6 M375 20 Q381 14 385 10 M375 17 Q382 10 387 6" stroke="url(#goldGrain)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Bottom Line -->
+  <path d="M0 30 L400 30" stroke="#153C4D" stroke-opacity="0.4" stroke-width="1"/>
+</svg>

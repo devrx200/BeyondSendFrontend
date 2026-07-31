@@ -70,49 +70,54 @@ const GovtBrandMarquee = () => {
   if (!brands.length) return null;
 
   return (
-    <section
-      className="py-4 border-top"
-      style={{ background: "rgba(135, 206, 235, 0.18)" }}
-    >
-      <div className="container-fluid">
-        <h6 className="text-center text-muted fw-bold mb-3">
-          Associated With Government Initiatives
-        </h6>
+    <>
+      <span className=" mb-0 crawling-patten" />
+      <section
+        className="py-4 border-top"
+        style={{ background: "rgba(135, 206, 235, 0.18)" }}
+      >
 
-        {/* VIEWPORT */}
-        <div
-          style={{ overflow: "hidden", width: "100%" }}
-          onMouseEnter={() => (isPaused.current = true)}
-          onMouseLeave={() => (isPaused.current = false)}
-        >
-          {/* MOVING STRIP */}
+        <div className="container-fluid">
+          <h6 className="text-center text-muted fw-bold mb-3">
+            Associated With Government Initiatives
+          </h6>
+
+          {/* VIEWPORT */}
           <div
-            ref={marqueeRef}
-            style={{
-              display: "flex",
-              gap: "40px",
-              width: "max-content",
-              alignItems: "center",
-              willChange: "transform"
-            }}
+            style={{ overflow: "hidden", width: "100%" }}
+            onMouseEnter={() => (isPaused.current = true)}
+            onMouseLeave={() => (isPaused.current = false)}
           >
-            {[...brands, ...brands].map((logo, i) => (
-              <img
-                key={i}
-                src={`${API_URL}${logo.image}`}
-                alt={logo.name}
-                className="border border-1 border-white rounded"
-                style={{
-                  height: "60px",
-                  objectFit: "contain",
-                  flexShrink: 0
-                }}
-              />
-            ))}
+            {/* MOVING STRIP */}
+            <div
+              ref={marqueeRef}
+              style={{
+                display: "flex",
+                gap: "40px",
+                width: "max-content",
+                alignItems: "center",
+                willChange: "transform"
+              }}
+            >
+              {[...brands, ...brands].map((logo, i) => (
+                <img
+                  key={i}
+                  src={`${API_URL}${logo.image}`}
+                  alt={logo.name}
+                  className="border border-1 border-white rounded"
+                  style={{
+                    height: "60px",
+                    objectFit: "contain",
+                    flexShrink: 0
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
+
   );
 };
 

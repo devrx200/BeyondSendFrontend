@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Container, Row, Col, Card, CardBody, Spinner, Badge
-} from "reactstrap";
+import { Container, Spinner } from "reactstrap";
 import axios from "axios";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -22,93 +20,89 @@ const AfterCarousel = () => {
 
   const statsData = stats
     ? [
-      { value: stats.totalGovernmentUniversities, labelEn: "Govt Universities", labelHi: "शासकीय विश्वविद्यालय", icon: "bi-bank", color: "primary" },
-      { value: stats.totalPrivateUniversities, labelEn: "Private Universities", labelHi: "निजी विश्वविद्यालय", icon: "bi-bank2", color: "danger" },
-      { value: stats.governmentColleges, labelEn: "Govt Colleges", labelHi: "शासकीय महाविद्यालय", icon: "bi-building", color: "success" },
-      { value: stats.privateColleges, labelEn: "Private Colleges", labelHi: "निजी महाविद्यालय", icon: "bi-buildings", color: "warning" },
-      { value: stats.aidedColleges, labelEn: "Aided Colleges", labelHi: "अनुदान प्राप्त महाविद्यालय", icon: "bi-journal-bookmark", color: "info" },
-    ]
+        { value: stats.totalGovernmentUniversities, labelEn: "Govt Universities", labelHi: "शासकीय विश्वविद्यालय", icon: "bi-bank", color: "primary" },
+        { value: stats.totalPrivateUniversities, labelEn: "Private Universities", labelHi: "निजी विश्वविद्यालय", icon: "bi-bank2", color: "danger" },
+        { value: stats.governmentColleges, labelEn: "Govt Colleges", labelHi: "शासकीय महाविद्यालय", icon: "bi-building", color: "success" },
+        { value: stats.privateColleges, labelEn: "Private Colleges", labelHi: "निजी महाविद्यालय", icon: "bi-buildings", color: "warning" },
+        { value: stats.aidedColleges, labelEn: "Aided Colleges", labelHi: "अनुदान प्राप्त महाविद्यालय", icon: "bi-journal-bookmark", color: "info" },
+      ]
     : [];
 
-const colorMap = {
-  primary: { bar: "#1565C0", bg: "#E6F1FB", icon: "#1565C0" },
-  success: { bar: "#2E7D32", bg: "#EAF3DE", icon: "#2E7D32" },
-  danger:  { bar: "#C62828", bg: "#FCEBEB", icon: "#C62828" },
-  warning: { bar: "#E65100", bg: "#FAEEDA", icon: "#E65100" },
-  info:    { bar: "#00838F", bg: "#E1F5EE", icon: "#00838F" },
-};
+  const colorMap = {
+    primary: { bar: "#1565C0", bg: "#E6F1FB", icon: "#1565C0" },
+    danger:  { bar: "#C62828", bg: "#FCEBEB", icon: "#C62828" },
+    success: { bar: "#2E7D32", bg: "#EAF3DE", icon: "#2E7D32" },
+    warning: { bar: "#E65100", bg: "#FAEEDA", icon: "#E65100" },
+    info:    { bar: "#00838F", bg: "#E1F5EE", icon: "#00838F" },
+  };
 
-return (
-  <Container className="my-3">
-    <div className="d-flex align-items-stretch gap-2 flex-wrap">
-
-      {/* Academic Year — left block */}
-      {!loading && stats && (
-        <div
-          className="d-flex flex-column justify-content-center flex-shrink-0 rounded-3 p-3"
-          style={{ background: "var(--bs-light)", border: "0.5px solid #8edefd", minWidth: "110px" }}
-        >
-          <small className="text-muted text-uppercase fw-bold" style={{ fontSize: "9px", letterSpacing: "0.5px" }}>
-            {isHindi ? "शैक्षणिक वर्ष" : "Academic Year"}
-          </small>
-          <span className="fw-500 lh-1 mt-1" style={{ fontSize: "18px" }}>
-            {stats.academicYear.split("-")[0]}
-          </span>
-          <div style={{ width: "20px", height: "2px", background: "#378ADD", borderRadius: "2px", margin: "5px 0" }} />
-          <span className="fw-500 lh-1" style={{ fontSize: "18px" }}>
-            {stats.academicYear.split("-")[1]}
-          </span>
-        </div>
-      )}
-
-      {/* Stat Cards */}
+  return (
+    <Container className="my-2 my-md-3">
       {loading ? (
-        <div className="text-center py-3 flex-grow-1"><Spinner color="primary" /></div>
+        <div className="text-center py-2"><Spinner color="primary" size="sm" /></div>
       ) : !stats ? (
-        <div className="text-center text-muted py-3 flex-grow-1">
+        <div className="text-center text-muted py-2 small">
           {isHindi ? "डेटा उपलब्ध नहीं है" : "No Data Available"}
         </div>
       ) : (
-        <div className="flex-grow-1" style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: "10px" }}>
-          {statsData.map((item, i) => {
-            const c = colorMap[item.color];
-            return (
-              <div
-                key={i}
-                className="rounded-3"
-                style={{ overflow: "hidden", border: "0.5px solid #dee2e6", background: "#fff" }}
-              >
-                {/* Color top bar */}
-                <div style={{ height: "4px", background: c.bar }} />
-
-                <div className="d-flex flex-column align-items-center gap-1 py-3 px-2">
-                  {/* Icon circle */}
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: "36px", height: "36px", background: c.bg }}
-                  >
-                    <i className={`bi ${item.icon}`} style={{ fontSize: "16px", color: c.icon }} />
-                  </div>
-
-                  {/* Value */}
-                  <span className="fw-500 lh-1" style={{ fontSize: "22px" }}>
-                    {item.value?.toLocaleString("en-IN") || 0}
-                  </span>
-
-                  {/* Label */}
-                  <small className="text-muted text-center lh-sm fw-bold" style={{ fontSize: "15px" }}>
-                    {isHindi ? item.labelHi : item.labelEn}
-                  </small>
-                </div>
+        <div className="stats-banner-container d-flex flex-column flex-lg-row align-items-stretch gap-2">
+          {/* Academic Year Tile */}
+          <div className="academic-year-tile d-flex flex-row flex-lg-column justify-content-center align-items-center rounded-3 p-2 px-3 flex-shrink-0">
+            <div className="text-center">
+              <small className="academic-year-label text-uppercase fw-bold d-block">
+                {isHindi ? "शैक्षणिक वर्ष" : "Academic Year"}
+              </small>
+              <div className="d-flex align-items-center justify-content-center gap-1 mt-1">
+                <span className="academic-year-value fw-bold">
+                  {stats.academicYear.split("-")[0]}
+                </span>
+                <span className="text-muted fw-bold">-</span>
+                <span className="academic-year-value fw-bold">
+                  {stats.academicYear.split("-")[1]}
+                </span>
               </div>
-            );
-          })}
+            </div>
+          </div>
+
+          {/* Responsive Stat Cards Grid */}
+          <div className="stat-cards-grid flex-grow-1">
+            {statsData.map((item, i) => {
+              const c = colorMap[item.color];
+              return (
+                <div
+                  key={i}
+                  className={`stat-card-item rounded-3 d-flex flex-column ${i === 4 ? "stat-card-last" : ""}`}
+                >
+                  {/* Top Accent Line */}
+                  <div style={{ height: "3px", background: c.bar }} />
+
+                  <div className="d-flex flex-column align-items-center justify-content-center gap-1 py-2 px-2 flex-grow-1">
+                    {/* Compact Icon Circle */}
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center stat-icon-wrap"
+                      style={{ background: c.bg }}
+                    >
+                      <i className={`bi ${item.icon}`} style={{ color: c.icon }} />
+                    </div>
+
+                    {/* Value */}
+                    <span className="stat-value fw-bold text-dark lh-1">
+                      {item.value?.toLocaleString("en-IN") || 0}
+                    </span>
+
+                    {/* Label */}
+                    <small className="stat-label text-secondary text-center fw-semibold lh-sm">
+                      {isHindi ? item.labelHi : item.labelEn}
+                    </small>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
-
-    </div>
-  </Container>
-);
+    </Container>
+  );
 };
 
 export default AfterCarousel;

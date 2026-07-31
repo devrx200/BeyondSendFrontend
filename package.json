@@ -7,10 +7,10 @@
   "main": "index.html",
   "proxy": "http://highereducation.cg.gov.in",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --host"
   },
   "dependencies": {
     "@smazeeapps/file-viewer": "^1.0.7",
