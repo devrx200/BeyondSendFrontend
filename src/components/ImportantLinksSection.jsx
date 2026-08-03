@@ -34,7 +34,7 @@ const ImportantLinksSection = () => {
       const res = await axios.get(`${API}/api/important-links`);
       if (res.data?.success) {
         const rawData = res.data.data || [];
-        
+
         let lastIndex = -1;
         // Map over data to assign a randomized color, ensuring no consecutive duplicates
         const dataWithColors = rawData.map(item => {
@@ -42,9 +42,9 @@ const ImportantLinksSection = () => {
           do {
             randomIndex = Math.floor(Math.random() * colorVariants.length);
           } while (randomIndex === lastIndex);
-          
+
           lastIndex = randomIndex;
-          
+
           return {
             ...item,
             colorData: colorVariants[randomIndex]
@@ -62,8 +62,8 @@ const ImportantLinksSection = () => {
   const handleExternalClick = (url) => {
     Swal.fire({
       title: isHindi ? "बाहरी लिंक" : "External Link",
-      text: isHindi 
-        ? "आपको एक बाहरी वेबसाइट पर रीडायरेक्ट किया जा रहा है। क्या आप जारी रखना चाहते हैं?" 
+      text: isHindi
+        ? "आपको एक बाहरी वेबसाइट पर रीडायरेक्ट किया जा रहा है। क्या आप जारी रखना चाहते हैं?"
         : "You are being redirected to an external website. Do you want to continue?",
       icon: "warning",
       showCancelButton: true,
@@ -100,11 +100,11 @@ const ImportantLinksSection = () => {
     <section className="py-5">
       <Container>
         {/* HEADER */}
-        <div 
-          className="text-white p-4 rounded-3 shadow-sm mb-5 text-center text-md-start" 
+        <div
+          className="text-white p-4 rounded-3 shadow-sm mb-5 text-center text-md-start"
           style={{ background: "linear-gradient(135deg, #0a5c51 0%, #1a3a8f 60%, #6eaff8 100%)" }}
         >
-          <h4 className="fw-bold mb-2">
+          <h4 className="fw-bold mb-2 text-white">
             {isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}
           </h4>
           <p className="text-white m-0 opacity-75 fs-5">
@@ -118,7 +118,7 @@ const ImportantLinksSection = () => {
         <Row className="g-4">
           {links.map((link) => {
             const variant = link.colorData || colorVariants[0];
-            
+
             const CardContent = (
               <Card
                 className="h-100 border-1 shadow rounded-3 overflow-hidden bg-white border-primary"

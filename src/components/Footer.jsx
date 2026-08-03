@@ -197,7 +197,7 @@ const Footer = () => {
       {/* ── Footer Bottom ── */}
 
       <div className="footer-bottom py-1 " >
-        <Container>
+        <Container fluid>
           <Row className="gy-2">
             <Col xs={12} className="text-center">
               <small>

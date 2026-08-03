@@ -172,7 +172,7 @@ const Header = () => {
       <span className="nav-pattern-strip" />
       {/* ── TOP BAR ── */}
       <div className="top-bar fw-bold py-0 text-white border-2 border-warning " role="banner">
-        <Container>
+        <Container fluid>
           {/* 3-column layout: Phone LEFT · Email CENTER · Language RIGHT */}
           <div
             className="container-inner d-flex align-items-center justify-content-between"
@@ -230,7 +230,7 @@ const Header = () => {
 
       {/* ── LOGO BAR ── */}
       <div className="logo-bar py-2">
-        <Container>
+        <Container fluid>
           <div className="d-flex justify-content-between align-items-center flex-nowrap gap-2 gap-xl-3">
             {/* Left — logo + title (Desktop only) */}
             <div className="d-none d-lg-flex align-items-center gap-3 flex-shrink-0" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
