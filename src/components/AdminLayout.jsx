@@ -4,11 +4,14 @@ import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
 import BreadcrumbBar from "./AdminBreadcrumbBar";
+import { useToast, ToastContainer } from "../utilities/WPToast";
 import "../css/AdminTheme.css";
+import "../css/WPStyleTheme.css";
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { toasts, toast } = useToast();
 
   useEffect(() => {
     const syncLayoutState = () => {
@@ -41,6 +44,7 @@ const AdminLayout = () => {
 
   return (
     <div className="adm-shell">
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
       <AdminSidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}

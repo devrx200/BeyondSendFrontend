@@ -21,34 +21,38 @@ import {
 // Design tokens (WordPress admin palette)
 // ─────────────────────────────────────────────
 const WP = {
-  bg: "#f0f0f1",
-  white: "#fff",
-  offWhite: "#f6f7f7",
-  text: "#1d2327",
-  textMid: "#50575e",
-  textLight: "#787c82",
-  border: "#c3c4c7",
-  line: "#dcdcde",
-  blue: "#2271b1",
-  blueHov: "#135e96",
-  blueBg: "#f0f6fc",
-  green: "#00a32a",
-  greenBg: "#edfaef",
-  red: "#d63638",
-  redBg: "#fcf0f1",
-  amber: "#996800",
-  amberBg: "#fcf9e8",
-  amberBd: "#dba617",
-  black: "#1d2327",
+  bg: "var(--wp-bg, #f0f0f1)",
+  white: "var(--wp-white, #fff)",
+  offWhite: "var(--wp-off-white, #f6f7f7)",
+  text: "var(--wp-text, #1d2327)",
+  textMid: "var(--wp-text-mid, #50575e)",
+  textLight: "var(--wp-text-light, #787c82)",
+  border: "var(--wp-border, #c3c4c7)",
+  line: "var(--wp-line, #dcdcde)",
+  blue: "var(--wp-blue, #2271b1)",
+  blueHov: "var(--wp-blue-hov, #135e96)",
+  blueBg: "var(--wp-blue-bg, #f0f6fc)",
+  green: "var(--wp-green, #00a32a)",
+  greenBg: "var(--wp-green-bg, #edfaef)",
+  red: "var(--wp-red, #d63638)",
+  redBg: "var(--wp-red-bg, #fcf0f1)",
+  amber: "var(--wp-amber, #996800)",
+  amberBg: "var(--wp-orange-bg, #fcf9e8)",
+  amberBd: "var(--wp-orange, #dba617)",
+  black: "var(--wp-black, #1d2327)",
 };
 
-const FF = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif";
+const FF = "var(--wp-font, -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif)";
 
 // ─────────────────────────────────────────────
 // Env / auth helpers
 // ─────────────────────────────────────────────
 const API_URL = import.meta.env.VITE_API_URL;
-const getToken = () => sessionStorage.getItem("authToken");
+const getToken = () => {
+  const raw = sessionStorage.getItem("authToken");
+  if (!raw) return "";
+  try { const p = JSON.parse(raw); return p?.token || p?.access || raw; } catch { return raw; }
+};
 
 // ─────────────────────────────────────────────
 // Upload limits
@@ -57,24 +61,27 @@ const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
 const MAX_UPLOAD_SIZE_LABEL = "100MB";
 
 // ─────────────────────────────────────────────
-// Shared style constants
+// Shared style constants — matches WPStyleTheme.css .wp-btn spec
 // ─────────────────────────────────────────────
 const S = {
   btnBase: {
-    display: "inline-flex", alignItems: "center", gap: 6,
-    border: "1px solid transparent", borderRadius: 20,
-    fontSize: 12, fontWeight: 500, lineHeight: "2.2",
-    padding: "0 14px", cursor: "pointer", fontFamily: FF,
+    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
+    border: "1px solid transparent", borderRadius: 3,
+    fontSize: 13, fontWeight: 400, lineHeight: "2.15384615",
+    padding: "0 10px", cursor: "pointer", fontFamily: FF,
+    whiteSpace: "nowrap", textDecoration: "none",
     transition: "background 0.15s, color 0.15s, border-color 0.15s",
   },
-  btnPrimary: { background: WP.blue, color: WP.white, border: "none" },
-  btnSecondary: { background: WP.white, color: WP.textMid, borderColor: WP.border },
-  btnDanger: { background: WP.red, color: WP.white, border: "none" },
+  btnPrimary: { background: WP.blue, color: "#fff", border: "none" },
+  btnSecondary: { background: "#fff", color: WP.textMid, borderColor: WP.border },
+  btnDanger: { background: WP.red, color: "#fff", border: "none" },
+  btnGhost: { background: "rgba(255,255,255,0.1)", color: "#fff", border: "none" },
+  btnSm: { fontSize: 11, padding: "0 8px", lineHeight: "1.9" },
   kbd: {
     display: "inline-block", background: "#e4e4e7",
     border: "1px solid #c3c4c7", borderRadius: 4,
     padding: "0 5px", fontSize: 10, fontFamily: "monospace",
-    lineHeight: "1.5", color: WP.text,
+    lineHeight: "1.5", color: "var(--wp-text, #1d2327)",
   },
 };
 
@@ -248,12 +255,12 @@ function Toast({ msg, type = "success", onDone }) {
       aria-live="polite"
       style={{
         position: "fixed", bottom: 24, right: 24, zIndex: 10000,
-        background: bg, color: WP.white,
-        padding: "10px 18px", borderRadius: 8,
-        fontSize: 13, fontWeight: 500, boxShadow: "0 8px 20px rgba(0,0,0,.2)",
+        background: bg, color: "#fff",
+        padding: "8px 16px", borderRadius: 4,
+        fontSize: 13, fontWeight: 500, boxShadow: "0 4px 12px rgba(0,0,0,.2)",
         fontFamily: FF, display: "flex", alignItems: "center", gap: 8,
         animation: "dce-slideUp 0.2s ease-out",
-        maxWidth: "calc(100vw - 48px)",
+        maxWidth: "calc(100vw - 48px)", border: "1px solid rgba(255,255,255,.2)",
       }}>
       {icon}{msg}
     </div>
@@ -541,12 +548,9 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
             ref={firstFocusRef}
             onClick={onClose}
             aria-label="Close media library"
-            style={{
-              background: "rgba(255,255,255,0.1)", border: "none",
-              color: WP.white, width: 32, height: 32, borderRadius: 20,
-              fontSize: 20, cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center",
-            }}>×</button>
+            style={{ ...S.btnBase, ...S.btnGhost, width: 32, height: 32, padding: 0, borderRadius: "50%", fontSize: 20 }}>
+            ×
+          </button>
         </div>
 
         {!uploadFile ? (
@@ -973,8 +977,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
               style={{
                 ...S.btnBase, ...S.btnPrimary,
                 opacity: canInsert ? 1 : .45,
-                cursor: canInsert ? "pointer" : "default",
-                fontWeight: 600,
+                cursor: canInsert ? "pointer" : "not-allowed",
               }}>
               Insert Link →
             </button>
@@ -1001,19 +1004,20 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
   ];
 
 
- const handleClearClick = async () => {
+const handleClearClick = async () => {
     if (isFullscreen) await new Promise(resolve => setTimeout(resolve, 30));
     const result = await Swal.fire({
       title: 'Clear editor content?',
       html: `All text, images, and formatting in the <strong>${activeTab === 'en' ? 'English' : 'Hindi'}</strong> tab will be permanently removed.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#2271b1',
+      confirmButtonColor: 'var(--wp-red, #d63638)',
+      cancelButtonColor: 'var(--wp-blue, #2271b1)',
       confirmButtonText: 'Yes, clear it!',
       cancelButtonText: 'Cancel',
+      customClass: { popup: 'wp-swal-popup', confirmButton: 'wp-swal-btn-danger', cancelButton: 'wp-swal-btn-cancel' },
       backdrop: true,
-      zIndex: 10001,         
+      zIndex: 10001,
       allowOutsideClick: false,
     });
 
@@ -1025,7 +1029,8 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
         icon: 'success',
         timer: 1500,
         showConfirmButton: false,
-        zIndex: 10001,        
+        customClass: { popup: 'wp-swal-popup' },
+        zIndex: 10001,
       });
     }
   };
@@ -1062,30 +1067,21 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
         <button
           onMouseDown={onAttachMouseDown}
           aria-label="Attach file from media library"
-          style={{ ...S.btnBase, ...S.btnPrimary, fontSize: 12 }}>
+          style={{ ...S.btnBase, ...S.btnPrimary }}>
           <FaLink size={11} /> Attach File
         </button>
         <button
           onClick={handleClearClick}
           aria-label="Clear editor content"
           title="Clear all content"
-          style={{
-            ...S.btnBase,
-            background: "rgba(214,54,56,0.15)", border: "none",
-            color: "#fca5a5", fontSize: 12,
-          }}>
+          style={{ ...S.btnBase, background: "rgba(214,54,56,0.18)", border: "1px solid rgba(214,54,56,0.35)", color: "#fca5a5" }}>
           <FaTrash size={11} /> Clear
         </button>
         <button
           onClick={onToggleFullscreen}
           aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           aria-pressed={isFullscreen}
-          style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: 32, height: 32, borderRadius: 20,
-            background: "rgba(255,255,255,0.1)", border: "none",
-            color: WP.white, cursor: "pointer",
-          }}>
+          style={{ ...S.btnBase, ...S.btnGhost, width: 32, height: 32, padding: 0, borderRadius: "50%" }}>
           {isFullscreen ? <FaCompress size={12} /> : <FaExpand size={12} />}
         </button>
       </div>

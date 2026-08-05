@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Card, CardBody, Button, Table, Form, FormGroup,
+  Card, CardBody, CardHeader, Button, Table, Form, FormGroup,
   Label, Input, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Container
 } from "reactstrap";
 import axios from "axios";
@@ -317,31 +317,28 @@ const handleDelete = (o) => {
   });
 };
   return (
-    <Container>
+    <>
+      {/* PAGE HEADER */}
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              📞 Contact Management
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              Manage contact details, address, email and communication information
+            </p>
+          </div>
+          <Button color="primary" disabled={loading} onClick={saveContact}>
+            <FaSave className="me-1" />
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
+        </CardHeader>
+      </Card>
 
-      <Card>
+      <Card className="adm-card shadow-sm border-0 mb-4">
         <CardBody>
-            <Form onSubmit={saveContact}>
-        <div
-  className="d-flex justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm"
-  style={{
-    background: "linear-gradient(135deg, #0f766e 0%, #115e59 100%)",
-  }}
->
-  <div>
-    <h4 className="mb-1 text-white fw-bold">
-      📞 Contact Management
-    </h4>
-    <small className="text-white-50">
-      Manage contact details, address, email and communication information
-    </small>
-  </div>
-
-  <Button color="light" disabled={loading}>
-    <FaSave className="me-2" />
-    {loading ? "Saving..." : "Save Changes"}
-  </Button>
-</div>
+          <Form onSubmit={saveContact}>
 
         
             {/* -------- Address Section -------- */}
@@ -521,10 +518,8 @@ const handleDelete = (o) => {
 
           
           </Form>
-        </CardBody>
-      </Card>
 
-      {/* ================= OFFICIALS LIST ================= */}
+          {/* ================= OFFICIALS LIST ================= */}
       <Card className="border-0 shadow-sm">
         <CardBody>
           <div className="d-flex justify-content-between align-items-center mb-3">
@@ -748,8 +743,9 @@ const handleDelete = (o) => {
         </ModalFooter>
       </Modal>
 
-    </Container>
-
+      </CardBody>
+    </Card>
+    </>
   );
 
 };

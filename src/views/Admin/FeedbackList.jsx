@@ -152,116 +152,134 @@ const AdminFeedbackList = () => {
   }
 
   return (
-    <Container className="py-4">
-      <Card className="adm-card shadow-sm">
-        <CardHeader>
-          <div className="d-flex align-items-center justify-content-between">
-            <h4 className="mb-0">All Users Feedback List</h4>
-            <span className="badge bg-info">{feedbacks.length} entries</span>
+    <>
+      {/* PAGE HEADER */}
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              💬 All Users Feedback List
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              View and manage feedback submitted by site visitors
+            </p>
           </div>
+          <span className="badge bg-light text-dark fs-6 px-3 py-2 fw-semibold">
+            {feedbacks.length} Entries
+          </span>
         </CardHeader>
-
-        <CardBody>
-          <Table bordered hover responsive>
-            <thead className="table-light">
-              <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Message</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {feedbacks.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="text-center">
-                    No feedback available
-                  </td>
-                </tr>
-              ) : (
-                feedbacks.map((item, index) => (
-                  <tr key={item._id}>
-                    <td>{index + 1}</td>
-                    <td>{item.name}</td>
-                    <td>{item.email}</td>
-                    <td>{item.phone}</td>
-                    <td>
-                      {item.message && item.message.length > 30
-                        ? item.message.slice(0, 30) + "..."
-                        : item.message || "—"}
-                    </td>
-                    <td>
-                      {item.createdAt
-                        ? new Date(item.createdAt).toLocaleDateString()
-                        : "—"}
-                    </td>
-                    <td>
-                      <Button
-                        size="sm"
-                        color="info"
-                        className="me-2"
-                        onClick={() => viewFeedback(item._id)}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="danger"
-                        onClick={() => deleteFeedback(item._id)}
-                      >
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-        </CardBody>
       </Card>
 
-      {/* ------------------ View Modal ------------------ */}
-      <Modal isOpen={modalOpen} toggle={toggleModal}>
-        <ModalHeader toggle={toggleModal}>
-          Feedback Details
-          {selectedFeedback?.createdAt && (
-            <small className="text-muted d-block">
-              {new Date(selectedFeedback.createdAt).toLocaleString()}
-            </small>
-          )}
-        </ModalHeader>
-        <ModalBody>
-          {detailLoading ? (
-            <div className="text-center py-3">
-              <Spinner color="primary" /> Loading...
+      <Card className="adm-card shadow-sm border-0 mb-4">
+        <CardBody>
+
+        <Card className="border rounded-3 mb-4 shadow-none">
+          <CardBody className="p-3">
+            <div className="table-responsive rounded-3 border">
+              <Table hover className="align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feedbacks.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center">
+                        No feedback available
+                      </td>
+                    </tr>
+                  ) : (
+                    feedbacks.map((item, index) => (
+                      <tr key={item._id}>
+                        <td>{index + 1}</td>
+                        <td>{item.name}</td>
+                        <td>{item.email}</td>
+                        <td>{item.phone}</td>
+                        <td>
+                          {item.message && item.message.length > 30
+                            ? item.message.slice(0, 30) + "..."
+                            : item.message || "—"}
+                        </td>
+                        <td>
+                          {item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            color="info"
+                            className="me-2"
+                            onClick={() => viewFeedback(item._id)}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="danger"
+                            onClick={() => deleteFeedback(item._id)}
+                          >
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
             </div>
-          ) : selectedFeedback ? (
-            <>
-              <p>
-                <strong>Name:</strong> {selectedFeedback.name || "—"}
-              </p>
-              <p>
-                <strong>Email:</strong> {selectedFeedback.email || "—"}
-              </p>
-              <p>
-                <strong>Phone:</strong> {selectedFeedback.phone || "—"}
-              </p>
-              <p>
-                <strong>Message:</strong>
-              </p>
-              <p className="border p-2 bg-light rounded">
-                {selectedFeedback.message || "No message provided"}
-              </p>
-            </>
-          ) : (
-            <p className="text-center text-muted">No feedback data available.</p>
-          )}
-        </ModalBody>
-      </Modal>
-    </Container>
+          </CardBody>
+        </Card>
+
+        {/* ------------------ View Modal ------------------ */}
+        <Modal isOpen={modalOpen} toggle={toggleModal}>
+          <ModalHeader toggle={toggleModal}>
+            Feedback Details
+            {selectedFeedback?.createdAt && (
+              <small className="text-muted d-block">
+                {new Date(selectedFeedback.createdAt).toLocaleString()}
+              </small>
+            )}
+          </ModalHeader>
+          <ModalBody>
+            {detailLoading ? (
+              <div className="text-center py-3">
+                <Spinner color="primary" /> Loading...
+              </div>
+            ) : selectedFeedback ? (
+              <>
+                <p>
+                  <strong>Name:</strong> {selectedFeedback.name || "—"}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selectedFeedback.email || "—"}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {selectedFeedback.phone || "—"}
+                </p>
+                <p>
+                  <strong>Message:</strong>
+                </p>
+                <p className="border p-2 bg-light rounded">
+                  {selectedFeedback.message || "No message provided"}
+                </p>
+              </>
+            ) : (
+              <p className="text-center text-muted">No feedback data available.</p>
+            )}
+          </ModalBody>
+        </Modal>
+
+      </CardBody>
+    </Card>
+    </>
   );
 };
 

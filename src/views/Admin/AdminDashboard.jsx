@@ -1,4 +1,4 @@
-import { Row, Col, Card, CardBody, Button, Spinner, Container, Badge } from "reactstrap";
+import { Row, Col, Card, CardBody, CardHeader, Button, Spinner, Container, Badge } from "reactstrap";
 import {
   FaUniversity,
   FaSchool,
@@ -89,338 +89,345 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <Container className="mt-4">
-      <Card className="shadow-lg border-0 m-0">
+    <>
+      {/* PAGE HEADER */}
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              📊 Dashboard Overview
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              Department of Higher Education, Government of Chhattisgarh
+            </p>
+          </div>
+          {academicYear && (
+            <Badge color="light" pill className="text-dark fs-6 px-3 py-2 fw-semibold">
+              Academic Year: {academicYear}
+            </Badge>
+          )}
+        </CardHeader>
+      </Card>
+
+      <Card className="adm-card shadow-sm border-0 mb-4">
         <CardBody>
 
-          {/* ================= HEADER ================= */}
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h4 className="fw-bold text-primary mb-0">
-              Dashboard Overview
-            </h4>
-            {academicYear && (
-              <Badge color="primary" pill className="fs-6">
-                Academic Year: {academicYear}
-              </Badge>
-            )}
-          </div>
-
-          {/* ================= STATS CARDS ================= */}
-          <Row>
-            {loading ? (
-              <Col className="text-center py-5">
-                <Spinner color="primary" />
-              </Col>
-            ) : (
-              stats.map((item, i) => {
-                const Icon = item.icon;
-                return (
-                  <Col xl={3} lg={4} md={6} sm={6} xs={12} key={i} className="mb-4">
-                    <Card
-                      className="shadow border-0 text-white h-100"
-                      style={{
-                        background: item.gradient,
-                        transition: "transform 0.3s"
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "translateY(-5px)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "translateY(0)")
-                      }
-                    >
-                      <CardBody className="d-flex justify-content-between align-items-center">
-                        <div>
-                          <div className="text-uppercase small opacity-75 fw-bold">
-                            {item.title}
-                          </div>
-                          <h2 className="fw-bold mb-0 text-white">
-                            {item.value}
-                          </h2>
-                        </div>
-                        <div className="bg-white bg-opacity-25 rounded-circle p-3">
-                          <Icon size={26} />
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </Col>
-                );
-              })
-            )}
-          </Row>
-
-          {/* ================= SECOND ROW ================= */}
-          <Row className="mt-2">
-
-            {/* ---------- CALENDAR ---------- */}
-            <Col lg={4} md={12} className="mb-4">
-              <Card className="shadow-sm border-0 h-100">
-                <CardBody>
-                  <h5 className="fw-bold mb-3">
-                    <FaCalendarAlt className="me-2 text-primary" />
-                    {currentMonth} {currentYear}
-                  </h5>
-                  <div
-                    className="d-grid"
-                    style={{
-                      gridTemplateColumns: "repeat(7, 1fr)",
-                      gap: "6px"
-                    }}
-                  >
-                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                      <div key={d} className="text-center fw-semibold text-muted small">
-                        {d}
-                      </div>
-                    ))}
-                    {[...Array(startDay)].map((_, i) => (
-                      <div key={i} />
-                    ))}
-                    {[...Array(daysInMonth)].map((_, i) => {
-                      const day = i + 1;
-                      const isToday = day === today.getDate();
-                      return (
-                        <div
-                          key={day}
-                          className={`text-center py-2 rounded ${isToday
-                            ? "bg-primary text-white fw-bold"
-                            : "bg-light"
-                            }`}
-                        >
-                          {day}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardBody>
-              </Card>
+        {/* ================= STATS CARDS ================= */}
+        <Row>
+          {loading ? (
+            <Col className="text-center py-5">
+              <Spinner color="primary" />
             </Col>
+          ) : (
+            stats.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <Col xl={3} lg={4} md={6} sm={6} xs={12} key={i} className="mb-4">
+                  <Card
+                    className="shadow border-0 text-white h-100"
+                    style={{
+                      background: item.gradient,
+                      transition: "transform 0.3s"
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.transform = "translateY(-5px)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.transform = "translateY(0)")
+                    }
+                  >
+                    <CardBody className="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="text-uppercase small opacity-75 fw-bold">
+                          {item.title}
+                        </div>
+                        <h2 className="fw-bold mb-0 text-white">
+                          {item.value}
+                        </h2>
+                      </div>
+                      <div className="bg-white bg-opacity-25 rounded-circle p-3">
+                        <Icon size={26} />
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              );
+            })
+          )}
+        </Row>
 
-            {/* ---------- QUICK ACTIONS ---------- */}
-            <Col lg={8} md={12} className="mb-4">
-              <Card className="shadow-sm border-0 h-100">
-                <CardBody>
-                  <h5 className="fw-bold mb-3">Quick Actions</h5>
-                  <Row className="g-3">
+        {/* ================= SECOND ROW ================= */}
+        <Row className="mt-2">
 
-                    {/* ========== ADMIN + DIRECTORATE ========== */}
-                    {userRole === "ADMIN" && employeeType === "DIRECTORATE" && (
-                      <>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="success"
-                            className="w-100 py-3 fw-semibold"
-                            onClick={() => navigate("/admin/menu")}
-                          >
-                            <FaBars size={20} className="mb-1" />
-                            <div>Add Menu</div>
-                          </Button>
-                        </Col>
+          {/* ---------- CALENDAR ---------- */}
+          <Col lg={4} md={12} className="mb-4">
+            <Card className="shadow-sm border-0 h-100">
+              <CardBody>
+                <h5 className="fw-bold mb-3">
+                  <FaCalendarAlt className="me-2 text-primary" />
+                  {currentMonth} {currentYear}
+                </h5>
+                <div
+                  className="d-grid"
+                  style={{
+                    gridTemplateColumns: "repeat(7, 1fr)",
+                    gap: "6px"
+                  }}
+                >
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                    <div key={d} className="text-center fw-semibold text-muted small">
+                      {d}
+                    </div>
+                  ))}
+                  {[...Array(startDay)].map((_, i) => (
+                    <div key={i} />
+                  ))}
+                  {[...Array(daysInMonth)].map((_, i) => {
+                    const day = i + 1;
+                    const isToday = day === today.getDate();
+                    return (
+                      <div
+                        key={day}
+                        className={`text-center py-2 rounded ${isToday
+                          ? "bg-primary text-white fw-bold"
+                          : "bg-light"
+                          }`}
+                      >
+                        {day}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardBody>
+            </Card>
+          </Col>
+
+          {/* ---------- QUICK ACTIONS ---------- */}
+          <Col lg={8} md={12} className="mb-4">
+            <Card className="shadow-sm border-0 h-100">
+              <CardBody>
+                <h5 className="fw-bold mb-3">Quick Actions</h5>
+                <Row className="g-3">
+
+                  {/* ========== ADMIN + DIRECTORATE ========== */}
+                  {userRole === "ADMIN" && employeeType === "DIRECTORATE" && (
+                    <>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="success"
+                          className="w-100 py-3 fw-semibold"
+                          onClick={() => navigate("/admin/menu")}
+                        >
+                          <FaBars size={20} className="mb-1" />
+                          <div>Add Menu</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="warning"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/slider")}
+                        >
+                          <FaImages size={20} className="mb-1" />
+                          <div>Home Slider</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="primary"
+                          className="w-100 py-3 fw-semibold"
+                          onClick={() => navigate("/admin/header-management")}
+                        >
+                          <FaBars size={20} className="mb-1" />
+                          <div>Header Mgmt</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="dark"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/footer-section-manager")}
+                        >
+                          <FaBars size={20} className="mb-1" />
+                          <div>Footer Mgmt</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="info"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/about-section")}
+                        >
+                          <FaInfoCircle size={20} className="mb-1" />
+                          <div>About Section</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="success"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/important-links")}
+                        >
+                          <FaLink size={20} className="mb-1" />
+                          <div>Important Links</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="secondary"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/brands")}
+                        >
+                          <FaTags size={20} className="mb-1" />
+                          <div>Footer Brands</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="dark"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/users-management")}
+                        >
+                          <FaAddressBook size={20} className="mb-1" />
+                          <div>Users Mgmt</div>
+                        </Button>
+                      </Col>
+                    </>
+                  )}
+
+                  {/* ========== ADMIN + OFFICER ========== */}
+                  {(userRole === "ADMIN" || userRole === "OFFICER") && (
+                    <>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="danger"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/new-updates")}
+                        >
+                          <FaBullhorn size={20} className="mb-1" />
+                          <div>Latest Updates</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="primary"
+                          className="w-100 py-3 fw-semibold"
+                          onClick={() => navigate("/admin/announcements")}
+                        >
+                          <FaBullhorn size={20} className="mb-1" />
+                          <div>Announcements</div>
+                        </Button>
+                      </Col>
+
+                      {employeeType === "DIRECTORATE" && (
                         <Col md={3} sm={6}>
                           <Button
                             color="warning"
                             className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/slider")}
-                          >
-                            <FaImages size={20} className="mb-1" />
-                            <div>Home Slider</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="primary"
-                            className="w-100 py-3 fw-semibold"
-                            onClick={() => navigate("/admin/header-management")}
-                          >
-                            <FaBars size={20} className="mb-1" />
-                            <div>Header Mgmt</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="dark"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/footer-section-manager")}
-                          >
-                            <FaBars size={20} className="mb-1" />
-                            <div>Footer Mgmt</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="info"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/about-section")}
-                          >
-                            <FaInfoCircle size={20} className="mb-1" />
-                            <div>About Section</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="success"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/important-links")}
-                          >
-                            <FaLink size={20} className="mb-1" />
-                            <div>Important Links</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="secondary"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/brands")}
-                          >
-                            <FaTags size={20} className="mb-1" />
-                            <div>Footer Brands</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="dark"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/users-management")}
-                          >
-                            <FaAddressBook size={20} className="mb-1" />
-                            <div>Users Mgmt</div>
-                          </Button>
-                        </Col>
-                      </>
-                    )}
-
-                    {/* ========== ADMIN + OFFICER ========== */}
-                    {(userRole === "ADMIN" || userRole === "OFFICER") && (
-                      <>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="danger"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/new-updates")}
+                            onClick={() => navigate("/admin/directorate-notices")}
                           >
                             <FaBullhorn size={20} className="mb-1" />
-                            <div>Latest Updates</div>
+                            <div>Directorate Notices</div>
                           </Button>
                         </Col>
+                      )}
+
+                      {employeeType === "DEPARTMATE" && (
                         <Col md={3} sm={6}>
                           <Button
-                            color="primary"
-                            className="w-100 py-3 fw-semibold"
-                            onClick={() => navigate("/admin/announcements")}
+                            color="warning"
+                            className="w-100 py-3 fw-semibold text-white"
+                            onClick={() => navigate("/admin/department-notices")}
                           >
                             <FaBullhorn size={20} className="mb-1" />
-                            <div>Announcements</div>
+                            <div>Department Notices</div>
                           </Button>
                         </Col>
+                      )}
 
-                        {employeeType === "DIRECTORATE" && (
-                          <Col md={3} sm={6}>
-                            <Button
-                              color="warning"
-                              className="w-100 py-3 fw-semibold text-white"
-                              onClick={() => navigate("/admin/directorate-notices")}
-                            >
-                              <FaBullhorn size={20} className="mb-1" />
-                              <div>Directorate Notices</div>
-                            </Button>
-                          </Col>
-                        )}
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="info"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/gallery")}
+                        >
+                          <FaNewspaper size={20} className="mb-1" />
+                          <div>Photo Galleries</div>
+                        </Button>
+                      </Col>
 
-                        {employeeType === "DEPARTMATE" && (
-                          <Col md={3} sm={6}>
-                            <Button
-                              color="warning"
-                              className="w-100 py-3 fw-semibold text-white"
-                              onClick={() => navigate("/admin/department-notices")}
-                            >
-                              <FaBullhorn size={20} className="mb-1" />
-                              <div>Department Notices</div>
-                            </Button>
-                          </Col>
-                        )}
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="success"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/download-management")}
+                        >
+                          <FaDownload size={20} className="mb-1" />
+                          <div>Downloads</div>
+                        </Button>
+                      </Col>
 
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="info"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/gallery")}
-                          >
-                            <FaNewspaper size={20} className="mb-1" />
-                            <div>Photo Galleries</div>
-                          </Button>
-                        </Col>
+                      {/* ✨ NEW BUTTON – Media, Resources & Library ✨ */}
+                      <Col md={3} sm={6}>
+                        <Button
+                          style={{
+                            background: "linear-gradient(135deg, #8E2DE2, #4A00E0)",
+                            border: "none"
+                          }}
+                          className="w-100 py-3 fw-semibold text-white shadow-sm"
+                          onClick={() => navigate("/admin/media-library-mangments")}
+                        >
+                          <FaFolderOpen size={20} className="mb-1" />
+                          <div>Media & Library</div>
+                        </Button>
+                      </Col>
+                    </>
+                  )}
 
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="success"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/download-management")}
-                          >
-                            <FaDownload size={20} className="mb-1" />
-                            <div>Downloads</div>
-                          </Button>
-                        </Col>
+                  {/* ========== NIC ========== */}
+                  {userRole === "NIC" && employeeType === "NIC" && (
+                    <>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="dark"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/activity-logs")}
+                        >
+                          <FaListAlt size={20} className="mb-1" />
+                          <div>Activity Logs</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="secondary"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/session-manager")}
+                        >
+                          <FaAddressBook size={20} className="mb-1" />
+                          <div>User Sessions</div>
+                        </Button>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Button
+                          color="info"
+                          className="w-100 py-3 fw-semibold text-white"
+                          onClick={() => navigate("/admin/help-guidance")}
+                        >
+                          <FaInfoCircle size={20} className="mb-1" />
+                          <div>Help Guidance</div>
+                        </Button>
+                      </Col>
+                    </>
+                  )}
 
-                        {/* ✨ NEW BUTTON – Media, Resources & Library ✨ */}
-                        <Col md={3} sm={6}>
-                          <Button
-                            style={{
-                              background: "linear-gradient(135deg, #8E2DE2, #4A00E0)",
-                              border: "none"
-                            }}
-                            className="w-100 py-3 fw-semibold text-white shadow-sm"
-                            onClick={() => navigate("/admin/media-library-mangments")}
-                          >
-                            <FaFolderOpen size={20} className="mb-1" />
-                            <div>Media & Library</div>
-                          </Button>
-                        </Col>
-                      </>
-                    )}
-
-                    {/* ========== NIC ========== */}
-                    {userRole === "NIC" && employeeType === "NIC" && (
-                      <>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="dark"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/activity-logs")}
-                          >
-                            <FaListAlt size={20} className="mb-1" />
-                            <div>Activity Logs</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="secondary"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/session-manager")}
-                          >
-                            <FaAddressBook size={20} className="mb-1" />
-                            <div>User Sessions</div>
-                          </Button>
-                        </Col>
-                        <Col md={3} sm={6}>
-                          <Button
-                            color="info"
-                            className="w-100 py-3 fw-semibold text-white"
-                            onClick={() => navigate("/admin/help-guidance")}
-                          >
-                            <FaInfoCircle size={20} className="mb-1" />
-                            <div>Help Guidance</div>
-                          </Button>
-                        </Col>
-                      </>
-                    )}
-
-                  </Row>
-                </CardBody>
-              </Card>
-            </Col>
-          </Row>
-        </CardBody>
-      </Card>
-    </Container>
+                </Row>
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+      </CardBody>
+    </Card>
+    </>
   );
 };
 

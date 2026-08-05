@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody,
   Row, Col, Badge,
-  CardHeader
+  CardHeader, Progress, Label, InputGroup, InputGroupText, Alert
 } from "reactstrap";
 import { useDropzone } from "react-dropzone";
 import axios from "axios";
@@ -11,9 +11,11 @@ import {
   FaTh, FaList, FaCopy, FaEye, FaUpload,
   FaFileImage, FaFilePdf, FaFileExcel, FaFileAlt,
   FaImages, FaFile, FaTable, FaTimes, FaCheckCircle,
-  FaExclamationTriangle, FaMagic, FaInfoCircle
+  FaExclamationTriangle, FaMagic, FaInfoCircle,
+  FaImage
 } from "react-icons/fa";
 import { FileViewer } from "@smazeeapps/file-viewer";
+import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API = import.meta.env.VITE_API_URL;
 const getToken = () => sessionStorage.getItem("authToken");
@@ -60,6 +62,7 @@ const isSeoFriendlyName = (fileName) => {
 };
 
 const MediaLibraryMangments = () => {
+  const { toasts, toast } = useToast();
   // ----------------------------- STATE -----------------------------
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -69,7 +72,8 @@ const MediaLibraryMangments = () => {
   const [previewFile, setPreviewFile] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewError, setPreviewError] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [editableName, setEditableName] = useState("");
@@ -120,14 +124,7 @@ const MediaLibraryMangments = () => {
   const copyLink = (filePath) => {
     const fullUrl = `${API}${filePath}`;
     navigator.clipboard.writeText(fullUrl);
-    Swal.fire({
-      title: "Link copied!",
-      icon: "success",
-      timer: 1200,
-      showConfirmButton: false,
-      position: "bottom-end",
-      toast: true
-    });
+    toast.success("Link copied to clipboard!");
   };
 
   // ----------------------------- PREVIEW MODAL (UPDATED) -----------------------------
@@ -263,11 +260,16 @@ const MediaLibraryMangments = () => {
     const formData = new FormData();
     formData.append("fileName", finalBase);
     formData.append("file", selectedFile);
-    setUploadProgress(true);
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       const res = await axios.post(`${API}/api/files/upload`, formData, {
-        headers: { ...authHeader(), "Content-Type": "multipart/form-data" }
+        headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
       await fetchFiles();
       const successMessage = res?.data?.message || "File uploaded successfully";
@@ -277,7 +279,8 @@ const MediaLibraryMangments = () => {
       const message = err?.response?.data?.message || "Upload failed. Check file type/size.";
       showToast("error", "Upload failed", message);
     } finally {
-      setUploadProgress(false);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -439,14 +442,26 @@ const MediaLibraryMangments = () => {
   // ----------------------------- MAIN RENDER -----------------------------
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+      {/* PAGE HEADER */}
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              <FaImage className="me-2" /> Media Library Management
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              Upload and manage rich media, images, and document assets
+            </p>
+          </div>
+        </CardHeader>
+      </Card>
+
       {/* Upload Area */}
-      <div className="p-3 pb-0">
+      <div className="p-0">
         <Card className="shadow-sm border-0 rounded-3 overflow-hidden">
-          <CardHeader className="p-2">
-            <h4 className="mb-0"> Media Library</h4>
-          </CardHeader>
           <CardBody className="p-4">
-            <div {...getRootProps()} className={`border-2 border-dashed rounded-3 p-5 text-center transition-all ${isDragActive ? "bg-primary-soft border-primary" : "bg-light border-secondary"}`} style={{ cursor: "pointer", transition: "all 0.2s", borderStyle: "dashed" }}>
+            <div {...getRootProps()} className={`border-2 border-dashed rounded-3 p-2 text-center transition-all ${isDragActive ? "bg-primary-soft border-primary" : "bg-light border-secondary"}`} style={{ cursor: "pointer", transition: "all 0.2s", borderStyle: "dashed" }}>
               <input {...getInputProps()} />
               {!selectedFile ? (
                 <>
@@ -457,64 +472,168 @@ const MediaLibraryMangments = () => {
                   <small className="text-muted mt-2 d-block"><strong>Supported:</strong> JPG, JPEG, PNG, GIF, WebP, SVG, PDF, DOC, DOCX, TXT, XLS, XLSX, CSV, PPT, PPTX, ZIP, MP3, MP4, MOV</small>
                 </>
               ) : (
-                <div className="text-center" style={{ maxWidth: 480, margin: "0 auto" }} onClick={(e) => e.stopPropagation()}>
-                  <FaFile size={48} className="text-primary mb-3" />
-                  <h6 className="mb-2">Selected File      <Button color="link" size="sm" className="p-0 align-baseline" onClick={(e) => { e.stopPropagation(); handleAutoFixName(); }}>
-                    <FaMagic className="me-1" />Auto Fix Name
-                  </Button></h6>
+                <div
+                  className="mx-auto"
+                  style={{ maxWidth: "900px" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Card className="border-0 shadow-sm rounded-3 overflow-hidden">
+                    {/* Ultra-thin Accent Line */}
+                    <div className="bg-primary bg-gradient" style={{ height: "3px" }}></div>
 
-                  <div className="text-start">
-                    <label className="small fw-semibold text-danger mb-1 d-block ">
-                      File Name <span className="fw-normal text-warning">(optional — leave blank to keep original)</span>
-                    </label>
-                    <div className="d-flex align-items-center gap-2">
-                      <Input
-                        type="text"
-                        placeholder={splitNameExt(selectedFile.name).base}
-                        value={editableName}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ fontSize: 13 }}
-                        invalid={editableName.trim() !== "" && !nameIsSeoFriendly}
-                      />
-                      <span className={`small text-nowrap fw-semibold ${isValidUploadSize ? "text-success" : "text-danger"}`}>
-                        .{fileExt} - {formatSize(selectedFile.size)}
-                      </span>
-                    </div>
+                    <CardBody className="p-3">
+                      {/* Header */}
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <Label className="fw-bold mb-0 text-dark d-flex align-items-center" style={{ fontSize: "0.85rem" }}>
+                          <FaFileAlt className="text-primary me-2 fs-6" />
+                          File Details
+                          <span className="text-muted fw-normal ms-1" style={{ fontSize: "0.7rem" }}>(Optional) - You Can Modify File Name</span>
+                        </Label>
 
-                    {(() => {
-                      const activeBase = editableName.trim() || splitNameExt(selectedFile.name).base;
-                      const previewName = toSeoFriendlyName(fileExt ? `${activeBase}.${fileExt}` : activeBase);
-                      const alreadyClean = editableName.trim() !== "" && nameIsSeoFriendly;
-                      return (
-                        <div className={`small mt-1 d-flex align-items-start gap-1 ${alreadyClean ? "text-success" : "text-warning"}`}>
-                          {alreadyClean ? <FaCheckCircle className="mt-1" /> : <FaExclamationTriangle className="mt-1" />}
-                          <span>
-                            {alreadyClean ? "Looks SEO-friendly. " : "Will be auto-converted to: "}
-                            <code>{previewName}</code>
-                          </span>
+                        <Button
+
+                          outline
+                          className="rounded-pill px-2 bg-info text-white py-0 fw-bold d-flex align-items-center shadow-sm"
+                          style={{ fontSize: "0.7rem", height: "22px" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAutoFixName();
+                          }}
+                        >
+                          <FaMagic className="me-1" />
+                          Auto Fix
+                        </Button>
+                      </div>
+
+                      {/* Small Input Group */}
+                      <InputGroup size="sm" className="mb-2 shadow-sm rounded-2">
+                        <Input
+                          type="text"
+                          className="border-primary border-opacity-25"
+                          style={{ fontSize: "0.8rem" }}
+                          value={editableName}
+                          placeholder={splitNameExt(selectedFile.name).base}
+                          invalid={editableName.trim() !== "" && !nameIsSeoFriendly}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                        />
+                        <InputGroupText
+                          className="bg-primary bg-gradient text-white fw-bold px-2 border-primary"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          .{fileExt}
+                        </InputGroupText>
+                      </InputGroup>
+
+                      {/* Tiny Information Tags */}
+                      <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span className="badge rounded-pill px-2 py-1 bg-info bg-opacity-10 text-info border border-info border-opacity-25" style={{ fontSize: "0.65rem" }}>
+                          📦 {formatSize(selectedFile.size)}
+                        </span>
+                        <span className="badge rounded-pill px-2 py-1 bg-success bg-opacity-10 text-success border border-success border-opacity-25" style={{ fontSize: "0.65rem" }}>
+                          📄 .{fileExt.toUpperCase()}
+                        </span>
+                        <span className="badge rounded-pill px-2 py-1 bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" style={{ fontSize: "0.65rem" }}>
+                          ⚡ Ready
+                        </span>
+                      </div>
+
+                      {/* Inline SEO Preview */}
+                      {(() => {
+                        const activeBase = editableName.trim() || splitNameExt(selectedFile.name).base;
+                        const previewName = toSeoFriendlyName(
+                          fileExt ? `${activeBase}.${fileExt}` : activeBase
+                        );
+                        const alreadyClean = editableName.trim() !== "" && nameIsSeoFriendly;
+
+                        return (
+                          <Alert
+                            color={alreadyClean ? "success" : "secondary"}
+                            className={`py-1 px-2 mb-2 border-0 rounded-2 d-flex align-items-center ${alreadyClean ? "bg-success bg-opacity-10" : "bg-light"
+                              }`}
+                          >
+                            <div className={`me-2 ${alreadyClean ? "text-success" : "text-secondary"}`} style={{ fontSize: "0.75rem" }}>
+                              {alreadyClean ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                            </div>
+                            <div className="d-flex align-items-center flex-wrap gap-1">
+                              <span className={`fw-bold ${alreadyClean ? "text-success" : "text-secondary"}`} style={{ fontSize: "0.7rem" }}>
+                                {alreadyClean ? "SEO Name:" : "Preview:"}
+                              </span>
+                              <code
+                                className="bg-white border rounded px-1 text-dark fw-bold"
+                                style={{ wordBreak: "break-word", fontSize: "0.7rem" }}
+                              >
+                                {previewName}
+                              </code>
+                            </div>
+                          </Alert>
+                        );
+                      })()}
+
+                      {/* Compact Tip */}
+                      <Alert className="bg-info bg-opacity-10 border-0 rounded-2 py-1 px-2 mb-3 d-flex align-items-start">
+                        <FaInfoCircle className="text-info me-2 mt-1" style={{ fontSize: "0.7rem" }} />
+                        <p className="mb-0 text-dark" style={{ fontSize: "0.7rem", lineHeight: "1.3" }}>
+                          Use descriptive names like <strong className="text-info">report.pdf</strong > instead of <strong className="text-danger">scan1.pdf</strong>. Hindi is transliterated automatically.
+                        </p>
+                      </Alert>
+
+                      {/* Slim Progress */}
+                      {isUploading && (
+                        <div className="mb-2 bg-light p-2 rounded-3 border">
+                          <div className="d-flex justify-content-between mb-1" style={{ fontSize: "0.7rem" }}>
+                            <span className="fw-bold text-primary">Uploading...</span>
+                            <span className="fw-bold text-primary">{uploadProgress}%</span>
+                          </div>
+                          <Progress
+                            value={uploadProgress}
+                            animated
+                            striped
+                            color="primary"
+                            className="bg-white rounded-pill"
+                            style={{ height: "6px" }}
+                          />
                         </div>
-                      );
-                    })()}
+                      )}
 
-                    <div className="small text-muted mt-2 d-flex align-items-start gap-1">
-                      <FaInfoCircle className="mt-1" />
-                      <span>
-                        Tip: keep names short and descriptive, e.g. <code>annual-report-2026.pdf</code> instead of <code>Scan_001 (2).pdf</code> — this improves search visibility and page load performance. Hindi names are automatically transliterated too.
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="d-flex gap-2 justify-content-center">
-                    <Button color="primary" onClick={handleUpload} disabled={uploadProgress}>
-                      {uploadProgress ? <Spinner size="sm" className="me-1" /> : <FaUpload className="me-1" />}
-                      Upload Now
-                    </Button>
-                    <Button color="secondary" outline onClick={handleCancelUpload} disabled={uploadProgress}>
-                      <FaTimes className="me-1" /> Cancel
-                    </Button>
-                  </div>
-                  {uploadProgress && <p className="mt-2 text-muted small">Uploading...</p>}
+                      {/* Small Buttons */}
+                      <div className="d-grid d-sm-flex d-flex justify-content-between  gap-2">
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="px-3 py-1 rounded-pill fw-bold text-secondary border shadow-sm"
+                          style={{ fontSize: "0.75rem" }}
+                          disabled={isUploading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCancelUpload();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          color="primary"
+                          size="sm"
+                          className="px-4 py-1 rounded-pill fw-bold shadow bg-gradient d-flex align-items-center justify-content-center"
+                          style={{ fontSize: "0.75rem" }}
+                          onClick={handleUpload}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? (
+                            <>
+                              <Spinner size="sm" className="me-1" style={{ width: "12px", height: "12px" }} />
+                              Uploading
+                            </>
+                          ) : (
+                            <>
+                              <FaUpload className="me-1" />
+                              Upload
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </CardBody>
+                  </Card>
                 </div>
               )}
             </div>
@@ -523,25 +642,25 @@ const MediaLibraryMangments = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white mt-3 mx-3 rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
+      <div className="bg-white mt-3  rounded-top-3 p-3 d-flex flex-wrap align-items-center justify-content-between gap-2 shadow-sm">
         <div className="d-flex flex-wrap align-items-center gap-3">
           <h4 className="mb-0 fw-bold " style={{ color: "#2271b1" }}>
             All Media Library
           </h4>
           <div className="d-flex gap-1">
-            <button onClick={() => setFilterType("all")} style={filterBtnStyle(filterType === "all")}>
+            <button onClick={() => setFilterType("all")} className={`wp-filter-btn ${filterType === "all" ? "is-active" : ""}`}>
               <FaImages /> All
             </button>
-            <button onClick={() => setFilterType("image")} style={filterBtnStyle(filterType === "image")}>
+            <button onClick={() => setFilterType("image")} className={`wp-filter-btn ${filterType === "image" ? "is-active" : ""}`}>
               <FaFileImage /> Images
             </button>
-            <button onClick={() => setFilterType("pdf")} style={filterBtnStyle(filterType === "pdf")}>
+            <button onClick={() => setFilterType("pdf")} className={`wp-filter-btn ${filterType === "pdf" ? "is-active" : ""}`}>
               <FaFilePdf /> PDF
             </button>
-            <button onClick={() => setFilterType("document")} style={filterBtnStyle(filterType === "document")}>
+            <button onClick={() => setFilterType("document")} className={`wp-filter-btn ${filterType === "document" ? "is-active" : ""}`}>
               <FaTable /> Documents
             </button>
-            <button onClick={() => setFilterType("video")} style={filterBtnStyle(filterType === "video")}>
+            <button onClick={() => setFilterType("video")} className={`wp-filter-btn ${filterType === "video" ? "is-active" : ""}`}>
               <FaFile /> Videos
             </button>
           </div>
@@ -552,10 +671,10 @@ const MediaLibraryMangments = () => {
         </div>
 
         <div className="d-flex gap-1">
-          <button onClick={() => setViewMode("grid")} style={filterBtnStyle(viewMode === "grid")}>
+          <button onClick={() => setViewMode("grid")} className={`wp-filter-btn ${viewMode === "grid" ? "is-active" : ""}`}>
             <FaTh /> Grid
           </button>
-          <button onClick={() => setViewMode("list")} style={filterBtnStyle(viewMode === "list")}>
+          <button onClick={() => setViewMode("list")} className={`wp-filter-btn ${viewMode === "list" ? "is-active" : ""}`}>
             <FaList /> List
           </button>
         </div>

@@ -14,8 +14,6 @@ import Swal from "sweetalert2";
 const API_URL = import.meta.env.VITE_API_URL;
 const BASE_URL = import.meta.env.BASE_URL;
 
-/* All header CSS is in App.css — search for "HEADER — moved from Header.jsx" */
-/* NEW: leader-profile-* classes below — add them to App.css in the same block */
 
 /* ── Desktop Dropdown ── */
 const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 }) => {
@@ -291,7 +289,7 @@ const Header = () => {
 
             {/* Right — Digital India + Emblem (Desktop only) */}
             <div className="d-none d-lg-flex align-items-center gap-2">
-              <img
+              {/* <img
                 src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : `${BASE_URL}Digital_India_logo.svg`}
                 className={`right-logo ${!isHindi ? "hide-digital-india-eng" : ""}`}
                 height={52}
@@ -299,7 +297,7 @@ const Header = () => {
                 style={{ objectFit: "contain", cursor: "pointer" }}
                 onClick={() => navigate("/")}
                 onError={e => (e.target.src = `${BASE_URL}Digital_India_logo.svg`)}
-              />
+              /> */}
               <img
                 src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : `${BASE_URL}Emblem_of_India.svg`}
                 className="right-logo"

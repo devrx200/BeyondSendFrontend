@@ -5,13 +5,14 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
 import axios from "axios";
-import Swal from "sweetalert2";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
-
+import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const ManageCategories = () => {
-const API_URL = import.meta.env.VITE_API_URL;
-const token = sessionStorage.getItem("authToken");
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = sessionStorage.getItem("authToken");
+  const { toasts, toast } = useToast();
+
   /* ---------- CREATE ---------- */
   const [categoryNameEn, setCategoryNameEn] = useState("");
   const [categoryNameHi, setCategoryNameHi] = useState("");
@@ -36,7 +37,7 @@ const token = sessionStorage.getItem("authToken");
       const res = await axios.get(`${API_URL}/api/get-categories`);
       setCategories(res.data.data);
     } catch {
-      Swal.fire("Error", "Failed to fetch categories", "error");
+      toast.error("Failed to fetch categories");
     } finally {
       setLoading(false);
     }
@@ -51,7 +52,7 @@ const token = sessionStorage.getItem("authToken");
     e.preventDefault();
 
     if (!categoryNameEn || !categoryNameHi) {
-      Swal.fire("Required", "Both English & Hindi names are required", "warning");
+      toast.warning("Both English & Hindi names are required");
       return;
     }
 
@@ -59,19 +60,19 @@ const token = sessionStorage.getItem("authToken");
       setBtnLoading(true);
       const res = await axios.post(`${API_URL}/api/create-category`, {
         categoryNameEn,
-        categoryNameHi, 
+        categoryNameHi,
       }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
-      Swal.fire("Success", res.data.message, "success");
+      toast.success(res.data.message || "Category created successfully");
       setCategoryNameEn("");
       setCategoryNameHi("");
       fetchCategories();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Create failed", "error");
+      toast.error(err.response?.data?.message || "Create failed");
     } finally {
       setBtnLoading(false);
     }
@@ -89,7 +90,7 @@ const token = sessionStorage.getItem("authToken");
   /* ---------- UPDATE ---------- */
   const handleUpdate = async () => {
     if (!editEn || !editHi) {
-      Swal.fire("Required", "Both fields are required", "warning");
+      toast.warning("Both fields are required");
       return;
     }
 
@@ -109,11 +110,11 @@ const token = sessionStorage.getItem("authToken");
         }
       );
 
-      Swal.fire("Success", res.data.message, "success");
+      toast.success(res.data.message || "Category updated successfully");
       setEditModal(false);
       fetchCategories();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Update failed", "error");
+      toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setUpdateLoading(false);
     }
@@ -121,16 +122,9 @@ const token = sessionStorage.getItem("authToken");
 
   /* ---------- DELETE ---------- */
   const handleDelete = async (id) => {
-    const confirm = await Swal.fire({
-      title: "Are you sure?",
-      text: "This will permanently delete the category.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete",
-      confirmButtonColor: "#d33"
-    });
+    const isConfirmed = await wpSwal.confirm("Are you sure?", "This will permanently delete the category.");
 
-    if (!confirm.isConfirmed) return;
+    if (!isConfirmed) return;
 
     try {
       const res = await axios.delete(`${API_URL}/api/delete-category/${id}`, {
@@ -138,34 +132,45 @@ const token = sessionStorage.getItem("authToken");
           Authorization: `Bearer ${token}`
         }
       });
-      Swal.fire("Deleted", res.data.message, "success");
+      toast.success(res.data.message || "Category deleted");
       fetchCategories();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Delete failed", "error");
+      toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
   /* ---------- UI ---------- */
   return (
-    <div className="container-fluid py-4">
+    <>
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+      
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1"><FaList className="me-2" /> Categories Management</h3>
+            <p className="adm-page-subtitle mb-0 text-white">Manage page categories & translations for rich content</p>
+          </div>
+        </CardHeader>
+      </Card>
+
       <Row>
         {/* ADD CATEGORY */}
         <Col md={4}>
-          <Card>
-            <CardHeader className="bg-primary text-white">
-              <FaPlus /> Add Category
+          <Card className="wp-card">
+            <CardHeader className="bg-primary text-white font-weight-bold">
+              <FaPlus className="me-2" /> Add Category
             </CardHeader>
-            <CardBody>
+            <CardBody className="p-3">
               <Form onSubmit={handleSubmit}>
                 <FormGroup>
-                  <Label>Category Name (English)</Label>
-                  <Input value={categoryNameEn} onChange={e => setCategoryNameEn(e.target.value)} />
+                  <Label className="fw-semibold">Category Name (English)</Label>
+                  <Input value={categoryNameEn} onChange={e => setCategoryNameEn(e.target.value)} placeholder="e.g. Schemes" />
                 </FormGroup>
                 <FormGroup>
-                  <Label>Category Name (Hindi)</Label>
-                  <Input value={categoryNameHi} onChange={e => setCategoryNameHi(e.target.value)} />
+                  <Label className="fw-semibold">Category Name (Hindi)</Label>
+                  <Input value={categoryNameHi} onChange={e => setCategoryNameHi(e.target.value)} placeholder="जैसे: योजनाएं" />
                 </FormGroup>
-                <Button block color="primary" disabled={btnLoading}>
+                <Button block color="primary" disabled={btnLoading} className="mt-3">
                   {btnLoading ? <Spinner size="sm" /> : "Create Category"}
                 </Button>
               </Form>
@@ -175,39 +180,41 @@ const token = sessionStorage.getItem("authToken");
 
         {/* CATEGORY LIST */}
         <Col md={8}>
-          <Card>
-            <CardHeader className="bg-dark text-white">
-              <FaList /> Category List
+          <Card className="wp-card">
+            <CardHeader className="bg-dark text-white font-weight-bold">
+              <FaList className="me-2" /> Category List
             </CardHeader>
-            <CardBody>
-              {loading ? <Spinner /> : (
-                <Table bordered hover responsive>
-                  <thead>
+            <CardBody className="p-0">
+              {loading ? (
+                <div className="text-center p-4"><Spinner /></div>
+              ) : (
+                <Table bordered hover responsive className="mb-0 wp-table">
+                  <thead className="table-light">
                     <tr>
-                      <th>#</th>
-                      <th>English</th>
-                      <th>Hindi</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                      <th>Action</th>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th>English Name</th>
+                      <th>Hindi Name</th>
+                      <th style={{ width: "100px" }}>Status</th>
+                      <th style={{ width: "120px" }}>Created</th>
+                      <th style={{ width: "100px" }} className="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categories.length ? categories.map((cat, i) => (
                       <tr key={cat._id}>
                         <td>{i + 1}</td>
-                        <td>{cat.categoryNameEn}</td>
+                        <td className="fw-medium">{cat.categoryNameEn}</td>
                         <td>{cat.categoryNameHi}</td>
                         <td>
-                          <Badge color={cat.isActive ? "success" : "danger"}>
+                          <Badge color={cat.isActive ? "success" : "danger"} className="px-2 py-1">
                             {cat.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </td>
                         <td>{new Date(cat.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <Button size="sm" color="warning" onClick={() => openEditModal(cat)}>
+                        <td className="text-end">
+                          <Button size="sm" color="warning" className="me-1" onClick={() => openEditModal(cat)}>
                             <FaEdit />
-                          </Button>{" "}
+                          </Button>
                           <Button size="sm" color="danger" onClick={() => handleDelete(cat._id)}>
                             <FaTrash />
                           </Button>
@@ -215,7 +222,7 @@ const token = sessionStorage.getItem("authToken");
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan="6" className="text-center">No Categories Found</td>
+                        <td colSpan="6" className="text-center py-4 text-muted">No Categories Found</td>
                       </tr>
                     )}
                   </tbody>
@@ -231,15 +238,15 @@ const token = sessionStorage.getItem("authToken");
         <ModalHeader toggle={() => setEditModal(false)}>Edit Category</ModalHeader>
         <ModalBody>
           <FormGroup>
-            <Label>Category Name (English)</Label>
+            <Label className="fw-semibold">Category Name (English)</Label>
             <Input value={editEn} onChange={e => setEditEn(e.target.value)} />
           </FormGroup>
           <FormGroup>
-            <Label>Category Name (Hindi)</Label>
+            <Label className="fw-semibold">Category Name (Hindi)</Label>
             <Input value={editHi} onChange={e => setEditHi(e.target.value)} />
           </FormGroup>
           <FormGroup>
-            <Label>Status</Label>
+            <Label className="fw-semibold">Status</Label>
             <Input
               type="select"
               value={editStatus}
@@ -257,7 +264,7 @@ const token = sessionStorage.getItem("authToken");
           </Button>
         </ModalFooter>
       </Modal>
-    </div>
+    </>
   );
 };
 

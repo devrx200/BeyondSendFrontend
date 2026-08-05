@@ -114,40 +114,40 @@ const HelpGuidance = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!form.title.trim()) {
-    return Swal.fire("Validation", "Title required", "warning");
-  }
-  
-  const fd = new FormData();
-  Object.keys(form).forEach(k => fd.append(k, form[k]));
-  if (form.contentType === "PDF" && file) fd.append("file", file);
-  
-  try {
-    const url = editingId
-      ? `${API_URL}/api/update-help-guidance/${editingId}`
-      : `${API_URL}/api/create-help-guidance`;
-    const method = editingId ? "put" : "post";
-    
-    // Fix: Move headers to config object, not as second parameter after data
-    const res = await axios({
-      method, 
-      url, 
-      data: fd,
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data" // Required for file upload
-      }
-    });
-    
-    Swal.fire("Success", res?.data?.message || "Operation successful", "success");
-    toggleModal();
-    loadData();
-  } catch (err) {
-    Swal.fire("Error", err?.response?.data?.message || "Error occurred", "error");
-  }
-};
+    e.preventDefault();
+
+    if (!form.title.trim()) {
+      return Swal.fire("Validation", "Title required", "warning");
+    }
+
+    const fd = new FormData();
+    Object.keys(form).forEach(k => fd.append(k, form[k]));
+    if (form.contentType === "PDF" && file) fd.append("file", file);
+
+    try {
+      const url = editingId
+        ? `${API_URL}/api/update-help-guidance/${editingId}`
+        : `${API_URL}/api/create-help-guidance`;
+      const method = editingId ? "put" : "post";
+
+      // Fix: Move headers to config object, not as second parameter after data
+      const res = await axios({
+        method,
+        url,
+        data: fd,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data" // Required for file upload
+        }
+      });
+
+      Swal.fire("Success", res?.data?.message || "Operation successful", "success");
+      toggleModal();
+      loadData();
+    } catch (err) {
+      Swal.fire("Error", err?.response?.data?.message || "Error occurred", "error");
+    }
+  };
 
   const handleEdit = (item) => {
     setEditingId(item._id);
@@ -183,52 +183,52 @@ const HelpGuidance = () => {
   const accessBadgeColor = { USER: "primary", OFFICER: "warning", ADMIN: "danger" };
 
   return (
- 
-      <Container fluid="xl">
+    <>
+      {/* PAGE HEADER */}
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              📖 {t("Help & Guidance", "सहायता और मार्गदर्शन")}
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              {t("Manage guides, videos and PDF resources", "गाइड, वीडियो और PDF संसाधनों का प्रबंधन करें")}
+            </p>
+          </div>
+          <Button color="primary" onClick={toggleModal}>
+            <FaPlus className="me-1" />
+            {t("Add New Resource", "नया जोड़ें")}
+          </Button>
+        </CardHeader>
+      </Card>
 
-        {/* ── HEADER ── */}
-        <Card className="adm-card mb-4">
-          <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-              <h4 className="adm-page-title  mb-1">
-                <FaFilePdf className="text-white" size={18} /> {t("Help & Guidance", "सहायता और मार्गदर्शन")}
-              </h4>
-              <p className="adm-page-subtitle mb-0 text-white">{t("Manage guides, videos and PDF resources", "गाइड, वीडियो और PDF संसाधनों का प्रबंधन करें")}</p>
-            </div>
-            <Button color="light border-dark" className="d-flex align-items-center gap-2 rounded-3 fw-semibold" onClick={toggleModal}>
-              <FaPlus className="text-dark" size={12} /> {t("Add New Resource", "नया जोड़ें")}
-            </Button>
-          </CardHeader>
-        </Card>
-
-        {/* ── FILTERS ── */}
-        <Card className="adm-card mb-4">
-          <CardHeader className="adm-card-header">
-            <h5 className="adm-card-title">{t("Search & Filters", "खोज और फ़िल्टर")}</h5>
-          </CardHeader>
-          <CardBody className="adm-card-body">
+      <Card className="adm-card shadow-sm border-0 mb-4">
+        <CardBody className="p-3">
+          {/* ── FILTERS ── */}
+          <div className="mb-4 p-3 border rounded-3">
+            <h6 className="mb-3 fw-semibold">{t("Search & Filters", "खोज और फ़िल्टर")}</h6>
             <Row className="g-2 align-items-center">
               <Col xs={12} md={5}>
                 <div className="input-group">
-                  <span className="input-group-text bg-light border-end-0 text-muted">
+                  <span className="input-group-text bg-white border-end-0 text-muted">
                     <FaSearch size={13} />
                   </span>
                   <Input
                     placeholder={t("Search...", "खोजें...")}
-                    className="border-start-0 bg-light"
+                    className="border-start-0 bg-white"
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   />
                 </div>
               </Col>
               <Col xs={6} md={3}>
-                <Input type="select" className="bg-light" onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+                <Input type="select" className="bg-white" onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
                   <option value="">{t("All Status", "सभी स्थिति")}</option>
                   <option value="active">{t("Active", "सक्रिय")}</option>
                   <option value="inactive">{t("Inactive", "निष्क्रिय")}</option>
                 </Input>
               </Col>
               <Col xs={6} md={3}>
-                <Input type="select" className="bg-light" onChange={(e) => { setAccessFilter(e.target.value); setPage(1); }}>
+                <Input type="select" className="bg-white" onChange={(e) => { setAccessFilter(e.target.value); setPage(1); }}>
                   <option value="">{t("All Access", "सभी पहुँच")}</option>
                   <option value="USER">{t("User", "उपयोगकर्ता")}</option>
                   <option value="OFFICER">{t("Officer", "अधिकारी")}</option>
@@ -248,274 +248,275 @@ const HelpGuidance = () => {
                 </div>
               </Col>
             </Row>
-          </CardBody>
-        </Card>
-
-        {/* ── CONTENT ── */}
-        {loading ? (
-          <div className="text-center py-5">
-            <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-            <p className="text-muted mt-3 mb-0">{t("Loading resources...", "संसाधन लोड हो रहे हैं...")}</p>
           </div>
-        ) : list.length === 0 ? (
-          <Card className="adm-card text-center py-5">
-            <CardBody>
-              <div className="display-4 mb-3">📭</div>
-              <h5 className="text-muted">No resources found</h5>
-              <p className="text-muted small mb-0">{t("Try adjusting your filters or add a new item.", "अपने फ़िल्टर बदलें या कोई नया आइटम जोड़ें।")}</p>
-            </CardBody>
-          </Card>
 
-        ) : viewMode === "grid" ? (
-          /* ── GRID VIEW ── */
-          <Row className="g-3">
-            {list.map(item => (
-              <Col xs={12} sm={6} lg={4} key={item._id}>
-                <Card className="h-100 adm-card">
-                  <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 4 }} />
-                  <CardBody className="d-flex flex-column p-3">
+          {/* ── CONTENT ── */}
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
+              <p className="text-muted mt-3 mb-0">{t("Loading resources...", "संसाधन लोड हो रहे हैं...")}</p>
+            </div>
+          ) : list.length === 0 ? (
+            <Card className="adm-card text-center py-5">
+              <CardBody>
+                <div className="display-4 mb-3">📭</div>
+                <h5 className="text-muted">No resources found</h5>
+                <p className="text-muted small mb-0">{t("Try adjusting your filters or add a new item.", "अपने फ़िल्टर बदलें या कोई नया आइटम जोड़ें।")}</p>
+              </CardBody>
+            </Card>
 
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <Badge color={accessBadgeColor[item.accessBy] || "secondary"} pill className="px-2">
-                        {item.accessBy}
-                      </Badge>
-                      <Badge color={item.status === "active" ? "success" : "secondary"} pill className="px-2">
-                        {item.status}
-                      </Badge>
-                    </div>
+          ) : viewMode === "grid" ? (
+            /* ── GRID VIEW ── */
+            <Row className="g-3">
+              {list.map(item => (
+                <Col xs={12} sm={6} lg={4} key={item._id}>
+                  <Card className="h-100 adm-card">
+                    <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 4 }} />
+                    <CardBody className="d-flex flex-column p-3">
 
-                    <div className="d-flex align-items-center gap-1 mb-2">
-                      {item.contentType === "pdf"
-                        ? <FaFilePdf className="text-danger" size={12} />
-                        : <FaVideo className="text-primary" size={12} />}
-                      <small className="text-muted fw-semibold text-uppercase" style={{ fontSize: "0.68rem" }}>
-                        {item.contentType}
-                      </small>
-                      {item.order && (
-                        <Badge color="light" pill className="ms-auto border text-muted" style={{ fontSize: "0.65rem" }}>#{item.order}</Badge>
-                      )}
-                    </div>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <Badge color={accessBadgeColor[item.accessBy] || "secondary"} pill className="px-2">
+                          {item.accessBy}
+                        </Badge>
+                        <Badge color={item.status === "active" ? "success" : "secondary"} pill className="px-2">
+                          {item.status}
+                        </Badge>
+                      </div>
 
-                    <h6 className="fw-bold text-dark mb-2" style={{ fontSize: "0.88rem" }}>{item.title}</h6>
+                      <div className="d-flex align-items-center gap-1 mb-2">
+                        {item.contentType === "pdf"
+                          ? <FaFilePdf className="text-danger" size={12} />
+                          : <FaVideo className="text-primary" size={12} />}
+                        <small className="text-muted fw-semibold text-uppercase" style={{ fontSize: "0.68rem" }}>
+                          {item.contentType}
+                        </small>
+                        {item.order && (
+                          <Badge color="light" pill className="ms-auto border text-muted" style={{ fontSize: "0.65rem" }}>#{item.order}</Badge>
+                        )}
+                      </div>
 
-                    {/* accordion description */}
-                    <div className="mb-3">
-                      <Button
-                        size="sm"
-                        color="light"
-                        className="d-flex align-items-center gap-1 w-100 border rounded-3 px-2 py-1 text-muted"
-                        style={{ fontSize: "0.72rem" }}
-                        onClick={() => toggleDesc(item._id)}
-                      >
-                        <span className="flex-grow-1 text-start">{t("Description", "विवरण")}</span>
-                        {openDesc === item._id ? <FaChevronUp size={9} /> : <FaChevronDown size={9} />}
-                      </Button>
-                      <Collapse isOpen={openDesc === item._id}>
-                        <div className="bg-light border rounded-3 p-2 mt-1 text-muted small" style={{ fontSize: "0.78rem" }}>
-                          {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
+                      <h6 className="fw-bold text-dark mb-2" style={{ fontSize: "0.88rem" }}>{item.title}</h6>
+
+                      {/* accordion description */}
+                      <div className="mb-3">
+                        <Button
+                          size="sm"
+                          color="light"
+                          className="d-flex align-items-center gap-1 w-100 border rounded-3 px-2 py-1 text-muted"
+                          style={{ fontSize: "0.72rem" }}
+                          onClick={() => toggleDesc(item._id)}
+                        >
+                          <span className="flex-grow-1 text-start">{t("Description", "विवरण")}</span>
+                          {openDesc === item._id ? <FaChevronUp size={9} /> : <FaChevronDown size={9} />}
+                        </Button>
+                        <Collapse isOpen={openDesc === item._id}>
+                          <div className="bg-light border rounded-3 p-2 mt-1 text-muted small" style={{ fontSize: "0.78rem" }}>
+                            {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
+                          </div>
+                        </Collapse>
+                      </div>
+
+                      <div className="d-flex gap-1 mt-auto">
+                        <Button size="sm" color="info" outline className="flex-fill rounded-3 fw-semibold" style={{ fontSize: "0.75rem" }} onClick={() => openPreview(item)}>
+                          <FaEye size={10} className="me-1" /> {t("Preview", "पूर्वावलोकन")}
+                        </Button>
+                        <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
+                          <FaEdit size={10} />
+                        </Button>
+                        <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
+                          <FaTrash size={10} />
+                        </Button>
+                      </div>
+
+                    </CardBody>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+
+          ) : (
+            /* ── LIST VIEW ── */
+            <div>
+              {list.map(item => (
+                <Card key={item._id} className="adm-card mb-2">
+                  <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 3 }} />
+                  <CardBody className="p-2 px-3">
+
+                    <div className="d-flex align-items-center gap-3">
+
+                      {/* icon */}
+                      <div className="flex-shrink-0">
+                        {item.contentType === "pdf"
+                          ? <FaFilePdf className="text-danger" size={20} />
+                          : <FaVideo className="text-primary" size={20} />}
+                      </div>
+
+                      {/* title + meta */}
+                      <div className="flex-grow-1 min-w-0">
+                        <div className="d-flex align-items-center flex-wrap gap-2">
+                          <span className="fw-bold text-dark" style={{ fontSize: "0.88rem" }}>{item.title}</span>
+                          {item.order && (
+                            <Badge color="light" pill className="border text-muted" style={{ fontSize: "0.65rem" }}>#{item.order}</Badge>
+                          )}
                         </div>
-                      </Collapse>
-                    </div>
+                        <Collapse isOpen={openDesc === item._id}>
+                          <p className="text-muted mb-0 mt-1" style={{ fontSize: "0.78rem" }}>
+                            {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
+                          </p>
+                        </Collapse>
+                      </div>
 
-                    <div className="d-flex gap-1 mt-auto">
-                      <Button size="sm" color="info" outline className="flex-fill rounded-3 fw-semibold" style={{ fontSize: "0.75rem" }} onClick={() => openPreview(item)}>
-                        <FaEye size={10} className="me-1" /> {t("Preview", "पूर्वावलोकन")}
-                      </Button>
-                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
-                        <FaEdit size={10} />
-                      </Button>
-                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
-                        <FaTrash size={10} />
-                      </Button>
+                      {/* badges */}
+                      <div className="d-none d-md-flex flex-column align-items-end gap-1 flex-shrink-0">
+                        <Badge color={accessBadgeColor[item.accessBy] || "secondary"} pill className="px-2" style={{ fontSize: "0.65rem" }}>
+                          {item.accessBy}
+                        </Badge>
+                        <Badge color={item.status === "active" ? "success" : "secondary"} pill className="px-2" style={{ fontSize: "0.65rem" }}>
+                          {item.status}
+                        </Badge>
+                      </div>
+
+                      {/* actions */}
+                      <div className="d-flex gap-1 flex-shrink-0">
+                        <Button size="sm" color="light" className="border rounded-3 px-2" title={t("Description", "विवरण")} onClick={() => toggleDesc(item._id)}>
+                          {openDesc === item._id ? <FaChevronUp size={10} className="text-muted" /> : <FaChevronDown size={10} className="text-muted" />}
+                        </Button>
+                        <Button size="sm" color="info" outline className="rounded-3 px-2" title={t("Preview", "पूर्वावलोकन")} onClick={() => openPreview(item)}>
+                          <FaEye size={11} />
+                        </Button>
+                        <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
+                          <FaEdit size={11} />
+                        </Button>
+                        <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
+                          <FaTrash size={11} />
+                        </Button>
+                      </div>
+
                     </div>
 
                   </CardBody>
                 </Card>
-              </Col>
-            ))}
-          </Row>
+              ))}
+            </div>
+          )}
 
-        ) : (
-          /* ── LIST VIEW ── */
-          <div>
-            {list.map(item => (
-              <Card key={item._id} className="adm-card mb-2">
-                <div className={item.contentType === "pdf" ? "bg-danger" : "bg-primary"} style={{ height: 3 }} />
-                <CardBody className="p-2 px-3">
-
-                  <div className="d-flex align-items-center gap-3">
-
-                    {/* icon */}
-                    <div className="flex-shrink-0">
-                      {item.contentType === "pdf"
-                        ? <FaFilePdf className="text-danger" size={20} />
-                        : <FaVideo className="text-primary" size={20} />}
-                    </div>
-
-                    {/* title + meta */}
-                    <div className="flex-grow-1 min-w-0">
-                      <div className="d-flex align-items-center flex-wrap gap-2">
-                        <span className="fw-bold text-dark" style={{ fontSize: "0.88rem" }}>{item.title}</span>
-                        {item.order && (
-                          <Badge color="light" pill className="border text-muted" style={{ fontSize: "0.65rem" }}>#{item.order}</Badge>
-                        )}
-                      </div>
-                      <Collapse isOpen={openDesc === item._id}>
-                        <p className="text-muted mb-0 mt-1" style={{ fontSize: "0.78rem" }}>
-                          {item.description || t("No description provided.", "कोई विवरण उपलब्ध नहीं है।")}
-                        </p>
-                      </Collapse>
-                    </div>
-
-                    {/* badges */}
-                    <div className="d-none d-md-flex flex-column align-items-end gap-1 flex-shrink-0">
-                      <Badge color={accessBadgeColor[item.accessBy] || "secondary"} pill className="px-2" style={{ fontSize: "0.65rem" }}>
-                        {item.accessBy}
-                      </Badge>
-                      <Badge color={item.status === "active" ? "success" : "secondary"} pill className="px-2" style={{ fontSize: "0.65rem" }}>
-                        {item.status}
-                      </Badge>
-                    </div>
-
-                    {/* actions */}
-                    <div className="d-flex gap-1 flex-shrink-0">
-                      <Button size="sm" color="light" className="border rounded-3 px-2" title={t("Description", "विवरण")} onClick={() => toggleDesc(item._id)}>
-                        {openDesc === item._id ? <FaChevronUp size={10} className="text-muted" /> : <FaChevronDown size={10} className="text-muted" />}
-                      </Button>
-                      <Button size="sm" color="info" outline className="rounded-3 px-2" title={t("Preview", "पूर्वावलोकन")} onClick={() => openPreview(item)}>
-                        <FaEye size={11} />
-                      </Button>
-                      <Button size="sm" color="warning" outline className="rounded-3 px-2" title={t("Edit", "संपादित करें")} onClick={() => handleEdit(item)}>
-                        <FaEdit size={11} />
-                      </Button>
-                      <Button size="sm" color="danger" outline className="rounded-3 px-2" title={t("Delete", "हटाएं")} onClick={() => handleDelete(item._id)}>
-                        <FaTrash size={11} />
-                      </Button>
-                    </div>
-
-                  </div>
-
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* ── PAGINATION ── */}
-        {totalPages > 1 && (
-          <div className="d-flex justify-content-center align-items-center flex-wrap gap-2 mt-4">
-            <Button size="sm" color="light" className="rounded-3" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-              ‹ {t("Prev", "पिछला")}
-            </Button>
-            {[...Array(totalPages)].map((_, i) => (
-              <Button
-                key={i}
-                size="sm"
-                color={page === i + 1 ? "primary" : "light"}
-                className="rounded-3 fw-semibold"
-                onClick={() => setPage(i + 1)}
-              >
-                {i + 1}
+          {/* ── PAGINATION ── */}
+          {totalPages > 1 && (
+            <div className="d-flex justify-content-center align-items-center flex-wrap gap-2 mt-4">
+              <Button size="sm" color="light" className="rounded-3" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+                ‹ {t("Prev", "पिछला")}
               </Button>
-            ))}
-            <Button size="sm" color="light" className="rounded-3" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-              {t("Next", "अगला")} ›
-            </Button>
-          </div>
-        )}
+              {[...Array(totalPages)].map((_, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  color={page === i + 1 ? "primary" : "light"}
+                  className="rounded-3 fw-semibold"
+                  onClick={() => setPage(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+              <Button size="sm" color="light" className="rounded-3" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+                {t("Next", "अगला")} ›
+              </Button>
+            </div>
+          )}
 
-        {/* ── ADD / EDIT MODAL ── */}
-        <Modal isOpen={modal} toggle={toggleModal} centered size="md">
-          <ModalHeader toggle={toggleModal} className="border-0 pb-1 fw-bold">
-            {editingId ? `✏️ ${t("Edit Resource", "संसाधन संपादित करें")}` : `➕ ${t("Add New Resource", "नया संसाधन जोड़ें")}`}
-          </ModalHeader>
-          <Form onSubmit={handleSubmit}>
-            <ModalBody className="pt-1">
-              <Row className="g-3">
+          {/* ── ADD / EDIT MODAL ── */}
+          <Modal isOpen={modal} toggle={toggleModal} centered size="md">
+            <ModalHeader toggle={toggleModal} className="border-0 pb-1 fw-bold">
+              {editingId ? `✏️ ${t("Edit Resource", "संसाधन संपादित करें")}` : `➕ ${t("Add New Resource", "नया संसाधन जोड़ें")}`}
+            </ModalHeader>
+            <Form onSubmit={handleSubmit}>
+              <ModalBody className="pt-1">
+                <Row className="g-3">
 
-                <Col xs={12}>
-                  <Label className="fw-semibold small">{t("Title", "शीर्षक")} <span className="text-danger">*</span></Label>
-                  <Input name="title" value={form.title} onChange={handleChange} placeholder={t("Enter a clear title...", "स्पष्ट शीर्षक दर्ज करें...")} />
-                </Col>
-
-                <Col xs={12}>
-                  <Label className="fw-semibold small">{t("Description", "विवरण")}</Label>
-                  <Input type="textarea" rows={3} name="description" value={form.description} onChange={handleChange} placeholder={t("Short description...", "संक्षिप्त विवरण...")} />
-                </Col>
-
-                <Col xs={6}>
-                  <Label className="fw-semibold small">{t("Content Type", "सामग्री प्रकार")}</Label>
-                  <Input type="select" name="contentType" value={form.contentType} onChange={handleChange}>
-                    <option value="VIDEO">🎬 {t("Video", "वीडियो")}</option>
-                    <option value="PDF">📄 PDF</option>
-                  </Input>
-                </Col>
-
-                <Col xs={6}>
-                  <Label className="fw-semibold small">{t("Order", "क्रम")}</Label>
-                  <Input type="number" name="order" value={form.order} onChange={handleChange} placeholder="e.g. 1" min={1} />
-                </Col>
-
-                {form.contentType === "VIDEO" && (
                   <Col xs={12}>
-                    <Label className="fw-semibold small">{t("Video URL", "वीडियो URL")}</Label>
-                    <Input name="videoUrl" value={form.videoUrl} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." />
+                    <Label className="fw-semibold small">{t("Title", "शीर्षक")} <span className="text-danger">*</span></Label>
+                    <Input name="title" value={form.title} onChange={handleChange} placeholder={t("Enter a clear title...", "स्पष्ट शीर्षक दर्ज करें...")} />
                   </Col>
-                )}
 
-                {form.contentType === "PDF" && (
                   <Col xs={12}>
-                    <Label className="fw-semibold small">{t("Upload PDF", "PDF अपलोड करें")}</Label>
-                    <Input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
+                    <Label className="fw-semibold small">{t("Description", "विवरण")}</Label>
+                    <Input type="textarea" rows={3} name="description" value={form.description} onChange={handleChange} placeholder={t("Short description...", "संक्षिप्त विवरण...")} />
                   </Col>
-                )}
 
-                <Col xs={6}>
-                  <Label className="fw-semibold small">{t("Status", "स्थिति")}</Label>
-                  <Input type="select" name="status" value={form.status} onChange={handleChange}>
-                    <option value="active">✅ {t("Active", "सक्रिय")}</option>
-                    <option value="inactive">⛔ {t("Inactive", "निष्क्रिय")}</option>
-                  </Input>
-                </Col>
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">{t("Content Type", "सामग्री प्रकार")}</Label>
+                    <Input type="select" name="contentType" value={form.contentType} onChange={handleChange}>
+                      <option value="VIDEO">🎬 {t("Video", "वीडियो")}</option>
+                      <option value="PDF">📄 PDF</option>
+                    </Input>
+                  </Col>
 
-                <Col xs={6}>
-                  <Label className="fw-semibold small">{t("Access By", "द्वारा पहुँच")}</Label>
-                  <Input type="select" name="accessBy" value={form.accessBy} onChange={handleChange}>
-                    <option value="USER">👤 {t("Public User On Site", "साइट पर सार्वजनिक उपयोगकर्ता")}</option>
-                    <option value="OFFICER">🧑‍💼 {t("Officer", "अधिकारी")}</option>
-                    <option value="ADMIN">🛡️ {t("Admin", "प्रशासन")}</option>
-                  </Input>
-                </Col>
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">{t("Order", "क्रम")}</Label>
+                    <Input type="number" name="order" value={form.order} onChange={handleChange} placeholder="e.g. 1" min={1} />
+                  </Col>
 
-              </Row>
+                  {form.contentType === "VIDEO" && (
+                    <Col xs={12}>
+                      <Label className="fw-semibold small">{t("Video URL", "वीडियो URL")}</Label>
+                      <Input name="videoUrl" value={form.videoUrl} onChange={handleChange} placeholder="https://youtube.com/watch?v=..." />
+                    </Col>
+                  )}
+
+                  {form.contentType === "PDF" && (
+                    <Col xs={12}>
+                      <Label className="fw-semibold small">{t("Upload PDF", "PDF अपलोड करें")}</Label>
+                      <Input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
+                    </Col>
+                  )}
+
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">{t("Status", "स्थिति")}</Label>
+                    <Input type="select" name="status" value={form.status} onChange={handleChange}>
+                      <option value="active">✅ {t("Active", "सक्रिय")}</option>
+                      <option value="inactive">⛔ {t("Inactive", "निष्क्रिय")}</option>
+                    </Input>
+                  </Col>
+
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">{t("Access By", "द्वारा पहुँच")}</Label>
+                    <Input type="select" name="accessBy" value={form.accessBy} onChange={handleChange}>
+                      <option value="USER">👤 {t("Public User On Site", "साइट पर सार्वजनिक उपयोगकर्ता")}</option>
+                      <option value="OFFICER">🧑‍💼 {t("Officer", "अधिकारी")}</option>
+                      <option value="ADMIN">🛡️ {t("Admin", "प्रशासन")}</option>
+                    </Input>
+                  </Col>
+
+                </Row>
+              </ModalBody>
+              <ModalFooter className="border-0 pt-0 d-flex justify-content-between">
+                <Button type="button" color="dark" className="rounded-3 px-4" onClick={toggleModal}>{t("Cancel", "रद्द करें")}</Button>
+                <Button type="submit" color="primary" className="rounded-3 px-4 fw-semibold">
+                  {editingId ? t("Update", "अपडेट करें") : t("Save", "सहेजें")}
+                </Button>
+              </ModalFooter>
+            </Form>
+          </Modal>
+
+          {/* ── PREVIEW MODAL ── */}
+          <Modal isOpen={previewModal} toggle={() => setPreviewModal(false)} size="xl" centered>
+            <ModalHeader toggle={() => setPreviewModal(false)} className="border-0 fw-bold">
+              👁️ {previewTitle}
+            </ModalHeader>
+            <ModalBody className="p-0" style={{ height: "70vh" }}>
+              <iframe
+                src={previewUrl}
+                width="100%"
+                height="100%"
+                style={{ border: "none", display: "block" }}
+                title={previewTitle}
+                allowFullScreen
+              />
             </ModalBody>
-            <ModalFooter className="border-0 pt-0 d-flex justify-content-between">
-              <Button type="button" color="dark" className="rounded-3 px-4" onClick={toggleModal}>{t("Cancel", "रद्द करें")}</Button>
-              <Button type="submit" color="primary" className="rounded-3 px-4 fw-semibold">
-                {editingId ? t("Update", "अपडेट करें") : t("Save", "सहेजें")}
-              </Button>
-            </ModalFooter>
-          </Form>
-        </Modal>
+          </Modal>
 
-        {/* ── PREVIEW MODAL ── */}
-        <Modal isOpen={previewModal} toggle={() => setPreviewModal(false)} size="xl" centered>
-          <ModalHeader toggle={() => setPreviewModal(false)} className="border-0 fw-bold">
-            👁️ {previewTitle}
-          </ModalHeader>
-          <ModalBody className="p-0" style={{ height: "70vh" }}>
-            <iframe
-              src={previewUrl}
-              width="100%"
-              height="100%"
-              style={{ border: "none", display: "block" }}
-              title={previewTitle}
-              allowFullScreen
-            />
-          </ModalBody>
-        </Modal>
-
-      </Container>
+        </CardBody>
+      </Card>
+    </>
   );
 };
 

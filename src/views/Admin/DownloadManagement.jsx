@@ -46,7 +46,7 @@ const DownloadManagement = () => {
 
   /* ================= FETCH ================= */
   const fetchDownloads = async () => {
-    const res = await axios.get(`${API_URL}/api/get-all-downloads`,{
+    const res = await axios.get(`${API_URL}/api/get-all-downloads`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     setDownloads(res.data || []);
@@ -129,21 +129,21 @@ const DownloadManagement = () => {
       toggleModal();
       fetchDownloads();
     } catch (err) {
-  // Check if error has response from backend
-  if (err.response) {
-    // Backend returned an error response
-    const errorMessage = err.response.data?.message || 
-                        err.response.data?.error || 
-                        "Something went wrong";
-    Swal.fire("Error", errorMessage, "error");
-  } else if (err.request) {
-    // Request was made but no response received
-    Swal.fire("Error", "No response from server", "error");
-  } else {
-    // Something else happened
-    Swal.fire("Error", err.message, "error");
-  }
-}
+      // Check if error has response from backend
+      if (err.response) {
+        // Backend returned an error response
+        const errorMessage = err.response.data?.message ||
+          err.response.data?.error ||
+          "Something went wrong";
+        Swal.fire("Error", errorMessage, "error");
+      } else if (err.request) {
+        // Request was made but no response received
+        Swal.fire("Error", "No response from server", "error");
+      } else {
+        // Something else happened
+        Swal.fire("Error", err.message, "error");
+      }
+    }
   };
 
 
@@ -202,10 +202,10 @@ const DownloadManagement = () => {
 
   /* ================= UI ================= */
   return (
-    <Container className="mt-4">
+    <>
       <Card className="shadow-lg border-0">
         <CardHeader>
-           <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className="d-flex justify-content-between align-items-center mb-3">
             <h4 className="fw-bold text-white">
               <FaFileAlt className="me-2" />
               Download Management
@@ -320,7 +320,7 @@ const DownloadManagement = () => {
                   )}
                 </FormGroup>
               </Col>
-                <Col xs={6}>
+              <Col xs={6}>
                 <Label className="fw-semibold small">Status</Label>
                 <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
                   <option value="true">✅ Active</option>
@@ -337,7 +337,7 @@ const DownloadManagement = () => {
           </Button>
         </ModalFooter>
       </Modal>
-    </Container>
+    </>
   );
 };
 

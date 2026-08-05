@@ -48,7 +48,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { FaPager } from "react-icons/fa6";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const HEWebCMSVersion  = import.meta.env.VITE_PORTAL_VERSION;
+const HEWebCMSVersion = import.meta.env.VITE_PORTAL_VERSION;
 
 
 const adminMenu = [
@@ -622,10 +622,14 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             alt="Chhattisgarh Government"
             className="adm-side-brand-logo"
           />
-          <div className="adm-side-dept fw-bold text-white">
-            Department of Higher Education,<br />
+          <small
+            className="fw-bold text-white"
+            style={{ fontSize: "11px", lineHeight: "1.5" }}
+          >
+            Department of Higher Education,
+            <br />
             Government of Chhattisgarh.
-          </div>
+          </small>
         </div>
 
         <div className="adm-side-avatar-wrap">
@@ -738,13 +742,13 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
           <FaSignOutAlt />
           <span>Sign Out</span>
         </button>
-        <hr/>
+        <hr />
         <span className="adm-footer-pill is-accent text-white border-white bg-black adm-signout-btn" >
           <FaShieldAlt /> HEWebCMS - {HEWebCMSVersion}
         </span>
       </div>
 
-    </aside>
+    </aside >
   );
 };
 

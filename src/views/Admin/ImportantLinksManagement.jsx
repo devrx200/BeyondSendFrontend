@@ -11,7 +11,6 @@ import {
     FaEdit, FaTrash, FaLink, FaBolt, FaPlus, FaTimes, FaCheck,
     FaGlobe, FaToggleOn, FaImage, FaLanguage, FaFont
 } from "react-icons/fa";
-import { confirmDelete, swalSuccess, swalWarn, swalError } from "../../utilities/swalHelper";
 
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;

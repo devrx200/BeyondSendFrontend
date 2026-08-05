@@ -5,13 +5,14 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
 import axios from "axios";
-import Swal from "sweetalert2";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
+import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ManageBrands = () => {
   const token = sessionStorage.getItem("authToken");
+  const { toasts, toast } = useToast();
 
   const authHeaders = {
     headers: { Authorization: `Bearer ${token}` }
@@ -29,7 +30,6 @@ const ManageBrands = () => {
   const [image, setImage] = useState(null);
   const [btnLoading, setBtnLoading] = useState(false);
 
-
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -45,9 +45,9 @@ const ManageBrands = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/api/get-brands`, authHeaders);
-      setBrands(res.data.data);
+      setBrands(res.data.data || []);
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Load failed", "error");
+      toast.error(err.response?.data?.message || "Load failed");
     } finally {
       setLoading(false);
     }
@@ -57,12 +57,11 @@ const ManageBrands = () => {
     fetchBrands();
   }, []);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!name || position === "" || !image) {
-      Swal.fire("Required", "All fields are required", "warning");
+      toast.warning("All fields (Name, Position, Image) are required");
       return;
     }
 
@@ -79,13 +78,13 @@ const ManageBrands = () => {
         multipartHeaders
       );
 
-      Swal.fire("Success", res.data.message, "success");
+      toast.success(res.data.message || "Brand created successfully");
       setName("");
       setPosition("");
       setImage(null);
       fetchBrands();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Create failed", "error");
+      toast.error(err.response?.data?.message || "Create failed");
     } finally {
       setBtnLoading(false);
     }
@@ -99,7 +98,6 @@ const ManageBrands = () => {
     setEditImage(null);
     setEditModal(true);
   };
-
 
   const handleUpdate = async () => {
     const formData = new FormData();
@@ -116,43 +114,37 @@ const ManageBrands = () => {
         multipartHeaders
       );
 
-      Swal.fire("Success", res.data.message, "success");
+      toast.success(res.data.message || "Brand updated successfully");
       setEditModal(false);
       fetchBrands();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Update failed", "error");
+      toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setUpdateLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    const confirm = await Swal.fire({
-      title: "Are you sure?",
-      text: "This action cannot be undone.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete",
-      confirmButtonColor: "#d33"
-    });
+    const isConfirmed = await wpSwal.confirm("Are you sure?", "This action cannot be undone.");
 
-    if (!confirm.isConfirmed) return;
+    if (!isConfirmed) return;
 
     try {
       const res = await axios.delete(
         `${API_URL}/api/delete-brand/${id}`,
         authHeaders
       );
-      Swal.fire("Deleted", res.data.message, "success");
+      toast.success(res.data.message || "Brand deleted");
       fetchBrands();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Delete failed", "error");
+      toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
-
   return (
-    <div className="container-fluid py-4">
+    <>
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+
       <Card className="adm-card mb-4">
         <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
@@ -161,28 +153,29 @@ const ManageBrands = () => {
           </div>
         </CardHeader>
       </Card>
+
       <Row>
         <Col md={4}>
-          <Card>
-            <CardHeader className="bg-primary text-white">
-              <FaPlus /> Add Brand
+          <Card className="wp-card">
+            <CardHeader className="bg-primary text-white font-weight-bold">
+              <FaPlus className="me-2" /> Add Brand
             </CardHeader>
-            <CardBody>
+            <CardBody className="p-3">
               <Form onSubmit={handleSubmit}>
                 <FormGroup>
-                  <Label>Name</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} />
+                  <Label className="fw-semibold">Name</Label>
+                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. NIC" />
                 </FormGroup>
                 <FormGroup>
-                  <Label>Position</Label>
-                  <Input type="number" value={position} onChange={e => setPosition(e.target.value)} />
+                  <Label className="fw-semibold">Position Order</Label>
+                  <Input type="number" value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. 1" />
                 </FormGroup>
                 <FormGroup>
-                  <Label>Image</Label>
+                  <Label className="fw-semibold">Logo Image</Label>
                   <Input type="file" onChange={e => setImage(e.target.files[0])} />
                 </FormGroup>
-                <Button block color="primary" disabled={btnLoading}>
-                  {btnLoading ? <Spinner size="sm" /> : "Create"}
+                <Button block color="primary" disabled={btnLoading} className="mt-3">
+                  {btnLoading ? <Spinner size="sm" /> : "Create Brand"}
                 </Button>
               </Form>
             </CardBody>
@@ -190,45 +183,55 @@ const ManageBrands = () => {
         </Col>
 
         <Col md={8}>
-          <Card>
-            <CardHeader className="bg-dark text-white">
-              <FaList /> Brand List
+          <Card className="wp-card">
+            <CardHeader className="bg-dark text-white font-weight-bold">
+              <FaList className="me-2" /> Brand List
             </CardHeader>
-            <CardBody>
-              {loading ? <Spinner /> : (
-                <Table bordered hover responsive>
-                  <thead>
+            <CardBody className="p-0">
+              {loading ? (
+                <div className="text-center p-4"><Spinner /></div>
+              ) : (
+                <Table bordered hover responsive className="mb-0 wp-table">
+                  <thead className="table-light">
                     <tr>
-                      <th>#</th>
-                      <th>Image</th>
+                      <th style={{ width: "50px" }}>#</th>
+                      <th style={{ width: "80px" }}>Image</th>
                       <th>Name</th>
-                      <th>Position</th>
-                      <th>Status</th>
-                      <th>Action</th>
+                      <th style={{ width: "90px" }}>Position</th>
+                      <th style={{ width: "100px" }}>Status</th>
+                      <th style={{ width: "100px" }} className="text-end">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {brands.map((b, i) => (
+                    {brands.length > 0 ? brands.map((b, i) => (
                       <tr key={b._id}>
                         <td>{i + 1}</td>
-                        <td><img src={`${API_URL}${b.image}`} height="40" /></td>
-                        <td>{b.name}</td>
+                        <td>
+                          {b.image ? (
+                            <img src={`${API_URL}${b.image}`} alt={b.name} style={{ height: "36px", objectFit: "contain" }} />
+                          ) : "—"}
+                        </td>
+                        <td className="fw-medium">{b.name}</td>
                         <td>{b.position}</td>
                         <td>
-                          <Badge color={b.isActive ? "success" : "danger"}>
+                          <Badge color={b.isActive ? "success" : "danger"} className="px-2 py-1">
                             {b.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </td>
-                        <td>
-                          <Button size="sm" color="warning" onClick={() => openEditModal(b)}>
+                        <td className="text-end">
+                          <Button size="sm" color="warning" className="me-1" onClick={() => openEditModal(b)}>
                             <FaEdit />
-                          </Button>{" "}
+                          </Button>
                           <Button size="sm" color="danger" onClick={() => handleDelete(b._id)}>
                             <FaTrash />
                           </Button>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="6" className="text-center py-4 text-muted">No Brands Found</td>
+                      </tr>
+                    )}
                   </tbody>
                 </Table>
               )}
@@ -241,15 +244,15 @@ const ManageBrands = () => {
         <ModalHeader toggle={() => setEditModal(false)}>Edit Brand</ModalHeader>
         <ModalBody>
           <FormGroup>
-            <Label>Name</Label>
+            <Label className="fw-semibold">Name</Label>
             <Input value={editName} onChange={e => setEditName(e.target.value)} />
           </FormGroup>
           <FormGroup>
-            <Label>Position</Label>
+            <Label className="fw-semibold">Position Order</Label>
             <Input type="number" value={editPosition} onChange={e => setEditPosition(e.target.value)} />
           </FormGroup>
           <FormGroup>
-            <Label>Status</Label>
+            <Label className="fw-semibold">Status</Label>
             <Input
               type="select"
               value={editStatus}
@@ -260,17 +263,18 @@ const ManageBrands = () => {
             </Input>
           </FormGroup>
           <FormGroup>
-            <Label>Image (Optional)</Label>
+            <Label className="fw-semibold">Image (Optional, leave blank to keep current)</Label>
             <Input type="file" onChange={e => setEditImage(e.target.files[0])} />
           </FormGroup>
         </ModalBody>
         <ModalFooter>
+          <Button color="secondary" onClick={() => setEditModal(false)}>Cancel</Button>
           <Button color="primary" onClick={handleUpdate} disabled={updateLoading}>
             {updateLoading ? <Spinner size="sm" /> : "Update"}
           </Button>
         </ModalFooter>
       </Modal>
-    </div>
+    </>
   );
 };
 

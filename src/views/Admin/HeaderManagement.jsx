@@ -107,7 +107,7 @@ const HeaderManagement = () => {
   };
 
   return (
-    <Container fluid className="mt-4">
+    <>
       <Card className="adm-card mb-4">
         <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
@@ -127,7 +127,7 @@ const HeaderManagement = () => {
 
 
       {/* CONTACT */}
-      <Card className="mb-3 shadow-sm">
+      <Card className="adm-card shadow-sm border-0 mb-4">
         <CardBody>
           <h5 className="text-primary mb-3">📞 Contact Info</h5>
 
@@ -158,7 +158,7 @@ const HeaderManagement = () => {
       </Card>
 
       {/* TITLES */}
-      <Card className="mb-3 shadow-sm">
+      <Card className="adm-card shadow-sm border-0 mb-4">
         <CardBody>
           <h5 className="text-primary mb-3">📝 Titles</h5>
 
@@ -205,7 +205,7 @@ const HeaderManagement = () => {
       </Card>
 
       {/* IMAGES */}
-      <Card className="shadow-sm">
+      <Card className="adm-card shadow-sm border-0 mb-4">
         <CardBody>
           <h5 className="text-primary mb-3">🖼 Upload Images</h5>
 
@@ -232,7 +232,7 @@ const HeaderManagement = () => {
       </Card>
 
 
-    </Container>
+    </>
   );
 };
 

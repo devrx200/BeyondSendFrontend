@@ -5,10 +5,8 @@ import DynamicBreadcrumb from "./Breadcrumb";
 
 const PageLayout = ({ title, titleHi, children, showBreadcrumb = true }) => {
   const { isHindi } = useLanguage();
-
   // Choose title based on language
   const pageTitle = isHindi && titleHi ? titleHi : title;
-
   return (
     <>
       {/* SEO: Dynamic title and language */}
@@ -46,7 +44,6 @@ const PageLayout = ({ title, titleHi, children, showBreadcrumb = true }) => {
             </div>
           </Container>
         )}
-
         {/* Page Content */}
         <div className="page-content pb-5">
           <Container>{children}</Container>

@@ -31,7 +31,7 @@ const BreadcrumbBar = () => {
 
         if (data.current) setWeather(data.current);
       } catch (err) {
-        console.error("Weather fetch error:", err);
+        // Silently handle offline/network issues for weather widget
       }
     };
 
