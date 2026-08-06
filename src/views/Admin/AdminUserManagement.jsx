@@ -32,11 +32,11 @@ const initialForm = {
 };
 
 /* ================= REGEX ================= */
-const ENGLISH_TEXT_ONLY    = /^[A-Za-z .,!?'"()\-\n\r]+$/;
+const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
 const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-\n\r]+$/;
-const PHONE_REGEX          = /^(\+91[- ]?)?[6-9][0-9]{9}$/;
-const EMAIL_REGEX          = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PASSWORD_REGEX       =
+const PHONE_REGEX = /^(\+91[- ]?)?[6-9][0-9]{9}$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 /* ================= FIELD VALIDATOR ================= */
@@ -104,17 +104,17 @@ const roleColor = (role) => {
 /* ================================================= */
 const AdminUserManagement = () => {
   const token = sessionStorage.getItem("authToken");
-const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL;
   const { isHindi } = useLanguage();
   const navigate = useNavigate();
 
-  const [users, setUsers]               = useState([]);
-  const [modal, setModal]               = useState(false);
-  const [editing, setEditing]           = useState(null);
-  const [formData, setFormData]         = useState(initialForm);
-  const [loading, setLoading]           = useState(false);
-  const [submitting, setSubmitting]     = useState(false);
-  const [errors, setErrors]             = useState({});
+  const [users, setUsers] = useState([]);
+  const [modal, setModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [formData, setFormData] = useState(initialForm);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -136,7 +136,7 @@ const API_URL = import.meta.env.VITE_API_URL;
   useEffect(() => { loadUsers(); }, []);
 
   /* ================= MODAL TOGGLE ================= */
-  const openModal  = () => setModal(true);
+  const openModal = () => setModal(true);
   const closeModal = () => {
     setModal(false);
     setEditing(null);
@@ -247,17 +247,17 @@ const API_URL = import.meta.env.VITE_API_URL;
   const handleEdit = (user) => {
     setEditing(user);
     setFormData({
-      name:            user.name            || "",
-      email:           user.email           || "",
-      mobile:          user.mobile          || "",
-      password:        "",
-      role:            user.role            || "OFFICER",
+      name: user.name || "",
+      email: user.email || "",
+      mobile: user.mobile || "",
+      password: "",
+      role: user.role || "OFFICER",
       userDeginations: user.userDeginations || "",
-      permissions:     user.permissions     || [],
-      controls:        user.controls        || [],
-      profileImage:    null,
-      status:          user.status          || "PENDING",
-      isActive:        user.isActive        ?? true,
+      permissions: user.permissions || [],
+      controls: user.controls || [],
+      profileImage: null,
+      status: user.status || "PENDING",
+      isActive: user.isActive ?? true,
     });
     setErrors({});
     setImagePreview(null);
@@ -299,7 +299,7 @@ const API_URL = import.meta.env.VITE_API_URL;
       {/* ── Gradient Header ── */}
       <CardHeader
         className="border-0 py-4"
-        // style={headerGradient}
+      // style={headerGradient}
       >
         <Row className="align-items-center">
           <Col>
@@ -431,8 +431,8 @@ const API_URL = import.meta.env.VITE_API_URL;
                       (e.currentTarget.style.backgroundColor = "rgba(102,126,234,0.06)")
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        i % 2 === 0 ? "rgba(102,126,234,0.02)" : "transparent")
+                    (e.currentTarget.style.backgroundColor =
+                      i % 2 === 0 ? "rgba(102,126,234,0.02)" : "transparent")
                     }
                   >
                     {/* # */}
@@ -621,16 +621,17 @@ const API_URL = import.meta.env.VITE_API_URL;
           </div>
         )}
       </CardBody>
-
-      {/* ================= MODAL ================= */}
-      <Modal isOpen={modal} toggle={closeModal} size="lg" backdrop="static" centered>
+      <Modal isOpen={modal} toggle={closeModal} size="xl" backdrop="static" centered>
+        {/* HEADER */}
         <ModalHeader
           toggle={closeModal}
+          className="border-bottom-0 shadow-sm"
           style={{ ...headerGradient, color: "#fff" }}
           close={
             <button
               className="btn-close btn-close-white"
               onClick={closeModal}
+              aria-label="Close"
             />
           }
         >
@@ -640,349 +641,300 @@ const API_URL = import.meta.env.VITE_API_URL;
         </ModalHeader>
 
         <Form onSubmit={handleSubmit} noValidate>
-          <ModalBody className="p-4">
-            <Row>
-              {/* NAME */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="name" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Full Name <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="e.g. Rajesh Kumar"
-                    value={formData.name}
-                    onChange={handleChange}
-                    invalid={!!errors.name}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  {errors.name && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.name}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
+          <ModalBody className="p-4 bg-light">
 
-              {/* EMAIL */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="email" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Email Address <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    placeholder="e.g. officer@gov.in"
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={!!editing}
-                    invalid={!!errors.email}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  {editing && (
-                    <small className="text-muted" style={{ fontSize: "11px" }}>
-                      Email cannot be changed.
-                    </small>
-                  )}
-                  {errors.email && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.email}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
-            </Row>
-
-            <Row>
-              {/* MOBILE */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="mobile" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Mobile Number <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    id="mobile"
-                    name="mobile"
-                    placeholder="e.g. 9876543210"
-                    value={formData.mobile}
-                    onChange={handleChange}
-                    invalid={!!errors.mobile}
-                    maxLength={13}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  {errors.mobile && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.mobile}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
- 
-              {/* PASSWORD — only on create */}
-              {!editing && (
-                <Col md={6}>
-                  <FormGroup>
-                    <Label for="password" className="fw-semibold" style={{ fontSize: "13px" }}>
-                      Password <span className="text-danger">*</span>
-                    </Label>
-                    <div className="position-relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        placeholder="Min 8 chars, A-Z, 0-9, @$!%*?&"
-                        value={formData.password}
-                        onChange={handleChange}
-                        invalid={!!errors.password}
-                        autoComplete="new-password"
-                        style={{ paddingRight: "2.5rem", fontSize: "14px" }}
-                      />
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                        onClick={() => setShowPassword((p) => !p)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && setShowPassword((p) => !p)
-                        }
-                        className="position-absolute top-50 end-0 translate-middle-y pe-2 text-secondary"
-                        style={{ cursor: "pointer", zIndex: 5 }}
-                      >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                      </span>
-                    </div>
-                    {errors.password && (
-                      <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                        {errors.password}
-                      </div>
-                    )}
-                  </FormGroup>
-                </Col>
-              )}
-            </Row>
-
-            <Row>
-              {/* DESIGNATION */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="userDeginations" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Designation <span className="text-danger">*</span>
-                  </Label>
-                  <Input
-                    id="userDeginations"
-                    name="userDeginations"
-                    placeholder="e.g. District Officer"
-                    value={formData.userDeginations}
-                    onChange={handleChange}
-                    invalid={!!errors.userDeginations}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  {errors.userDeginations && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.userDeginations}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
-
-              {/* ROLE */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="role" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Role
-                  </Label>
-                  <Input
-                    id="role"
-                    type="select"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    style={{ fontSize: "14px" }}
+            {/* PROFILE IMAGE SECTION (Centered at the top) */}
+            <div className="d-flex flex-column align-items-center mb-4 pb-3 border-bottom">
+              <div className="position-relative mb-3">
+                {/* Avatar Image */}
+                <img
+                  src={imagePreview || "https://ui-avatars.com/api/?name=Officer&background=e9ecef&color=6c757d&size=120"}
+                  alt="Profile Preview"
+                  className="rounded-circle shadow-sm bg-white"
+                  style={{
+                    width: "110px",
+                    height: "110px",
+                    objectFit: "cover",
+                    border: "3px solid #fff"
+                  }}
+                />
+                {/* Remove Image Button */}
+                {imagePreview && (
+                  <Button
+                    color="danger"
+                    size="sm"
+                    className="position-absolute top-0 start-100 translate-middle rounded-circle p-0 d-flex justify-content-center align-items-center shadow"
+                    style={{ width: "28px", height: "28px" }}
+                    onClick={() => {
+                      setImagePreview(null);
+                      setFormData((prev) => ({ ...prev, profileImage: null }));
+                    }}
+                    title="Remove Image"
                   >
-                    <option value="OFFICER">Officer</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="SUPERADMIN">Super Admin</option>
-                  </Input>
-                </FormGroup>
-              </Col>
-            </Row>
+                    ✕
+                  </Button>
+                )}
+              </div>
 
-            <Row>
-              {/* PERMISSIONS */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="permissions" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Permissions{" "}
-                    <small className="text-muted fw-normal">(comma separated)</small>
-                  </Label>
-                  <Input
-                    id="permissions"
-                    name="permissions"
-                    placeholder="e.g. view reports, manage users"
-                    value={formData.permissions.join(", ")}
-                    onChange={handleChange}
-                    invalid={!!errors.permissions}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  <small className="text-muted" style={{ fontSize: "11px" }}>
-                    Separate each permission with a comma.
-                  </small>
-                  {errors.permissions && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.permissions}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
+              {/* File Input */}
+              <div className="text-center">
+                <Input
+                  id="profileImage"
+                  type="file"
+                  name="profileImage"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleChange}
+                  className="form-control form-control-sm shadow-sm mx-auto"
+                  style={{ maxWidth: "250px" }}
+                />
+                <small className="text-muted d-block mt-1" style={{ fontSize: "12px" }}>
+                  JPG, PNG or WEBP. Max 2MB.
+                </small>
+              </div>
+            </div>
 
-              {/* CONTROLS */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="controls" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Controls{" "}
-                    <small className="text-muted fw-normal">(comma separated)</small>
-                  </Label>
-                  <Input
-                    id="controls"
-                    name="controls"
-                    placeholder="e.g. dashboard, reports, users"
-                    value={formData.controls.join(", ")}
-                    onChange={handleChange}
-                    invalid={!!errors.controls}
-                    autoComplete="off"
-                    style={{ fontSize: "14px" }}
-                  />
-                  <small className="text-muted" style={{ fontSize: "11px" }}>
-                    Separate each control with a comma.
-                  </small>
-                  {errors.controls && (
-                    <div className="invalid-feedback d-block" style={{ fontSize: "12px" }}>
-                      {errors.controls}
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
-            </Row>
+            {/* FORM FIELDS GRID */}
+            <div className="bg-white p-4 rounded-3 shadow-sm border">
+              <Row className="g-4">
 
-            <Row>
-              {/* PROFILE IMAGE */}
-              <Col md={6}>
-                <FormGroup>
-                  <Label for="profileImage" className="fw-semibold" style={{ fontSize: "13px" }}>
-                    Profile Photo
-                  </Label>
-                  <Input
-                    id="profileImage"
-                    type="file"
-                    name="profileImage"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleChange}
-                    style={{ fontSize: "14px" }}
-                  />
-                  <small className="text-muted" style={{ fontSize: "11px" }}>
-                    JPG, PNG or WEBP. Max 2MB.
-                  </small>
-
-                  {imagePreview && (
-                    <div className="mt-2 d-flex align-items-center gap-2">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="rounded"
-                        style={{
-                          width: 72,
-                          height: 72,
-                          objectFit: "cover",
-                          border: "2px solid #dee2e6",
-                          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        color="outline-danger"
-                        style={{ fontSize: "12px" }}
-                        onClick={() => {
-                          setImagePreview(null);
-                          setFormData((prev) => ({ ...prev, profileImage: null }));
-                        }}
-                      >
-                        ✕ Remove
-                      </Button>
-                    </div>
-                  )}
-                </FormGroup>
-              </Col>
-
-              {/* STATUS — only on edit */}
-              {editing && (
-                <Col md={6}>
-                  <FormGroup>
-                    <Label for="status" className="fw-semibold" style={{ fontSize: "13px" }}>
-                      Status
+                {/* NAME */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="name" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Full Name <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="status"
-                      type="select"
-                      name="status"
-                      value={formData.status}
+                      id="name"
+                      name="name"
+                      placeholder="e.g. Rajesh Kumar"
+                      value={formData.name}
                       onChange={handleChange}
-                      style={{ fontSize: "14px" }}
+                      invalid={!!errors.name}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+                  </FormGroup>
+                </Col>
+
+                {/* EMAIL */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="email" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Email Address <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      name="email"
+                      placeholder="e.g. officer@gov.in"
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={!!editing}
+                      invalid={!!errors.email}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {editing && <small className="text-info" style={{ fontSize: "11px" }}>Email cannot be changed after creation.</small>}
+                    {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  </FormGroup>
+                </Col>
+
+                {/* MOBILE */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="mobile" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Mobile Number <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      id="mobile"
+                      name="mobile"
+                      placeholder="e.g. 9876543210"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      invalid={!!errors.mobile}
+                      maxLength={13}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {errors.mobile && <div className="invalid-feedback">{errors.mobile}</div>}
+                  </FormGroup>
+                </Col>
+
+                {/* DESIGNATION */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="userDeginations" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Designation <span className="text-danger">*</span>
+                    </Label>
+                    <Input
+                      id="userDeginations"
+                      name="userDeginations"
+                      placeholder="e.g. District Officer"
+                      value={formData.userDeginations}
+                      onChange={handleChange}
+                      invalid={!!errors.userDeginations}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {errors.userDeginations && <div className="invalid-feedback">{errors.userDeginations}</div>}
+                  </FormGroup>
+                </Col>
+
+                {/* PASSWORD (Only on create) */}
+                {!editing && (
+                  <Col md={4}>
+                    <FormGroup className="mb-0">
+                      <Label for="password" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                        Password <span className="text-danger">*</span>
+                      </Label>
+                      <div className="position-relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          placeholder="Min 8 chars, A-Z, 0-9, @$!%*?&"
+                          value={formData.password}
+                          onChange={handleChange}
+                          invalid={!!errors.password}
+                          autoComplete="new-password"
+                          className="shadow-sm"
+                          style={{ paddingRight: "2.5rem" }}
+                        />
+                        <span
+                          role="button"
+                          onClick={() => setShowPassword((p) => !p)}
+                          className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"
+                          style={{ cursor: "pointer", zIndex: 5 }}
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </span>
+                      </div>
+                      {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
+                    </FormGroup>
+                  </Col>
+                )}
+
+                {/* ROLE */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="role" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Role Allocation -
+                    </Label>
+                    <Input
+                      id="role"
+                      type="select"
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className="shadow-sm cursor-pointer"
                     >
-                      <option value="PENDING">Pending</option>
-                      <option value="APPROVED">Approved</option>
-                      <option value="REJECTED">Rejected</option>
+                      <option value="OFFICER">Officer</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="SUPERADMIN">Super Admin</option>
                     </Input>
                   </FormGroup>
                 </Col>
-              )}
-            </Row>
-<Row>
-  <Col md={6}>
-              <FormGroup>
-                <Label className="fw-bold mb-2">Status</Label>
-                <Input
-                  type="select"
-                  name="isActive"
-                  value={formData.isActive}
-                  onChange={handleChange}
-                  className={`shadow-sm border-2 ${formData.isActive === "true"
-                    ? "border-success text-success"
-                    : formData.isActive === "false"
-                      ? "border-danger text-danger"
-                      : "border-secondary"
-                    }`}
-                  style={{
-                    borderRadius: "12px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="">🟡 Select Status</option>
-                  <option value="true">🟢 Active</option>
-                  <option value="false">🔴 Inactive</option>
-                </Input>
-              </FormGroup>
-            </Col>
-</Row>
+
+                {/* PERMISSIONS (Full Width) */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="permissions" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Permissions <small className="text-muted fw-normal">(Comma separated)</small>
+                    </Label>
+                    <Input
+                      id="permissions"
+                      name="permissions"
+                      placeholder="e.g. view_reports, manage_users, edit_data"
+                      value={formData.permissions.join(", ")}
+                      onChange={handleChange}
+                      invalid={!!errors.permissions}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {errors.permissions && <div className="invalid-feedback">{errors.permissions}</div>}
+                  </FormGroup>
+                </Col>
+
+                {/* CONTROLS (Full Width) */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="controls" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Controls <small className="text-muted fw-normal">(Comma separated)</small>
+                    </Label>
+                    <Input
+                      id="controls"
+                      name="controls"
+                      placeholder="e.g. dashboard, reports, users"
+                      value={formData.controls.join(", ")}
+                      onChange={handleChange}
+                      invalid={!!errors.controls}
+                      autoComplete="off"
+                      className="shadow-sm"
+                    />
+                    {errors.controls && <div className="invalid-feedback">{errors.controls}</div>}
+                  </FormGroup>
+                </Col>
+
+
+                {/* ACTIVE STATUS (Always visible) */}
+                <Col md={editing ? 4 : 4}>
+                  <FormGroup className="mb-0">
+                    <Label className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      System Access (Active/Inactive)
+                    </Label>
+                    <Input
+                      type="select"
+                      name="isActive"
+                      value={formData.isActive}
+                      onChange={handleChange}
+                      className={`shadow-sm fw-semibold cursor-pointer ${formData.isActive === "true" ? "text-success border-success bg-success bg-opacity-10" :
+                        formData.isActive === "false" ? "text-danger border-danger bg-danger bg-opacity-10" : ""
+                        }`}
+                    >
+                      <option value="">🟡 Select Status</option>
+                      <option value="true">🟢 Active (Allowed)</option>
+                      <option value="false">🔴 Inactive (Blocked)</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+
+                {/* APPROVAL STATUS (Only visible on Edit) */}
+                {editing && (
+                  <Col md={6}>
+                    <FormGroup className="mb-0">
+                      <Label for="status" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                        Approval Status
+                      </Label>
+                      <Input
+                        id="status"
+                        type="select"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="shadow-sm cursor-pointer"
+                      >
+                        <option value="PENDING">⏳ Pending</option>
+                        <option value="APPROVED">✅ Approved</option>
+                        <option value="REJECTED">❌ Rejected</option>
+                      </Input>
+                    </FormGroup>
+                  </Col>
+                )}
+
+              </Row>
+            </div>
           </ModalBody>
 
-          <ModalFooter className="bg-light border-top">
+          {/* FOOTER */}
+          <ModalFooter className="bg-white border-top shadow-sm">
             <Button
               color="secondary"
               outline
               type="button"
               onClick={closeModal}
               disabled={submitting}
-              style={{ fontSize: "14px" }}
+              className="px-4"
             >
               Cancel
             </Button>
@@ -990,11 +942,11 @@ const API_URL = import.meta.env.VITE_API_URL;
               color="primary"
               type="submit"
               disabled={submitting}
-              style={{ fontSize: "14px", minWidth: "140px" }}
+              className="px-4 d-flex align-items-center shadow-sm"
             >
               {submitting ? (
                 <>
-                  <Spinner size="sm" className="me-1" />
+                  <Spinner size="sm" className="me-2" />
                   {editing ? "Saving..." : "Creating..."}
                 </>
               ) : (
