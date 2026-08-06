@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   Card,
   CardBody,
@@ -18,11 +18,44 @@ import {
   TabPane,
   CardHeader
 } from "reactstrap";
-import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaLink, FaArrowLeft, FaList } from "react-icons/fa";
+import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaArrowLeft, FaList } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+
+const STORAGE_KEYS = {
+  tab: "announcements_active_tab",
+  editingId: "announcements_editing_id",
+  formData: "announcements_form_data"
+};
+
+const initialState = {
+  titleEn: "",
+  titleHi: "",
+  slug: "",
+  shortDescriptionEn: "",
+  shortDescriptionHi: "",
+  descriptionEn: "",
+  descriptionHi: "",
+  categoryId: "",
+  image: null,
+  fromDate: "",
+  expiryDate: "",
+  displayOrder: 0,
+  isSchemes: false,
+  isActive: true
+};
+
+// Safe JSON reader for sessionStorage
+const readStoredJSON = (key, fallback) => {
+  try {
+    const raw = sessionStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
@@ -30,55 +63,62 @@ const AnnouncementsManagement = () => {
   const token = sessionStorage.getItem("authToken");
   const isSubmittingRef = useRef(false);
 
-  const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = sessionStorage.getItem("announcements_active_tab");
-    return savedTab || "list";
+  // ── Restore everything needed to reconstruct the exact UI state on reload ──
+  const [activeTab, setActiveTab] = useState(
+    () => sessionStorage.getItem(STORAGE_KEYS.tab) || "list"
+  );
+  const [editingId, setEditingId] = useState(
+    () => sessionStorage.getItem(STORAGE_KEYS.editingId) || null
+  );
+  const [formData, setFormData] = useState(() => {
+    const stored = readStoredJSON(STORAGE_KEYS.formData, null);
+    // 'image' is a File object and can never be restored from storage
+    return stored ? { ...initialState, ...stored, image: null } : initialState;
   });
 
   const [announcements, setAnnouncements] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [usedOrders, setUsedOrders] = useState([]);
-  const [editingId, setEditingId] = useState(null);
 
-  // ── descriptionEn / descriptionHi now live inside formData ──
-  const initialState = {
-    titleEn: "",
-    titleHi: "",
-    slug: "",
-    shortDescriptionEn: "",
-    shortDescriptionHi: "",
-    descriptionEn: "",
-    descriptionHi: "",
-    categoryId: "",
-    image: null,
-    fromDate: "",
-    expiryDate: "",
-    displayOrder: 0,
-    isSchemes: false,
-    isActive: true
-  };
+  // ── Persist state to sessionStorage whenever it changes ──
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEYS.tab, activeTab);
+  }, [activeTab]);
 
-  const [formData, setFormData] = useState(initialState);
+  useEffect(() => {
+    if (editingId) {
+      sessionStorage.setItem(STORAGE_KEYS.editingId, editingId);
+    } else {
+      sessionStorage.removeItem(STORAGE_KEYS.editingId);
+    }
+  }, [editingId]);
 
-  const generateSlug = (text) =>
-    text
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+  useEffect(() => {
+    const { image, ...serializable } = formData; // eslint-disable-line no-unused-vars
+    sessionStorage.setItem(STORAGE_KEYS.formData, JSON.stringify(serializable));
+  }, [formData]);
 
-  const fetchCategories = async () => {
+  const generateSlug = useCallback(
+    (text) =>
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, ""),
+    []
+  );
+
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/api/get-categories`);
       setCategories(res.data.data || []);
     } catch {
       console.error("Failed to load categories");
     }
-  };
+  }, [API]);
 
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/api/get-announcements-list`, {
@@ -92,14 +132,10 @@ const AnnouncementsManagement = () => {
         expiryDate: item.expiryDate ? item.expiryDate.split("T")[0] : "",
         categoryId: item.categoryId || null,
         isActive: item.isActive !== false,
-        isSchemes: !!item.isSchemes,
+        isSchemes: !!item.isSchemes
       }));
 
       setAnnouncements(list);
-      const orders = list
-        .map((a) => Number(a.displayOrder))
-        .filter((o) => !isNaN(o));
-      setUsedOrders(orders);
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -109,183 +145,240 @@ const AnnouncementsManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API, token, isHindi]);
 
   useEffect(() => {
     fetchAnnouncements();
     fetchCategories();
-  }, [API, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
 
-  const handleTabChange = (tab) => {
+  const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
-    sessionStorage.setItem("announcements_active_tab", tab);
-  };
+  }, []);
 
-  const getNextAvailableOrder = (requested, usedOrders) => {
+  // ── Derived value: recompute only when announcements or the scheme flag change ──
+  const usedOrders = useMemo(() => {
+    return announcements
+      .filter((a) => a.isSchemes === formData.isSchemes)
+      .map((a) => Number(a.displayOrder))
+      .filter((o) => !isNaN(o) && o !== 0);
+  }, [announcements, formData.isSchemes]);
+
+  const getNextAvailableOrder = useCallback((requested, used) => {
     let order = requested;
-    while (usedOrders.includes(order)) order++;
+    while (used.includes(order)) order++;
     return order;
-  };
+  }, []);
 
-  useEffect(() => {
-    const schemeOrders = announcements
-      .filter(a => a.isSchemes === formData.isSchemes)
-      .map(a => Number(a.displayOrder))
-      .filter(Boolean);
-    setUsedOrders(schemeOrders);
-  }, [formData.isSchemes, announcements]);
-
-  const handleAddNew = () => {
+  const handleAddNew = useCallback(() => {
     setEditingId(null);
     setFormData(initialState);
     handleTabChange("form");
-  };
+  }, [handleTabChange]);
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     handleTabChange("list");
     setEditingId(null);
     setFormData(initialState);
     fetchAnnouncements();
-  };
+  }, [handleTabChange, fetchAnnouncements]);
 
-  const handleEdit = (item) => {
-    if (!item) return;
-    const itemId = item._id;
-    if (!itemId) return;
+  const handleEdit = useCallback(
+    (item) => {
+      if (!item) return;
+      const itemId = item._id;
+      if (!itemId) return;
 
-    setEditingId(itemId);
-    setFormData({
-      titleEn: item.titleEn || "",
-      titleHi: item.titleHi || "",
-      slug: item.slug || "",
-      shortDescriptionEn: item.shortDescriptionEn || "",
-      shortDescriptionHi: item.shortDescriptionHi || "",
-      descriptionEn: item.descriptionEn || "",
-      descriptionHi: item.descriptionHi || "",
-      categoryId: item.categoryId?._id || "",
-      image: null,
-      fromDate: item.fromDate,
-      expiryDate: item.expiryDate,
-      displayOrder: item.displayOrder !== undefined && item.displayOrder !== null ? String(item.displayOrder) : "",
-      isSchemes: !!item.isSchemes,
-      isActive: item.isActive !== false
-    });
-    handleTabChange("form");
-  };
-
-  const handleDelete = async (id) => {
-    const confirm = await Swal.fire({
-      title: isHindi ? "क्या आप निश्चित हैं?" : "Are you sure?",
-      text: isHindi ? "यह घोषणा हटा दी जाएगी!" : "This announcement will be deleted!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: isHindi ? "हाँ, हटाएं" : "Yes, Delete",
-      cancelButtonText: isHindi ? "रद्द करें" : "Cancel"
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-      await axios.delete(`${API}/api/delete-announcement/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      setEditingId(itemId);
+      setFormData({
+        titleEn: item.titleEn || "",
+        titleHi: item.titleHi || "",
+        slug: item.slug || "",
+        shortDescriptionEn: item.shortDescriptionEn || "",
+        shortDescriptionHi: item.shortDescriptionHi || "",
+        descriptionEn: item.descriptionEn || "",
+        descriptionHi: item.descriptionHi || "",
+        categoryId: item.categoryId?._id || "",
+        image: null,
+        fromDate: item.fromDate,
+        expiryDate: item.expiryDate,
+        displayOrder:
+          item.displayOrder !== undefined && item.displayOrder !== null
+            ? String(item.displayOrder)
+            : "",
+        isSchemes: !!item.isSchemes,
+        isActive: item.isActive !== false
       });
-      Swal.fire({
-        icon: "success",
-        title: isHindi ? "हटाया गया!" : "Deleted!",
-        text: "Announcement deleted successfully",
-        timer: 2000,
-        showConfirmButton: false
-      });
-      fetchAnnouncements();
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: isHindi ? "त्रुटि" : "Error",
-        text: err.response?.data?.message || "Delete failed"
-      });
-    }
-  };
+      handleTabChange("form");
+    },
+    [handleTabChange]
+  );
+  const handleImageChange = useCallback((e) => {
+    const file = e.target.files[0];
 
-  // ── handleSubmit: guarded against double-fires + uses formData.descriptionEn/Hi ──
-  const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-
-    // Prevent duplicate/auto submissions firing back-to-back
-    if (isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
-
-    setSubmitting(true);
-
-    const fd = new FormData();
-
-    Object.keys(formData).forEach((key) => {
-      if (key === "image") return;
-      const value = formData[key];
-      if (value === null || value === undefined) return;
-      if (typeof value === "boolean") {
-        fd.append(key, value.toString());
-      } else {
-        fd.append(key, value);
-      }
-    });
-
-    if (formData.image && formData.image instanceof File) {
-      fd.append('image', formData.image);
+    // Clear previous image if no file selected
+    if (!file) {
+      setFormData((prev) => ({ ...prev, image: null }));
+      return;
     }
 
-    try {
-      let res;
-      if (editingId) {
-        res = await axios.put(`${API}/api/update-announcement/${editingId}`, fd, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`
-          }
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      Swal.fire({
+        icon: 'error',
+        title: isHindi ? 'अमान्य फ़ाइल प्रकार' : 'Invalid File Type',
+        text: isHindi
+          ? 'कृपया केवल JPG, JPEG, या PNG फ़ाइलें अपलोड करें'
+          : 'Please upload only JPG, JPEG, or PNG files',
+      });
+      e.target.value = ''; // Reset file input
+      return;
+    }
+
+    // Validate file size (520 KB = 520 * 1024 bytes)
+    const maxSize = 520 * 1024;
+    if (file.size > maxSize) {
+      const fileSizeKB = (file.size / 1024).toFixed(2);
+      Swal.fire({
+        icon: 'error',
+        title: isHindi ? 'फ़ाइल बहुत बड़ी है' : 'File Too Large',
+        text: isHindi
+          ? `फ़ाइल का आकार ${fileSizeKB} KB है। कृपया 520 KB से कम की फ़ाइल अपलोड करें।`
+          : `File size is ${fileSizeKB} KB. Please upload a file smaller than 520 KB.`,
+      });
+      e.target.value = ''; // Reset file input
+      return;
+    }
+
+    // If validation passes, set the file
+    setFormData((prev) => ({ ...prev, image: file }));
+  }, [isHindi]);
+  const handleDelete = useCallback(
+    async (id) => {
+      const confirm = await Swal.fire({
+        title: isHindi ? "क्या आप निश्चित हैं?" : "Are you sure?",
+        text: isHindi ? "यह घोषणा हटा दी जाएगी!" : "This announcement will be deleted!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: isHindi ? "हाँ, हटाएं" : "Yes, Delete",
+        cancelButtonText: isHindi ? "रद्द करें" : "Cancel"
+      });
+
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await axios.delete(`${API}/api/delete-announcement/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
         Swal.fire({
           icon: "success",
-          title: isHindi ? "अपडेट किया गया!" : "Updated!",
-          text: res.data?.message || "Announcement updated successfully",
+          title: isHindi ? "हटाया गया!" : "Deleted!",
+          text: "Announcement deleted successfully",
           timer: 2000,
           showConfirmButton: false
         });
-      } else {
-        res = await axios.post(`${API}/api/create-announcement`, fd, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`
-          }
-        });
+        fetchAnnouncements();
+      } catch (err) {
         Swal.fire({
-          icon: "success",
-          title: isHindi ? "बनाया गया!" : "Created!",
-          text: res.data?.message || "Announcement created successfully",
-          timer: 2000,
-          showConfirmButton: false
+          icon: "error",
+          title: isHindi ? "त्रुटि" : "Error",
+          text: err.response?.data?.message || "Delete failed"
         });
       }
+    },
+    [token, isHindi, fetchAnnouncements]
+  );
 
-      handleBackToList();
-    } catch (err) {
-      console.error("Submit error:", err.response?.data || err.message);
-      Swal.fire({
-        icon: "error",
-        title: isHindi ? "त्रुटि" : "Error",
-        text: err.response?.data?.message || err.message || "Operation failed"
+  const handleSubmit = useCallback(
+    async (e) => {
+      if (e) e.preventDefault();
+
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
+      setSubmitting(true);
+
+      const fd = new FormData();
+
+      Object.keys(formData).forEach((key) => {
+        if (key === "image") return;
+        const value = formData[key];
+        if (value === null || value === undefined) return;
+        if (typeof value === "boolean") {
+          fd.append(key, value.toString());
+        } else {
+          fd.append(key, value);
+        }
       });
-    } finally {
-      setSubmitting(false);
-      isSubmittingRef.current = false;
-    }
-  };
+
+      if (formData.image && formData.image instanceof File) {
+        fd.append("image", formData.image);
+      }
+
+      try {
+        let res;
+        if (editingId) {
+          res = await axios.put(`${API}/api/update-announcement/${editingId}`, fd, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            }
+          });
+          Swal.fire({
+            icon: "success",
+            title: isHindi ? "अपडेट किया गया!" : "Updated!",
+            text: res.data?.message || "Announcement updated successfully",
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          res = await axios.post(`${API}/api/create-announcement`, fd, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            }
+          });
+          Swal.fire({
+            icon: "success",
+            title: isHindi ? "बनाया गया!" : "Created!",
+            text: res.data?.message || "Announcement created successfully",
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+        // Clear session storage
+        sessionStorage.removeItem(STORAGE_KEYS.editingId);
+        sessionStorage.removeItem(STORAGE_KEYS.formData);
+        sessionStorage.removeItem(STORAGE_KEYS.tab);
+
+        // Full page reload after a small delay to show success message
+        setTimeout(() => {
+          window.location.reload();
+        }, 1600);
+        handleBackToList();
+      } catch (err) {
+        console.error("Submit error:", err.response?.data || err.message);
+        Swal.fire({
+          icon: "error",
+          title: isHindi ? "त्रुटि" : "Error",
+          text: err.response?.data?.message || err.message || "Operation failed"
+        });
+      } finally {
+        setSubmitting(false);
+        isSubmittingRef.current = false;
+      }
+    },
+    [formData, editingId, API, token, isHindi, handleBackToList]
+  );
 
   return (
     <Card className=" ">
       <CardHeader>
-        <div  className="d-flex justify-content-between align-items-center p-2">
-          <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3" >
+        <div className="d-flex justify-content-between align-items-center p-2">
+          <h4 className="mb-0 text-white d-flex align-items-center  fs-3 fw-3">
             <FaBullhorn className="me-2 " />
             {isHindi ? "घोषणाएं प्रबंधन" : "Announcements Management"}
           </h4>
@@ -296,10 +389,8 @@ const AnnouncementsManagement = () => {
             </Button>
           )}
         </div>
-
       </CardHeader>
-      <CardBody >
-
+      <CardBody>
         <Nav tabs className="mb-3">
           <NavItem>
             <NavLink
@@ -326,7 +417,13 @@ const AnnouncementsManagement = () => {
               style={{ cursor: "pointer" }}
             >
               <FaBullhorn className="me-2" />
-              {editingId ? (isHindi ? "घोषणा संपादित करें" : "Edit Announcement") : (isHindi ? "नई घोषणा" : "New Announcement")}
+              {editingId
+                ? isHindi
+                  ? "घोषणा संपादित करें"
+                  : "Edit Announcement"
+                : isHindi
+                  ? "नई घोषणा"
+                  : "New Announcement"}
             </NavLink>
           </NavItem>
         </Nav>
@@ -392,13 +489,7 @@ const AnnouncementsManagement = () => {
                           </td>
                           <td>
                             <div className="d-flex align-items-center" style={{ gap: "8px" }}>
-                              <Button
-                                size="sm"
-                                color="info"
-                                onClick={() => handleEdit(item)}
-                                title="Edit"
-                                type="button"
-                              >
+                              <Button size="sm" color="info" onClick={() => handleEdit(item)} title="Edit" type="button">
                                 <FaEdit />
                               </Button>
                               <Button
@@ -423,70 +514,38 @@ const AnnouncementsManagement = () => {
 
           {/* FORM TAB */}
           <TabPane tabId="form">
-
             <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-              <Button
-                color="link"
-                onClick={handleBackToList}
-                className="p-0 text-decoration-none fw-semibold"
-                type="button"
-              >
+              <Button color="link" onClick={handleBackToList} className="p-0 text-decoration-none fw-semibold" type="button">
                 <FaArrowLeft className="me-2" />
                 {isHindi ? "सूची पर वापस जाएं" : "Back to List"}
               </Button>
 
               <div className="d-flex gap-2">
-                <Button
-                  color="light"
-                  className="border"
-                  onClick={handleBackToList}
-                  disabled={submitting}
-                  type="button"
-                >
+                <Button color="light" className="border" onClick={handleBackToList} disabled={submitting} type="button">
                   {isHindi ? "रद्द करें" : "Cancel"}
                 </Button>
-                <Button
-                  color="primary"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  type="button"
-                >
+                <Button color="primary" onClick={handleSubmit} disabled={submitting} type="button">
                   {submitting ? (
                     <>
                       <Spinner size="sm" className="me-2" />
                       Processing...
                     </>
+                  ) : editingId ? (
+                    "Update"
                   ) : (
-                    <>
-                      {editingId ? "Update" : "Create"}
-                    </>
+                    "Create"
                   )}
                 </Button>
               </div>
             </div>
 
-            {/*
-              IMPORTANT FIX:
-              Changed <Form> (a native <form> tag with no onSubmit handler)
-              to a plain <div>. Any internal button inside
-              DynamicContentEditor (e.g. an EN/HI language toggle) that
-              doesn't set type="button" was previously treated as a
-              type="submit" button. Inside a real <form> with no onSubmit
-              handler, clicking it triggered the browser's native form
-              submission -> full page reload, wiping all state.
-              Using a <div> here removes the native <form> element
-              entirely, so no nested button can ever trigger that
-              native submit/reload behavior. The actual save still
-              happens only via the explicit "Create"/"Update" button's
-              onClick={handleSubmit} above.
-            */}
-            <div onKeyDown={(e) => {
-              // Extra safety: pressing Enter anywhere in the form
-              // (e.g. inside an input or the editor) should never submit.
-              if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
-                e.preventDefault();
-              }
-            }}>
+            <div
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+                  e.preventDefault();
+                }
+              }}
+            >
               <Row>
                 <Col md={6}>
                   <FormGroup>
@@ -498,11 +557,11 @@ const AnnouncementsManagement = () => {
                       name="titleEn"
                       value={formData.titleEn}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
+                        setFormData((prev) => ({
+                          ...prev,
                           titleEn: e.target.value,
                           slug: generateSlug(e.target.value)
-                        })
+                        }))
                       }
                       placeholder="Enter English title"
                     />
@@ -518,7 +577,7 @@ const AnnouncementsManagement = () => {
                       required
                       value={formData.titleHi}
                       name="titleHi"
-                      onChange={(e) => setFormData({ ...formData, titleHi: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, titleHi: e.target.value }))}
                       placeholder="हिंदी शीर्षक दर्ज करें"
                     />
                   </FormGroup>
@@ -535,9 +594,7 @@ const AnnouncementsManagement = () => {
                       required
                       rows="3"
                       value={formData.shortDescriptionEn}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionEn: e.target.value })
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, shortDescriptionEn: e.target.value }))}
                       placeholder="Brief description in English"
                     />
                   </FormGroup>
@@ -552,9 +609,7 @@ const AnnouncementsManagement = () => {
                       required
                       rows="3"
                       value={formData.shortDescriptionHi}
-                      onChange={(e) =>
-                        setFormData({ ...formData, shortDescriptionHi: e.target.value })
-                      }
+                      onChange={(e) => setFormData((prev) => ({ ...prev, shortDescriptionHi: e.target.value }))}
                       placeholder="हिंदी में संक्षिप्त विवरण"
                     />
                   </FormGroup>
@@ -577,7 +632,7 @@ const AnnouncementsManagement = () => {
                       type="select"
                       required
                       value={formData.categoryId}
-                      onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
                     >
                       <option value="">-- Select Category --</option>
                       {categories.map((cat) => (
@@ -597,17 +652,42 @@ const AnnouncementsManagement = () => {
                     <Input
                       type="file"
                       accept=".jpg,.jpeg,.png"
-                      onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
+                      onChange={handleImageChange}
                     />
                     <small className="text-muted">Optional - Leave empty to keep existing</small>
+
+                    {/* Show file info if image is selected */}
+                    {formData.image && (
+                      <div className="mt-2">
+                        <Badge color="success" className="me-2">
+                          <FaImage className="me-1" />
+                          File Selected
+                        </Badge>
+                        <small className="text-muted">
+                          {(formData.image.size / 1024).toFixed(2)} KB
+                        </small>
+                        <Button
+                          size="sm"
+                          color="danger"
+                          className="ms-2"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, image: null }));
+                            // Reset file input
+                            const fileInput = document.querySelector('input[type="file"]');
+                            if (fileInput) fileInput.value = '';
+                          }}
+                          type="button"
+                        >
+                          <FaTrash className="me-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    )}
                   </FormGroup>
                 </Col>
               </Row>
 
-
-
               <Row>
-
                 <Col md={4}>
                   <FormGroup>
                     <Label className="fw-semibold">Display Order</Label>
@@ -620,19 +700,17 @@ const AnnouncementsManagement = () => {
                       onChange={(e) => {
                         const val = Number(e.target.value);
                         if (!val) {
-                          setFormData({ ...formData, displayOrder: "" });
+                          setFormData((prev) => ({ ...prev, displayOrder: "" }));
                           return;
                         }
                         const nextOrder = getNextAvailableOrder(val, usedOrders);
-                        setFormData({
-                          ...formData,
+                        setFormData((prev) => ({
+                          ...prev,
                           displayOrder: String(nextOrder)
-                        });
+                        }));
                       }}
                     />
-                    <small className="text-muted">
-                      If entered order exists, next available order is auto-selected
-                    </small>
+                    <small className="text-muted">If entered order exists, next available order is auto-selected</small>
                   </FormGroup>
                 </Col>
                 <Col md={4}>
@@ -645,7 +723,7 @@ const AnnouncementsManagement = () => {
                       name="fromDate"
                       required
                       value={formData.fromDate}
-                      onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, fromDate: e.target.value }))}
                     />
                   </FormGroup>
                 </Col>
@@ -659,12 +737,10 @@ const AnnouncementsManagement = () => {
                       required
                       name="expiryDate"
                       value={formData.expiryDate}
-                      onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, expiryDate: e.target.value }))}
                     />
                   </FormGroup>
                 </Col>
-
-
               </Row>
               <hr className="my-4" />
               <h6 className="mb-3 text-primary">Options</h6>
@@ -676,7 +752,7 @@ const AnnouncementsManagement = () => {
                       type="checkbox"
                       id="isActive"
                       checked={formData.isActive}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
                     />
                     <Label check for="isActive" className="fw-semibold">
                       Is Active
@@ -690,17 +766,15 @@ const AnnouncementsManagement = () => {
                       type="checkbox"
                       id="isSchemes"
                       checked={formData.isSchemes}
-                      onChange={(e) => setFormData({ ...formData, isSchemes: e.target.checked })}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, isSchemes: e.target.checked }))}
                     />
                     <Label check for="isSchemes" className="fw-semibold">
                       Is Schemes
                     </Label>
                   </FormGroup>
                 </Col>
-
-
               </Row>
-              {/* DynamicContentEditor */}
+
               <Row>
                 <Col md={12}>
                   <FormGroup className="mb-3">
@@ -725,8 +799,6 @@ const AnnouncementsManagement = () => {
                   </FormGroup>
                 </Col>
               </Row>
-
-
             </div>
           </TabPane>
         </TabContent>
