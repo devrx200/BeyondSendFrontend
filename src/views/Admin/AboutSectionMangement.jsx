@@ -48,7 +48,8 @@ const AboutSectionMangement = () => {
     aboutContentHin: "",
     order: "",
     image: null,
-    isActive: true
+    isActive: true,
+    isShowOnHeader: true
   });
 
   const loadList = async () => {
@@ -84,7 +85,8 @@ const AboutSectionMangement = () => {
       aboutContentHin: "",
       order: "",
       image: null,
-      isActive: true
+      isActive: true,
+      isShowOnHeader: true
     });
     setImagePreview(null);
   };
@@ -301,7 +303,8 @@ const AboutSectionMangement = () => {
       aboutContentHin: item.aboutContentHin,
       order: item.order ?? "",
       image: null,
-      isActive: item.isActive
+      isActive: item.isActive,
+      isShowOnHeader: item.isShowOnHeader ?? true
     });
     setImagePreview(item.profileUrl ? `${API_URL}${item.profileUrl}` : null);
     setModal(true);
@@ -415,6 +418,7 @@ const AboutSectionMangement = () => {
                 <th>About</th>
                 <th>Order</th>
                 <th>Status</th>
+                <th>Show on Header</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -447,6 +451,11 @@ const AboutSectionMangement = () => {
                           ? (item.isActive ? "सक्रिय" : "निष्क्रिय")
                           : (item.isActive ? "Active" : "Inactive")
                         }
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge color={item.isShowOnHeader !== false ? "info" : "secondary"}>
+                        {item.isShowOnHeader !== false ? "Yes" : "No"}
                       </Badge>
                     </td>
                     <td>
@@ -584,6 +593,13 @@ const AboutSectionMangement = () => {
                     <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })}>
                       <option value="true">✅ Active</option>
                       <option value="false">⛔ Inactive</option>
+                    </Input>
+                  </Col>
+                  <Col xs={6}>
+                    <Label className="fw-semibold small">Show on Header</Label>
+                    <Input type="select" name="isShowOnHeader" value={form.isShowOnHeader} onChange={e => setForm({ ...form, isShowOnHeader: e.target.value })}>
+                      <option value="true">✅ Yes</option>
+                      <option value="false">⛔ No</option>
                     </Input>
                   </Col>
                 </Row>

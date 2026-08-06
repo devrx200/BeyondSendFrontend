@@ -138,7 +138,7 @@ const Header = () => {
       try {
         const res = await axios.get(`${API_URL}/api/get-about-sections`);
         const filteredAndSorted = (res.data?.departmentLeaderProfiles || [])
-          .filter(item => item.isActive === true)
+          .filter(item => item.isActive === true && item.isShowOnHeader !== false)
           .sort((a, b) => (a.order || 0) - (b.order || 0))
           .slice(0, 3);
         setLeaderProfiles(filteredAndSorted);

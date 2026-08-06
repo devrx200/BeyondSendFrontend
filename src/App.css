@@ -3401,8 +3401,8 @@ main {
 }
 
 .leader-profile-img {
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   display: block;
   border-radius: 50%;
   overflow: hidden;
@@ -3415,13 +3415,13 @@ main {
 
 .leader-profile-name {
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: #0B3D91;
   line-height: 1.2;
 }
 
 .leader-profile-designation {
-  font-size: 0.70rem;
+  font-size: 0.8rem;
   color: #555;
   line-height: 1.2;
 }
@@ -3434,18 +3434,18 @@ main {
   }
 
   .leader-profile-img {
-    height: 36px !important;
-    width: 36px !important;
+    height: 56px !important;
+    width: 56px !important;
   }
 
   .leader-profile-name {
-    font-size: 0.68rem !important;
+    font-size: 0.85rem !important;
     line-height: 1.15 !important;
     font-weight: 700 !important;
   }
 
   .leader-profile-designation {
-    font-size: 0.60rem !important;
+    font-size: 0.70rem !important;
     line-height: 1.15 !important;
     color: #4b5563 !important;
   }
@@ -3457,17 +3457,17 @@ main {
   }
 
   .leader-profile-img {
-    height: 32px !important;
-    width: 32px !important;
+    height: 44px !important;
+    width: 44px !important;
   }
 
   .leader-profile-name {
-    font-size: 0.62rem !important;
+    font-size: 0.75rem !important;
     line-height: 1.1 !important;
   }
 
   .leader-profile-designation {
-    font-size: 0.54rem !important;
+    font-size: 0.65rem !important;
     line-height: 1.1 !important;
   }
 }

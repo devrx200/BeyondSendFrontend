@@ -13,8 +13,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
-
-
+import { jwtDecode } from "jwt-decode";
 
 /* ================= INITIAL FORM ================= */
 const initialForm = {
@@ -23,7 +22,8 @@ const initialForm = {
   mobile: "",
   password: "",
   role: "OFFICER",
-  userDeginations: "",
+  employeeType: "DIRECTORATE",
+  userDesignations: "",
   permissions: [],
   controls: [],
   profileImage: null,
@@ -42,7 +42,7 @@ const PASSWORD_REGEX =
 /* ================= FIELD VALIDATOR ================= */
 const validateField = (name, value, isEditing = false) => {
   if (name === "password" && isEditing) return "";
-  if (["profileImage", "isActive", "role", "status"].includes(name)) return "";
+  if (["profileImage", "isActive", "role", "status", "employeeType"].includes(name)) return "";
 
   const trimmed = Array.isArray(value)
     ? value.join(",").trim()
@@ -57,7 +57,7 @@ const validateField = (name, value, isEditing = false) => {
       if (trimmed.length < 2)
         return "Name must be at least 2 characters.";
       break;
-    case "userDeginations":
+    case "userDesignations":
       if (!ENGLISH_TEXT_ONLY.test(trimmed))
         return "Designation must be in English letters only.";
       break;
@@ -96,7 +96,6 @@ const statusColor = (status) => {
 };
 
 const roleColor = (role) => {
-  if (role === "SUPERADMIN") return "danger";
   if (role === "ADMIN") return "primary";
   return "info";
 };
@@ -118,6 +117,11 @@ const AdminUserManagement = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
+  // Decode Token and Global Object
+  const currentUser = token ? jwtDecode(token) : null;
+  const currentEmployeeType = window.employeeType || currentUser?.employeeType || "DEPARTMENT";
+  const currentRole = window.userRole || currentUser?.role || "OFFICER";
+
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
     try {
@@ -136,7 +140,14 @@ const AdminUserManagement = () => {
   useEffect(() => { loadUsers(); }, []);
 
   /* ================= MODAL TOGGLE ================= */
-  const openModal = () => setModal(true);
+  const openModal = () => {
+    setFormData((prev) => ({
+      ...initialForm,
+      employeeType: currentEmployeeType === "DEPARTMENT" ? "DEPARTMENT" : "DIRECTORATE",
+      role: currentEmployeeType === "DEPARTMENT" ? "OFFICER" : "OFFICER"
+    }));
+    setModal(true);
+  };
   const closeModal = () => {
     setModal(false);
     setEditing(null);
@@ -163,7 +174,17 @@ const AdminUserManagement = () => {
       newValue = value;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: newValue };
+      if (name === "employeeType") {
+        if (currentEmployeeType === "DIRECTORATE" && newValue === "DEPARTMENT") {
+          updated.role = "ADMIN";
+        } else {
+          updated.role = "OFFICER";
+        }
+      }
+      return updated;
+    });
 
     const rawForValidation = Array.isArray(newValue) ? newValue.join(",") : newValue;
     const error = validateField(name, rawForValidation, !!editing);
@@ -172,7 +193,7 @@ const AdminUserManagement = () => {
 
   /* ================= FULL FORM VALIDATE ================= */
   const validateForm = () => {
-    const fieldsToValidate = ["name", "email", "mobile", "userDeginations"];
+    const fieldsToValidate = ["name", "email", "mobile", "userDesignations"];
     if (!editing) fieldsToValidate.push("password");
 
     const newErrors = {};
@@ -219,7 +240,7 @@ const AdminUserManagement = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        Swal.fire("Updated!", "Officer updated successfully.", "success");
+        Swal.fire("Updated!", "User updated successfully.", "success");
       } else {
         await axios.post(`${API_URL}/api/create-user`, payload, {
           headers: {
@@ -227,7 +248,7 @@ const AdminUserManagement = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        Swal.fire("Created!", "Officer created successfully.", "success");
+        Swal.fire("Created!", "User created successfully.", "success");
       }
 
       closeModal();
@@ -252,7 +273,8 @@ const AdminUserManagement = () => {
       mobile: user.mobile || "",
       password: "",
       role: user.role || "OFFICER",
-      userDeginations: user.userDeginations || "",
+      employeeType: user.employeeType || "DEPARTMENT",
+      userDesignations: user.userDesignations || user.userDeginations || "",
       permissions: user.permissions || [],
       controls: user.controls || [],
       profileImage: null,
@@ -270,7 +292,7 @@ const AdminUserManagement = () => {
       title: isHindi ? "क्या आप निश्चित हैं?" : "Are you sure?",
       text: isHindi
         ? "यह उपयोगकर्ता हमेशा के लिए हटाया जाएगा।"
-        : "This officer will be permanently deleted.",
+        : "This user will be permanently deleted.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -285,10 +307,10 @@ const AdminUserManagement = () => {
       await axios.delete(`${API_URL}/api/delete-user/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      Swal.fire("Deleted!", "Officer has been deleted.", "success");
+      Swal.fire("Deleted!", "User has been deleted.", "success");
       loadUsers();
     } catch {
-      Swal.fire("Error", "Failed to delete officer.", "error");
+      Swal.fire("Error", "Failed to delete user.", "error");
     }
   };
 
@@ -299,7 +321,7 @@ const AdminUserManagement = () => {
       {/* ── Gradient Header ── */}
       <CardHeader
         className="border-0 py-4"
-      // style={headerGradient}
+        style={headerGradient}
       >
         <Row className="align-items-center">
           <Col>
@@ -327,7 +349,7 @@ const AdminUserManagement = () => {
               {isHindi ? "सेशन" : "Sessions"}
             </Button>
 
-            {/* Add Officer Button */}
+            {/* Add User Button */}
             <Button
               color="light"
               size="sm"
@@ -335,7 +357,7 @@ const AdminUserManagement = () => {
               onClick={openModal}
             >
               <FaPlus />
-              {isHindi ? "नया अधिकारी" : "Add Officer"}
+              {isHindi ? "नया उपयोगकर्ता" : "Add User"}
             </Button>
           </Col>
         </Row>
@@ -509,13 +531,13 @@ const AdminUserManagement = () => {
 
                     {/* Designation */}
                     <td>
-                      {u.userDeginations ? (
+                      {u.userDesignations || u.userDeginations ? (
                         <Badge
                           color="info"
                           pill
                           style={{ fontSize: "11px" }}
                         >
-                          {u.userDeginations}
+                          {u.userDesignations || u.userDeginations}
                         </Badge>
                       ) : (
                         <span className="text-muted">—</span>
@@ -636,8 +658,8 @@ const AdminUserManagement = () => {
           }
         >
           {editing
-            ? (isHindi ? "✏️ अधिकारी संपादित करें" : "✏️ Edit Officer")
-            : (isHindi ? "➕ नया अधिकारी जोड़ें" : "➕ Add New Officer")}
+            ? (isHindi ? "✏️ उपयोगकर्ता संपादित करें" : "✏️ Edit User")
+            : (isHindi ? "➕ नया उपयोगकर्ता जोड़ें" : "➕ Add New User")}
         </ModalHeader>
 
         <Form onSubmit={handleSubmit} noValidate>
@@ -764,20 +786,20 @@ const AdminUserManagement = () => {
                 {/* DESIGNATION */}
                 <Col md={4}>
                   <FormGroup className="mb-0">
-                    <Label for="userDeginations" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                    <Label for="userDesignations" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
                       Designation <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="userDeginations"
-                      name="userDeginations"
+                      id="userDesignations"
+                      name="userDesignations"
                       placeholder="e.g. District Officer"
-                      value={formData.userDeginations}
+                      value={formData.userDesignations}
                       onChange={handleChange}
-                      invalid={!!errors.userDeginations}
+                      invalid={!!errors.userDesignations}
                       autoComplete="off"
                       className="shadow-sm"
                     />
-                    {errors.userDeginations && <div className="invalid-feedback">{errors.userDeginations}</div>}
+                    {errors.userDesignations && <div className="invalid-feedback">{errors.userDesignations}</div>}
                   </FormGroup>
                 </Col>
 
@@ -815,11 +837,33 @@ const AdminUserManagement = () => {
                   </Col>
                 )}
 
+                {/* EMPLOYEE TYPE */}
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label for="employeeType" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                      Employee Type
+                    </Label>
+                    <Input
+                      id="employeeType"
+                      type="select"
+                      name="employeeType"
+                      value={formData.employeeType}
+                      onChange={handleChange}
+                      className="shadow-sm cursor-pointer"
+                    >
+                      {currentEmployeeType === "DIRECTORATE" && (
+                        <option value="DIRECTORATE">Directorate</option>
+                      )}
+                      <option value="DEPARTMENT">Department</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
+
                 {/* ROLE */}
                 <Col md={4}>
                   <FormGroup className="mb-0">
                     <Label for="role" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      Role Allocation -
+                      Role Allocation
                     </Label>
                     <Input
                       id="role"
@@ -829,9 +873,11 @@ const AdminUserManagement = () => {
                       onChange={handleChange}
                       className="shadow-sm cursor-pointer"
                     >
-                      <option value="OFFICER">Officer</option>
-                      <option value="ADMIN">Admin</option>
-                      <option value="SUPERADMIN">Super Admin</option>
+                      {currentEmployeeType === "DIRECTORATE" && formData.employeeType === "DEPARTMENT" ? (
+                        <option value="ADMIN">Admin</option>
+                      ) : (
+                        <option value="OFFICER">Officer</option>
+                      )}
                     </Input>
                   </FormGroup>
                 </Col>
@@ -950,7 +996,7 @@ const AdminUserManagement = () => {
                   {editing ? "Saving..." : "Creating..."}
                 </>
               ) : (
-                editing ? "💾 Save Changes" : "✅ Create Officer"
+                editing ? "💾 Save Changes" : "✅ Create User"
               )}
             </Button>
           </ModalFooter>

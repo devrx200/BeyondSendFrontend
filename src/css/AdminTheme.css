@@ -390,7 +390,7 @@
   width: 32px;
 }
 
-.adm-sidebar.is-collapsed .adm-side-brand {
+.adm-sidebar.is-collapsed .adm-side-brand-text {
   display: none;
 }
 

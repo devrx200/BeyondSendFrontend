@@ -616,20 +616,21 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     <aside className={sidebarClasses}>
       {/* PROFILE SECTION */}
       <div className="adm-side-profile">
-        <div className="adm-side-brand d-flex border border-1 border-rounded p-1">
+        <div className="adm-side-brand">
           <img
-            src="/Chhattisgarh.svg"
+            src={`${import.meta.env.BASE_URL || "/"}Chhattisgarh.svg`}
             alt="Chhattisgarh Government"
             className="adm-side-brand-logo"
+            onError={e => (e.target.src = "/Chhattisgarh.svg")}
           />
-          <small
-            className="fw-bold text-white"
-            style={{ fontSize: "11px", lineHeight: "1.5" }}
-          >
-            Department of Higher Education,
-            <br />
-            Government of Chhattisgarh.
-          </small>
+          <div className="adm-side-brand-text lh-sm">
+            <div className="fw-bold text-white" style={{ fontSize: "0.75rem" }}>
+              Department of Higher Education,
+            </div>
+            <div className="text-white-50" style={{ fontSize: "0.65rem", marginTop: "2px" }}>
+              Government of Chhattisgarh.
+            </div>
+          </div>
         </div>
 
         <div className="adm-side-avatar-wrap">
