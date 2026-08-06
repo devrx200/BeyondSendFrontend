@@ -624,7 +624,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             onError={e => (e.target.src = "/Chhattisgarh.svg")}
           />
           <div className="adm-side-brand-text lh-sm">
-            <div className="fw-bold text-white" style={{ fontSize: "0.75rem" }}>
+            <div className="fw-bold text-white" style={{ fontSize: "0.55rem" }}>
               Department of Higher Education,
             </div>
             <div className="text-white-50" style={{ fontSize: "0.65rem", marginTop: "2px" }}>

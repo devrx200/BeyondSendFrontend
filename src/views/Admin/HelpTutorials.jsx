@@ -395,7 +395,7 @@ const HelpTutorials = () => {
                 ? <FaFilePdf size={14} />
                 : <FaPlayCircle size={14} />}
             </div>
-            <span className="fw-bold">
+            <span className="fw-bold text-white">
               {isPdf
                 ? t("PDF Documents", "PDF दस्तावेज़")
                 : t("Video Tutorials", "वीडियो ट्यूटोरियल")}
@@ -449,25 +449,24 @@ const HelpTutorials = () => {
         <div className="px-3 px-md-4">
 
           {/* ── PAGE HEADER ── */}
-          <div className="adm-page-head">
+          <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded">
             <div>
-              <h4 className="adm-page-title">
-                <span style={{ fontSize: "1.2rem" }}>📘</span>
-                {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
-              </h4>
-              <p className="adm-page-subtitle">
+              <h3 className="adm-page-title mb-1">
+                📘 {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
+              </h3>
+              <p className="adm-page-subtitle mb-0 text-white">
                 {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
               </p>
             </div>
             <div className="d-flex flex-wrap gap-2">
-              <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1">
+              <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
                 <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
               </Badge>
-              <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1">
+              <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
                 <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
               </Badge>
             </div>
-          </div>
+          </CardHeader>
 
           {/* ── SECTIONS ── */}
           <Row className="g-4">

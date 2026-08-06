@@ -129,7 +129,12 @@ const AdminUserManagement = () => {
       const res = await axios.get(`${API_URL}/api/get-all-users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(res.data?.data || []);
+      const allUsers = res.data?.data || [];
+      // Do not show ADMIN DIRECTORATE users on the list
+      const filteredUsers = allUsers.filter(
+        (u) => !(u.role === "ADMIN" && u.employeeType === "DIRECTORATE")
+      );
+      setUsers(filteredUsers);
     } catch {
       Swal.fire("Error", "Failed to load users. Please try again.", "error");
     } finally {
@@ -274,7 +279,7 @@ const AdminUserManagement = () => {
       password: "",
       role: user.role || "OFFICER",
       employeeType: user.employeeType || "DEPARTMENT",
-      userDesignations: user.userDesignations || user.userDeginations || "",
+      userDesignations: user.userDesignations || "",
       permissions: user.permissions || [],
       controls: user.controls || [],
       profileImage: null,
@@ -531,13 +536,13 @@ const AdminUserManagement = () => {
 
                     {/* Designation */}
                     <td>
-                      {u.userDesignations || u.userDeginations ? (
+                      {u.userDesignations ? (
                         <Badge
                           color="info"
                           pill
                           style={{ fontSize: "11px" }}
                         >
-                          {u.userDesignations || u.userDeginations}
+                          {u.userDesignations}
                         </Badge>
                       ) : (
                         <span className="text-muted">—</span>

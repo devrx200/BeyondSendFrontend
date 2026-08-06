@@ -13,7 +13,7 @@ import {
   Label,
   Input,
   Row,
-  Col, Badge, CardHeader
+  Col, Badge, CardHeader, UncontrolledCollapse
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaImage } from "react-icons/fa";
 import axios from "axios";
@@ -49,7 +49,8 @@ const AboutSectionMangement = () => {
     order: "",
     image: null,
     isActive: true,
-    isShowOnHeader: true
+    isShowOnHeader: true,
+    isHideOnAboutSection: false
   });
 
   const loadList = async () => {
@@ -86,7 +87,8 @@ const AboutSectionMangement = () => {
       order: "",
       image: null,
       isActive: true,
-      isShowOnHeader: true
+      isShowOnHeader: true,
+      isHideOnAboutSection: false
     });
     setImagePreview(null);
   };
@@ -304,7 +306,8 @@ const AboutSectionMangement = () => {
       order: item.order ?? "",
       image: null,
       isActive: item.isActive,
-      isShowOnHeader: item.isShowOnHeader ?? true
+      isShowOnHeader: item.isShowOnHeader ?? true,
+      isHideOnAboutSection: item.isHideOnAboutSection ?? false
     });
     setImagePreview(item.profileUrl ? `${API_URL}${item.profileUrl}` : null);
     setModal(true);
@@ -356,55 +359,73 @@ const AboutSectionMangement = () => {
 
   return (
     <>
-      <Card className="adm-card mb-4">
-        <CardHeader className="adm-card-header">
-          <h4 className="adm-page-title mb-1">About Department Content</h4>
-          <p className="adm-page-subtitle mb-0 text-white">Title & description shown on the public About page</p>
+      <Card className="adm-card mb-4 border-0 shadow-sm overflow-hidden">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
+          <div>
+            <h3 className="adm-page-title mb-1">
+              🏢 {isHindi ? "विभाग के बारे में" : "About Department Content"}
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              {isHindi ? "सार्वजनिक 'हमारे बारे में' पृष्ठ पर दिखाया गया शीर्षक और विवरण" : "Title & description shown on the public About page"}
+            </p>
+          </div>
         </CardHeader>
-        <CardBody>
-          <Row>
+        <CardBody className="p-4 bg-white">
+          <Row className="g-4">
             <Col md={6}>
-              <FormGroup>
-                <Label>Title (English)</Label>
-                <Input name="titleEng" value={aboutDepartment.titleEng} onChange={handleDeptChange} />
+              <FormGroup className="mb-0">
+                <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
+                  {isHindi ? "शीर्षक (अंग्रेजी)" : "Title (English)"}
+                </Label>
+                <Input name="titleEng" className="shadow-sm" value={aboutDepartment.titleEng} onChange={handleDeptChange} placeholder="Enter department title in English" />
               </FormGroup>
             </Col>
             <Col md={6}>
-              <FormGroup>
-                <Label>Title (Hindi)</Label>
-                <Input name="titleHin" value={aboutDepartment.titleHin} onChange={handleDeptChange} />
+              <FormGroup className="mb-0">
+                <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
+                  {isHindi ? "शीर्षक (हिंदी)" : "Title (Hindi)"}
+                </Label>
+                <Input name="titleHin" className="shadow-sm" value={aboutDepartment.titleHin} onChange={handleDeptChange} placeholder="हिंदी में विभाग का शीर्षक दर्ज करें" />
               </FormGroup>
             </Col>
             <Col md={6}>
-              <FormGroup>
-                <Label>Description (English)</Label>
-                <Input type="textarea" rows="5" name="descriptionEng" value={aboutDepartment.descriptionEng} onChange={handleDeptChange} />
+              <FormGroup className="mb-0">
+                <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
+                  {isHindi ? "विवरण (अंग्रेजी)" : "Description (English)"}
+                </Label>
+                <Input type="textarea" rows="6" className="shadow-sm" name="descriptionEng" value={aboutDepartment.descriptionEng} onChange={handleDeptChange} placeholder="Enter detailed description in English..." />
               </FormGroup>
             </Col>
             <Col md={6}>
-              <FormGroup>
-                <Label>Description (Hindi)</Label>
-                <Input type="textarea" rows="5" name="descriptionHin" value={aboutDepartment.descriptionHin} onChange={handleDeptChange} />
+              <FormGroup className="mb-0">
+                <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
+                  {isHindi ? "विवरण (हिंदी)" : "Description (Hindi)"}
+                </Label>
+                <Input type="textarea" rows="6" className="shadow-sm" name="descriptionHin" value={aboutDepartment.descriptionHin} onChange={handleDeptChange} placeholder="हिंदी में विस्तृत विवरण दर्ज करें..." />
               </FormGroup>
             </Col>
           </Row>
-          <Button color="primary" disabled={deptSaving} onClick={saveAboutDepartment}>
-            <FaSave className="me-2" />
-            {deptSaving ? "Saving..." : "Save Department Content"}
-          </Button>
+          <div className="d-flex justify-content-end mt-4 pt-4 border-top">
+            <Button color="primary" disabled={deptSaving} onClick={saveAboutDepartment} className="px-4 shadow-sm d-flex align-items-center">
+              <FaSave className="me-2" />
+              {deptSaving ? (isHindi ? "सहेजा जा रहा है..." : "Saving...") : (isHindi ? "विभाग सामग्री सहेजें" : "Save Department Content")}
+            </Button>
+          </div>
         </CardBody>
       </Card>
 
-      <Card className="adm-card mb-4">
-        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <Card className="adm-card mb-4 border-0 shadow-sm overflow-hidden">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
           <div>
-            <h4 className="adm-page-title mb-1">
-              <FaImage className="me-2" /> Department Leader Profiles
-            </h4>
-            <p className="adm-page-subtitle mb-0 text-white">Manage the public about section leader profiles</p>
+            <h3 className="adm-page-title mb-1">
+              👥 {isHindi ? "विभाग के नेता प्रोफाइल" : "Department Leader Profiles"}
+            </h3>
+            <p className="adm-page-subtitle mb-0 text-white">
+              {isHindi ? "सार्वजनिक अबाउट सेक्शन लीडर प्रोफाइल प्रबंधित करें" : "Manage the public about section leader profiles"}
+            </p>
           </div>
-          <Button color="light" className="text-success" onClick={toggleModal}>
-            <FaPlus className="me-2" /> Add
+          <Button color="light" className="text-primary fw-semibold shadow-sm" onClick={toggleModal}>
+            <FaPlus className="me-2" /> {isHindi ? "नया जोड़ें" : "Add Leader"}
           </Button>
         </CardHeader>
         <CardBody>
@@ -419,13 +440,14 @@ const AboutSectionMangement = () => {
                 <th>Order</th>
                 <th>Status</th>
                 <th>Show on Header</th>
+                <th>Hide on About Section</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="text-center text-muted">No records found</td>
+                  <td colSpan="9" className="text-center text-muted">No records found</td>
                 </tr>
               ) : (
                 list.map((item, i) => (
@@ -437,12 +459,19 @@ const AboutSectionMangement = () => {
                     <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
                     <td>{isHindi ? item.designationHin : item.designationEng}</td>
                     <td style={{ maxWidth: "300px" }}>
-                      {(isHindi ? item.aboutContentHin : item.aboutContentEng)
-                        ?.split("\n")
-                        .filter(line => line.trim() !== "")
-                        .map((line, index) => (
-                          <p key={index} className="mb-1">{line}</p>
-                        ))}
+                      <Button color="link" id={`about-toggler-${item._id}`} className="p-0 text-decoration-none fw-semibold" size="sm">
+                        {isHindi ? "विवरण दिखाएँ/छिपाएँ" : "Toggle About Details"}
+                      </Button>
+                      <UncontrolledCollapse toggler={`#about-toggler-${item._id}`}>
+                        <div className="mt-2 text-muted border-start border-primary border-2 ps-2" style={{ fontSize: "0.85rem", maxHeight: "150px", overflowY: "auto" }}>
+                          {(isHindi ? item.aboutContentHin : item.aboutContentEng)
+                            ?.split("\n")
+                            .filter(line => line.trim() !== "")
+                            .map((line, index) => (
+                              <p key={index} className="mb-1">{line}</p>
+                            ))}
+                        </div>
+                      </UncontrolledCollapse>
                     </td>
                     <td>{item.order}</td>
                     <td>
@@ -456,6 +485,11 @@ const AboutSectionMangement = () => {
                     <td>
                       <Badge color={item.isShowOnHeader !== false ? "info" : "secondary"}>
                         {item.isShowOnHeader !== false ? "Yes" : "No"}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge color={item.isHideOnAboutSection ? "warning" : "light"} className={item.isHideOnAboutSection ? "" : "text-dark border"}>
+                        {item.isHideOnAboutSection ? "Hidden" : "Visible"}
                       </Badge>
                     </td>
                     <td>
@@ -588,18 +622,25 @@ const AboutSectionMangement = () => {
                       )}
                     </FormGroup>
                   </Col>
-                  <Col xs={6}>
+                  <Col md={4}>
                     <Label className="fw-semibold small">Status</Label>
-                    <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value })}>
+                    <Input type="select" name="isActive" value={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.value === 'true' })}>
                       <option value="true">✅ Active</option>
                       <option value="false">⛔ Inactive</option>
                     </Input>
                   </Col>
-                  <Col xs={6}>
+                  <Col md={4}>
                     <Label className="fw-semibold small">Show on Header</Label>
-                    <Input type="select" name="isShowOnHeader" value={form.isShowOnHeader} onChange={e => setForm({ ...form, isShowOnHeader: e.target.value })}>
+                    <Input type="select" name="isShowOnHeader" value={form.isShowOnHeader} onChange={e => setForm({ ...form, isShowOnHeader: e.target.value === 'true' })}>
                       <option value="true">✅ Yes</option>
                       <option value="false">⛔ No</option>
+                    </Input>
+                  </Col>
+                  <Col md={4}>
+                    <Label className="fw-semibold small">Hide on About Section</Label>
+                    <Input type="select" name="isHideOnAboutSection" value={form.isHideOnAboutSection} onChange={e => setForm({ ...form, isHideOnAboutSection: e.target.value === 'true' })}>
+                      <option value="false">👁️ Visible</option>
+                      <option value="true">🚫 Hidden</option>
                     </Input>
                   </Col>
                 </Row>
