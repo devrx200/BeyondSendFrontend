@@ -162,28 +162,22 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           {/* Header */}
           <CardHeader className="detail-card-header">
-            <h1 className="fw-bold mb-3 text-white h4 d-flex align-items-center gap-2">
-              <FaFileAlt size={22} aria-hidden="true" />
+            <h1 className="fw-semibold mb-3 text-white h4 d-flex align-items-center gap-2">
+              <FaFileAlt size={20} aria-hidden="true" />
               {title}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <Row className="g-2 align-items-center">
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                  📅 <strong>{isHindi ? 'प्रकाशित:' : 'Published:'}</strong> {publishDate}
-                </Badge>
-              </Col>
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                  🔄 <strong>{isHindi ? 'अपडेट:' : 'Updated:'}</strong> {updateDate}
-                </Badge>
-              </Col>
-              <Col xs={12} md className="text-start text-md-end ms-md-auto">
-                <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-1">
-                  ← {isHindi ? 'होम पर वापस' : 'Back To Home'}
-                </Button>
-              </Col>
-            </Row>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                📅 <span className="fw-semibold">{isHindi ? 'प्रकाशित:' : 'Published:'}</span> {publishDate}
+              </Badge>
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                🔄 <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {updateDate}
+              </Badge>
+              <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-1 ms-md-auto mt-2 mt-md-0">
+                ← {isHindi ? 'होम पर वापस' : 'Back To Home'}
+              </Button>
+            </div>
           </CardHeader>
 
           {/* Body */}
@@ -195,7 +189,7 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
             )}
             {descriptionHtml && (
               <>
-                <h2 className="h5 fw-bold">
+                <h2 className="h5 fw-semibold">
                   {isHindi ? 'विवरण' : 'Details'}
                 </h2>
                 <hr />

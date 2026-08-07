@@ -163,38 +163,30 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
 
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           <CardHeader className="detail-card-header">
-            <h1 className="fw-bold mb-3 text-white h4 d-flex align-items-center gap-2">
-              <FaNewspaper size={22} aria-hidden="true" /> {title}
+            <h1 className="fw-semibold mb-3 text-white h4 d-flex align-items-center gap-2">
+              <FaNewspaper size={20} aria-hidden="true" /> {title}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <Row className="g-2 align-items-center">
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
               {page.categoryId && (
-                <Col xs="auto">
-                  <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                    <FaUserTie size={12} aria-hidden="true" />
-                    {isHindi ? page.categoryId?.categoryNameHi : page.categoryId?.categoryNameEn}
-                  </Badge>
-                </Col>
+                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                  <FaUserTie size={12} aria-hidden="true" />
+                  {isHindi ? page.categoryId?.categoryNameHi : page.categoryId?.categoryNameEn}
+                </Badge>
               )}
-              <Col xs="auto">
-                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                  <FaCalendarAlt size={12} aria-hidden="true" />
-                  <strong>{isHindi ? 'प्रकाशन:' : 'Published:'}</strong> {formatDateTime(publishDate, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs="auto">
-                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                  <FaClock size={12} aria-hidden="true" />
-                  <strong>{isHindi ? 'अपडेट:' : 'Updated:'}</strong> {formatDateTime(page.updatedAt, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs={12} md className="d-flex justify-content-start justify-content-md-end ms-md-auto">
-                <Button tag={Link} to={listPath} color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-2">
-                  <FaChevronLeft size={11} aria-hidden="true" />
-                  {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
-                </Button>
-              </Col>
-            </Row>
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                <FaCalendarAlt size={12} aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Published:'}</span> {formatDateTime(publishDate, isHindi)}
+              </Badge>
+              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                <FaClock size={12} aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(page.updatedAt, isHindi)}
+              </Badge>
+              <Button tag={Link} to={listPath} color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-2 ms-md-auto mt-2 mt-md-0">
+                <FaChevronLeft size={11} aria-hidden="true" />
+                {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
+              </Button>
+            </div>
           </CardHeader>
 
           <CardBody className="p-4">
@@ -202,7 +194,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
 
             {documents.length > 0 && (
               <div className="mt-5 pt-4 border-top">
-                <h2 className="h5 mb-3 fw-bold">
+                <h2 className="h5 mb-3 fw-semibold">
                   {isHindi ? 'इस सूचना से संबंधित दस्तावेज़' : 'Documents Related to This Notification'}
                 </h2>
                 <hr className="my-3" />
@@ -221,11 +213,11 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
                           <td style={{ width: 160 }} className="fw-semibold bg-light small">{isHindi ? 'देखें / डाउनलोड' : 'View / Download'}</td>
                           <td>
                             <div className="d-flex align-items-center gap-2 flex-wrap">
-                              <a href={`${API}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="fw-bold text-decoration-none small">
+                              <a href={`${API}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="fw-semibold text-decoration-none small">
                                 {getFileIcon(doc.fileType)}
                                 {isHindi ? doc.titleHin : doc.titleEng}
                               </a>
-                              <span className="text-danger small fw-bold">
+                              <span className="text-danger small fw-semibold">
                                 {isHindi ? 'फाइल:' : 'File:'} {doc.fileSize} | {doc.fileType?.toUpperCase()}
                               </span>
                               <Badge color="dark" onClick={() => forceDownload(`${API}${doc.fileUrl}`, `${doc.titleEng || 'document'}${doc.fileUrl.substring(doc.fileUrl.lastIndexOf('.')).split('?')[0]}`)}
@@ -368,10 +360,10 @@ const MultiSectionListView = ({ prefetchedData, isHindi, onPageChange, onFilterC
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden mb-4">
           <CardHeader className="detail-card-header">
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h1 className="mb-0 fw-bold text-white h5 d-flex align-items-center gap-2">
+              <h1 className="mb-0 fw-semibold text-white h5 d-flex align-items-center gap-2">
                 <FaNewspaper aria-hidden="true" /> {listTitle}
               </h1>
-              <Badge pill color="light" className="text-primary fw-bold px-3 py-2">
+              <Badge pill color="light" className="text-primary fw-semibold px-3 py-2">
                 {totalDocuments} {isHindi ? 'आइटम' : 'Items'}
               </Badge>
             </div>
@@ -449,7 +441,7 @@ const MultiSectionListView = ({ prefetchedData, isHindi, onPageChange, onFilterC
                       <div className="d-flex align-items-start">
                         <div className="me-3 rounded-pill flex-shrink-0" style={{ width: 6, alignSelf: 'stretch', background: 'linear-gradient(180deg,#0d6efd,#6610f2)' }} aria-hidden="true" />
                         <div className="flex-grow-1">
-                          <h2 className="h6 fw-bold mb-2 text-dark">
+                          <h2 className="h6 fw-semibold mb-2 text-dark">
                             {isHindi ? item.titleHin || item.titleEng : item.titleEng}
                           </h2>
                           {summary && <p className="small text-muted mb-3">{summary}</p>}

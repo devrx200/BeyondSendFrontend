@@ -118,7 +118,7 @@ const FeedbackForm = () => {
           >
             <div />
             <div className="pt-5">
-              <h3 className="fw-bold text-danger mb-1">
+              <h3 className="fw-semibold text-danger mb-1">
                 {isHindi ? 'हम आपकी प्रतिक्रिया को महत्व देते हैं' : 'We Value Your Feedback'}
               </h3>
               <p className="text-muted mb-0">
@@ -130,7 +130,7 @@ const FeedbackForm = () => {
           {/* Right Form */}
           <Col lg={6}>
             <div className="bg-white rounded-4 shadow-sm p-4 p-md-5">
-              <h2 className="h4 fw-bold text-center mb-4">
+              <h2 className="h4 fw-semibold text-center mb-4">
                 {isHindi ? 'अपनी प्रतिक्रिया भेजें' : 'Send Us Your Feedback'}
               </h2>
 

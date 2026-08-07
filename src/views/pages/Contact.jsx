@@ -56,7 +56,7 @@ const ContactCard = ({ item, isHindi }) => {
             <span className={`badge bg-${accent} rounded-pill mb-1 fw-semibold`} style={{ fontSize: '0.6rem', letterSpacing: '0.08em', opacity: 0.85 }}>
               {item.badge}
             </span>
-            <h3 className="h5 fw-bold mb-0 lh-sm">{item.title}</h3>
+            <h3 className="h5 fw-semibold mb-0 lh-sm">{item.title}</h3>
             <small className="text-muted">{item.subtitle}</small>
           </div>
         </div>
@@ -106,7 +106,7 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
           <span className={`badge bg-${isDirectorate ? 'success' : 'primary'} rounded-pill mb-1 fw-semibold`} style={{ fontSize: '0.6rem', letterSpacing: '0.08em', opacity: 0.85 }}>
             {isDirectorate ? 'DIRECTORATE · HIGHER EDUCATION' : 'DEPT. OF HIGHER EDUCATION'}
           </span>
-          <h3 className="h5 fw-bold mb-0 lh-sm" style={{ color: '#1a1f36' }}>
+          <h3 className="h5 fw-semibold mb-0 lh-sm" style={{ color: '#1a1f36' }}>
             {isDirectorate
               ? (isHindi ? 'उच्च शिक्षा निदेशालय' : 'Directorate of Higher Education')
               : (isHindi ? 'उच्च शिक्षा विभाग' : 'Department of Higher Education')}
@@ -123,7 +123,7 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
       >
         <FaBuilding className={`text-${isDirectorate ? 'success' : 'primary'}`} />
       </div>
-      <h6 className="fw-bold mb-1">
+      <h6 className="fw-semibold mb-1">
         {isDirectorate
           ? (isHindi ? 'कोई निदेशालय रिकॉर्ड नहीं' : 'No Directorate Records')
           : (isHindi ? 'कोई विभागीय रिकॉर्ड नहीं' : 'No Department Records')}

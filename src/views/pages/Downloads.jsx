@@ -94,7 +94,7 @@ const Downloads = () => {
                     <FaDownload />
                   </div>
                   <div>
-                    <h2 className="h5 fw-bold mb-1">
+                    <h2 className="h5 fw-semibold mb-1">
                       {isHindi ? 'डाउनलोड केंद्र' : 'Download Center'}
                     </h2>
                     <small className="text-muted">

@@ -203,34 +203,28 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           {/* Gradient Header */}
           <CardHeader className="detail-card-header">
-            <h1 className="fw-bold mb-3 text-white h4 d-flex align-items-center gap-2">
-              <FaTicketSimple size={22} aria-hidden="true" />
+            <h1 className="fw-semibold mb-3 text-white h4 d-flex align-items-center gap-2">
+              <FaTicketSimple size={20} aria-hidden="true" />
               {pageTitle}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <Row className="g-2 align-items-center">
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
-                  <FaCalendarAlt size={11} aria-hidden="true" />
-                  {isHindi ? 'प्रकाशन:' : 'Created:'} {formatDateTime(detail.createdAt, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
-                  <FaCalendarPlus size={11} aria-hidden="true" />
-                  {isHindi ? 'अपडेट:' : 'Updated:'} {formatDateTime(detail.updatedAt, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs={12} md className="text-start text-md-end">
-                <Button
-                  tag={Link} to="/" color="dark" size="sm"
-                  className="d-inline-flex align-items-center gap-1 fw-semibold"
-                >
-                  <FaChevronLeft size={12} aria-hidden="true" />
-                  {isHindi ? 'मुख्य पृष्ठ पर वापस' : 'Back To Home'}
-                </Button>
-              </Col>
-            </Row>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
+                <FaCalendarAlt size={11} aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
+              </Badge>
+              <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
+                <FaCalendarPlus size={11} aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
+              </Badge>
+              <Button
+                tag={Link} to="/" color="dark" size="sm"
+                className="d-inline-flex align-items-center gap-1 fw-semibold ms-md-auto mt-2 mt-md-0"
+              >
+                <FaChevronLeft size={12} aria-hidden="true" />
+                {isHindi ? 'मुख्य पृष्ठ पर वापस' : 'Back To Home'}
+              </Button>
+            </div>
           </CardHeader>
 
           {/* Content */}

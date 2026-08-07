@@ -132,18 +132,16 @@ const AnnouncementsAndSchemes = () => {
             <div className="icon-wrapper bg-primary text-white p-2 rounded-circle me-3">
               {activeTab === "announcements" ? <FaBullhorn size={20} /> : <FaFileAlt size={20} />}
             </div>
-            <h3 className="fw-bold mb-0 text-dark">
-              <h4 className="fw-bold mb-0 text-dark">
-                {isHindi ? "घोषणाएं और योजनाएं" : "Announcements & Schemes"}
-              </h4>
+            <h3 className="fw-semibold mb-0 text-dark fs-5">
+              {isHindi ? "घोषणाएं और योजनाएं" : "Announcements & Schemes"}
             </h3>
           </div>
 
           <Nav tabs className="border-0 font-weight-bold">
             <NavItem>
               <NavLink
-                className={`cursor-pointer px-4 py-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "announcements"
-                    ? "active border-primary text-primary fw-bold"
+                className={`cursor-pointer px-3 px-md-4 py-2 py-md-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "announcements"
+                    ? "active border-primary text-primary fw-semibold"
                     : "border-transparent text-muted"
                   }`}
                 onClick={() => handleTabChange("announcements")}
@@ -154,8 +152,8 @@ const AnnouncementsAndSchemes = () => {
             </NavItem>
             <NavItem>
               <NavLink
-                className={`cursor-pointer px-4 py-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "schemes"
-                    ? "active border-success text-success fw-bold"
+                className={`cursor-pointer px-3 px-md-4 py-2 py-md-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "schemes"
+                    ? "active border-success text-success fw-semibold"
                     : "border-transparent text-muted"
                   }`}
                 onClick={() => handleTabChange("schemes")}
@@ -234,16 +232,16 @@ const AnnouncementsAndSchemes = () => {
                         </small>
                       </div>
 
-                      <h5 className="fw-bold mb-2 text-dark">
+                      <h3 className="fw-semibold mb-2 text-dark fs-6">
                         <Link
                           to={`/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`}
                           className="text-decoration-none text-dark hover-primary-text"
                         >
                           {isHindi ? (item.titleHi || item.titleEn) : item.titleEn}
                         </Link>
-                      </h5>
+                      </h3>
 
-                      <p className="text-muted mb-3 fs-6 lh-base">
+                      <p className="text-muted mb-3 small lh-base">
                         {truncateText(
                           isHindi
                             ? (item.shortDescriptionHi || item.shortDescriptionEn)

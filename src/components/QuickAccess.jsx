@@ -43,7 +43,7 @@ const QuickAccess = ({ isHindi }) => {
         
         {/* Header Section */}
         <div className="bg-light p-1 border-1  border-dark mb-4">
-          <h2 className="fw-bold mb-2 text-dark" style={{ fontSize: "28px", letterSpacing: "-0.5px" }}>
+          <h2 className="fw-semibold mb-2 text-dark fs-4" style={{ letterSpacing: "-0.5px" }}>
             {isHindi ? "त्वरित लिंक" : "Quick Access"}
           </h2>
           {/* Fixed the underline: made it a colorful gradient instead of invisible white */}
@@ -86,15 +86,15 @@ const QuickAccess = ({ isHindi }) => {
                       <div
                         className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
                         style={{
-                          width: "64px",
-                          height: "64px",
+                          width: "52px",
+                          height: "52px",
                           transition: "all 0.3s ease",
                           background: isHov ? color : bg,
                         }}
                       >
                         <Icon
                           style={{
-                            fontSize: "26px",
+                            fontSize: "22px",
                             transition: "all 0.3s ease",
                             color: isHov ? "#ffffff" : color,
                           }}
@@ -103,9 +103,9 @@ const QuickAccess = ({ isHindi }) => {
 
                       {/* Primary Label */}
                       <p
-                        className="mb-1 fw-bold"
+                        className="mb-1 fw-semibold"
                         style={{ 
-                          fontSize: "15px", 
+                          fontSize: "14px", 
                           color: isHov ? color : "#1e293b",
                           transition: "color 0.2s ease" 
                         }}
@@ -115,8 +115,8 @@ const QuickAccess = ({ isHindi }) => {
 
                       {/* Secondary Label */}
                       <p
-                        className="mb-0 fw-medium"
-                        style={{ fontSize: "12px", color: "#94a3b8" }}
+                        className="mb-0 text-muted"
+                        style={{ fontSize: "11px" }}
                       >
                         {isHindi ? titleEn : titleHi}
                       </p>

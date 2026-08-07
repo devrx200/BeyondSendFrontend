@@ -330,41 +330,33 @@ const DepDirectorateNoticesListView = () => {
         {/* Detail Card */}
         <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
           <CardHeader className="detail-card-header">
-            <h1 className="fw-bold mb-3 lh-base text-white h4">
+            <h1 className="fw-semibold mb-3 lh-base text-white h4">
               {detailTitle}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <Row className="g-2 align-items-center">
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
-                  <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
-                  {isHindi ? 'प्रकाशन:' : 'Created:'} {formatDateTime(detail.createdAt, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
-                  <FaCalendarPlus size={11} className="text-success" aria-hidden="true" />
-                  {isHindi ? 'अपडेट:' : 'Updated:'} {formatDateTime(detail.updatedAt, isHindi)}
-                </Badge>
-              </Col>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
+                <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
+              </Badge>
+              <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
+                <FaCalendarPlus size={11} className="text-success" aria-hidden="true" />
+                <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
+              </Badge>
               {detail.categoryId && (
-                <Col xs={12} sm="auto">
-                  <Badge color="warning" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
-                    <FaTag size={11} aria-hidden="true" />
-                    {isHindi ? detail.categoryId?.categoryNameHi : detail.categoryId?.categoryNameEn}
-                  </Badge>
-                </Col>
+                <Badge color="warning" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill">
+                  <FaTag size={11} aria-hidden="true" />
+                  {isHindi ? detail.categoryId?.categoryNameHi : detail.categoryId?.categoryNameEn}
+                </Badge>
               )}
-              <Col xs={12} md className="d-flex justify-content-start justify-content-md-end">
-                <Button
-                  tag={Link} to={listRoute} size="sm" outline
-                  className="d-inline-flex align-items-center gap-1 fw-semibold text-white bg-dark border-0 py-1 px-3"
-                >
-                  <FaChevronLeft size={11} aria-hidden="true" />
-                  {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
-                </Button>
-              </Col>
-            </Row>
+              <Button
+                tag={Link} to={listRoute} size="sm" outline
+                className="d-inline-flex align-items-center gap-1 fw-semibold text-white bg-dark border-0 py-1 px-3 ms-md-auto mt-2 mt-md-0"
+              >
+                <FaChevronLeft size={11} aria-hidden="true" />
+                {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
+              </Button>
+            </div>
           </CardHeader>
 
           {/* Body */}
@@ -374,7 +366,7 @@ const DepDirectorateNoticesListView = () => {
               dangerouslySetInnerHTML={{ __html: detailDesc }}
             />
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
-              <div className="fw-bold text-dark small">
+              <div className="fw-semibold text-dark small">
                 {isHindi ? 'आधिकारिक दस्तावेज़ डाउनलोड करें:' : 'Official Documents:'} 👉
               </div>
               {detail.file && (
@@ -404,7 +396,7 @@ const DepDirectorateNoticesListView = () => {
             </div>
           </CardBody>
 
-          <CardFooter className="bg-light fw-bold border-top px-4 py-3 text-center text-muted">
+          <CardFooter className="bg-light fw-semibold border-top px-4 py-3 text-center text-muted">
             {isHindi ? 'पढ़ने के लिए धन्यवाद !' : 'Thanks For Reading !'}
           </CardFooter>
         </Card>

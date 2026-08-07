@@ -173,7 +173,7 @@ const SchemeAnnouncementDetails = () => {
                 NEW
               </Badge>
             )}
-            <h1 className="fw-bold mb-3 lh-base text-white h4">
+            <h1 className="fw-semibold mb-3 lh-base text-white h4">
               {detailTitle}
             </h1>
             <hr className="border-white opacity-25 my-3" />
@@ -240,7 +240,7 @@ const SchemeAnnouncementDetails = () => {
             />
           </CardBody>
 
-          <CardFooter className="bg-light fw-bold border-top px-4 py-3 text-center text-muted">
+          <CardFooter className="bg-light fw-semibold border-top px-4 py-3 text-center text-muted">
             {isHindi ? 'पढ़ने के लिए धन्यवाद !' : 'Thanks For Reading !'}
           </CardFooter>
         </Card>

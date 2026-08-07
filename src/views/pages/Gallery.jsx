@@ -71,7 +71,7 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
               <FaImages size={9} className="me-1" aria-hidden="true" />
               {isHindi ? 'गैलरी विवरण' : 'Gallery Detail'}
             </Badge>
-            <h2 className="text-white mb-1 fw-bold" style={{ fontSize: 'clamp(16px,3vw,26px)' }}>
+            <h2 className="text-white mb-1 fw-semibold" style={{ fontSize: 'clamp(16px,3vw,26px)' }}>
               {detailLoading ? (isHindi ? item.titleHin : item.titleEng) : (isHindi ? galleryDetail?.titleHin : galleryDetail?.titleEng)}
             </h2>
             {!detailLoading && galleryDetail && (
@@ -196,7 +196,7 @@ const Gallery = () => {
         <Container>
           <Row className="align-items-center gy-3">
             <Col lg={7}>
-              <h2 className="text-white fw-bold mb-2 gallery-hero-title">
+              <h2 className="text-white fw-semibold mb-2 gallery-hero-title">
                 {isHindi ? 'चित्र' : 'Photo'}{' '}
                 <span style={{ color: '#4fc3f7' }}>{isHindi ? 'प्रदर्शनी' : 'Gallery'}</span>
               </h2>
@@ -213,14 +213,14 @@ const Gallery = () => {
                     <div className="d-flex align-items-center gap-2">
                       <div className="gallery-stat-icon" aria-hidden="true"><FaImages color="#4fc3f7" size={16} /></div>
                       <div>
-                        <div className="text-white fw-bold" style={{ fontSize: 18, lineHeight: 1 }}>{galleryList.length}</div>
+                        <div className="text-white fw-semibold" style={{ fontSize: 18, lineHeight: 1 }}>{galleryList.length}</div>
                         <small style={{ color: 'rgba(255,255,255,.65)' }}>{isHindi ? 'कुल गैलरी' : 'Galleries'}</small>
                       </div>
                     </div>
                     <div className="d-flex align-items-center gap-2">
                       <div className="gallery-stat-icon" aria-hidden="true"><FaCamera color="#4fc3f7" size={16} /></div>
                       <div>
-                        <div className="text-white fw-bold" style={{ fontSize: 18, lineHeight: 1 }}>
+                        <div className="text-white fw-semibold" style={{ fontSize: 18, lineHeight: 1 }}>
                           {galleryList.reduce((t, g) => t + (g.images?.length || 0), 0)}
                         </div>
                         <small style={{ color: 'rgba(255,255,255,.65)' }}>{isHindi ? 'कुल फ़ोटो' : 'Photos'}</small>

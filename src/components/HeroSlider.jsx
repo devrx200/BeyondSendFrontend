@@ -81,8 +81,8 @@ const styles = `
 
   .hero-title {
     color: #fff;
-    font-size: clamp(1.6rem, 5vw, 3.4rem);
-    font-weight: 800;
+    font-size: clamp(1.4rem, 4vw, 2.8rem);
+    font-weight: 700;
     line-height: 1.18;
     text-shadow: 0 3px 16px rgba(0,0,0,.45);
     margin-bottom: 14px;
@@ -243,7 +243,7 @@ const HeroSlider = () => {
                   {showBtn && slide.link && (
                     <Button
                       color="warning"
-                      className="fw-bold px-4 py-2 shadow"
+                      className="fw-semibold px-4 py-2 shadow"
                       style={{ fontSize: "clamp(.82rem,1.6vw,1rem)" }}
                       onClick={() => handleRedirect(slide)}
                     >

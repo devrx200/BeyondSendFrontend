@@ -274,7 +274,7 @@ const Section = ({ type, arr, page, setPage, onPreview, isHindi }) => {
           {isPdf
             ? <FaFilePdf size={18} color="#fff" aria-hidden="true" />
             : <FaYoutube size={20} color="#fff" aria-hidden="true" />}
-          <span className="fw-bold text-white" style={{ fontSize: "1rem" }}>
+          <span className="fw-semibold text-white" style={{ fontSize: "1rem" }}>
             {isPdf
               ? (isHindi ? "PDF दस्तावेज़" : "PDF Documents")
               : (isHindi ? "वीडियो ट्यूटोरियल" : "Video Tutorials")}
@@ -375,7 +375,7 @@ const HelpSupport = () => {
         {/* Preview Modal */}
         <Modal isOpen={modal} toggle={() => setModal(false)} size="xl" centered>
           <ModalHeader toggle={() => setModal(false)} className="border-0 pb-0">
-            <span className="fw-bold text-dark" style={{ fontSize: ".95rem" }}>{previewTitle}</span>
+            <span className="fw-semibold text-dark" style={{ fontSize: ".95rem" }}>{previewTitle}</span>
           </ModalHeader>
           <ModalBody className="p-0" style={{ height: "72vh" }}>
             <iframe

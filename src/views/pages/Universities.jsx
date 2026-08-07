@@ -61,28 +61,28 @@ const UniversityCard = ({ university }) => (
       </Col>
       {/* Main info */}
       <Col xs={9} sm={10} md className="border-end px-3 py-2" style={{ minWidth: 0 }}>
-        <p className="fw-bold mb-2 d-flex align-items-center flex-wrap gap-1" style={{ fontSize: 13, color: '#1e1b4b', lineHeight: 1.5 }}>
+        <p className="fw-semibold mb-2 d-flex align-items-center flex-wrap gap-1" style={{ fontSize: 13, color: '#1e1b4b', lineHeight: 1.5 }}>
           <span>{university.name}</span>
           <span className="px-2 py-1 rounded-pill" style={{ background: '#c7f1fe', color: '#793004', fontSize: 11, fontWeight: 700 }}>
             ⭐ NAAC: {university.naacGrade || 'N/A'}
           </span>
         </p>
         <div className="d-flex flex-column gap-1">
-          <InfoRow icon="🎓" label="Mode"    value={university.educationMode} />
+          <InfoRow icon="🎓" label="Mode" value={university.educationMode} />
           <InfoRow icon="📍" label="Address" value={university.address} />
-          <InfoRow icon="📅" label="Est."    value={university.establishYear} badge badgeColor="primary" />
+          <InfoRow icon="📅" label="Est." value={university.establishYear} badge badgeColor="primary" />
         </div>
       </Col>
       {/* Contact & Location */}
       <Col xs={12} md={4} lg={4} xl={3} className="border-end px-3 py-2" style={{ maxWidth: 350 }}>
-        <p className="text-uppercase text-muted fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: '.07em' }}>
+        <p className="text-uppercase text-muted fw-semibold mb-2" style={{ fontSize: 9.5, letterSpacing: '.07em' }}>
           Contact &amp; Location
         </p>
         <div className="d-flex flex-column gap-1">
-          <InfoRow icon="✉️" label="Email"    value={university.universityEmail} />
-          <InfoRow icon="📞" label="Phone"    value={university.contactNumber} />
-          <InfoRow icon="🏙"  label="District" value={university.districtName} />
-          <InfoRow icon="🏛"  label="Assembly" value={university.vidhansabhaName} />
+          <InfoRow icon="✉️" label="Email" value={university.universityEmail} />
+          <InfoRow icon="📞" label="Phone" value={university.contactNumber} />
+          <InfoRow icon="🏙" label="District" value={university.districtName} />
+          <InfoRow icon="🏛" label="Assembly" value={university.vidhansabhaName} />
         </div>
       </Col>
       {/* Actions */}
@@ -109,8 +109,8 @@ const UniversityCard = ({ university }) => (
 );
 
 const TABS = [
-  { id: 'STATE',   typeVal: '1', en: 'State',   hi: 'राज्य',    color: 'primary' },
-  { id: 'PRIVATE', typeVal: '0', en: 'Private', hi: 'निजी',     color: 'success' },
+  { id: 'STATE', typeVal: '1', en: 'State', hi: 'राज्य', color: 'primary' },
+  { id: 'PRIVATE', typeVal: '0', en: 'Private', hi: 'निजी', color: 'success' },
   { id: 'CENTRAL', typeVal: '2', en: 'Central', hi: 'केंद्रीय', color: 'warning' },
 ];
 
@@ -118,14 +118,14 @@ const TABS = [
 const Universities = () => {
   const { isHindi } = useLanguage();
 
-  const [activeTab,         setActiveTab]         = useState('STATE');
-  const [universities,      setUniversities]      = useState([]);
-  const [districts,         setDistricts]         = useState([]);
-  const [allVidhansabha,    setAllVidhansabha]    = useState([]);
-  const [vidhansabhaList,   setVidhansabhaList]   = useState([]);
-  const [selectedDistrict,  setSelectedDistrict]  = useState('');
-  const [selectedVidhan,    setSelectedVidhan]    = useState('');
-  const [loading,           setLoading]           = useState(false);
+  const [activeTab, setActiveTab] = useState('STATE');
+  const [universities, setUniversities] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [allVidhansabha, setAllVidhansabha] = useState([]);
+  const [vidhansabhaList, setVidhansabhaList] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedVidhan, setSelectedVidhan] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     axios.get(`${EXTERNAL_API_URL}/api/district/get-all-district`)
@@ -152,8 +152,8 @@ const Universities = () => {
     try {
       setLoading(true);
       const params = {};
-      if (selectedDistrict) params.district   = selectedDistrict;
-      if (selectedVidhan)   params.vidhansabha = selectedVidhan;
+      if (selectedDistrict) params.district = selectedDistrict;
+      if (selectedVidhan) params.vidhansabha = selectedVidhan;
       const res = await axios.get(`${EXTERNAL_API_URL}/api/university/get-all-university-form-main-hrmis`, { params });
       setUniversities(res.data.data || []);
     } catch (err) {
@@ -184,7 +184,7 @@ const Universities = () => {
                   <FaUniversity size={26} color="#6366f1" />
                 </div>
                 <div>
-                  <h1 className="h5 mb-0 fw-bold">{isHindi ? 'छत्तीसगढ़ के विश्वविद्यालय' : 'Universities in Chhattisgarh'}</h1>
+                  <h1 className="h5 mb-0 fw-semibold">{isHindi ? 'छत्तीसगढ़ के विश्वविद्यालय' : 'Universities in Chhattisgarh'}</h1>
                   <p className="text-muted mb-0" style={{ fontSize: 12.5 }}>
                     {isHindi ? 'राज्य में उच्च शिक्षा के प्रमुख केंद्र' : 'Leading Centers of Higher Education in the State'}
                   </p>

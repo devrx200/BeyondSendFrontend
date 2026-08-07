@@ -49,7 +49,7 @@ const About = () => {
           <Col lg={12}>
             <Card className="border-0 shadow-sm about-dept-card">
               <CardBody className="p-4 p-md-5">
-                <h2 id="about-dept-heading" className="mb-3 text-primary fw-bold">
+                <h2 id="about-dept-heading" className="mb-3 text-primary fw-semibold">
                   {isHindi ? 'विभाग के बारे में' : 'About the Department'}
                 </h2>
                 <p className="lead text-muted">
@@ -85,7 +85,7 @@ const About = () => {
                 <div className="about-icon-box bg-primary" aria-hidden="true">
                   <FaEye />
                 </div>
-                <h3 className="fw-bold h5">
+                <h3 className="fw-semibold h5">
                   {isHindi ? 'हमारा दृष्टिकोण' : 'Our Vision'}
                 </h3>
                 <p className="text-muted mb-0">
@@ -103,7 +103,7 @@ const About = () => {
                 <div className="about-icon-box bg-success" aria-hidden="true">
                   <FaBullseye />
                 </div>
-                <h3 className="fw-bold h5">
+                <h3 className="fw-semibold h5">
                   {isHindi ? 'हमारा उद्देश्य' : 'Our Mission'}
                 </h3>
                 <ul className="text-muted mission-list mb-0">
@@ -123,7 +123,7 @@ const About = () => {
       <section aria-labelledby="key-focus-heading">
         <Row className="mb-4">
           <Col>
-            <h2 id="key-focus-heading" className="text-center fw-bold text-primary">
+            <h2 id="key-focus-heading" className="text-center fw-semibold text-primary">
               {isHindi ? 'मुख्य कार्य क्षेत्र' : 'Key Focus Areas'}
             </h2>
           </Col>
@@ -137,7 +137,7 @@ const About = () => {
                   <div className="about-icon-circle" aria-hidden="true">
                     {item.icon}
                   </div>
-                  <h4 className="fw-bold h6 mb-2">
+                  <h4 className="fw-semibold h6 mb-2">
                     {isHindi ? item.titleHi : item.titleEn}
                   </h4>
                   <p className="small text-muted mb-0">

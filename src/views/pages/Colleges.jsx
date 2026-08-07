@@ -54,7 +54,7 @@ function StatBadge({ icon, label, value, color = 'primary' }) {
   return (
     <div className="d-flex flex-column align-items-center justify-content-center p-2 rounded-3" style={{ background: s.bg, minWidth: 72 }}>
       <span style={{ fontSize: 18 }} aria-hidden="true">{icon}</span>
-      <span className="fw-bold" style={{ fontSize: 13, color: s.color }}>{value}</span>
+      <span className="fw-semibold" style={{ fontSize: 13, color: s.color }}>{value}</span>
       <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em', color: s.color, opacity: 0.7 }}>{label}</span>
     </div>
   );
@@ -139,7 +139,7 @@ function CollegeCardList({ college, isHindi }) {
           {/* Main Info */}
           <Col className="p-3 border-end" style={{ minWidth: 0 }}>
             <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-              <span className="fw-bold text-dark" style={{ fontSize: 14, lineHeight: 1.3 }}>{college.name}</span>
+              <span className="fw-semibold text-dark" style={{ fontSize: 14, lineHeight: 1.3 }}>{college.name}</span>
               <Badge color={nc} pill style={{ fontSize: 10 }}>⭐ NAAC {college.naacGrade || 'N/A'}</Badge>
               {isTribal && <Badge color="warning" pill style={{ fontSize: 10, background: '#fd7e14' }}>🏔️ {isHindi ? 'जनजातीय' : 'Tribal'}</Badge>}
               {isLead   && <Badge color="info"    pill style={{ fontSize: 10 }}>✅ {isHindi ? 'अग्रणी'   : 'Lead'}</Badge>}
@@ -154,7 +154,7 @@ function CollegeCardList({ college, isHindi }) {
           {/* University */}
           {uni.universityName && (
             <Col xs={12} md={3} className="p-3 border-end" style={{ background: '#fafbff', minWidth: 0 }}>
-              <p className="text-uppercase fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: '0.09em', color: '#6c757d' }}>🏫 {isHindi ? 'संबद्ध विश्वविद्यालय' : 'Affiliated University'}</p>
+              <p className="text-uppercase fw-semibold mb-2" style={{ fontSize: 9.5, letterSpacing: '0.09em', color: '#6c757d' }}>🏫 {isHindi ? 'संबद्ध विश्वविद्यालय' : 'Affiliated University'}</p>
               <p className="fw-semibold mb-1 text-dark" style={{ fontSize: 12, lineHeight: 1.3 }}>{uni.universityName}</p>
               {uni.universityType && <Badge color="light" className="text-dark border mb-1" style={{ fontSize: 10 }}>{uni.universityType}</Badge>}
               {uni.contactNumber  && <a href={`tel:${uni.contactNumber}`} className="text-muted small d-block text-decoration-none">📞 {uni.contactNumber}</a>}
@@ -164,7 +164,7 @@ function CollegeCardList({ college, isHindi }) {
           {/* Contact + Action */}
           <Col xs={12} md="auto" className="p-3 d-flex flex-column justify-content-between" style={{ minWidth: 150 }}>
             <div>
-              <p className="text-uppercase fw-bold mb-2" style={{ fontSize: 9.5, letterSpacing: '0.09em', color: '#6c757d' }}>{isHindi ? 'संपर्क' : 'Contact'}</p>
+              <p className="text-uppercase fw-semibold mb-2" style={{ fontSize: 9.5, letterSpacing: '0.09em', color: '#6c757d' }}>{isHindi ? 'संपर्क' : 'Contact'}</p>
               {college.collegeEmail   && <a href={`mailto:${college.collegeEmail}`}   className="d-block text-truncate text-dark text-decoration-none small mb-1" style={{ maxWidth: 150 }}>✉️ {college.collegeEmail}</a>}
               {college.contactNumber  && <a href={`tel:${college.contactNumber}`}     className="d-block text-dark text-decoration-none small mb-2">📞 {college.contactNumber}</a>}
             </div>
@@ -203,7 +203,7 @@ function CollegeCardGrid({ college, isHindi }) {
         )}
       </div>
       <CardBody className="p-3 d-flex flex-column">
-        <h3 className="fw-bold text-dark mb-2 h6" style={{ lineHeight: 1.35 }}>{college.name}</h3>
+        <h3 className="fw-semibold text-dark mb-2 h6" style={{ lineHeight: 1.35 }}>{college.name}</h3>
         <div className="d-flex flex-wrap gap-1 mb-2">
           <Badge color={nc} pill style={{ fontSize: 10 }}>⭐ {college.naacGrade || 'N/A'}</Badge>
           {isTribal && <Badge color="warning" pill style={{ fontSize: 10 }}>🏔️ {isHindi ? 'जनजातीय' : 'Tribal'}</Badge>}
@@ -215,7 +215,7 @@ function CollegeCardGrid({ college, isHindi }) {
           {college.establishYear && <div className="text-muted small mb-2">📅 <Badge color="primary" pill style={{ fontSize: 10 }}>{college.establishYear}</Badge></div>}
           {uni.universityName && (
             <div className="p-2 rounded-2 mb-2" style={{ background: '#f0f4ff', borderLeft: '3px solid #3b5bdb' }}>
-              <div className="text-uppercase fw-bold mb-1" style={{ fontSize: 9, letterSpacing: '0.07em', color: '#6c757d' }}>{isHindi ? 'विश्वविद्यालय' : 'University'}</div>
+              <div className="text-uppercase fw-semibold mb-1" style={{ fontSize: 9, letterSpacing: '0.07em', color: '#6c757d' }}>{isHindi ? 'विश्वविद्यालय' : 'University'}</div>
               <div className="text-dark fw-semibold" style={{ fontSize: 11, lineHeight: 1.3 }}>{uni.universityName}</div>
               {uni.universityType && <Badge color="light" className="text-dark border mt-1" style={{ fontSize: 9 }}>{uni.universityType}</Badge>}
             </div>
@@ -294,7 +294,7 @@ const Colleges = () => {
               <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: 60, height: 60, background: 'rgba(255,255,255,0.15)', fontSize: 32 }} aria-hidden="true">🏛️</div>
             </Col>
             <Col>
-              <h1 className="h4 fw-bold mb-1 text-white">{isHindi ? 'छत्तीसगढ़ के महाविद्यालय' : 'Colleges of Chhattisgarh'}</h1>
+              <h1 className="h4 fw-semibold mb-1 text-white">{isHindi ? 'छत्तीसगढ़ के महाविद्यालय' : 'Colleges of Chhattisgarh'}</h1>
               <p className="mb-0 small" style={{ color: 'rgba(255,255,255,0.75)' }}>
                 {isHindi ? 'उच्च शिक्षा विभाग, छत्तीसगढ़ शासन द्वारा पंजीकृत महाविद्यालय' : 'Registered institutions under Department of Higher Education, Govt. of Chhattisgarh'}
               </p>

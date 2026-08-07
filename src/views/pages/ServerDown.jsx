@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container, Row, Col,
   Card, CardHeader, CardBody,
@@ -62,7 +62,7 @@ const ServerDown = ({ onRetry, retrying }) => {
                     <div className="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
                       <img src="/Chhattisgarh.svg" alt="Chhattisgarh" style={{ height: 'clamp(36px,5vw,48px)', width: 'auto' }} className="flex-shrink-0" />
                       <div className="min-w-0">
-                        <h1 className="mb-0 fw-bold text-white fs-6 lh-1 text-truncate">{t.deptName}</h1>
+                        <h1 className="mb-0 fw-semibold text-white fs-6 lh-1 text-truncate">{t.deptName}</h1>
                         <p className="mb-0 text-white-50 small text-truncate">{t.govtName}</p>
                       </div>
                     </div>
@@ -110,7 +110,7 @@ const ServerDown = ({ onRetry, retrying }) => {
                   {t.badge}
                 </Badge>
 
-                <h2 className="fw-bold mb-3 fs-4">
+                <h2 className="fw-semibold mb-3 fs-4">
                   {t.title}
                   <span className="d-inline-block" style={{ minWidth: '1.2em', textAlign: 'left' }} aria-hidden="true">{dots}</span>
                 </h2>
@@ -177,7 +177,7 @@ const ServerDown = ({ onRetry, retrying }) => {
 
                 <hr className="my-3" />
 
-                <p className="fw-bold small text-center mb-0">{t.managed}</p>
+                <p className="fw-semibold small text-center mb-0">{t.managed}</p>
               </CardBody>
             </Card>
 

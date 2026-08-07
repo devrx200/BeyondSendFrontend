@@ -129,7 +129,7 @@ const NoticeDepAndDirectorate = () => {
                         <CardTitle
                             tag="h6"
                             className="fw-semibold mb-0 text-black"
-                            style={{ fontSize: "0.83rem", lineHeight: "1.5" }}
+                            style={{ fontSize: "0.8rem", lineHeight: "1.4" }}
                         >
                             {isHindi ? item.titleHi : item.titleEn}
                         </CardTitle>
@@ -216,8 +216,8 @@ const NoticeDepAndDirectorate = () => {
                                     </div>
                                     <div>
                                         <h6
-                                            className="fw-bold mb-0 text-white"
-                                            style={{ fontSize: "0.95rem", fontFamily: "'Georgia', serif" }}
+                                            className="fw-semibold mb-0 text-white"
+                                            style={{ fontSize: "0.9rem", fontFamily: "'Georgia', serif" }}
                                         >
                                             {isHindi
                                                 ? "संचालनालय (इंद्रावती भवन) सूचनाए"
@@ -324,8 +324,8 @@ const NoticeDepAndDirectorate = () => {
                                     </div>
                                     <div>
                                         <h6
-                                            className="fw-bold mb-0 text-white"
-                                            style={{ fontSize: "0.95rem", fontFamily: "'Georgia', serif" }}
+                                            className="fw-semibold mb-0 text-white"
+                                            style={{ fontSize: "0.9rem", fontFamily: "'Georgia', serif" }}
                                         >
                                             {isHindi
                                                 ? "विभाग (महानदी भवन) सूचनाए"
