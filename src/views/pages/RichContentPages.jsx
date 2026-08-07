@@ -133,14 +133,19 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
           }}>
             {isHindi ? 'प्रीव्यू मोड' : 'PREVIEW MODE'}
           </div>
-          <div style={{
-            position: 'fixed', top: 15, right: 15,
-            backgroundColor: 'rgba(220,53,69,0.85)', color: '#fff',
-            padding: '5px 14px', borderRadius: 30,
-            fontSize: 12, fontWeight: 'bold', zIndex: 10000,
-          }}>
-            {isHindi ? 'प्रीव्यू मोड' : 'PREVIEW MODE'}
-          </div>
+          <button
+            onClick={() => window.close()}
+            style={{
+              position: 'fixed', top: 15, right: 15,
+              backgroundColor: 'rgba(220,53,69,0.95)', color: '#fff',
+              border: 'none', cursor: 'pointer', pointerEvents: 'auto',
+              padding: '6px 16px', borderRadius: 30,
+              fontSize: 13, fontWeight: 'bold', zIndex: 10000,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}
+          >
+            {isHindi ? 'प्रीव्यू बंद करें' : 'Close Preview'}
+          </button>
         </div>
       )}
 
@@ -167,15 +172,15 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
               {title}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+            <div className="d-flex flex-nowrap align-items-center gap-2 mb-3 pb-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
                 📅 <span className="fw-semibold">{isHindi ? 'प्रकाशित:' : 'Published:'}</span> {publishDate}
               </Badge>
-              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
                 🔄 <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {updateDate}
               </Badge>
-              <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-1 ms-md-auto mt-2 mt-md-0">
-                ← {isHindi ? 'होम पर वापस' : 'Back To Home'}
+              <Button tag={Link} to="/" color="dark" size="sm" className="fw-semibold d-inline-flex align-items-center gap-1 ms-auto flex-shrink-0" style={{ fontSize: 11, padding: '4px 10px', borderRadius: '4px' }}>
+                ← {isHindi ? 'होम' : 'Back To Home'}
               </Button>
             </div>
           </CardHeader>

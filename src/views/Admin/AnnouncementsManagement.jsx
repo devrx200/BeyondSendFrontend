@@ -497,13 +497,14 @@ const AnnouncementsManagement = () => {
                       required
                       name="titleEn"
                       value={formData.titleEn}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setFormData({
                           ...formData,
-                          titleEn: e.target.value,
-                          slug: generateSlug(e.target.value)
-                        })
-                      }
+                          titleEn: val,
+                          slug: editingId ? formData.slug : generateSlug(val)
+                        });
+                      }}
                       placeholder="Enter English title"
                     />
                   </FormGroup>
@@ -563,8 +564,13 @@ const AnnouncementsManagement = () => {
               <Row>
                 <Col md={4}>
                   <FormGroup>
-                    <Label className="fw-semibold">Slug (Auto-generated)</Label>
-                    <Input name="slug" value={formData.slug} disabled className="bg-light" />
+                    <Label className="fw-semibold">Slug</Label>
+                    <Input 
+                      name="slug" 
+                      value={formData.slug} 
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    />
+                    <small className="text-muted">Auto-generated from Title (Editable)</small>
                   </FormGroup>
                 </Col>
 

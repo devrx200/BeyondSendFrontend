@@ -227,7 +227,7 @@ const SchemeAnnouncementDetails = () => {
                   src={`${API_URL}${data.image}`}
                   alt={detailTitle}
                   className="img-fluid rounded-4 shadow-sm w-100"
-                  style={{ maxHeight: '450px', objectFit: 'cover' }}
+                  style={{ maxHeight: '450px', objectFit: 'contain' }}
                   loading="lazy"
                 />
               </div>

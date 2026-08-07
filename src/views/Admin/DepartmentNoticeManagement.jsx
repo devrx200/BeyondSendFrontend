@@ -282,13 +282,14 @@ const handleOpenCreate = () => {
                       value={formData.titleEn}
                       name="titleEn"
                       autoComplete="off"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setFormData({
                           ...formData,
-                          titleEn: e.target.value,
-                          slug: generateSlug(e.target.value)
-                        })
-                      }
+                          titleEn: val,
+                          slug: editingId ? formData.slug : generateSlug(val)
+                        });
+                      }}
                     />
                   </FormGroup>
                 </Col>
@@ -312,7 +313,12 @@ const handleOpenCreate = () => {
                 <Col md={6}>
                   <FormGroup>
                     <Label>Slug</Label>
-                    <Input value={formData.slug} disabled />
+                    <Input 
+                      name="slug"
+                      value={formData.slug} 
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    />
+                    <small className="text-muted">Auto-generated from Title (Editable)</small>
                   </FormGroup>
 
                 </Col>

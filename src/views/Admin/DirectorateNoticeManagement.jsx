@@ -588,13 +588,14 @@ const DirectorateNoticeManagement = () => {
                       <Input
                         required
                         value={formData.titleEn}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setFormData({
                             ...formData,
-                            titleEn: e.target.value,
-                            slug: generateSlug(e.target.value)
-                          })
-                        }
+                            titleEn: val,
+                            slug: editingId ? formData.slug : generateSlug(val)
+                          });
+                        }}
                         placeholder="Enter English title"
                       />
                     </FormGroup>
@@ -620,8 +621,12 @@ const DirectorateNoticeManagement = () => {
                   <Col md={6}>
                     <FormGroup>
                       <Label>Slug</Label>
-                      <Input value={formData.slug} disabled className="bg-light" />
-                      <small className="text-muted">Auto-generated from title</small>
+                      <Input 
+                        name="slug"
+                        value={formData.slug} 
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      />
+                      <small className="text-muted">Auto-generated from title (Editable)</small>
                     </FormGroup>
                   </Col>
 

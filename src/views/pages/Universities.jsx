@@ -194,67 +194,73 @@ const Universities = () => {
               <hr className="my-3" />
 
               {/* Toolbar — type tabs + filters */}
-              <div className="d-flex align-items-center gap-2 mb-3 flex-wrap">
+              <Row className="align-items-center g-2 mb-3">
                 {/* Type tabs */}
-                <Nav pills className="gap-1 flex-shrink-0" role="tablist" aria-label={isHindi ? 'विश्वविद्यालय प्रकार' : 'University type'}>
-                  {TABS.map(({ id, en, hi, color }) => (
-                    <NavItem key={id}>
-                      <NavLink
-                        className={['fw-semibold py-1 px-3',
-                          activeTab === id
-                            ? `bg-${color} ${color === 'warning' ? 'text-dark' : 'text-white'}`
-                            : `border border-${color} text-${color} bg-white`,
-                        ].join(' ')}
-                        style={{ fontSize: 12.5, borderRadius: 20, cursor: 'pointer' }}
-                        onClick={() => setActiveTab(id)}
-                        role="tab" aria-selected={activeTab === id}
-                      >
-                        {isHindi ? hi : en}
-                      </NavLink>
-                    </NavItem>
-                  ))}
-                </Nav>
+                <Col xs={12} sm="auto" md="auto">
+                  <Nav pills className="gap-1 flex-nowrap overflow-auto pb-1 pb-sm-0" role="tablist" aria-label={isHindi ? 'विश्वविद्यालय प्रकार' : 'University type'} style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+                    {TABS.map(({ id, en, hi, color }) => (
+                      <NavItem key={id} className="flex-shrink-0">
+                        <NavLink
+                          className={['fw-semibold py-1 px-3',
+                            activeTab === id
+                              ? `bg-${color} ${color === 'warning' ? 'text-dark' : 'text-white'}`
+                              : `border border-${color} text-${color} bg-white`,
+                          ].join(' ')}
+                          style={{ fontSize: 12.5, borderRadius: 20, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          onClick={() => setActiveTab(id)}
+                          role="tab" aria-selected={activeTab === id}
+                        >
+                          {isHindi ? hi : en}
+                        </NavLink>
+                      </NavItem>
+                    ))}
+                  </Nav>
+                </Col>
 
-                <div className="border-start flex-shrink-0" style={{ height: 28 }} aria-hidden="true" />
+                {/* District select */}
+                <Col xs={12} sm={6} md="auto">
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    aria-label={isHindi ? 'जिला फ़िल्टर' : 'District filter'}
+                    style={{ minWidth: 160, fontSize: 13, borderRadius: 8, cursor: 'pointer' }}
+                  >
+                    <option value="">{isHindi ? '📍 सभी जिले' : '📍 All Districts'}</option>
+                    {districts.map((d) => (
+                      <option key={d._id} value={d.LGDCode}>{d.districtNameEng || d.name}</option>
+                    ))}
+                  </select>
+                </Col>
 
-                {/* District select — fluid width */}
-                <select
-                  className="form-select form-select-sm uni-filter-select"
-                  value={selectedDistrict}
-                  onChange={(e) => setSelectedDistrict(e.target.value)}
-                  aria-label={isHindi ? 'जिला फ़िल्टर' : 'District filter'}
-                >
-                  <option value="">{isHindi ? 'सभी जिले' : 'All Districts'}</option>
-                  {districts.map((d) => (
-                    <option key={d._id} value={d.LGDCode}>{d.districtNameEng || d.name}</option>
-                  ))}
-                </select>
+                {/* Vidhansabha select */}
+                <Col xs={12} sm={6} md="auto">
+                  <select
+                    className="form-select form-select-sm"
+                    value={selectedVidhan}
+                    onChange={(e) => setSelectedVidhan(e.target.value)}
+                    aria-label={isHindi ? 'विधानसभा फ़िल्टर' : 'Vidhansabha filter'}
+                    style={{ minWidth: 180, fontSize: 13, borderRadius: 8, cursor: 'pointer' }}
+                  >
+                    <option value="">{isHindi ? '🏛️ सभी विधानसभा' : '🏛️ All Vidhansabha'}</option>
+                    {vidhansabhaList.map((v) => (
+                      <option key={v._id} value={v.ConstituencyNumber}>{v.ConstituencyName}</option>
+                    ))}
+                  </select>
+                </Col>
 
-                {/* Vidhansabha select — fluid width */}
-                <select
-                  className="form-select form-select-sm uni-filter-select uni-filter-select-wide"
-                  value={selectedVidhan}
-                  onChange={(e) => setSelectedVidhan(e.target.value)}
-                  aria-label={isHindi ? 'विधानसभा फ़िल्टर' : 'Vidhansabha filter'}
-                >
-                  <option value="">{isHindi ? 'सभी विधानसभा' : 'All Vidhansabha'}</option>
-                  {vidhansabhaList.map((v) => (
-                    <option key={v._id} value={v.ConstituencyNumber}>{v.ConstituencyName}</option>
-                  ))}
-                </select>
-
-                {/* Clear */}
-                {(selectedDistrict || selectedVidhan) && (
-                  <button className="btn btn-sm bg-danger text-white flex-shrink-0" style={{ fontSize: 12, borderRadius: 8 }} onClick={clearFilters}>
-                    ✕ {isHindi ? 'साफ करें' : 'Clear'}
-                  </button>
-                )}
-
-                {/* Count */}
-                <Badge color="dark" className="ms-auto flex-shrink-0" style={{ fontSize: 11.5 }}>
-                  {loading ? '…' : `${filtered.length} ${isHindi ? 'विश्वविद्यालय' : `Universit${filtered.length === 1 ? 'y' : 'ies'}`}`}
-                </Badge>
-              </div>
+                {/* Clear & Count */}
+                <Col xs={12} md="auto" className="d-flex align-items-center gap-2 ms-md-auto mt-2 mt-md-0">
+                  {(selectedDistrict || selectedVidhan) && (
+                    <button className="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" style={{ fontSize: 12, borderRadius: 8, height: '30px' }} onClick={clearFilters}>
+                      ✕ {isHindi ? 'साफ करें' : 'Clear'}
+                    </button>
+                  )}
+                  <Badge color="dark" style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20 }} className={!(selectedDistrict || selectedVidhan) ? 'ms-auto ms-md-0' : ''}>
+                    {loading ? '…' : `${filtered.length} ${isHindi ? 'विश्वविद्यालय' : `Universit${filtered.length === 1 ? 'y' : 'ies'}`}`}
+                  </Badge>
+                </Col>
+              </Row>
 
               {/* Tab Content */}
               <TabContent activeTab={activeTab}>

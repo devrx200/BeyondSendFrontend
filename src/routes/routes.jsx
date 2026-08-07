@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import axios from "axios";
 
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
@@ -13,51 +13,16 @@ import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
 
 /* ─── Public Pages ────────────────────────────────────────────────────────── */
-import Home from "../views/pages/Home";
-import About from "../views/pages/About";
-import Contact from "../views/pages/Contact";
-import Gallery from "../views/pages/Gallery";
-import Universities from "../views/pages/Universities";
-import Colleges from "../views/pages/Colleges";
-import Downloads from "../views/pages/Downloads";
-import FeedbackForm from "../views/pages/FeedbackForm";
-import HelpSupport from "../views/pages/HelpSupport";
-import SchemeAnnouncementDetails from "../views/pages/SchemeAnnouncementDetails";
-import MultiSectionPages from "../views/pages/MultiSectionPages";
-import SlugResolver from "../utilities/SlugResolver";
-import DepDirectorateNoticesListView from "../views/pages/DepDirectorateNoticesListView";
-
-/* ─── Admin Pages ─────────────────────────────────────────────────────────── */
-import AdminLogin from "../views/Admin/AdminLogin";
-import AdminDashboard from "../views/Admin/AdminDashboard";
-import AdminUserManagement from "../views/Admin/AdminUserManagement";
-import AdminEducationStats from "../views/Admin/AdminEducationStats";
-import AdminFeedbackList from "../views/Admin/FeedbackList";
-import MenuManagement from "../views/Admin/MenuManagement";
-import HeaderManagement from "../views/Admin/HeaderManagement";
-import SliderManagement from "../views/Admin/SliderManagement";
-import FooterSection from "../views/Admin/FooterSectionManager";
-import AboutSectionMangement from "../views/Admin/AboutSectionMangement";
-import AnnouncementsManagement from "../views/Admin/AnnouncementsManagement";
-import NewUpdatesManagement from "../views/Admin/NewUpdatesManagement";
-import GalleryManagement from "../views/Admin/GalleryManagement";
-import ManageCategories from "../views/Admin/ManageCategories";
-import ManageBrands from "../views/Admin/ManageBrands";
-import ContactManagement from "../views/Admin/ContactManagement";
-import ContactCardCMS from "../views/Admin/ContactCardForm";
-import ImportantLinksManagement from "../views/Admin/ImportantLinksManagement";
-import ImportantPageManagement from "../views/Admin/ImportantPageManagement";
-import PageCreatorManagement from "../views/Admin/MultiSectionPagesMangagement";
-import RichContentPageManagements from "../views/Admin/RichContentPageManagements";
-import MediaLibraryMangments from "../views/Admin/MediaLibraryMangments";
-import DownloadManagement from "../views/Admin/DownloadManagement";
-import DepartmentNoticeManagement from "../views/Admin/DepartmentNoticeManagement";
-import DirectorateNoticeManagement from "../views/Admin/DirectorateNoticeManagement";
-import HelpGuidance from "../views/Admin/HelpGuidance";
-import HelpTutorials from "../views/Admin/HelpTutorials";
-import SessionManager from "../views/Admin/SessionManager";
-import ActivityLogManagement from "../views/Admin/ActivityLogManagement";
-import DbBackupManagement from "../views/Admin/DbBackupManagement"
+import {
+  Home, About, Contact, Gallery, Universities, Colleges, Downloads, FeedbackForm, HelpSupport,
+  SchemeAnnouncementDetails, SchemeAnnouncementListView, MultiSectionPages, SlugResolver, DepDirectorateNoticesListView,
+  AdminLogin, AdminDashboard, AdminUserManagement, AdminEducationStats, AdminFeedbackList, MenuManagement,
+  HeaderManagement, SliderManagement, FooterSection, AboutSectionMangement, AnnouncementsManagement, NewUpdatesManagement,
+  GalleryManagement, ManageCategories, ManageBrands, ContactManagement, ContactCardCMS, ImportantLinksManagement,
+  ImportantPageManagement, PageCreatorManagement, RichContentPageManagements, MediaLibraryMangments, DownloadManagement,
+  DepartmentNoticeManagement, DirectorateNoticeManagement, HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
+  DbBackupManagement
+} from "./LazyLoadingRouter";
 
 /* ─── Constants ───────────────────────────────────────────────────────────── */
 const API_URL = import.meta.env.VITE_API_URL;
@@ -104,7 +69,8 @@ const AppRoutes = () => {
   };
 
   return (
-    <Routes>
+    <Suspense fallback={<div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>}>
+      <Routes>
 
       {/* ── Public Routes ─────────────────────────────────────────────────── */}
       <Route path="/" element={<MainLayout><Home /></MainLayout>} />
@@ -120,8 +86,10 @@ const AppRoutes = () => {
       <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
 
       {/* Announcements & Schemes */}
+      <Route path="/announcements" element={<MainLayout><SchemeAnnouncementListView /></MainLayout>} />
       <Route path="/announcements/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
       <Route path="/announcement/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
+      <Route path="/schemes" element={<MainLayout><SchemeAnnouncementListView /></MainLayout>} />
       <Route path="/schemes/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
       <Route path="/scheme/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
 
@@ -201,6 +169,7 @@ const AppRoutes = () => {
       </Route>
 
     </Routes>
+    </Suspense>
   );
 };
 

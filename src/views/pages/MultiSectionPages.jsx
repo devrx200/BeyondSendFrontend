@@ -69,7 +69,7 @@ const formatDateTime = (date, isHindi) => {
 };
 
 /* ══ MultiSectionPages ══ */
-const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFilterChange }) => {
+const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFilterChange, preview = false }) => {
   const { isHindi } = useLanguage();
 
   useEffect(() => {
@@ -142,6 +142,41 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={title} />
       </Helmet>
+
+      {/* Preview watermark overlay */}
+      {preview && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed', inset: 0,
+            pointerEvents: 'none', zIndex: 9999, overflow: 'hidden',
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: '40%', left: '-20%',
+            width: '140%', transform: 'rotate(-30deg)',
+            textAlign: 'center', opacity: 0.12,
+            fontSize: 'clamp(48px, 10vw, 100px)', fontWeight: 'bold',
+            color: '#fc7785', whiteSpace: 'nowrap',
+            letterSpacing: '8px', textTransform: 'uppercase',
+          }}>
+            {isHindi ? 'प्रीव्यू मोड' : 'PREVIEW MODE'}
+          </div>
+          <button
+            onClick={() => window.close()}
+            style={{
+              position: 'fixed', top: 15, right: 15,
+              backgroundColor: 'rgba(220,53,69,0.95)', color: '#fff',
+              border: 'none', cursor: 'pointer', pointerEvents: 'auto',
+              padding: '6px 16px', borderRadius: 30,
+              fontSize: 13, fontWeight: 'bold', zIndex: 10000,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}
+          >
+            {isHindi ? 'प्रीव्यू बंद करें' : 'Close Preview'}
+          </button>
+        </div>
+      )}
 
       <Container className="py-4">
         {/* Breadcrumb */}

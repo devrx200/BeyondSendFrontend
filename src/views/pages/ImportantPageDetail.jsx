@@ -208,21 +208,22 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
               {pageTitle}
             </h1>
             <hr className="border-white opacity-25 my-3" />
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-              <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
-                <FaCalendarAlt size={11} aria-hidden="true" />
+            <div className="d-flex flex-nowrap align-items-center gap-2 mb-3 pb-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
+                <FaCalendarAlt size={10} aria-hidden="true" />
                 <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
               </Badge>
-              <Badge color="light" className="text-dark rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1">
-                <FaCalendarPlus size={11} aria-hidden="true" />
+              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
+                <FaCalendarPlus size={10} aria-hidden="true" />
                 <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
               </Badge>
               <Button
                 tag={Link} to="/" color="dark" size="sm"
-                className="d-inline-flex align-items-center gap-1 fw-semibold ms-md-auto mt-2 mt-md-0"
+                className="d-inline-flex align-items-center gap-1 fw-semibold ms-auto flex-shrink-0"
+                style={{ fontSize: 11, padding: '4px 10px', borderRadius: '4px' }}
               >
-                <FaChevronLeft size={12} aria-hidden="true" />
-                {isHindi ? 'मुख्य पृष्ठ पर वापस' : 'Back To Home'}
+                <FaChevronLeft size={10} aria-hidden="true" />
+                {isHindi ? 'मुख्य पृष्ठ' : 'Back To Home'}
               </Button>
             </div>
           </CardHeader>

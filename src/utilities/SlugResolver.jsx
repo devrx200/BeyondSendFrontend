@@ -95,6 +95,7 @@ const SlugResolver = ({ preview = false }) => {
         mode={status}
         fullSlug={slugForApi}
         onPageChange={(page) => fetchData(page, 10)}
+        preview={isPreview}
       />
     );
   }
