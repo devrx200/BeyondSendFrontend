@@ -449,7 +449,7 @@ const HelpTutorials = () => {
         <div className="px-3 px-md-4">
 
           {/* ── PAGE HEADER ── */}
-          <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded">
+          <CardHeader className="adm-card-header p-3 border border-white d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded">
             <div>
               <h3 className="adm-page-title mb-1">
                 📘 {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}

@@ -434,7 +434,7 @@ const FooterSection = () => {
                         </p>
                     </div>
 
-                    <Button color="primary" onClick={saveFooter}>
+                    <Button color="dark" onClick={saveFooter}>
                         <FaSave className="me-1" />
                         Save Footer Content
                     </Button>
@@ -444,479 +444,404 @@ const FooterSection = () => {
             <Card className="adm-card shadow-sm border-0 mb-4">
                 <CardBody>
 
-                <Card className="border rounded-3 mb-4 shadow-none">
-                    <CardBody className="p-3">
-                        <h6 className="fw-semibold mb-3 text-primary">Contact Information</h6>
+                    <Card className="border rounded-3 mb-4 shadow-none">
+                        <CardBody className="p-3">
+                            <h6 className="fw-semibold mb-3 text-primary">Contact Information</h6>
 
-                        <Row>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>Department Name (English)</Label>
-                                    <Input
-                                        name="departmentNameEn"
-                                        value={footer.contactInfo.departmentNameEn}
-                                        onChange={e =>
-                                            handleChange("departmentNameEn", e.target.value)
-                                        }
-                                        invalid={!!errors.departmentNameEn}
-                                    />
-                                    <small className="text-danger">{errors.departmentNameEn}</small>
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>Department Name (Hindi)</Label>
-                                    <Input
-                                        name="departmentNameHi"
-                                        value={footer.contactInfo.departmentNameHi}
-                                        onChange={e =>
-                                            handleChange("departmentNameHi", e.target.value, {
-                                                isHindi: true,
-                                            })
-                                        }
-                                        invalid={!!errors.departmentNameHi}
-                                    />
-                                    {errors.departmentNameHi && (
-                                        <FormFeedback>{errors.departmentNameHi}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
+                            <Row>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>Department Name (English)</Label>
+                                        <Input
+                                            name="departmentNameEn"
+                                            value={footer.contactInfo.departmentNameEn}
+                                            onChange={e =>
+                                                handleChange("departmentNameEn", e.target.value)
+                                            }
+                                            invalid={!!errors.departmentNameEn}
+                                        />
+                                        <small className="text-danger">{errors.departmentNameEn}</small>
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>Department Name (Hindi)</Label>
+                                        <Input
+                                            name="departmentNameHi"
+                                            value={footer.contactInfo.departmentNameHi}
+                                            onChange={e =>
+                                                handleChange("departmentNameHi", e.target.value, {
+                                                    isHindi: true,
+                                                })
+                                            }
+                                            invalid={!!errors.departmentNameHi}
+                                        />
+                                        {errors.departmentNameHi && (
+                                            <FormFeedback>{errors.departmentNameHi}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
 
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaPhoneAlt /> Phone
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaPhoneAlt /> Phone
+                                        </Label>
+                                        <Input
+                                            name="phone"
+                                            value={footer.contactInfo.phone}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                setFooter({
+                                                    ...footer,
+                                                    contactInfo: { ...footer.contactInfo, phone: value },
+                                                });
+                                                setErrors(prev => ({
+                                                    ...prev,
+                                                    phone: PHONE_REGEX.test(value)
+                                                        ? ""
+                                                        : "Invalid mobile number",
+                                                }));
+                                            }}
+                                            invalid={!!errors.phone}
+                                        />
+                                        {errors.phone && (
+                                            <FormFeedback>{errors.phone}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaMapMarkerAlt /> Address (English)
+                                        </Label>
+                                        <Input
+                                            type="textarea"
+                                            name="addressEn"
+                                            value={footer.contactInfo.addressEn}
+                                            onChange={e =>
+                                                handleChange("addressEn", e.target.value, {
+                                                    isTextarea: true,
+                                                })
+                                            }
+                                            invalid={!!errors.addressEn}
+                                        />
+                                        {errors.addressEn && (
+                                            <FormFeedback>{errors.addressEn}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaMapMarkerAlt /> Address (Hindi)
+                                        </Label>
+                                        <Input
+                                            type="textarea"
+                                            name="addressHi"
+                                            value={footer.contactInfo.addressHi}
+                                            onChange={e =>
+                                                handleChange("addressHi", e.target.value, {
+                                                    isHindi: true,
+                                                    isTextarea: true,
+                                                })
+                                            }
+                                            invalid={!!errors.addressHi}
+                                        />
+                                        {errors.addressHi && (
+                                            <FormFeedback>{errors.addressHi}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+
+                                {/* ================= Email ================= */}
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaEnvelope /> Email
+                                        </Label>
+                                        <Input
+                                            name="email"
+                                            value={footer.contactInfo.email}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                setFooter({
+                                                    ...footer,
+                                                    contactInfo: { ...footer.contactInfo, email: value },
+                                                });
+                                                setErrors(prev => ({
+                                                    ...prev,
+                                                    email: EMAIL_REGEX.test(value)
+                                                        ? ""
+                                                        : "Invalid email address",
+                                                }));
+                                            }}
+                                            invalid={!!errors.email}
+                                        />
+                                        {errors.email && (
+                                            <FormFeedback>{errors.email}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaUser /> Organizer Name (Web Info Manager) (English)
+                                        </Label>
+                                        <Input
+                                            name="organizerNameEn"
+                                            value={footer.contactInfo.organizerNameEn}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                setFooter({
+                                                    ...footer,
+                                                    contactInfo: { ...footer.contactInfo, organizerNameEn: value },
+                                                });
+                                                setErrors(prev => ({
+                                                    ...prev,
+                                                    organizerNameEn: !value.trim()
+                                                        ? "organizer Name is required"
+                                                        : "",
+                                                }));
+                                            }}
+                                            invalid={!!errors.organizerNameEn}
+                                        />
+                                        {errors.organizerNameEn && (
+                                            <FormFeedback>{errors.organizerNameEn}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaUser /> Organizer Name (Web Info Manager) (Hindi)
+                                        </Label>
+                                        <Input
+                                            name="organizerNameHi"
+                                            value={footer.contactInfo.organizerNameHi}
+                                            onChange={e => {
+                                                const value = e.target.value;
+                                                setFooter({
+                                                    ...footer,
+                                                    contactInfo: { ...footer.contactInfo, organizerNameHi: value },
+                                                });
+                                                setErrors(prev => ({
+                                                    ...prev,
+                                                    organizerNameHi: !value.trim()
+                                                        ? "organizer Name is required"
+                                                        : "",
+                                                }));
+                                            }}
+                                            invalid={!!errors.organizerNameHi}
+                                        />
+                                        {errors.organizerNameHi && (
+                                            <FormFeedback>{errors.organizerNameHi}</FormFeedback>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+                                <Col md="4">
+                                    <FormGroup>
+                                        <Label>
+                                            <FaUser /> Organizer NIC Logo (upload)
+                                        </Label>
+
+                                        <Input
+                                            name="organizerLogo"
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+
+                                                setFooter({
+                                                    ...footer,
+                                                    contactInfo: {
+                                                        ...footer.contactInfo,
+                                                        organizerLogo: file,
+                                                    },
+                                                });
+
+                                                setErrors((prev) => ({
+                                                    ...prev,
+                                                    organizerLogo: !file
+                                                        ? "Organizer Logo is required"
+                                                        : "",
+                                                }));
+                                            }}
+                                            invalid={!!errors.organizerLogo}
+
+                                        />
+
+                                        {errors.organizerLogo && (
+                                            <FormFeedback>{errors.organizerLogo}</FormFeedback>
+                                        )}
+                                        {footer?.contactInfo?.organizerLogo && (
+                                            <div style={{ marginTop: "10px" }}>
+                                                <img
+                                                    src={
+                                                        footer.contactInfo.organizerLogo instanceof File
+                                                            ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
+                                                            : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
+                                                    }
+                                                    alt="Preview"
+                                                    height="60"
+                                                    style={{
+                                                        border: "1px solid #ddd",
+                                                        padding: "4px",
+                                                        borderRadius: "6px",
+                                                    }} />
+                                            </div>
+                                        )}
+                                    </FormGroup>
+                                </Col>
+
+                            </Row>
+                        </CardBody>
+                    </Card>
+                    {/* ================= LINKS MANAGER ================= */}
+                    <Card className="admin-card">
+                        <CardBody>
+                            <h3 className="section-title">Footer Links Manager</h3>
+
+                            <Row className="align-items-end">
+                                <Col md="3">
+                                    <Label className="form-contol-label">
+                                        Link Title (English)
                                     </Label>
                                     <Input
-                                        name="phone"
-                                        value={footer.contactInfo.phone}
+
+                                        value={newLink.titleEn}
+                                        invalid={!!errors.newLinkTitle}
                                         onChange={e => {
                                             const value = e.target.value;
-                                            setFooter({
-                                                ...footer,
-                                                contactInfo: { ...footer.contactInfo, phone: value },
-                                            });
+                                            setNewLink({ ...newLink, titleEn: value });
                                             setErrors(prev => ({
                                                 ...prev,
-                                                phone: PHONE_REGEX.test(value)
-                                                    ? ""
-                                                    : "Invalid mobile number",
+                                                newLinkTitle: validateEnglish(value),
                                             }));
                                         }}
-                                        invalid={!!errors.phone}
                                     />
-                                    {errors.phone && (
-                                        <FormFeedback>{errors.phone}</FormFeedback>
+                                    {errors.newLinkTitle && (
+                                        <small className="text-danger">{errors.newLinkTitle}</small>
                                     )}
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaMapMarkerAlt /> Address (English)
+                                </Col>
+                                <Col md="3">
+                                    <Label className="form-contol-label">
+                                        Link Title (Hindi)
                                     </Label>
                                     <Input
-                                        type="textarea"
-                                        name="addressEn"
-                                        value={footer.contactInfo.addressEn}
+                                        value={newLink.titleHin}
+                                        invalid={!!errors.newLinkTitleHin}
+                                        onChange={e => {
+                                            const value = e.target.value;
+                                            setNewLink({ ...newLink, titleHin: value });
+                                            setErrors(prev => ({
+                                                ...prev,
+                                                newLinkTitleHin: validateHindi(value),
+                                            }));
+                                        }}
+                                    />
+                                    {errors.newLinkTitleHin && (
+                                        <small className="text-danger">{errors.newLinkTitleHin}</small>
+                                    )}
+                                </Col>
+                                <Col md="3">
+                                    <Label className="form-contol-label">
+                                        Title Path
+                                    </Label>
+                                    <Input
+                                        placeholder="/about /index /downloads"
+                                        value={newLink.url}
+                                        invalid={!!errors.newLinkUrl}
+                                        onChange={e => {
+                                            const value = e.target.value;
+                                            setNewLink({ ...newLink, url: value });
+                                            setErrors(prev => ({
+                                                ...prev,
+                                                newLinkUrl: validateRequired(value),
+                                            }));
+                                        }}
+                                    />
+                                    {errors.newLinkUrl && (
+                                        <small className="text-danger">{errors.newLinkUrl}</small>
+                                    )}
+                                </Col>
+                                <Col md="2">
+                                    <Label className="form-contol-label">
+                                        Link Type
+                                    </Label>
+                                    <Input
+                                        type="select"
+                                        value={newLink.type}
                                         onChange={e =>
-                                            handleChange("addressEn", e.target.value, {
-                                                isTextarea: true,
-                                            })
+                                            setNewLink({ ...newLink, type: e.target.value })
                                         }
-                                        invalid={!!errors.addressEn}
-                                    />
-                                    {errors.addressEn && (
-                                        <FormFeedback>{errors.addressEn}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaMapMarkerAlt /> Address (Hindi)
-                                    </Label>
-                                    <Input
-                                        type="textarea"
-                                        name="addressHi"
-                                        value={footer.contactInfo.addressHi}
-                                        onChange={e =>
-                                            handleChange("addressHi", e.target.value, {
-                                                isHindi: true,
-                                                isTextarea: true,
-                                            })
-                                        }
-                                        invalid={!!errors.addressHi}
-                                    />
-                                    {errors.addressHi && (
-                                        <FormFeedback>{errors.addressHi}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
-
-                            {/* ================= Email ================= */}
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaEnvelope /> Email
-                                    </Label>
-                                    <Input
-                                        name="email"
-                                        value={footer.contactInfo.email}
-                                        onChange={e => {
-                                            const value = e.target.value;
-                                            setFooter({
-                                                ...footer,
-                                                contactInfo: { ...footer.contactInfo, email: value },
-                                            });
-                                            setErrors(prev => ({
-                                                ...prev,
-                                                email: EMAIL_REGEX.test(value)
-                                                    ? ""
-                                                    : "Invalid email address",
-                                            }));
-                                        }}
-                                        invalid={!!errors.email}
-                                    />
-                                    {errors.email && (
-                                        <FormFeedback>{errors.email}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaUser /> Organizer Name (Web Info Manager) (English)
-                                    </Label>
-                                    <Input
-                                        name="organizerNameEn"
-                                        value={footer.contactInfo.organizerNameEn}
-                                        onChange={e => {
-                                            const value = e.target.value;
-                                            setFooter({
-                                                ...footer,
-                                                contactInfo: { ...footer.contactInfo, organizerNameEn: value },
-                                            });
-                                            setErrors(prev => ({
-                                                ...prev,
-                                                organizerNameEn: !value.trim()
-                                                    ? "organizer Name is required"
-                                                    : "",
-                                            }));
-                                        }}
-                                        invalid={!!errors.organizerNameEn}
-                                    />
-                                    {errors.organizerNameEn && (
-                                        <FormFeedback>{errors.organizerNameEn}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaUser /> Organizer Name (Web Info Manager) (Hindi)
-                                    </Label>
-                                    <Input
-                                        name="organizerNameHi"
-                                        value={footer.contactInfo.organizerNameHi}
-                                        onChange={e => {
-                                            const value = e.target.value;
-                                            setFooter({
-                                                ...footer,
-                                                contactInfo: { ...footer.contactInfo, organizerNameHi: value },
-                                            });
-                                            setErrors(prev => ({
-                                                ...prev,
-                                                organizerNameHi: !value.trim()
-                                                    ? "organizer Name is required"
-                                                    : "",
-                                            }));
-                                        }}
-                                        invalid={!!errors.organizerNameHi}
-                                    />
-                                    {errors.organizerNameHi && (
-                                        <FormFeedback>{errors.organizerNameHi}</FormFeedback>
-                                    )}
-                                </FormGroup>
-                            </Col>
-                            <Col md="4">
-                                <FormGroup>
-                                    <Label>
-                                        <FaUser /> Organizer NIC Logo (upload)
-                                    </Label>
-
-                                    <Input
-                                        name="organizerLogo"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-
-                                            setFooter({
-                                                ...footer,
-                                                contactInfo: {
-                                                    ...footer.contactInfo,
-                                                    organizerLogo: file,
-                                                },
-                                            });
-
-                                            setErrors((prev) => ({
-                                                ...prev,
-                                                organizerLogo: !file
-                                                    ? "Organizer Logo is required"
-                                                    : "",
-                                            }));
-                                        }}
-                                        invalid={!!errors.organizerLogo}
-
-                                    />
-
-                                    {errors.organizerLogo && (
-                                        <FormFeedback>{errors.organizerLogo}</FormFeedback>
-                                    )}
-                                    {footer?.contactInfo?.organizerLogo && (
-                                        <div style={{ marginTop: "10px" }}>
-                                            <img
-                                                src={
-                                                    footer.contactInfo.organizerLogo instanceof File
-                                                        ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
-                                                        : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
-                                                }
-                                                alt="Preview"
-                                                height="60"
-                                                style={{
-                                                    border: "1px solid #ddd",
-                                                    padding: "4px",
-                                                    borderRadius: "6px",
-                                                }} />
-                                        </div>
-                                    )}
-                                </FormGroup>
-                            </Col>
-
-                        </Row>
-                    </CardBody>
-                </Card>
-                {/* ================= LINKS MANAGER ================= */}
-                <Card className="admin-card">
-                    <CardBody>
-                        <h3 className="section-title">Footer Links Manager</h3>
-
-                        <Row className="align-items-end">
-                            <Col md="3">
-                                <Label className="form-contol-label">
-                                    Link Title (English)
-                                </Label>
-                                <Input
-
-                                    value={newLink.titleEn}
-                                    invalid={!!errors.newLinkTitle}
-                                    onChange={e => {
-                                        const value = e.target.value;
-                                        setNewLink({ ...newLink, titleEn: value });
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            newLinkTitle: validateEnglish(value),
-                                        }));
-                                    }}
-                                />
-                                {errors.newLinkTitle && (
-                                    <small className="text-danger">{errors.newLinkTitle}</small>
-                                )}
-                            </Col>
-                            <Col md="3">
-                                <Label className="form-contol-label">
-                                    Link Title (Hindi)
-                                </Label>
-                                <Input
-                                    value={newLink.titleHin}
-                                    invalid={!!errors.newLinkTitleHin}
-                                    onChange={e => {
-                                        const value = e.target.value;
-                                        setNewLink({ ...newLink, titleHin: value });
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            newLinkTitleHin: validateHindi(value),
-                                        }));
-                                    }}
-                                />
-                                {errors.newLinkTitleHin && (
-                                    <small className="text-danger">{errors.newLinkTitleHin}</small>
-                                )}
-                            </Col>
-                            <Col md="3">
-                                <Label className="form-contol-label">
-                                    Title Path
-                                </Label>
-                                <Input
-                                    placeholder="/about /index /downloads"
-                                    value={newLink.url}
-                                    invalid={!!errors.newLinkUrl}
-                                    onChange={e => {
-                                        const value = e.target.value;
-                                        setNewLink({ ...newLink, url: value });
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            newLinkUrl: validateRequired(value),
-                                        }));
-                                    }}
-                                />
-                                {errors.newLinkUrl && (
-                                    <small className="text-danger">{errors.newLinkUrl}</small>
-                                )}
-                            </Col>
-                            <Col md="2">
-                                <Label className="form-contol-label">
-                                    Link Type
-                                </Label>
-                                <Input
-                                    type="select"
-                                    value={newLink.type}
-                                    onChange={e =>
-                                        setNewLink({ ...newLink, type: e.target.value })
-                                    }
-                                >
-                                    <option value="quick">Quick Links</option>
-                                    <option value="important">Important Links</option>
-                                </Input>
-                            </Col>
-                            <br></br>
-                            <Col md="3" className="mt-3 text-nowrap ">
-                                {/* <Button color="success" onClick={addLink} size="sm">
+                                    >
+                                        <option value="quick">Quick Links</option>
+                                        <option value="important">Important Links</option>
+                                    </Input>
+                                </Col>
+                                <br></br>
+                                <Col md="3" className="mt-3 text-nowrap ">
+                                    {/* <Button color="success" onClick={addLink} size="sm">
                                 <FaPlus /> 
                             </Button> */}
-                                <Button
-                                    color={editRow.data ? "warning" : "success"}
-                                    onClick={addOrUpdateLink}
-                                    size="sm"
-                                >
-                                    {editRow.data ? "Update" : <><FaPlus className="me-1" /> Add</>}
-                                </Button>
-
-                                {editRow.data && (
                                     <Button
-                                        color="danger"
+                                        color={editRow.data ? "warning" : "success"}
+                                        onClick={addOrUpdateLink}
                                         size="sm"
-                                        className="ms-2"
-                                        onClick={() => {
-                                            setEditRow({ type: null, index: null, data: null });
-                                            setNewLink({ titleEn: "", titleHin: "", url: "", type: "quick" });
-                                        }}
                                     >
-                                        <FaTimes />
+                                        {editRow.data ? "Update" : <><FaPlus className="me-1" /> Add</>}
                                     </Button>
-                                )}
 
-                            </Col>
-                        </Row>
+                                    {editRow.data && (
+                                        <Button
+                                            color="danger"
+                                            size="sm"
+                                            className="ms-2"
+                                            onClick={() => {
+                                                setEditRow({ type: null, index: null, data: null });
+                                                setNewLink({ titleEn: "", titleHin: "", url: "", type: "quick" });
+                                            }}
+                                        >
+                                            <FaTimes />
+                                        </Button>
+                                    )}
 
-                        {/* ================= QUICK LINKS TABLE ================= */}
-                        <Row className="mt-4">
-                            <Col md="6">
-                                <h6><FaLink /> Quick Links</h6>
-                                <Table
-                                    responsive
-                                    bordered
-                                    hover
-                                    size="sm"
-                                    className="footer-links-table"
-                                >
-                                    <thead className="table-header">
-                                        <tr>
-                                            <th>Link Title (English)</th>
-                                            <th>Link Title (Hindi)</th>
-                                            <th className="text-center" style={{ width: "80px" }}>
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {footer.quickLinks.map((link, index) => (
-                                            <tr key={link._id || index}>
-                                                <td>{link.titleEn}</td>
-                                                <td>{link.titleHin}</td>
+                                </Col>
+                            </Row>
 
-                                                {/* <td width="60">
+                            {/* ================= QUICK LINKS TABLE ================= */}
+                            <Row className="mt-4">
+                                <Col md="6">
+                                    <h6><FaLink /> Quick Links</h6>
+                                    <Table
+                                        responsive
+                                        bordered
+                                        hover
+                                        size="sm"
+                                        className="footer-links-table"
+                                    >
+                                        <thead className="table-header">
+                                            <tr>
+                                                <th>Link Title (English)</th>
+                                                <th>Link Title (Hindi)</th>
+                                                <th className="text-center" style={{ width: "80px" }}>
+                                                    Action
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {footer.quickLinks.map((link, index) => (
+                                                <tr key={link._id || index}>
+                                                    <td>{link.titleEn}</td>
+                                                    <td>{link.titleHin}</td>
+
+                                                    {/* <td width="60">
                                                 <FaTrash
                                                     className="delete-icon"
                                                     onClick={() => deleteLink("quick", link, index)}
                                                 />
                                             </td> */}
-                                                <td className="text-center">
-                                                    <div className="d-flex gap-2 justify-center-content">
-                                                        <FaEdit
-                                                            className="edit-icon me-2" style={{
-                                                                background: "transparent",
-                                                                border: "none",
-                                                                padding: "4px",
-                                                                marginRight: "6px",
-                                                                cursor: "pointer",
-                                                                fontSize: "23px",
-                                                                lineHeight: "1",
-                                                                color: "#198754",
-                                                            }}
-                                                            onClick={() => handleEditLink("quick", link, index)}
-                                                        />
-                                                        <FaTrash style={{
-                                                            background: "transparent",
-                                                            border: "none",
-                                                            padding: "4px",
-                                                            marginRight: "6px",
-                                                            cursor: "pointer",
-                                                            fontSize: "23px",
-                                                            lineHeight: "1",
-                                                            color: "#af2e1d",
-                                                        }} onClick={() => deleteAnyLink("quick", link, index)} />
-
-                                                    </div>
-
-                                                </td>
-                                            </tr>
-                                        ))}
-
-                                    </tbody>
-                                </Table>
-                            </Col>
-
-                            <Col md="6">
-                                <h6><FaLink /> Important Links</h6>
-                                <Table
-                                    responsive
-                                    bordered
-                                    hover
-                                    size="sm"
-                                    className="footer-links-table"
-                                >
-                                    <thead className="table-header">
-                                        <tr>
-                                            <th>Link Title (English)</th>
-                                            <th>Link Title (Hindi)</th>
-                                            <th className="text-center" style={{ width: "80px" }}>
-                                                Action
-                                            </th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {footer.importantLinks.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="2" className="text-center text-muted py-3">
-                                                    No important links added
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            footer.importantLinks.map((link, index) => (
-                                                <tr key={link._id || index}>
-                                                    <td className="link-title-cell">{link.titleEn}</td>
-                                                    <td className="link-title-cell">{link.titleHin}</td>
-
-                                                    {/* <td className="text-center">
-                                                    <FaTrash
-                                                        className="delete-icon"
-                                                        onClick={() => deleteLink("important", link, index)}
-                                                        title="Delete"
-                                                    />
-                                                </td> */}
                                                     <td className="text-center">
                                                         <div className="d-flex gap-2 justify-center-content">
                                                             <FaEdit
@@ -930,7 +855,7 @@ const FooterSection = () => {
                                                                     lineHeight: "1",
                                                                     color: "#198754",
                                                                 }}
-                                                                onClick={() => handleEditLink("important", link, index)}
+                                                                onClick={() => handleEditLink("quick", link, index)}
                                                             />
                                                             <FaTrash style={{
                                                                 background: "transparent",
@@ -940,137 +865,212 @@ const FooterSection = () => {
                                                                 cursor: "pointer",
                                                                 fontSize: "23px",
                                                                 lineHeight: "1",
-                                                                color: "#a71c17",
-                                                            }} onClick={() => deleteAnyLink("important", link, index)} />
+                                                                color: "#af2e1d",
+                                                            }} onClick={() => deleteAnyLink("quick", link, index)} />
+
                                                         </div>
+
                                                     </td>
-
                                                 </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </Table>
+                                            ))}
 
-                            </Col>
-                        </Row>
-                    </CardBody>
-                </Card>
-                {/* ================= SOCIAL LINKS ================= */}
-                <Card className="admin-card">
-                    <CardBody>
-                        <h3 className="section-title">Social Media Links</h3>
-                        <Row className="align-items-end">
-                            <Col md="4">
-                                <Label>Platform</Label>
-                                <Input
-                                    placeholder="YouTube / Instagram / Facebook"
-                                    value={newSocial.platform}
-                                    invalid={!!errors.socialPlatform}
-                                    onChange={e => {
-                                        const value = e.target.value;
-                                        setNewSocial({ ...newSocial, platform: value });
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            socialPlatform: validateRequired(value),
-                                        }));
-                                    }}
-                                />
-                                {errors.socialPlatform && (
-                                    <small className="text-danger">{errors.socialPlatform}</small>
-                                )}
-                            </Col>
-                            <Col md="6">
-                                <Label>URL</Label>
-                                <Input
-                                    placeholder="https://youtube.com/..."
-                                    value={newSocial.url}
-                                    invalid={!!errors.socialUrl}
-                                    onChange={e => {
-                                        const value = e.target.value;
-                                        setNewSocial({ ...newSocial, url: value });
-                                        setErrors(prev => ({
-                                            ...prev,
-                                            socialUrl: validateSocialUrl(value),
-                                        }));
-                                    }}
-                                />
-                                {errors.socialUrl && (
-                                    <small className="text-danger">{errors.socialUrl}</small>
-                                )}
-                            </Col>
-                            <Col md="2">
-                                <Button
-                                    color={editRow.data ? "warning" : "success"}
-                                    onClick={addOrUpdateLink}
-                                    size="sm"
-                                >
-                                    {editRow.data ? "Update" : <FaPlus />}
-                                </Button>
-                            </Col>
-                        </Row>
+                                        </tbody>
+                                    </Table>
+                                </Col>
 
-                        {/* SOCIAL LINKS TABLE */}
-                        <Table bordered responsive hover striped size="sm" className="mt-3">
-                            <thead className="table-header">
-                                <tr>
-                                    <th>Platform</th>
-                                    <th>URL</th>
-                                    <th width="80">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {footer.socialLinks.map((item, index) => (
-                                    <tr key={item._id || index}>
-                                        <td>{item.platform}</td>
-                                        <td>{item.url}</td>
-                                        <td className="text-center" style={{ whiteSpace: "nowrap" }}>
-                                            {/* EDIT */}
-                                            <button
-                                                type="button"
-                                                title="Edit"
-                                                onClick={() => handleEditSocial(item, index)}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    marginRight: "6px",
-                                                    cursor: "pointer",
-                                                    fontSize: "16px",
-                                                    lineHeight: "1",
-                                                    color: "#198754",
-                                                }}
-                                            >
-                                                <FaEdit />
-                                            </button>
+                                <Col md="6">
+                                    <h6><FaLink /> Important Links</h6>
+                                    <Table
+                                        responsive
+                                        bordered
+                                        hover
+                                        size="sm"
+                                        className="footer-links-table"
+                                    >
+                                        <thead className="table-header">
+                                            <tr>
+                                                <th>Link Title (English)</th>
+                                                <th>Link Title (Hindi)</th>
+                                                <th className="text-center" style={{ width: "80px" }}>
+                                                    Action
+                                                </th>
+                                            </tr>
+                                        </thead>
 
-                                            {/* DELETE */}
-                                            <button
-                                                type="button"
-                                                title="Delete"
-                                                onClick={() => deleteAnyLink("social", item, index)}
-                                                style={{
-                                                    background: "transparent",
-                                                    border: "none",
-                                                    padding: "4px",
-                                                    cursor: "pointer",
-                                                    fontSize: "16px",
-                                                    lineHeight: "1",
-                                                    color: "#ad2937",
-                                                }}
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </td>
+                                        <tbody>
+                                            {footer.importantLinks.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="2" className="text-center text-muted py-3">
+                                                        No important links added
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                footer.importantLinks.map((link, index) => (
+                                                    <tr key={link._id || index}>
+                                                        <td className="link-title-cell">{link.titleEn}</td>
+                                                        <td className="link-title-cell">{link.titleHin}</td>
+
+                                                        {/* <td className="text-center">
+                                                    <FaTrash
+                                                        className="delete-icon"
+                                                        onClick={() => deleteLink("important", link, index)}
+                                                        title="Delete"
+                                                    />
+                                                </td> */}
+                                                        <td className="text-center">
+                                                            <div className="d-flex gap-2 justify-center-content">
+                                                                <FaEdit
+                                                                    className="edit-icon me-2" style={{
+                                                                        background: "transparent",
+                                                                        border: "none",
+                                                                        padding: "4px",
+                                                                        marginRight: "6px",
+                                                                        cursor: "pointer",
+                                                                        fontSize: "23px",
+                                                                        lineHeight: "1",
+                                                                        color: "#198754",
+                                                                    }}
+                                                                    onClick={() => handleEditLink("important", link, index)}
+                                                                />
+                                                                <FaTrash style={{
+                                                                    background: "transparent",
+                                                                    border: "none",
+                                                                    padding: "4px",
+                                                                    marginRight: "6px",
+                                                                    cursor: "pointer",
+                                                                    fontSize: "23px",
+                                                                    lineHeight: "1",
+                                                                    color: "#a71c17",
+                                                                }} onClick={() => deleteAnyLink("important", link, index)} />
+                                                            </div>
+                                                        </td>
+
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </Table>
+
+                                </Col>
+                            </Row>
+                        </CardBody>
+                    </Card>
+                    {/* ================= SOCIAL LINKS ================= */}
+                    <Card className="admin-card">
+                        <CardBody>
+                            <h3 className="section-title">Social Media Links</h3>
+                            <Row className="align-items-end">
+                                <Col md="4">
+                                    <Label>Platform</Label>
+                                    <Input
+                                        placeholder="YouTube / Instagram / Facebook"
+                                        value={newSocial.platform}
+                                        invalid={!!errors.socialPlatform}
+                                        onChange={e => {
+                                            const value = e.target.value;
+                                            setNewSocial({ ...newSocial, platform: value });
+                                            setErrors(prev => ({
+                                                ...prev,
+                                                socialPlatform: validateRequired(value),
+                                            }));
+                                        }}
+                                    />
+                                    {errors.socialPlatform && (
+                                        <small className="text-danger">{errors.socialPlatform}</small>
+                                    )}
+                                </Col>
+                                <Col md="6">
+                                    <Label>URL</Label>
+                                    <Input
+                                        placeholder="https://youtube.com/..."
+                                        value={newSocial.url}
+                                        invalid={!!errors.socialUrl}
+                                        onChange={e => {
+                                            const value = e.target.value;
+                                            setNewSocial({ ...newSocial, url: value });
+                                            setErrors(prev => ({
+                                                ...prev,
+                                                socialUrl: validateSocialUrl(value),
+                                            }));
+                                        }}
+                                    />
+                                    {errors.socialUrl && (
+                                        <small className="text-danger">{errors.socialUrl}</small>
+                                    )}
+                                </Col>
+                                <Col md="2">
+                                    <Button
+                                        color={editRow.data ? "warning" : "success"}
+                                        onClick={addOrUpdateLink}
+                                        size="sm"
+                                    >
+                                        {editRow.data ? "Update" : <FaPlus />}
+                                    </Button>
+                                </Col>
+                            </Row>
+
+                            {/* SOCIAL LINKS TABLE */}
+                            <Table bordered responsive hover striped size="sm" className="mt-3">
+                                <thead className="table-header">
+                                    <tr>
+                                        <th>Platform</th>
+                                        <th>URL</th>
+                                        <th width="80">Action</th>
                                     </tr>
-                                ))}
+                                </thead>
+                                <tbody>
+                                    {footer.socialLinks.map((item, index) => (
+                                        <tr key={item._id || index}>
+                                            <td>{item.platform}</td>
+                                            <td>{item.url}</td>
+                                            <td className="text-center" style={{ whiteSpace: "nowrap" }}>
+                                                {/* EDIT */}
+                                                <button
+                                                    type="button"
+                                                    title="Edit"
+                                                    onClick={() => handleEditSocial(item, index)}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        marginRight: "6px",
+                                                        cursor: "pointer",
+                                                        fontSize: "16px",
+                                                        lineHeight: "1",
+                                                        color: "#198754",
+                                                    }}
+                                                >
+                                                    <FaEdit />
+                                                </button>
 
-                            </tbody>
-                        </Table>
-                    </CardBody>
-                </Card>
+                                                {/* DELETE */}
+                                                <button
+                                                    type="button"
+                                                    title="Delete"
+                                                    onClick={() => deleteAnyLink("social", item, index)}
+                                                    style={{
+                                                        background: "transparent",
+                                                        border: "none",
+                                                        padding: "4px",
+                                                        cursor: "pointer",
+                                                        fontSize: "16px",
+                                                        lineHeight: "1",
+                                                        color: "#ad2937",
+                                                    }}
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
 
-            </CardBody>
-        </Card>
+                                </tbody>
+                            </Table>
+                        </CardBody>
+                    </Card>
+
+                </CardBody>
+            </Card>
         </>
     );
 };
