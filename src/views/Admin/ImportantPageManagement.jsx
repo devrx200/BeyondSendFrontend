@@ -7,6 +7,7 @@ import {
   FaCompress, FaTimes, FaFileUpload, FaPlus
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API = import.meta.env.VITE_API_URL;
@@ -498,8 +499,8 @@ const ImportantPageManagement = () => {
     fd.append("slug", f.slug);
     fd.append("shortDescriptionEn", f.shortDescriptionEn);
     fd.append("shortDescriptionHi", f.shortDescriptionHi);
-    fd.append("descriptionEn", f.descriptionEn);
-    fd.append("descriptionHi", f.descriptionHi);
+    fd.append("descriptionEn", encodeBase64(f.descriptionEn || ""));
+    fd.append("descriptionHi", encodeBase64(f.descriptionHi || ""));
     fd.append("metaKeywords", JSON.stringify(f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean)));
     fd.append("tags", JSON.stringify(f.tags.split(",").map(x => x.trim()).filter(Boolean)));
     fd.append("categoryId", f.categoryId || "");
@@ -583,8 +584,8 @@ const ImportantPageManagement = () => {
       slug: row.slug || "",
       shortDescriptionEn: row.shortDescriptionEn || "",
       shortDescriptionHi: row.shortDescriptionHi || "",
-      descriptionEn: row.descriptionEn || "",
-      descriptionHi: row.descriptionHi || "",
+      descriptionEn: decodeBase64(row.descriptionEn || ""),
+      descriptionHi: decodeBase64(row.descriptionHi || ""),
       metaKeywords: Array.isArray(row.metaKeywords) ? row.metaKeywords.join(", ") : (row.metaKeywords || ""),
       tags: Array.isArray(row.tags) ? row.tags.join(", ") : (row.tags || ""),
       categoryId: row.categoryId?._id || row.categoryId || "",

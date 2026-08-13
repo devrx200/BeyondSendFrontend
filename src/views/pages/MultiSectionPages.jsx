@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import { FaEye } from 'react-icons/fa6';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { decodeBase64 } from '../../utilities/rXBase64';
 
 const API = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = 'Department of Higher Education, Government of Chhattisgarh India.';
@@ -99,9 +100,10 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
   if (!page) return null;
 
   const title        = isHindi ? (page.titleHin || page.titleEng) : page.titleEng;
-  const htmlContent  = isHindi
+  const rawHtmlContent  = isHindi
     ? (page.htmlContentHi || page.descriptionHi || page.htmlContent || page.descriptionEn)
     : (page.htmlContent   || page.descriptionEn);
+  const htmlContent = decodeBase64(rawHtmlContent);
   const publishDate  = page.publishDate || page.createdAt;
   const documents    = page.documentsUpdate || [];
   const listPath     = `/${page.baseSlug}/${page.mainSlug}`;

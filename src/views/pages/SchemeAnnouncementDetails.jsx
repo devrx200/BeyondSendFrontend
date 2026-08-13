@@ -7,6 +7,7 @@ import {
 } from 'reactstrap';
 import axios from 'axios';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { decodeBase64 } from '../../utilities/rXBase64';
 import {
   FaCalendarAlt, FaHome, FaTag, FaChevronLeft,
   FaCalendarPlus, FaExclamationTriangle,
@@ -117,7 +118,8 @@ const SchemeAnnouncementDetails = () => {
 
   /* Detail */
   const detailTitle      = isHindi ? data.titleHi : data.titleEn;
-  const descriptionHtml  = isHindi ? data.descriptionHi : data.descriptionEn;
+  const rawDescription   = isHindi ? data.descriptionHi : data.descriptionEn;
+  const descriptionHtml  = decodeBase64(rawDescription);
   const metaDescription  = getMetaDescription(
     descriptionHtml,
     isHindi ? data.shortDescriptionHi : data.shortDescriptionEn

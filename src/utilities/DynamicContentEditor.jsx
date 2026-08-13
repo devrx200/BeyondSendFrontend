@@ -4,6 +4,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import JoditEditor from "jodit-react";
+import { encodeBase64, decodeBase64 } from "./rXBase64";
 import axios from "axios";
 import { Progress } from "reactstrap";
 import Swal from "sweetalert2";
@@ -1166,12 +1167,15 @@ const DynamicContentEditor = forwardRef(({
 
   const isControlled = contents !== undefined && setContents !== undefined;
   const [internalContent, setInternalContent] = useState(() => ({
-    [ENG]: initialEn, [HIN]: initialHi,
+    [ENG]: decodeBase64(initialEn), [HIN]: decodeBase64(initialHi),
   }));
 
   const getCurrentContent = useCallback(() => {
     if (isControlled && contents?.[0]) {
-      return { [ENG]: contents[0][ENG] || "", [HIN]: contents[0][HIN] || "" };
+      return {
+        [ENG]: decodeBase64(contents[0][ENG] || ""),
+        [HIN]: decodeBase64(contents[0][HIN] || ""),
+      };
     }
     return internalContent;
   }, [isControlled, contents, internalContent, ENG, HIN]);
@@ -1180,27 +1184,20 @@ const DynamicContentEditor = forwardRef(({
 
   const item = isControlled ? contents?.[0] : internalContent;
   const currentField = activeTab === "en" ? ENG : HIN;
-  const externalValue = item?.[currentField] || "";
+  const externalValue = decodeBase64(item?.[currentField] || "");
 
-  // Always-fresh mirror of externalValue, readable from callbacks/timers
-  // (e.g. Jodit's afterInit) without those closures going stale. Updated
-  // on every render — a plain ref write, so it never triggers a re-render
-  // itself.
   const externalValueRef = useRef(externalValue);
   externalValueRef.current = externalValue;
-
-  // Tracks the last (field, value) pair WE pushed into state via
-  // updateContent (typing → blur, link insert, clear). When externalValue
-  // changes purely as an echo of our own update, the sync effect below
-  // skips touching the live editor instance — that's what previously threw
-  // the cursor to the end of the content after every save.
   const lastOwnUpdateRef = useRef({ field: null, value: null });
 
   useEffect(() => { setLiveContent(externalValue); }, [externalValue]);
 
   useEffect(() => {
     if (!isControlled) {
-      setInternalContent(() => ({ [ENG]: initialEn, [HIN]: initialHi }));
+      setInternalContent(() => ({
+        [ENG]: decodeBase64(initialEn),
+        [HIN]: decodeBase64(initialHi),
+      }));
     }
   }, [isControlled, initialEn, initialHi, ENG, HIN]);
 
@@ -1253,7 +1250,9 @@ const DynamicContentEditor = forwardRef(({
 
   const handleChange = useCallback((newContent) => {
     setLiveContent(newContent);
-  }, []);
+    const field = activeTabRef.current === "en" ? ENG : HIN;
+    updateContent(field, newContent);
+  }, [ENG, HIN, updateContent]);
 
   const handleClear = useCallback(() => {
     const field = activeTabRef.current === "en" ? ENG : HIN;
@@ -1276,13 +1275,6 @@ const DynamicContentEditor = forwardRef(({
     if (!editor) return;
     editor.focus();
 
-    // Save the exact cursor/selection position using Jodit's own
-    // marker-based save/restore API. A raw native Range (the previous
-    // approach) can go stale the moment focus moves to the modal, which is
-    // exactly why the link used to land at the end of the content instead
-    // of where the cursor actually was. Jodit's save() inserts invisible
-    // marker spans at the real position, which survive the modal being
-    // open and let restore() put the cursor back exactly.
     try {
       if (typeof editor.selection.save === "function") {
         editor.selection.save();
@@ -1337,13 +1329,6 @@ const DynamicContentEditor = forwardRef(({
     savedRangeRef.current = null;
   }, [handleBlur, showToast]);
 
-  // Keeps the mounted editor in sync when its value changes for reasons
-  // OTHER than our own typing/blur/insert round-trip — e.g. the parent
-  // finishes an async fetch and populates `contents` after the editor has
-  // already mounted, or the person switches language tabs. It updates the
-  // live instance directly (editor.value = ...) instead of rebuilding the
-  // whole editor, and it explicitly skips our own echoed updates so the
-  // cursor is never disturbed by the user's own edits.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -1356,12 +1341,6 @@ const DynamicContentEditor = forwardRef(({
   }, [externalValue, currentField]);
 
   const joditConfig = useMemo(() => {
-    // Only rebuilt when isFullscreen/height actually change (both require a
-    // real toolbar/layout rebuild). When that happens, seed the new
-    // instance with whatever the currently-mounted editor holds right now
-    // (freshest, even if not yet saved to state) so nothing typed is lost.
-    // On first mount there's no instance yet, so fall back to the latest
-    // known external value.
     const seed = editorRef.current ? editorRef.current.value : externalValueRef.current;
     return {
       height: isFullscreen ? "calc(100vh - 210px)" : height,

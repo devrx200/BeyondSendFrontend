@@ -23,6 +23,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 
 const AnnouncementsManagement = () => {
   const { isHindi } = useLanguage();
@@ -160,8 +161,8 @@ const AnnouncementsManagement = () => {
       slug: item.slug || "",
       shortDescriptionEn: item.shortDescriptionEn || "",
       shortDescriptionHi: item.shortDescriptionHi || "",
-      descriptionEn: item.descriptionEn || "",
-      descriptionHi: item.descriptionHi || "",
+      descriptionEn: decodeBase64(item.descriptionEn || ""),
+      descriptionHi: decodeBase64(item.descriptionHi || ""),
       categoryId: item.categoryId?._id || "",
       image: null,
       fromDate: item.fromDate,
@@ -222,8 +223,11 @@ const AnnouncementsManagement = () => {
 
     Object.keys(formData).forEach((key) => {
       if (key === "image") return;
-      const value = formData[key];
+      let value = formData[key];
       if (value === null || value === undefined) return;
+      if (key === "descriptionEn" || key === "descriptionHi") {
+        value = encodeBase64(value);
+      }
       if (typeof value === "boolean") {
         fd.append(key, value.toString());
       } else {

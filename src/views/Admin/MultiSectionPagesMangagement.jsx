@@ -7,6 +7,7 @@ import {
   FaPlus, FaFilePdf, FaFileWord, FaFileExcel
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API = import.meta.env.VITE_API_URL;
@@ -664,8 +665,8 @@ const MultiSectionPagesManagement = () => {
     mainSlug: form.mainSlug.trim(),
     slug: form.slug.trim(),
     department: form.department.trim(),
-    htmlContent: form.htmlContent,
-    htmlContentHi: form.htmlContentHi,
+    htmlContent: encodeBase64(form.htmlContent || ""),
+    htmlContentHi: encodeBase64(form.htmlContentHi || ""),
     isActive: form.isActive,
     metaKeywords: form.metaKeywords
       .split(",")
@@ -699,8 +700,10 @@ const MultiSectionPagesManagement = () => {
 
   const buildFormData = () => {
     const fd = new FormData();
-    const fields = ["titleEng", "titleHin", "baseSlug", "mainSlug", "slug", "department", "htmlContent", "htmlContentHi"];
+    const fields = ["titleEng", "titleHin", "baseSlug", "mainSlug", "slug", "department"];
     fields.forEach(key => fd.append(key, form[key]));
+    fd.append("htmlContent", encodeBase64(form.htmlContent || ""));
+    fd.append("htmlContentHi", encodeBase64(form.htmlContentHi || ""));
     fd.append("isActive", form.isActive);
 
     const docs = form.documentsUpdate.map((doc, idx) => {
@@ -818,8 +821,8 @@ const MultiSectionPagesManagement = () => {
       mainSlug: item.mainSlug || "",
       slug: item.slug || "",
       department: item.department || "",
-      htmlContent: item.htmlContent || "",
-      htmlContentHi: item.htmlContentHi || "",
+      htmlContent: decodeBase64(item.htmlContent || ""),
+      htmlContentHi: decodeBase64(item.htmlContentHi || ""),
       isActive: item.isActive !== false,
       categoryId: item.categoryId?._id || item.categoryId || "",
       tags: Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || ""),

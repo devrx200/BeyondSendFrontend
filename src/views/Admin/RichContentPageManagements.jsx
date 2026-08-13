@@ -6,6 +6,7 @@ import {
   FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand, FaCompress, FaTimes, FaPlus
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API = import.meta.env.VITE_API_URL;
@@ -332,6 +333,8 @@ const RichContentPageManagements = () => {
 
   const buildPayload = (f) => ({
     ...f,
+    descriptionEn: encodeBase64(f.descriptionEn || ""),
+    descriptionHi: encodeBase64(f.descriptionHi || ""),
     metaKeywords: f.metaKeywords.split(",").map(x => x.trim()).filter(Boolean),
     tags: f.tags.split(",").map(x => x.trim()).filter(Boolean),
     categoryId: f.categoryId || null
@@ -397,8 +400,8 @@ const RichContentPageManagements = () => {
       slug: row.slug || "",
       shortDescriptionEn: row.shortDescriptionEn || "",
       shortDescriptionHi: row.shortDescriptionHi || "",
-      descriptionEn: row.descriptionEn || "",
-      descriptionHi: row.descriptionHi || "",
+      descriptionEn: decodeBase64(row.descriptionEn || ""),
+      descriptionHi: decodeBase64(row.descriptionHi || ""),
       metaKeywords: Array.isArray(row.metaKeywords) ? row.metaKeywords.join(", ") : (row.metaKeywords || ""),
       tags: Array.isArray(row.tags) ? row.tags.join(", ") : (row.tags || ""),
       categoryId: row.categoryId?._id || row.categoryId || "",
