@@ -13,6 +13,9 @@ export default defineConfig({
     host: true,
     port: 5175,
     strictPort: true,
+    hmr: {
+      overlay: false,
+    },
   },
   esbuild: {
     target: "es2020",

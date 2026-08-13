@@ -198,8 +198,8 @@ const AnnouncementsManagement = () => {
         slug: item.slug || "",
         shortDescriptionEn: item.shortDescriptionEn || "",
         shortDescriptionHi: item.shortDescriptionHi || "",
-        descriptionEn: item.descriptionEn || "",
-        descriptionHi: item.descriptionHi || "",
+        descriptionEn: decodeBase64(item.descriptionEn || ""),
+        descriptionHi: decodeBase64(item.descriptionHi || ""),
         categoryId: item.categoryId?._id || "",
         image: null,
         fromDate: item.fromDate,
@@ -308,7 +308,9 @@ const AnnouncementsManagement = () => {
         if (key === "image") return;
         const value = formData[key];
         if (value === null || value === undefined) return;
-        if (typeof value === "boolean") {
+        if (key === "descriptionEn" || key === "descriptionHi") {
+          fd.append(key, encodeBase64(value || ""));
+        } else if (typeof value === "boolean") {
           fd.append(key, value.toString());
         } else {
           fd.append(key, value);
@@ -557,24 +559,14 @@ const AnnouncementsManagement = () => {
                       required
                       name="titleEn"
                       value={formData.titleEn}
-<<<<<<< HEAD
                       onChange={(e) => {
                         const val = e.target.value;
-                        setFormData({
-                          ...formData,
-                          titleEn: val,
-                          slug: editingId ? formData.slug : generateSlug(val)
-                        });
-                      }}
-=======
-                      onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          titleEn: e.target.value,
-                          slug: generateSlug(e.target.value)
-                        }))
-                      }
->>>>>>> 79a7d39cbfcef10087317283a8ee1ce9ff6ed6f7
+                          titleEn: val,
+                          slug: editingId ? prev.slug : generateSlug(val)
+                        }));
+                      }}
                       placeholder="Enter English title"
                     />
                   </FormGroup>
