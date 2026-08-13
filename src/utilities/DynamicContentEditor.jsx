@@ -16,6 +16,7 @@ import {
   FaTh, FaList, FaSearch, FaRegSave,
   FaFileAudio, FaFileVideo, FaFile, FaTrash,
   FaMagic, FaCheckCircle, FaExclamationTriangle, FaInfoCircle,
+  FaGlobe, FaLanguage,
 } from "react-icons/fa";
 
 // ─────────────────────────────────────────────
@@ -221,6 +222,8 @@ const makeContentResponsive = (html) => {
 function EditorStyles() {
   return (
     <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Rozha+One&family=Yatra+One&display=swap');
+
       @keyframes dce-fadeIn { from { opacity: 0; } to { opacity: 1; } }
       @keyframes dce-zoomIn {
         from { transform: translate(-50%,-48%) scale(0.96); opacity: 0; }
@@ -233,6 +236,20 @@ function EditorStyles() {
       @media (max-width: 600px) {
         .dce-modal-toolbar { flex-direction: column !important; }
         .dce-filter-pills  { flex-wrap: wrap !important; }
+      }
+      /* Hide Upload option tab in Jodit Image Popup Dialog — ONLY URL tab supported */
+      .jodit-popup-import-image .jodit-tabs__button:first-child,
+      .jodit-popup-import-image .jodit-tabs__buttons > button:first-child:not(:only-child),
+      .jodit-popup .jodit-tabs__buttons > button[data-tab-id="upload"],
+      .jodit-popup .jodit-tabs__buttons > button:first-child:not(:only-child) {
+        display: none !important;
+      }
+      /* Ensure SweetAlert2 confirmation dialog and Jodit popups appear ON TOP of Fullscreen editor */
+      .swal2-container {
+        z-index: 99999 !important;
+      }
+      .jodit-popup, .jodit-dialog__box {
+        z-index: 99990 !important;
       }
     `}</style>
   );
@@ -474,9 +491,9 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
       const serverMsg = err.response?.data?.message;
       const msg =
         status === 413 ? `File is too large. Maximum allowed size is ${MAX_UPLOAD_SIZE_LABEL}.` :
-        status === 415 ? "File type not allowed. Check supported formats." :
-        status === 401 ? "Session expired. Please log in again." :
-        serverMsg || "Upload failed. Please try again.";
+          status === 415 ? "File type not allowed. Check supported formats." :
+            status === 401 ? "Session expired. Please log in again." :
+              serverMsg || "Upload failed. Please try again.";
       onShowToast?.(msg, "error");
     } finally {
       setUploading(false);
@@ -1000,12 +1017,12 @@ AttachModal.propTypes = {
 // ─────────────────────────────────────────────
 function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isFullscreen, onToggleFullscreen }) {
   const TABS = [
-    { key: "en", label: "English", flag: "🇬🇧" },
-    { key: "hi", label: "हिंदी", flag: "🇮🇳" },
+    { key: "en", label: "English", icon: "🇺🇸" },
+    { key: "hi", label: "हिंदी", icon: "🇮🇳" },
   ];
 
 
-const handleClearClick = async () => {
+  const handleClearClick = async () => {
     if (isFullscreen) await new Promise(resolve => setTimeout(resolve, 30));
     const result = await Swal.fire({
       title: 'Clear editor content?',
@@ -1036,7 +1053,7 @@ const handleClearClick = async () => {
     }
   };
 
-  
+
   return (
     <div style={{
       background: WP.black, padding: "8px 16px",
@@ -1059,7 +1076,7 @@ const handleClearClick = async () => {
               display: "inline-flex", alignItems: "center", gap: 6,
               transition: "background 0.15s",
             }}>
-            <span>{tab.flag}</span>{tab.label}
+            <span>{tab.icon}</span>{tab.label}
           </button>
         ))}
       </div>
@@ -1156,7 +1173,7 @@ const DynamicContentEditor = forwardRef(({
   const [selText, setSelText] = useState("");
   const [toast, setToast] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-// Keep a stable editor instance while typing.
+  // Keep a stable editor instance while typing.
   // editorKey is only used for rare resets/clears.
   const [editorKey, setEditorKey] = useState(`${instanceId}_${activeTab}`);
   const [liveContent, setLiveContent] = useState("");
@@ -1343,36 +1360,89 @@ const DynamicContentEditor = forwardRef(({
   const joditConfig = useMemo(() => {
     const seed = editorRef.current ? editorRef.current.value : externalValueRef.current;
     return {
+      preset: "full",
       height: isFullscreen ? "calc(100vh - 210px)" : height,
       readonly: false,
       toolbarAdaptive: true,
-      showCharsCounter: false,
-      showWordsCounter: false,
-      showXPathInStatusbar: false,
+      showCharsCounter: true,
+      showWordsCounter: true,
+      showXPathInStatusbar: true,
       askBeforePasteHTML: false,
       askBeforePasteFromWord: false,
       defaultActionOnPaste: "insert_as_html",
       spellcheck: true,
+      image: {
+        openByLink: true,
+        selectImage: false,
+      },
       uploader: {
-        insertImageAsBase64URI: true,
+        url: "",
+        insertImageAsBase64URI: false,
+        maxSize: 100 * 1024, // 100KB upload size limit
         imagesExtensions: ["jpg", "jpeg", "png", "gif", "webp", "svg"],
         withCredentials: false,
       },
       buttons: [
+        "source", "|",
         "bold", "italic", "underline", "strikethrough", "|",
         "superscript", "subscript", "|",
-        "eraser", "|",
+        "eraser", "copyformat", "|",
+        "font", "fontsize", "brush", "paragraph", "lineHeight", "|",
         "ul", "ol", "|",
         "outdent", "indent", "|",
-        "font", "fontsize", "brush", "paragraph", "|",
         "align", "|",
         "table", "link", "image", "video", "|",
-        "hr", "|",
+        "hr", "symbols", "print", "|",
         "undo", "redo", "|",
-        "copyformat", "|",
-        "find", "|",
-        "fullsize", "source",
+        "find", "selectall", "showblocks", "|",
+        "fullsize",
       ],
+      buttonsMD: [
+        "source", "|",
+        "bold", "italic", "underline", "|",
+        "font", "fontsize", "brush", "paragraph", "|",
+        "ul", "ol", "|",
+        "align", "|",
+        "table", "link", "image", "|",
+        "undo", "redo", "|",
+        "fullsize",
+      ],
+      buttonsXS: [
+        "bold", "italic", "|",
+        "brush", "paragraph", "|",
+        "ul", "ol", "|",
+        "align", "|",
+        "link", "image", "|",
+        "undo", "redo",
+      ],
+      controls: {
+        font: {
+          list: {
+            "Inter": "Inter, sans-serif",
+            "Roboto": "Roboto, sans-serif",
+            "Poppins": "Poppins, sans-serif",
+            "Montserrat": "Montserrat, sans-serif",
+            "Outfit": "Outfit, sans-serif",
+            "Open Sans": "'Open Sans', sans-serif",
+            "Lato": "Lato, sans-serif",
+            "Noto Sans Devanagari (Hindi)": "'Noto Sans Devanagari', sans-serif",
+            "Mangal (Hindi)": "Mangal, 'Devanagari Sangam MN', sans-serif",
+            "Kruti Dev 010 (Hindi)": "'Kruti Dev 010', 'KrutiDev010', sans-serif",
+            "Walkman Chanakya (Hindi)": "'Walkman Chanakya', 'Chanakya', sans-serif",
+            "Rozha One (Hindi Decorative)": "'Rozha One', serif",
+            "Yatra One (Hindi Traditional)": "'Yatra One', cursive",
+            "Arial": "Arial, Helvetica, sans-serif",
+            "Georgia": "Georgia, 'Times New Roman', serif",
+            "Times New Roman": "'Times New Roman', Times, serif",
+            "Courier New": "'Courier New', Courier, monospace",
+            "Verdana": "Verdana, Geneva, sans-serif",
+            "Tahoma": "Tahoma, Geneva, sans-serif",
+            "Trebuchet MS": "'Trebuchet MS', Helvetica, sans-serif",
+            "Impact": "Impact, Charcoal, sans-serif",
+            "Comic Sans MS": "'Comic Sans MS', cursive, sans-serif",
+          },
+        },
+      },
       commandToHotkeys: {
         bold: ["ctrl+b", "cmd+b"],
         italic: ["ctrl+i", "cmd+i"],
@@ -1423,7 +1493,7 @@ const DynamicContentEditor = forwardRef(({
           padding: "5px 16px", fontSize: 11, color: WP.textMid,
           display: "flex", gap: 14, flexWrap: "wrap",
         }}>
-          {[["Ctrl+B","Bold"],["Ctrl+I","Italic"],["Ctrl+K","Link"],["Ctrl+Z","Undo"]].map(([k, l]) => (
+          {[["Ctrl+B", "Bold"], ["Ctrl+I", "Italic"], ["Ctrl+K", "Link"], ["Ctrl+Z", "Undo"]].map(([k, l]) => (
             <span key={k}><kbd style={S.kbd}>{k}</kbd> {l}</span>
           ))}
         </div>
