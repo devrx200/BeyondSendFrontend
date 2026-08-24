@@ -126,7 +126,18 @@ const SessionManager = () => {
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try { document.execCommand("copy"); } catch (err) {}
+      document.body.removeChild(textArea);
+    }
     setSuccessMsg("Copied to clipboard!");
     setTimeout(() => setSuccessMsg(""), 2000);
   };

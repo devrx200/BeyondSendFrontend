@@ -46,7 +46,6 @@ const FlipDigit = ({ digit }) => {
 };
 
 const FlipCounter = ({ count }) => {
-  /* Use the exact digits the API returned — no leading-zero padding */
   const digits = String(count > 0 ? count : 0).split("");
   return (
     <div className="flip-digit-wrap" role="img" aria-label={`Visitor count: ${count}`}>
@@ -55,9 +54,104 @@ const FlipCounter = ({ count }) => {
   );
 };
 
-/* ─────────────────────────────────────
-   Footer
-───────────────────────────────────── */
+
+const SecuritySeal = () => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !containerRef.current) return;
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "security-seal");
+    // Allow scripts and same-origin for the iframe content when using srcdoc.
+    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups");
+    iframe.setAttribute("loading", "lazy");
+    iframe.style.border = "0";
+    iframe.style.width = "175px";
+    iframe.style.height = "100px";
+    iframe.style.display = "block";
+    iframe.style.overflow = "hidden";
+    iframe.style.background = "transparent";
+    iframe.setAttribute("scrolling", "no");
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/><style>html,body{margin:0;padding:0;background:transparent}</style></head><body><div id="siteSeal"></div><script src="https://security-seal.emsign.com/generateSeal?width=175"></script></body></html>`;
+
+    let blobUrl = null;
+    let fallbackTimer = null;
+
+    const showFallback = () => {
+      try {
+        if (!containerRef.current) return;
+        containerRef.current.innerHTML = `
+          <div class="security-seal-fallback text-center">
+            <a href="https://security-seal.emsign.com/" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none">View Security Seal</a>
+          </div>`;
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const handleLoad = () => {
+      // Try to detect if the seal element was injected. Accessing contentDocument may fail if cross-origin.
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        const siteSeal = doc && doc.getElementById && doc.getElementById('siteSeal');
+        if (siteSeal && siteSeal.children.length > 0) {
+          // Seal present — clear fallback timer
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          return;
+        }
+      } catch (err) {
+        // Cross-origin access; cannot introspect
+      }
+      // If no content injected after a short delay, show fallback
+      fallbackTimer = setTimeout(() => {
+        showFallback();
+      }, 2000);
+    };
+
+    const handleError = () => {
+      showFallback();
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    iframe.addEventListener('error', handleError);
+
+    // Try srcdoc first (works well for many browsers). If that fails, fallback to blob URL.
+    try {
+      iframe.srcdoc = html;
+    } catch (e) {
+      const blob = new Blob([html], { type: 'text/html' });
+      blobUrl = URL.createObjectURL(blob);
+      iframe.src = blobUrl;
+    }
+
+    containerRef.current.innerHTML = "";
+    containerRef.current.appendChild(iframe);
+
+    // if the seal doesn't appear in X ms, show fallback
+    fallbackTimer = setTimeout(() => {
+      showFallback();
+    }, 4000);
+
+    return () => {
+      try {
+        iframe.removeEventListener('load', handleLoad);
+        iframe.removeEventListener('error', handleError);
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        if (containerRef.current) containerRef.current.innerHTML = "";
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
+  return (
+    <div id="emsign-security-seal" ref={containerRef} className="text-center" aria-live="polite" />
+  );
+};
+
 const Footer = () => {
   const { isHindi } = useLanguage();
   const [footer, setFooter] = useState(null);
@@ -104,11 +198,11 @@ const Footer = () => {
   return (
     <footer className="footer mt-0 pt-0">
       <span className="footer-top-pattern mb-1" />
-      <Container className="py-1 ">
+      <Container className="py-2">
         <Row className="g-4">
 
           {/* ── Contact Info ── */}
-          <Col xs={12} md={4}>
+          <Col xs={12} sm={6} md={4}>
             <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
             <img
               src="/cg-hiedu-full-logo.jpg"
@@ -138,7 +232,7 @@ const Footer = () => {
           </Col>
 
           {/* ── Quick Links ── */}
-          <Col xs={6} md={3}>
+          <Col xs={6} sm={6} md={3}>
             <h5>{isHindi ? "त्वरित लिंक" : "Quick Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
               {quickLinks.map((link, i) => (
@@ -152,7 +246,7 @@ const Footer = () => {
           </Col>
 
           {/* ── Important Links ── */}
-          <Col xs={6} md={3}>
+          <Col xs={6} sm={6} md={3}>
             <h5>{isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
               {importantLinks.map((link, i) => (
@@ -166,29 +260,38 @@ const Footer = () => {
           </Col>
 
           {/* ── Follow Us + Visitor Counter ── */}
-          <Col xs={12} md={2}>
-            <h5>{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
-            <div className="d-flex gap-2 flex-wrap mb-4">
-              {socialLinks.map((s, i) => (
-                <a
-                  key={i}
-                  href={s.url}
-                  className="text-white"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.platform}
-                  style={{ fontSize: "1.4rem", transition: "color .2s" }}
-                >
-                  {SOCIAL_ICONS[s.platform?.toLowerCase()] || <FaLinkedin />}
-                </a>
-              ))}
-            </div>
+          <Col xs={12} sm={6} md={2} className="">
+            <Row className="gy-0 gx-2 mx-0">
+              <Col xs={6} md={12} className="px-0">
+                <h5>{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
+                <div className="d-flex gap-3 flex-wrap mb-4 mb-md-4">
+                  {socialLinks.map((s, i) => (
+                    <a
+                      key={i}
+                      href={s.url}
+                      className="text-white"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={s.platform}
+                      style={{ fontSize: "1.4rem", transition: "color .2s" }}
+                    >
+                      {SOCIAL_ICONS[s.platform?.toLowerCase()] || <FaLinkedin />}
+                    </a>
+                  ))}
+                </div>
+              </Col>
 
-            {/* ── Animated Visitor Counter ── */}
-            <h6 className="text-white mb-2">
-              {isHindi ? "आगंतुक संख्या" : "Site Visitors"}
-            </h6>
-            <FlipCounter count={visitorCount} />
+              <Col xs={6} md={12} className="px-0">
+                <h5>
+                  {isHindi ? "आगंतुक संख्या" : "Site Visitors"}
+                </h5>
+                <div className="d-flex">
+                  <FlipCounter count={visitorCount} />
+                </div>
+                <SecuritySeal />
+              </Col>
+
+            </Row>
           </Col>
 
         </Row>

@@ -397,7 +397,19 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   const copyFileUrl = useCallback((filePath, fileName) => {
-    navigator.clipboard.writeText(`${API_URL}${filePath}`);
+    const fullUrl = `${API_URL}${filePath}`;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(fullUrl);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = fullUrl;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try { document.execCommand("copy"); } catch (err) {}
+      document.body.removeChild(textArea);
+    }
     onShowToast?.(`${fileName} — URL copied`, "success");
   }, [onShowToast]);
 

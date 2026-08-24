@@ -470,36 +470,42 @@ const MultiSectionListView = ({ prefetchedData, isHindi, onPageChange, onFilterC
               const rawSummary = isHindi
                 ? (item.shortDescriptionHi || item.shortDescriptionEn)
                 : item.shortDescriptionEn;
-              const summary = truncateText(rawSummary, 160);
+              const cleanSummary = rawSummary ? rawSummary.replace(/<[^>]+>/g, '') : '';
+              const summary = truncateText(cleanSummary, 160);
+              
               return (
-                <Card key={item._id} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden">
+                <Card key={item._id} className="list-item-card shadow-sm mb-3 rounded-3 overflow-hidden bg-white">
                   <Link to={`/${baseSlug}/${mainSlug}/${item.slug}`} className="text-decoration-none text-dark">
                     <CardBody className="py-3 px-4">
                       <div className="d-flex align-items-start">
-                        <div className="me-3 rounded-pill flex-shrink-0" style={{ width: 6, alignSelf: 'stretch', background: 'linear-gradient(180deg,#0d6efd,#6610f2)' }} aria-hidden="true" />
+                        <div className="me-3 rounded-pill flex-shrink-0 mt-1" style={{ width: 4, height: 44, background: 'linear-gradient(180deg, #1042c2, #123974)' }} aria-hidden="true" />
                         <div className="flex-grow-1">
-                          <h2 className="h6 fw-semibold mb-2 text-dark">
+                          <h2 className="h6 fw-bold mb-1 text-dark" style={{ lineHeight: '1.4' }}>
                             {isHindi ? item.titleHin || item.titleEng : item.titleEng}
                           </h2>
-                          {summary && <p className="small text-muted mb-3">{summary}</p>}
-                          <div className="d-flex flex-wrap gap-3 text-secondary small">
+                          {summary && (
+                            <p className="text-muted mb-2" style={{ fontSize: '0.86rem', lineHeight: '1.5' }}>
+                              {summary}
+                            </p>
+                          )}
+                          <div className="d-flex flex-wrap gap-3 text-secondary" style={{ fontSize: '0.8rem' }}>
                             <span className="d-flex align-items-center gap-1">
                               <FaCalendarAlt size={12} className="text-success" aria-hidden="true" />
-                              {isHindi ? 'प्रकाशन:' : 'Published:'} {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                              <span className="fw-medium">{isHindi ? 'प्रकाशन:' : 'Published:'}</span> {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB') : '—'}
                             </span>
                             <span className="d-flex align-items-center gap-1">
                               <FaClock size={12} className="text-warning" aria-hidden="true" />
-                              {isHindi ? 'अपडेट:' : 'Updated:'} {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : '—'}
+                              <span className="fw-medium">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {item.updatedAt ? new Date(item.updatedAt).toLocaleDateString('en-GB') : '—'}
                             </span>
                             {item.documentsUpdate?.length > 0 && (
                               <span className="d-flex align-items-center gap-1">
                                 <FaFile size={12} className="text-danger" aria-hidden="true" />
-                                {item.documentsUpdate.length} {isHindi ? 'दस्तावेज़' : 'Docs'}
+                                <span className="fw-medium">{item.documentsUpdate.length}</span> {isHindi ? 'दस्तावेज़' : 'Docs'}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="ms-3 text-primary align-self-center" aria-hidden="true">
+                        <div className="ms-3 text-primary align-self-center chevron-icon" aria-hidden="true">
                           <FaChevronRight size={16} />
                         </div>
                       </div>

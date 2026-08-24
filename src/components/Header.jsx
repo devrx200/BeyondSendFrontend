@@ -170,7 +170,7 @@ const Header = () => {
       <span className="nav-pattern-strip" />
       {/* ── TOP BAR ── */}
       <div className="top-bar fw-bold py-0 text-white border-2 border-warning " role="banner">
-        <Container fluid>
+        <Container>
           {/* 3-column layout: Phone LEFT · Email CENTER · Language RIGHT */}
           <div
             className="container-inner d-flex align-items-center justify-content-between"
@@ -227,8 +227,8 @@ const Header = () => {
       </div>
 
       {/* ── LOGO BAR ── */}
-      <div className="logo-bar py-2">
-        <Container fluid>
+      <div className="logo-bar py-3">
+        <Container >
           <div className="d-flex justify-content-between align-items-center flex-nowrap gap-2 gap-xl-3">
             {/* Left — logo + title (Desktop only) */}
             <div className="d-none d-lg-flex align-items-center gap-3 flex-shrink-0" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
@@ -236,7 +236,7 @@ const Header = () => {
                 src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
                 alt="Chhattisgarh Logo"
                 className="main-logo"
-                height={60}
+                height={80}
                 style={{ objectFit: "contain" }}
                 onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)}
               />
@@ -258,7 +258,7 @@ const Header = () => {
             {leaderProfiles.length > 0 && (
               <div className="d-flex align-items-center justify-content-center justify-content-lg-center w-100 w-lg-auto mx-auto leader-profiles-wrap py-1">
                 {leaderProfiles.map(profile => (
-                  <div key={profile._id} className="d-flex align-items-center leader-profile-item">
+                  <div key={profile._id} className="leader-profile-item">
                     <img
                       src={
                         profile.profileUrl
@@ -266,7 +266,7 @@ const Header = () => {
                           : "/placeholder.png"
                       }
                       alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
-                      className="leader-profile-img me-1 me-md-2"
+                      className="leader-profile-img"
                       style={{ objectFit: "contain" }}
                     />
                     <div className="leader-profile-text-wrap">
@@ -274,12 +274,7 @@ const Header = () => {
                         {isHindi ? profile.imgNameHin : profile.imgNameEng}
                       </div>
                       <div className="leader-profile-designation">
-                        <span className="d-none d-lg-inline">
-                          {isHindi ? profile.designationHin : profile.designationEng}
-                        </span>
-                        <span className="d-inline d-lg-none">
-                          {profile.designationHin}
-                        </span>
+                        {isHindi ? profile.designationHin : profile.designationEng}
                       </div>
                     </div>
                   </div>
@@ -301,7 +296,7 @@ const Header = () => {
               <img
                 src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : `${BASE_URL}Emblem_of_India.svg`}
                 className="right-logo"
-                height={52}
+                height={80}
                 alt="Emblem of India"
                 style={{ objectFit: "contain", cursor: "pointer" }}
                 onClick={() => navigate("/")}
@@ -314,7 +309,7 @@ const Header = () => {
 
       {/* ── MAIN NAV ── */}
       <nav className="site-navbar shadow-sm " aria-label="Main navigation">
-        <Container className="d-flex align-items-center justify-content-between" style={{ flexWrap: "nowrap" }}>
+        <Container fluid className="d-flex align-items-center justify-content-between px-2 px-lg-3" style={{ flexWrap: "nowrap" }}>
           {/* Mobile Nav Brand (Emblem + Department Title) — Always visible on mobile view */}
           <div className="mobile-nav-brand d-flex align-items-center gap-2 d-lg-none py-1" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
             <img

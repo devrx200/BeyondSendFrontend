@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
-import { Button } from "reactstrap";
+import { Button, UncontrolledTooltip } from "reactstrap";
 import { FaCommentDots } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const FeedbackToggleFloating = () => {
   const navigate = useNavigate();
   const [hasToken, setHasToken] = useState(false);
 
+  const location = useLocation();
+
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
     setHasToken(!!token); // true if exists
   }, []);
+
+  // Hide on admin routes
+  if (location.pathname.toLowerCase().includes('/admin') || location.pathname.toLowerCase().includes('/dashboard')) {
+    return null;
+  }
 
   return (
     <div
@@ -22,8 +29,12 @@ const FeedbackToggleFloating = () => {
       }}
     >
       <Button
+        id="feedback-btn-floating"
         color="warning"
-        onClick={() => navigate("/feedback")}
+        onClick={() => {
+          window.scrollTo(0, 0);
+          navigate("/feedback");
+        }}
         className="d-flex align-items-center gap-2 shadow"
         style={{
           borderRadius: "30px",
@@ -47,6 +58,10 @@ const FeedbackToggleFloating = () => {
           </span>
         )}
       </Button>
+
+      <UncontrolledTooltip placement="left" target="feedback-btn-floating">
+        {hasToken ? "Send Feedback" : "We Value Your Feedback"}
+      </UncontrolledTooltip>
     </div>
   );
 };

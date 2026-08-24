@@ -169,7 +169,7 @@ const Section = ({ type, arr, page, setPage, onPreview, isHindi }) => {
   return (
     <div className="hs-card">
       {/* Header */}
-      <CardHeader className="adm-card-header border-0 shadow-sm" style={{ background: '#1a3a4a', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <CardHeader className="adm-card-header border-0 shadow-sm" style={{ background: 'linear-gradient(90deg, #1042c2 0%, #123974 100%)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="d-flex align-items-center gap-2 flex-grow-1">
           <div
             className={`rounded-3 d-flex align-items-center justify-content-center ${isPdf ? "bg-danger" : "bg-primary"}`}

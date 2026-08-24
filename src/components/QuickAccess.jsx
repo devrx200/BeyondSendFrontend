@@ -40,19 +40,21 @@ const QuickAccess = ({ isHindi }) => {
   return (
     <section className="">
       <Container >
-        
+
         {/* Header Section */}
-        <div className="bg-light p-1 border-1  border-dark mb-4">
-          <h2 className="fw-semibold mb-2 text-dark fs-4" style={{ letterSpacing: "-0.5px" }}>
+        <div 
+          className="rounded px-3 py-2 mb-4 shadow-sm"
+          style={{ background: "linear-gradient(90deg, #1042c2 0%, #123974 100%)" }}
+        >
+          <h2 className="fw-semibold mb-2 text-white fs-4" style={{ letterSpacing: "-0.5px" }}>
             {isHindi ? "त्वरित लिंक" : "Quick Access"}
           </h2>
-          {/* Fixed the underline: made it a colorful gradient instead of invisible white */}
+          {/* Accent Underline */}
           <div
-            className=""
             style={{
               width: "60px",
               height: "4px",
-              background: "linear-gradient(90deg, #3b82f6, #ec4899)",
+              background: "#ffd54f",
               borderRadius: "4px",
             }}
           />
@@ -62,7 +64,7 @@ const QuickAccess = ({ isHindi }) => {
         <Row className="g-4 justify-content-center">
           {QUICK_LINKS.map(({ id, titleEn, titleHi, link, Icon, color, bg }) => {
             const isHov = hovered === id;
-            
+
             return (
               <Col key={id} xs={6} sm={4} md={4} lg={2}>
                 <Link to={link} className="text-decoration-none">
@@ -81,7 +83,7 @@ const QuickAccess = ({ isHindi }) => {
                     onMouseLeave={() => setHovered(null)}
                   >
                     <CardBody className="text-center py-4 px-2 d-flex flex-column align-items-center justify-content-center">
-                      
+
                       {/* Icon Circle */}
                       <div
                         className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
@@ -104,10 +106,10 @@ const QuickAccess = ({ isHindi }) => {
                       {/* Primary Label */}
                       <p
                         className="mb-1 fw-semibold"
-                        style={{ 
-                          fontSize: "14px", 
+                        style={{
+                          fontSize: "14px",
                           color: isHov ? color : "#1e293b",
-                          transition: "color 0.2s ease" 
+                          transition: "color 0.2s ease"
                         }}
                       >
                         {isHindi ? titleHi : titleEn}
@@ -120,7 +122,7 @@ const QuickAccess = ({ isHindi }) => {
                       >
                         {isHindi ? titleEn : titleHi}
                       </p>
-                      
+
                     </CardBody>
                   </Card>
                 </Link>

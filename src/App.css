@@ -18,6 +18,11 @@
   /* Accent */
   --accent-color: #10b981;
   --accent-light: #34d399;
+
+  /* Pista Green — scrollbar & accent */
+  --pista-green: #93C572;
+  --pista-green-light: #b8dda0;
+  --pista-green-dark: #6fa84e;
   --accent-dark: #059669;
 
   /* Neutrals */
@@ -215,22 +220,27 @@ main {
    ======================================== */
 
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gray-400);
-  border-radius: var(--radius-md);
-  border: 2px solid var(--gray-100);
+  background: var(--pista-green);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
+  background: var(--pista-green-dark);
+}
+
+/* Firefox scrollbar */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pista-green) transparent;
 }
 
 /* ========================================
@@ -672,12 +682,12 @@ main {
 }
 
 .news-list::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: transparent;
   border-radius: 10px;
 }
 
 .news-list::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
+  background: var(--pista-green);
   border-radius: 10px;
 }
 
@@ -3389,90 +3399,125 @@ main {
 
 /* Leader profiles — header center gap */
 .leader-profiles-wrap {
-  flex-wrap: nowrap;
-}
-
-.leader-profiles-wrap {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  gap: 16px;
+  gap: 20px;
   max-width: 100%;
 }
 
 .leader-profile-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
   white-space: nowrap;
 }
 
 .leader-profile-img {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   display: block;
   border-radius: 50%;
   overflow: hidden;
   object-fit: contain !important;
   object-position: center;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
 }
 
 .leader-profile-name {
   font-weight: 700;
-  font-size: 1rem;
-  color: #0B3D91;
-  line-height: 1.2;
+  font-size: 0.95rem;
+  color: #111827;
+  line-height: 1.25;
 }
 
 .leader-profile-designation {
   font-size: 0.8rem;
-  color: #555;
-  line-height: 1.2;
+  color: #4b5563;
+  line-height: 1.25;
 }
 
 @media (max-width: 991.98px) {
   .leader-profiles-wrap {
-    justify-content: space-evenly !important;
-    gap: 8px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
     width: 100% !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    box-sizing: border-box !important;
+  }
+
+  .leader-profile-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    white-space: normal !important;
   }
 
   .leader-profile-img {
-    height: 56px !important;
-    width: 56px !important;
+    height: 52px !important;
+    width: 52px !important;
+    margin-bottom: 4px !important;
+    border-width: 1.5px !important;
+  }
+
+  .leader-profile-text-wrap {
+    width: 100% !important;
+    text-align: center !important;
+    min-width: 0 !important;
   }
 
   .leader-profile-name {
-    font-size: 0.85rem !important;
+    font-size: 0.78rem !important;
     line-height: 1.15 !important;
     font-weight: 700 !important;
+    color: #111827 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
 
   .leader-profile-designation {
-    font-size: 0.70rem !important;
+    font-size: 0.68rem !important;
     line-height: 1.15 !important;
     color: #4b5563 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    margin-top: 1px !important;
   }
 }
 
 @media (max-width: 480px) {
   .leader-profiles-wrap {
     gap: 4px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .leader-profile-img {
     height: 44px !important;
     width: 44px !important;
+    margin-bottom: 3px !important;
   }
 
   .leader-profile-name {
-    font-size: 0.75rem !important;
+    font-size: 0.72rem !important;
     line-height: 1.1 !important;
   }
 
   .leader-profile-designation {
-    font-size: 0.65rem !important;
+    font-size: 0.62rem !important;
     line-height: 1.1 !important;
   }
 }
@@ -3610,8 +3655,8 @@ main {
 .desk-nav {
   display: flex !important;
   align-items: center !important;
-  flex-wrap: nowrap !important;
-  white-space: nowrap !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
 }
 
 .nav-link-btn,
@@ -3657,37 +3702,62 @@ main {
   position: absolute;
   top: 100%;
   left: 0;
-  min-width: 210px;
-  background: #fff;
-  border: 1px solid #dce3f0;
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .13);
+  min-width: 230px;
+  background: #153c4d;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 3px solid #ffd54f;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
   z-index: 2000;
-  padding: 4px 0;
-  animation: ddFade .15s ease;
+  padding: 0;
+  animation: ddFade .2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dd-menu.sub-right {
   top: 0;
   left: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 3px solid #ffd54f;
+  border-radius: 0 6px 6px 6px;
 }
 
 .dd-item {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
-  padding: 8px 16px;
-  font-size: .85rem;
-  color: #0d1f4e;
+  padding: 12px 18px;
+  font-size: .88rem;
+  font-weight: 500;
+  color: #f8fafc;
   background: none;
   border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   text-align: left;
-  gap: 6px;
-  transition: background .12s;
+  gap: 8px;
+  transition: all .2s ease;
 }
 
-.dd-item:hover {
-  background: #eef2fa;
+.dd-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 5px 5px;
+}
+
+.dd-item:hover,
+.dd-item:focus {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffd54f;
+}
+
+.dd-item .chevron {
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.dd-item:hover .chevron {
+  color: #ffd54f;
+  transform: translateX(3px);
 }
 
 @keyframes ddFade {
@@ -3848,6 +3918,7 @@ main {
   .desk-nav {
     display: flex !important;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
     flex: 1;
     gap: 0;
@@ -4194,4 +4265,296 @@ main {
 .hs-page-btn:disabled {
   opacity: .4;
   cursor: default;
+}
+
+/* ========================================
+   SWEETALERT2 LAYOUT SHIFT FIX
+   Prevents background from shifting/creating a gap on the right
+   ======================================== */
+body.swal2-shown,
+body.swal2-height-auto {
+  padding-right: 0 !important;
+}
+
+/* ========================================
+   LIST ITEM PROFESSIONAL DESIGN
+   ======================================== */
+.list-item-card {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.list-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.list-item-card .chevron-icon {
+  transition: transform 0.2s ease;
+}
+
+.list-item-card:hover .chevron-icon {
+  transform: translateX(4px);
+}
+
+/* ========================================
+   RESPONSIVE ENHANCEMENTS — ALL PAGES
+   Government Website Standard Fixes
+   ======================================== */
+
+/* ── CMS Content Responsive (all detail pages) ── */
+.cms-content {
+  overflow-x: auto;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.cms-content img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.cms-content table {
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+  border-collapse: collapse;
+}
+
+.cms-content iframe {
+  max-width: 100% !important;
+}
+
+.cms-content pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ── Pagination Responsive (all list pages) ── */
+.pagination {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+
+@media (max-width: 575.98px) {
+  .pagination .page-link {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ── Breadcrumb Responsive ── */
+.breadcrumb {
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 575.98px) {
+  .breadcrumb {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.75rem !important;
+  }
+
+  .breadcrumb-item+.breadcrumb-item::before {
+    padding: 0 0.3rem;
+  }
+}
+
+/* ── Header Badges Row Responsive (detail pages) ── */
+.detail-card-header .d-flex.flex-nowrap,
+.detail-card-header .d-flex.flex-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.detail-card-header .d-flex.flex-nowrap::-webkit-scrollbar,
+.detail-card-header .d-flex.flex-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 575.98px) {
+  .detail-card-header {
+    padding: 0.85rem !important;
+  }
+
+  .detail-card-header h1 {
+    font-size: 1rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .detail-card-header .badge {
+    font-size: 0.68rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+}
+
+/* ── Colleges Page ── */
+@media (max-width: 767.98px) {
+  .college-list-card .row {
+    flex-direction: column !important;
+  }
+
+  .college-list-card [class*="col-md-auto"] {
+    width: 100% !important;
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ── Universities Page ── */
+@media (max-width: 575.98px) {
+  .university-card .row.g-0 {
+    flex-direction: column !important;
+  }
+
+  .university-card [class*="col-"][class*="col-sm-2"],
+  .university-card [class*="col-"][class*="col-md-auto"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center;
+    padding: 0.75rem !important;
+  }
+}
+
+/* ── Downloads Page ── */
+@media (max-width: 767.98px) {
+  .table-responsive {
+    font-size: 0.82rem;
+  }
+
+  .table-responsive th,
+  .table-responsive td {
+    white-space: nowrap;
+  }
+}
+
+/* ── Contact Page ── */
+@media (max-width: 575.98px) {
+  .official-card .d-flex {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .official-icon {
+    margin: 0 auto;
+  }
+}
+
+/* ── FeedbackForm Page ── */
+@media (max-width: 991.98px) {
+  .feedback-illustration {
+    min-height: 220px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .feedback-illustration {
+    min-height: 160px !important;
+  }
+}
+
+/* ── Gallery Page Hero ── */
+@media (max-width: 575.98px) {
+  .gallery-hero-section {
+    padding: 1rem !important;
+  }
+
+  .gallery-hero-section h2 {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ── ServerDown Page ── */
+@media (max-width: 575.98px) {
+  .server-down-bg svg {
+    max-width: 200px !important;
+    height: auto !important;
+  }
+}
+
+/* ── Notice List Container Mobile ── */
+@media (max-width: 575.98px) {
+  .notice-list-container {
+    padding: 0.65rem !important;
+    border-radius: 8px !important;
+  }
+
+  .notice-list-container .list-group-item {
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.82rem;
+  }
+}
+
+/* ── PageLayout Responsive ── */
+.page-layout .page-content {
+  padding-bottom: 2rem;
+}
+
+@media (max-width: 575.98px) {
+  .page-layout .page-content {
+    padding-bottom: 1.25rem;
+  }
+
+  .page-layout .page-content>.container {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+}
+
+/* ── Filter Buttons Horizontal Scroll (Colleges, Downloads) ── */
+.filter-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+}
+
+.filter-scroll-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Global Link Hover Lift for Cards ── */
+.list-group-item[action]:hover {
+  transform: translateX(2px);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+/* ── Global Overflow Fix to prevent right-side black bar on mobile ── */
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* ── Print Styles ── */
+@media print {
+
+  .top-bar,
+  .logo-bar,
+  .site-navbar,
+  .mob-drawer,
+  .mob-overlay,
+  .breadcrumb,
+  footer,
+  .nav-pattern-strip,
+  .footer-pattern-strip,
+  .crawling-patten {
+    display: none !important;
+  }
+
+  .page-content {
+    padding: 0 !important;
+  }
+
+  .cms-content {
+    font-size: 12pt;
+  }
 }

@@ -123,7 +123,18 @@ const MediaLibraryMangments = () => {
   // ----------------------------- COPY LINK -----------------------------
   const copyLink = (filePath) => {
     const fullUrl = `${API}${filePath}`;
-    navigator.clipboard.writeText(fullUrl);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(fullUrl);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = fullUrl;
+      textArea.style.position = "fixed";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try { document.execCommand("copy"); } catch (err) {}
+      document.body.removeChild(textArea);
+    }
     toast.success("Link copied to clipboard!");
   };
 

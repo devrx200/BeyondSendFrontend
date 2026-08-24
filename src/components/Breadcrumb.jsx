@@ -24,7 +24,8 @@ const DynamicBreadcrumb = () => {
     <Container className="mt-3">
 
       <Breadcrumb
-        listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center"
+        aria-label={isHindi ? "ब्रेडक्रम्ब नेविगेशन" : "Breadcrumb navigation"}
+        listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center flex-wrap"
       >
 
         {/* Home */}
@@ -33,7 +34,7 @@ const DynamicBreadcrumb = () => {
             to="/"
             className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium"
           >
-            <FaHome size={13} />
+            <FaHome size={13} aria-hidden="true" />
             {isHindi ? "होम" : "Home"}
           </Link>
         </BreadcrumbItem>
@@ -49,9 +50,10 @@ const DynamicBreadcrumb = () => {
               active={isLast}
               className={`d-flex align-items-center gap-1 ${isLast ? "fw-semibold text-secondary" : ""
                 }`}
+              style={isLast ? { maxWidth: '60vw', overflow: 'hidden' } : undefined}
             >
               {isLast ? (
-                <span>{formatName(segment)}</span>
+                <span className="text-truncate d-inline-block" style={{ maxWidth: '100%' }}>{formatName(segment)}</span>
               ) : (
                 <Link
                   to={routeTo}
