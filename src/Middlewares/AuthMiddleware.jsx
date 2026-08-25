@@ -41,9 +41,11 @@ const AuthMiddleware = ({ allowedRoles = [],
       const role = user?.role?.toUpperCase();
       const employeeType = user?.employeeType?.toUpperCase();
       sessionStorage.setItem("userData", JSON.stringify(user));
+      sessionStorage.setItem("userRole", role || "");
+      sessionStorage.setItem("employeeType", employeeType || "");
 
-      window.userRole = user?.role?.toUpperCase();
-      window.employeeType = user?.employeeType?.toUpperCase();
+      window.userRole = role;
+      window.employeeType = employeeType;
       
       if (
         allowedRoles.length > 0 &&

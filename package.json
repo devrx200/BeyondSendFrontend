@@ -5,7 +5,7 @@
   "type": "module",
   "homepage": "/",
   "main": "index.html",
-  "proxy": "http://highereducation.cg.gov.in",
+  "proxy": "https://highereducation.cg.gov.in",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",

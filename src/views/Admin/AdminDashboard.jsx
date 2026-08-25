@@ -34,9 +34,15 @@ const startDay = new Date(currentYear, today.getMonth(), 1).getDay();
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  // 🔁 Replace with your actual user data (from context / session)
-  const userRole = sessionStorage.getItem("userRole") || "ADMIN";
-  const employeeType = sessionStorage.getItem("employeeType") || "DIRECTORATE";
+  const storedUser = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("userData") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const userRole = (sessionStorage.getItem("userRole") || storedUser?.role || window.userRole || "ADMIN").toUpperCase();
+  const employeeType = (sessionStorage.getItem("employeeType") || storedUser?.employeeType || window.employeeType || "DIRECTORATE").toUpperCase();
 
   const [statsData, setStatsData] = useState(null);
   const [academicYear, setAcademicYear] = useState("");
@@ -332,7 +338,7 @@ const AdminDashboard = () => {
                         </Col>
                       )}
 
-                      {employeeType === "DEPARTMATE" && (
+                      {(employeeType === "DEPARTMENT" || employeeType === "DEPARTMATE") && (
                         <Col md={3} sm={6}>
                           <Button
                             color="warning"

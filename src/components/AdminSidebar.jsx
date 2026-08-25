@@ -79,7 +79,7 @@ const adminMenu = [
           hi: "नवीन अपडेट स्लाइडर"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       },
       {
         id: "announcements",
@@ -90,7 +90,7 @@ const adminMenu = [
           hi: "घोषणाएं"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       },
       {
         id: "directorate-notices",
@@ -112,7 +112,7 @@ const adminMenu = [
           hi: "विभागीय सूचनाएं"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DEPARTMATE"]
+        allowedEmployeeTypes: ["DEPARTMENT", "DEPARTMATE"]
       }
     ]
   },
@@ -134,8 +134,8 @@ const adminMenu = [
           en: "Multi Section Pages",
           hi: "बहु-खंड पृष्ठ"
         },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        allowedRoles: ["ADMIN", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       },
 
       {
@@ -147,7 +147,7 @@ const adminMenu = [
           hi: "समृद्ध सामग्री पृष्ठ"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       },
       {
         id: "important-page-management",
@@ -172,7 +172,7 @@ const adminMenu = [
       hi: "मीडिया, संसाधन एवं लाइब्रेरी"
     },
     allowedRoles: ["ADMIN", "OFFICER"],
-    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
 
   },
   {
@@ -214,7 +214,7 @@ const adminMenu = [
           hi: "फोटो गैलरी पेज"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       },
 
       {
@@ -226,7 +226,7 @@ const adminMenu = [
           hi: "डाउनलोड पेज"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       }
     ]
   },
@@ -248,7 +248,7 @@ const adminMenu = [
           hi: "श्रेणियाँ"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
       }
     ]
   },
