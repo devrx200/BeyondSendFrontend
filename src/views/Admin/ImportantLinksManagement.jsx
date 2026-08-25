@@ -5,6 +5,7 @@ import {
     CardHeader
 } from "reactstrap";
 import axios from "axios";
+import Swal from "sweetalert2";
 import IconPicker from "../../components/IconPicker";
 import { ICONS } from "../../utilities/icons";
 import {
@@ -36,10 +37,14 @@ const ImportantLinksManagement = () => {
 
     /* ================= LOAD ================= */
     const loadLinks = async () => {
-        const res = await axios.get(`${API}/api/important-links-for-admin`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        setLinks(res.data.data || []);
+        try {
+            const res = await axios.get(`${API}/api/important-links-for-admin`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setLinks(res.data.data || []);
+        } catch (err) {
+            console.error("Failed to load links:", err);
+        }
     };
 
     useEffect(() => {
@@ -49,6 +54,7 @@ const ImportantLinksManagement = () => {
     /* ================= OPEN ADD ================= */
     const openAdd = () => {
         setEditId(null);
+        setErrors({});
         setForm({
             titleEng: "",
             titleHin: "",
@@ -63,6 +69,7 @@ const ImportantLinksManagement = () => {
     /* ================= OPEN EDIT ================= */
     const openEdit = (item) => {
         setEditId(item._id);
+        setErrors({});
         setForm({
             titleEng: item.titleEng,
             titleHin: item.titleHin,
@@ -123,8 +130,19 @@ const ImportantLinksManagement = () => {
     const saveLink = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
 
-        if (!form.titleEng || !form.url) {
-            return swalWarn("Validation", "English title & URL required");
+        if (!form.titleEng || !form.titleEng.trim()) {
+            return Swal.fire({
+                icon: "warning",
+                title: "Validation Error",
+                text: "English title is required"
+            });
+        }
+        if (!form.url || !form.url.trim()) {
+            return Swal.fire({
+                icon: "warning",
+                title: "Validation Error",
+                text: "URL is required (must start with http://, https:// or /)"
+            });
         }
 
         try {
@@ -132,36 +150,69 @@ const ImportantLinksManagement = () => {
                 await axios.put(`${API}/api/important-links/${editId}`, form,
                     { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
                 );
+                Swal.fire({
+                    icon: "success",
+                    title: "Updated!",
+                    text: "Important link updated successfully",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             } else {
                 await axios.post(`${API}/api/important-links`, form,
                     { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
                 );
+                Swal.fire({
+                    icon: "success",
+                    title: "Created!",
+                    text: "Important link added successfully",
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             }
 
-            swalSuccess("Saved", "Link saved successfully");
             setModal(false);
             loadLinks();
         } catch (err) {
-            swalError("Error", err?.response?.data?.message || "Could not save link");
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: err?.response?.data?.message || "Could not save link"
+            });
         }
     };
 
     /* ================= DELETE ================= */
     const deleteLink = async (id) => {
-        const ok = await confirmDelete({
-            title: "Delete this link?",
-            text: "This action cannot be undone."
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "Do you really want to delete this link? This action cannot be undone.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+            cancelButtonText: "Cancel"
         });
-        if (!ok) return;
+        if (!result.isConfirmed) return;
 
         try {
             await axios.delete(`${API}/api/important-links/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            swalSuccess("Deleted", "Link removed successfully");
+            Swal.fire({
+                icon: "success",
+                title: "Deleted!",
+                text: "Link removed successfully",
+                timer: 2000,
+                showConfirmButton: false
+            });
             loadLinks();
         } catch (err) {
-            swalError("Error", err?.response?.data?.message || "Delete failed");
+            Swal.fire({
+                icon: "error",
+                title: "Delete Failed",
+                text: err?.response?.data?.message || "Delete failed"
+            });
         }
     };
 

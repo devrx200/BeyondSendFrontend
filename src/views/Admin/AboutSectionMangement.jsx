@@ -167,7 +167,7 @@ const AboutSectionMangement = () => {
     setErrors(prev => ({ ...prev, [name]: error }));
   };
 
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
   const MAX_FILE_SIZE = 520 * 1024;
   const REQUIRED_WIDTH = 250;
   const REQUIRED_HEIGHT = 300;
@@ -177,7 +177,7 @@ const AboutSectionMangement = () => {
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setErrors(prev => ({ ...prev, image: "Only JPG or PNG images are allowed" }));
+      setErrors(prev => ({ ...prev, image: "Only JPG, PNG or WEBP images are allowed" }));
       return;
     }
     if (file.size > MAX_FILE_SIZE) {

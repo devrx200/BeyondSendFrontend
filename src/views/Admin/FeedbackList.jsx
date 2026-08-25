@@ -3,9 +3,19 @@ import { Container, Table, Button, Modal, ModalHeader, ModalBody, Card, CardBody
 import axios from "axios";
 import Swal from "sweetalert2";
 
+const getToken = () => {
+  const token = sessionStorage.getItem("authToken");
+  if (!token) return "";
+  try {
+    const parsed = JSON.parse(token);
+    return parsed?.token || parsed?.access || token;
+  } catch {
+    return token;
+  }
+};
+
 const AdminFeedbackList = () => {
   const API_URL = import.meta.env.VITE_API_URL;
-  const token = sessionStorage.getItem("authToken");
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,21 +25,9 @@ const AdminFeedbackList = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Redirect or show error if no token
-  if (!token) {
-    // You can replace with navigate("/login") if using react-router
-    return (
-      <Container className="py-4 text-center">
-        <h4>You are not authenticated. Please log in.</h4>
-        <Button color="primary" onClick={() => window.location.href = "/login"}>
-          Go to Login
-        </Button>
-      </Container>
-    );
-  }
-
   /* ------------------ Fetch All Feedbacks ------------------ */
   const fetchFeedbacks = async () => {
+    const token = getToken();
     setLoading(true);
     setError(null);
     try {
@@ -43,11 +41,6 @@ const AdminFeedbackList = () => {
     } catch (err) {
       console.error("Failed to fetch feedbacks", err);
       setError("Failed to load feedbacks. Please try again.");
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Could not fetch feedback list.",
-      });
     } finally {
       setLoading(false);
     }
@@ -59,6 +52,7 @@ const AdminFeedbackList = () => {
 
   /* ------------------ View Feedback ------------------ */
   const viewFeedback = async (id) => {
+    const token = getToken();
     setDetailLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/admin/feedbacks/${id}`, {
@@ -96,6 +90,7 @@ const AdminFeedbackList = () => {
 
     if (!result.isConfirmed) return;
 
+    const token = getToken();
     try {
       await axios.delete(`${API_URL}/api/admin/feedbacks/${id}`, {
         headers: {
