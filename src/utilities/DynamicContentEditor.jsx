@@ -574,6 +574,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
             </p>
           </div>
           <button
+            type="button"
             data-modal-focus
             ref={firstFocusRef}
             onClick={onClose}
@@ -639,6 +640,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button
+                  type="button"
                   onClick={handleUpload}
                   disabled={uploading}
                   aria-label="Upload file"
@@ -646,6 +648,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                   <FaUpload size={11} />{uploading ? "Uploading…" : "Upload"}
                 </button>
                 <button
+                  type="button"
                   onClick={resetUpload}
                   disabled={uploading}
                   aria-label="Cancel upload"
@@ -787,6 +790,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
             {FILTERS.map(f => (
               <button
                 key={f.key}
+                type="button"
                 onClick={() => setFilter(f.key)}
                 aria-pressed={filter === f.key}
                 style={{
@@ -810,6 +814,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
             ].map(({ mode, Icon, label }) => (
               <button
                 key={mode}
+                type="button"
                 onClick={() => setViewMode(mode)}
                 aria-label={label}
                 aria-pressed={viewMode === mode}
@@ -846,7 +851,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
               {!loading && error && (
                 <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 40, color: WP.red }}>
                   <FaTimes style={{ marginBottom: 8 }} /><br />{error}
-                  <br /><button onClick={fetchFiles} style={{ ...S.btnBase, ...S.btnPrimary, marginTop: 12 }}>Retry</button>
+                  <br /><button type="button" onClick={fetchFiles} style={{ ...S.btnBase, ...S.btnPrimary, marginTop: 12 }}>Retry</button>
                 </div>
               )}
               {!loading && !error && filtered.length === 0 && (
@@ -896,6 +901,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                     }}>{file.originalName}</span>
                     <div style={{ fontSize: 9, color: WP.textLight }}>{fmtSize(file.fileSize)}</div>
                     <button
+                      type="button"
                       onClick={e => { e.stopPropagation(); copyFileUrl(file.filePath, file.originalName); }}
                       aria-label={`Copy URL for ${file.originalName}`}
                       style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, fontSize: 10, display: "inline-flex", alignItems: "center", gap: 3 }}>
@@ -919,7 +925,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                   {loading && Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={5} />)}
                   {!loading && error && (
                     <tr><td colSpan={5} style={{ padding: 32, textAlign: "center", color: WP.red }}>
-                      {error} <button onClick={fetchFiles} style={{ ...S.btnBase, ...S.btnPrimary, marginLeft: 12 }}>Retry</button>
+                      {error} <button type="button" onClick={fetchFiles} style={{ ...S.btnBase, ...S.btnPrimary, marginLeft: 12 }}>Retry</button>
                     </td></tr>
                   )}
                   {!loading && !error && filtered.length === 0 && (
@@ -951,6 +957,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                         <td style={{ padding: "10px 8px", color: WP.textLight, whiteSpace: "nowrap" }}>{formatDate(file.createdAt)}</td>
                         <td style={{ padding: "10px 8px" }}>
                           <button
+                            type="button"
                             onClick={e => { e.stopPropagation(); copyFileUrl(file.filePath, file.originalName); }}
                             aria-label={`Copy URL for ${file.originalName}`}
                             style={{ background: "none", border: "none", cursor: "pointer", color: WP.blue, fontSize: 12, display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -994,11 +1001,13 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
               </span>
             )}
             <button
+              type="button"
               onClick={onClose}
               style={{ ...S.btnBase, ...S.btnSecondary }}>
               Cancel
             </button>
             <button
+              type="button"
               data-modal-focus
               ref={lastFocusRef}
               disabled={!canInsert}
@@ -1076,9 +1085,14 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
         {TABS.map(tab => (
           <button
             key={tab.key}
+            type="button"
             role="tab"
             aria-selected={activeTab === tab.key}
-            onClick={() => onTabChange(tab.key)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onTabChange(tab.key);
+            }}
             style={{
               padding: "5px 14px", borderRadius: 20, border: "none",
               background: activeTab === tab.key ? "rgba(255,255,255,0.2)" : "transparent",
@@ -1095,12 +1109,14 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
 
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <button
+          type="button"
           onMouseDown={onAttachMouseDown}
           aria-label="Attach file from media library"
           style={{ ...S.btnBase, ...S.btnPrimary }}>
           <FaLink size={11} /> Attach File
         </button>
         <button
+          type="button"
           onClick={handleClearClick}
           aria-label="Clear editor content"
           title="Clear all content"
@@ -1108,6 +1124,7 @@ function EditorToolbar({ activeTab, onTabChange, onAttachMouseDown, onClear, isF
           <FaTrash size={11} /> Clear
         </button>
         <button
+          type="button"
           onClick={onToggleFullscreen}
           aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           aria-pressed={isFullscreen}

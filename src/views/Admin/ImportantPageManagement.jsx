@@ -576,6 +576,9 @@ const ImportantPageManagement = () => {
     } catch (err) { toast.error(err?.response?.data?.message || "Delete failed"); }
   };
 
+  const [descEnManuallyEdited, setDescEnManuallyEdited] = useState(false);
+  const [descHiManuallyEdited, setDescHiManuallyEdited] = useState(false);
+
   const handleEdit = (row) => {
     setEditingId(row._id);
     setForm({
@@ -593,6 +596,8 @@ const ImportantPageManagement = () => {
     });
     setFile(null);
     setSlugManuallyEdited(true);
+    setDescEnManuallyEdited(true);
+    setDescHiManuallyEdited(true);
     setSlugError("");
     setEditorKey(k => k + 1);
     setView("form");
@@ -603,6 +608,8 @@ const ImportantPageManagement = () => {
     setForm(emptyForm());
     setFile(null);
     setSlugManuallyEdited(false);
+    setDescEnManuallyEdited(false);
+    setDescHiManuallyEdited(false);
     setSlugError("");
     setIsFormFullscreen(false);
     setEditorKey(k => k + 1);
@@ -627,7 +634,25 @@ const ImportantPageManagement = () => {
     setView("list");
   }, [form, editingId, resetForm]);
 
-  const handleChange = (e) => { const { name, value, type, checked } = e.target; setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value })); };
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (name === "shortDescriptionEn") setDescEnManuallyEdited(true);
+    if (name === "shortDescriptionHi") setDescHiManuallyEdited(true);
+    setForm(prev => {
+      const updates = { [name]: type === "checkbox" ? checked : value };
+      if (name === "titleEn") {
+        if (!descEnManuallyEdited || !prev.shortDescriptionEn || prev.shortDescriptionEn === prev.titleEn) {
+          updates.shortDescriptionEn = value;
+        }
+      }
+      if (name === "titleHi") {
+        if (!descHiManuallyEdited || !prev.shortDescriptionHi || prev.shortDescriptionHi === prev.titleHi) {
+          updates.shortDescriptionHi = value;
+        }
+      }
+      return { ...prev, ...updates };
+    });
+  };
   const handleSlugChange = (e) => { setSlugManuallyEdited(true); const clean = sanitiseSlug(e.target.value); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
   const handleSlugBlur = (e) => { const clean = e.target.value.replace(/^-+|-+$/g, ""); setForm(prev => ({ ...prev, slug: clean })); setSlugError(validateSlug(clean)); };
   const handleSort = (col) => { if (sortBy === col) setSortOrder(o => o === "desc" ? "asc" : "desc"); else { setSortBy(col); setSortOrder("desc"); } setCurrentPage(1); };

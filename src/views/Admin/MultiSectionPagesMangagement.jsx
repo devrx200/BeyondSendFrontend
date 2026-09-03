@@ -207,6 +207,29 @@ const SS_FULLSCREEN = "mspm_fullscreen";
 // --- Default list page size ---
 const DEFAULT_PAGE_SIZE = 100;
 
+// --- Auto-detect Department from logged in user / employeeType ---
+export const getCurrentUserDepartment = () => {
+  try {
+    const raw = sessionStorage.getItem("userData");
+    const user = raw ? JSON.parse(raw) : null;
+    if (user?.department && typeof user.department === "string" && user.department.trim()) {
+      return user.department.trim();
+    }
+    const empType = (
+      sessionStorage.getItem("employeeType") ||
+      user?.employeeType ||
+      window.employeeType ||
+      ""
+    ).toUpperCase();
+
+    if (empType === "DIRECTORATE") return "Directorate of Higher Education";
+    if (empType === "DEPARTMENT") return "Department of Higher Education";
+    return user?.office || "Department of Higher Education";
+  } catch {
+    return "Department of Higher Education";
+  }
+};
+
 // --- Initial form state ---
 const emptyForm = () => ({
   titleEng: "",
@@ -214,7 +237,7 @@ const emptyForm = () => ({
   baseSlug: "",
   mainSlug: "",
   slug: "",
-  department: "",
+  department: getCurrentUserDepartment(),
   htmlContent: "",
   htmlContentHi: "",
   isActive: true,
@@ -268,7 +291,14 @@ const MultiSectionPagesManagement = () => {
   const initForm = () => {
     try {
       const s = sessionStorage.getItem(SS_FORM);
-      return s ? JSON.parse(s) : emptyForm();
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (!parsed.department) {
+          parsed.department = getCurrentUserDepartment();
+        }
+        return parsed;
+      }
+      return emptyForm();
     } catch { return emptyForm(); }
   };
   const initFullscreen = () => sessionStorage.getItem(SS_FULLSCREEN) === "true";
@@ -301,6 +331,8 @@ const MultiSectionPagesManagement = () => {
   const [showDocForm, setShowDocForm] = useState(false);
   const [editingDocIndex, setEditingDocIndex] = useState(null);
   const [currentDocument, setCurrentDocument] = useState(emptyDocument());
+  const [descEnManuallyEdited, setDescEnManuallyEdited] = useState(false);
+  const [descHiManuallyEdited, setDescHiManuallyEdited] = useState(false);
 
   const slugDebounceRef = useRef(null);
   const fetchCategories = async () => {
@@ -445,6 +477,8 @@ const MultiSectionPagesManagement = () => {
     setForm(emptyForm());
     setPageStatus(emptyPageStatus());
     setSlugManuallyEdited(false);
+    setDescEnManuallyEdited(false);
+    setDescHiManuallyEdited(false);
     setSlugError("");
     setIsFormFullscreen(false);
     setShowDocForm(false);
@@ -460,18 +494,36 @@ const MultiSectionPagesManagement = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "shortDescriptionEn") setDescEnManuallyEdited(true);
+    if (name === "shortDescriptionHin") setDescHiManuallyEdited(true);
     setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleTitleChange = (e) => {
     const title = e.target.value;
-    if (!slugManuallyEdited) {
-      const newSlug = titleToSlug(title);
-      setForm(prev => ({ ...prev, titleEng: title, slug: newSlug }));
-      setSlugError(validateSlug(newSlug));
-    } else {
-      setForm(prev => ({ ...prev, titleEng: title }));
-    }
+    setForm(prev => {
+      const updates = { titleEng: title };
+      if (!slugManuallyEdited) {
+        const newSlug = titleToSlug(title);
+        updates.slug = newSlug;
+        setSlugError(validateSlug(newSlug));
+      }
+      if (!descEnManuallyEdited || !prev.shortDescriptionEn || prev.shortDescriptionEn === prev.titleEng) {
+        updates.shortDescriptionEn = title;
+      }
+      return { ...prev, ...updates };
+    });
+  };
+
+  const handleTitleHinChange = (e) => {
+    const title = e.target.value;
+    setForm(prev => {
+      const updates = { titleHin: title };
+      if (!descHiManuallyEdited || !prev.shortDescriptionHin || prev.shortDescriptionHin === prev.titleHin) {
+        updates.shortDescriptionHin = title;
+      }
+      return { ...prev, ...updates };
+    });
   };
 
   const handleSlugChange = (e) => {
@@ -879,7 +931,7 @@ const MultiSectionPagesManagement = () => {
               type="text"
               name="titleHin"
               value={form.titleHin}
-              onChange={handleChange}
+              onChange={handleTitleHinChange}
               placeholder="शीर्षक दर्ज करें (Hindi title)"
               className="wp-input wp-title-input-hi"
             />
@@ -1094,7 +1146,7 @@ const MultiSectionPagesManagement = () => {
             </div>
           </Card>
 
-          <Card title="Department">
+          <Card title="Published By - Department">
             <input name="department" value={form.department} onChange={handleChange} placeholder="e.g., Higher Education Department" className="wp-input" />
           </Card>
 

@@ -59,24 +59,25 @@ const PageLayout = ({
 
         {/* Page Header */}
         {title && (
-          <Container className="mt-3">
+          <Container className="mt-2 mt-md-3 px-2 px-sm-3">
             <div
-              className="rounded-top-3 border border-1 border-white shadow text-white p-3 p-md-4 mb-4"
+              className="rounded-3 rounded-md-4 border border-1 border-white border-opacity-25 shadow text-white p-3 p-md-4 mb-3 mb-md-4"
               style={{
                 background:
-                  "linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)",
+                  "linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)",
+                boxShadow: "0 8px 24px rgba(30, 58, 138, 0.18)"
               }}
             >
-              <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+              <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
                 {/* Title */}
                 <div>
-                  <h1 className="h3 fw-bold mb-2 mb-md-0 text-white">
+                  <h1 className="h4 h3-md fw-bold mb-1 text-white" style={{ fontSize: "clamp(1.25rem, 2.8vw, 1.75rem)" }}>
                     {isHindi && titleHi ? titleHi : title}
                   </h1>
                   <div className="opacity-75 small">
-                    {isHindi
-                      ? "आधिकारिक पृष्ठ जानकारी"
-                      : "Official Page Information"}
+                    {pageDescription || (isHindi
+                      ? "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन — आधिकारिक पृष्ठ"
+                      : "Department of Higher Education, Govt. of Chhattisgarh — Official Page")}
                   </div>
                 </div>
               </div>
@@ -85,7 +86,7 @@ const PageLayout = ({
         )}
         {/* Page Content — wrapped in <main> for accessibility */}
         <main className="page-content pb-4 pb-md-5" role="main">
-          <Container>{children}</Container>
+          <Container className="px-2 px-sm-3">{children}</Container>
         </main>
       </div>
     </>

@@ -48,15 +48,15 @@ const InfoRow = ({ icon, label, value, badge, badgeColor }) => (
 
 /* ── University Card ── */
 const UniversityCard = ({ university }) => (
-  <article className="border rounded-3 bg-white overflow-hidden"
-    style={{ transition: 'box-shadow .2s' }}
-    onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(99,102,241,.13)')}
-    onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}>
+  <article className="border rounded-3 bg-white overflow-hidden shadow-sm"
+    style={{ transition: 'box-shadow .2s, transform .2s' }}
+    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(30,58,138,.12)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}>
     <Row className="g-0 align-items-stretch">
       {/* Logo */}
       <Col xs={3} sm={2} md="auto"
         className="d-flex align-items-center justify-content-center border-end"
-        style={{ minWidth: 72, background: 'linear-gradient(135deg,#f0e8ff,#e8f4fd)' }}>
+        style={{ minWidth: 68, background: 'linear-gradient(135deg,#f0e8ff,#e8f4fd)' }}>
         <UniversityLogo src={university.profileImgUrl || university.universityLogo} alt={university.name} />
       </Col>
       {/* Main info */}
@@ -74,7 +74,7 @@ const UniversityCard = ({ university }) => (
         </div>
       </Col>
       {/* Contact & Location */}
-      <Col xs={12} md={4} lg={4} xl={3} className="border-end px-3 py-2" style={{ maxWidth: 350 }}>
+      <Col xs={12} md={4} lg={4} xl={3} className="border-end border-top border-md-top-0 px-3 py-2">
         <p className="text-uppercase text-muted fw-semibold mb-2" style={{ fontSize: 9.5, letterSpacing: '.07em' }}>
           Contact &amp; Location
         </p>
@@ -87,18 +87,18 @@ const UniversityCard = ({ university }) => (
       </Col>
       {/* Actions */}
       <Col xs={12} md="auto"
-        className="d-flex flex-row flex-md-column align-items-center justify-content-center gap-2 px-3 py-2"
-        style={{ minWidth: 130 }}>
+        className="d-flex flex-row flex-md-column align-items-center justify-content-center gap-2 px-3 py-2 border-top border-md-top-0 bg-light bg-opacity-25"
+        style={{ minWidth: 120 }}>
         {university.googleLocation && (
           <a href={university.googleLocation} target="_blank" rel="noopener noreferrer"
-            className="btn btn-sm btn-warning px-3 fw-semibold text-danger border border-dark"
+            className="btn btn-sm btn-warning px-3 fw-semibold text-danger border border-dark flex-grow-1 flex-md-grow-0"
             style={{ fontSize: 11.5, borderRadius: 20 }}>
             <FaMapLocation aria-hidden="true" /> Map
           </a>
         )}
         {university.universityUrl && (
           <a href={university.universityUrl} target="_blank" rel="noopener noreferrer"
-            className="btn btn-sm btn-primary px-3 fw-semibold"
+            className="btn btn-sm btn-primary px-3 fw-semibold flex-grow-1 flex-md-grow-0"
             style={{ fontSize: 11.5, borderRadius: 20 }}>
             🌐 Website
           </a>
@@ -172,7 +172,13 @@ const Universities = () => {
   const clearFilters = () => { setSelectedDistrict(''); setSelectedVidhan(''); setVidhansabhaList(allVidhansabha); };
 
   return (
-    <PageLayout title={isHindi ? 'विश्वविद्यालय' : 'Universities'} titleHi="विश्वविद्यालय">
+    <PageLayout
+      title={isHindi ? 'विश्वविद्यालय' : 'Universities'}
+      titleHi="विश्वविद्यालय"
+      description="List of State, Central, and Private Universities in Chhattisgarh, Department of Higher Education."
+      descriptionHi="छत्तीसगढ़ राज्य के शासकीय, केंद्रीय एवं निजी विश्वविद्यालयों की आधिकारिक सूची — उच्च शिक्षा विभाग।"
+      showBreadcrumb
+    >
       <Row>
         <Col lg={12}>
           <Card className="border-0 shadow-sm rounded-4 p-2">

@@ -210,7 +210,13 @@ const SchemeAnnouncementListView = () => {
         <meta name="description" content={isHindi ? `${pageTitleText} की सूची` : `${pageTitleText} list`} />
       </Helmet>
 
-      <PageLayout title={pageTitleText} titleHi={pageTitleText} showBreadcrumb>
+      <PageLayout
+        title={pageTitleText}
+        titleHi={pageTitleText}
+        description={isHindi ? `${pageTitleText} की आधिकारिक सूची — उच्च शिक्षा विभाग, छत्तीसगढ़ शासन` : `Official ${pageTitleText} list — Department of Higher Education, Govt. of Chhattisgarh`}
+        descriptionHi={isHindi ? `${pageTitleText} की आधिकारिक सूची — उच्च शिक्षा विभाग, छत्तीसगढ़ शासन` : `Official ${pageTitleText} list — Department of Higher Education, Govt. of Chhattisgarh`}
+        showBreadcrumb
+      >
         <div className="notice-list-container">
           <Card className="border-0 shadow-sm mb-4 rounded-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)' }}>
             <CardBody className="py-4 px-4">

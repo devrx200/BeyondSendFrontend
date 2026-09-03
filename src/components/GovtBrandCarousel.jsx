@@ -1,14 +1,56 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { FaLandmark } from "react-icons/fa";
+import { useLanguage } from "../contexts/LanguageContext";
 
-const GovtBrandMarquee = () => {
+const API_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.BASE_URL || "/";
+
+const BrandItem = ({ brand }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const getUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const cleanPath = path.replace(/\\/g, "/");
+    return `${API_URL}${cleanPath.startsWith("/") ? "" : "/"}${cleanPath}`;
+  };
+
+  const imgUrl = getUrl(brand.image);
+
+  if (imgError || !imgUrl) {
+    return (
+      <div className="brand-fallback-badge">
+        <FaLandmark style={{ color: "#1e40af", fontSize: "1.1rem" }} />
+        <span>{brand.name || "Govt. Initiative"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="brand-card-item">
+      <img
+        src={imgUrl}
+        alt={brand.name || "Government Initiative"}
+        style={{
+          height: "48px",
+          maxWidth: "160px",
+          objectFit: "contain",
+          display: "block"
+        }}
+        onError={() => setImgError(true)}
+      />
+    </div>
+  );
+};
+
+const GovtBrandCarousel = () => {
+  const { isHindi } = useLanguage();
   const [brands, setBrands] = useState([]);
   const marqueeRef = useRef(null);
-  const speedRef = useRef(0.4);
+  const speedRef = useRef(0.45);
   const isPaused = useRef(false);
   const contentWidthRef = useRef(0);
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   /* ================= FETCH BRANDS ================= */
   useEffect(() => {
@@ -17,43 +59,62 @@ const GovtBrandMarquee = () => {
         const res = await axios.get(`${API_URL}/api/get-brands`);
 
         const activeBrands = (res.data.data || [])
-          .filter(b => b.isActive)
-          .sort((a, b) => a.position - b.position);
+          .filter((b) => b.isActive)
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-        setBrands(activeBrands);
+        // Default fallbacks if no brands in DB
+        if (activeBrands.length === 0) {
+          setBrands([
+            { name: "Digital India", image: "/Digital_India_logo.svg", isActive: true },
+            { name: "National Scholarship Portal", image: "", isActive: true },
+            { name: "AICTE India", image: "", isActive: true },
+            { name: "UGC India", image: "", isActive: true },
+            { name: "Skill India", image: "", isActive: true },
+            { name: "Voter Portal India", image: "", isActive: true },
+          ]);
+        } else {
+          setBrands(activeBrands);
+        }
       } catch (err) {
         console.error("Failed to fetch brands", err);
+        setBrands([
+          { name: "Digital India", image: "/Digital_India_logo.svg", isActive: true },
+          { name: "National Scholarship Portal", image: "", isActive: true },
+          { name: "AICTE India", image: "", isActive: true },
+          { name: "UGC India", image: "", isActive: true },
+          { name: "Skill India", image: "", isActive: true },
+        ]);
       }
     };
 
     fetchBrands();
-  }, [API_URL]);
+  }, []);
 
   /* ================= MARQUEE LOGIC ================= */
   useEffect(() => {
     if (!brands.length) return;
 
     const marquee = marqueeRef.current;
+    if (!marquee) return;
+
     let x = 0;
     let animationId;
 
-    // Wait for images to load before measuring
     const measureWidth = () => {
-      contentWidthRef.current = marquee.scrollWidth / 2;
+      if (marquee) {
+        contentWidthRef.current = marquee.scrollWidth / 2;
+      }
     };
 
     measureWidth();
     window.addEventListener("resize", measureWidth);
 
     const animate = () => {
-      if (!isPaused.current) {
+      if (!isPaused.current && marquee && contentWidthRef.current > 0) {
         x -= speedRef.current;
-
-        // ✅ RESET AT EXACT POINT (NO GAP)
         if (Math.abs(x) >= contentWidthRef.current) {
           x = 0;
         }
-
         marquee.style.transform = `translateX(${x}px)`;
       }
       animationId = requestAnimationFrame(animate);
@@ -71,54 +132,61 @@ const GovtBrandMarquee = () => {
 
   return (
     <>
-      <span className=" mb-0 crawling-patten" />
+      <span className="mb-0 crawling-patten" />
       <section
-        className="py-4 border-top"
-        style={{ background: "rgba(135, 206, 235, 0.18)" }}
+        className="py-4 border-top border-bottom"
+        style={{
+          background: "linear-gradient(180deg, rgba(238, 246, 255, 0.7) 0%, rgba(224, 239, 255, 0.5) 100%)",
+        }}
       >
-
-        <div className="container-fluid">
-          <h6 className="text-center text-muted fw-bold mb-3">
-            Associated With Government Initiatives
-          </h6>
+        <div className="container-fluid px-3">
+          <div className="text-center mb-3 px-2">
+            <span
+              className="d-inline-block px-3 py-1 rounded-pill fw-bold text-uppercase"
+              style={{
+                fontSize: "clamp(0.68rem, 2.2vw, 0.78rem)",
+                letterSpacing: "0.06em",
+                color: "#1e3a8a",
+                background: "rgba(30, 58, 138, 0.08)",
+                border: "1px solid rgba(30, 58, 138, 0.18)",
+                lineHeight: "1.4",
+                maxWidth: "96%",
+                wordBreak: "break-word",
+              }}
+            >
+              {isHindi ? "शासकीय पहलों से संबद्ध" : "Associated With Government Initiatives"}
+            </span>
+          </div>
 
           {/* VIEWPORT */}
           <div
             style={{ overflow: "hidden", width: "100%" }}
             onMouseEnter={() => (isPaused.current = true)}
             onMouseLeave={() => (isPaused.current = false)}
+            onTouchStart={() => (isPaused.current = true)}
+            onTouchEnd={() => (isPaused.current = false)}
           >
             {/* MOVING STRIP */}
             <div
               ref={marqueeRef}
               style={{
                 display: "flex",
-                gap: "40px",
+                gap: "24px",
                 width: "max-content",
                 alignItems: "center",
-                willChange: "transform"
+                willChange: "transform",
+                padding: "6px 0",
               }}
             >
-              {[...brands, ...brands].map((logo, i) => (
-                <img
-                  key={i}
-                  src={`${API_URL}${logo.image}`}
-                  alt={logo.name}
-                  className="border border-1 border-white rounded"
-                  style={{
-                    height: "60px",
-                    objectFit: "contain",
-                    flexShrink: 0
-                  }}
-                />
+              {[...brands, ...brands].map((brand, i) => (
+                <BrandItem key={i} brand={brand} />
               ))}
             </div>
           </div>
         </div>
       </section>
     </>
-
   );
 };
 
-export default GovtBrandMarquee;
+export default GovtBrandCarousel;

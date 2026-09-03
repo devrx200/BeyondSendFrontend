@@ -28,14 +28,20 @@ const SlugResolver = ({ preview = false }) => {
   const fetchData = useCallback(async (page = 1, limit = 10) => {
     try {
       setStatus("loading");
-      const response = await axios.post(`${API}/api/resolve-slug/get-page`, {
-        fullSlug: slugForApi,
-        preview: isPreview,
-        page,
-        limit,
-      });
+      const response = await axios.post(
+        `${API}/api/resolve-slug/get-page`,
+        {
+          fullSlug: slugForApi,
+          preview: isPreview,
+          page,
+          limit,
+        },
+        {
+          validateStatus: (status) => status < 500,
+        }
+      );
       const data = response.data;
-      if (data?.success) {
+      if (response.status === 200 && data?.success) {
         setPageData(data.data);
         setStatus(data.type);
         // Extract title for SEO

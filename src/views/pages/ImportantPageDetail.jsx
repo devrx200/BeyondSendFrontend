@@ -200,27 +200,32 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
           </BreadcrumbItem>
         </Breadcrumb>
 
-        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+        <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
           {/* Gradient Header */}
-          <CardHeader className="detail-card-header">
-            <h1 className="fw-semibold mb-3 text-white h4 d-flex align-items-center gap-2">
-              <FaTicketSimple size={20} aria-hidden="true" />
-              {pageTitle}
+          <CardHeader className="detail-card-header p-3 p-md-4">
+            <h1 className="fw-bold mb-2 text-white h5 d-flex align-items-start gap-2.5 lh-base">
+              <FaTicketSimple size={20} className="mt-1 flex-shrink-0 opacity-90" aria-hidden="true" />
+              <span>{pageTitle}</span>
             </h1>
-            <hr className="border-white opacity-25 my-3" />
-            <div className="d-flex flex-nowrap align-items-center gap-2 mb-3 pb-1 overflow-auto" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
-              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
-                <FaCalendarAlt size={10} aria-hidden="true" />
-                <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
-              </Badge>
-              <Badge color="light" className="text-dark rounded-pill px-2 py-1 px-md-3 py-md-2 d-inline-flex align-items-center gap-1 flex-shrink-0" style={{ fontSize: 11 }}>
-                <FaCalendarPlus size={10} aria-hidden="true" />
-                <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
-              </Badge>
+            <hr className="border-white opacity-20 my-2.5" />
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
+                </span>
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaCalendarPlus size={11} className="text-success" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
+                </span>
+              </div>
               <Button
-                tag={Link} to="/" color="dark" size="sm"
-                className="d-inline-flex align-items-center gap-1 fw-semibold ms-auto flex-shrink-0"
-                style={{ fontSize: 11, padding: '4px 10px', borderRadius: '4px' }}
+                tag={Link}
+                to="/"
+                color="dark"
+                size="sm"
+                className="fw-semibold px-3 py-1 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5 ms-auto ms-sm-0"
+                style={{ fontSize: "12px" }}
               >
                 <FaChevronLeft size={10} aria-hidden="true" />
                 {isHindi ? 'मुख्य पृष्ठ' : 'Back To Home'}

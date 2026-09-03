@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody,
+  Card, CardBody, Button, Spinner, Input, Modal, ModalHeader, ModalBody, ModalFooter,
   Row, Col, Badge,
   CardHeader, Progress, Label, InputGroup, InputGroupText, Alert
 } from "reactstrap";
@@ -12,9 +12,8 @@ import {
   FaFileImage, FaFilePdf, FaFileExcel, FaFileAlt,
   FaImages, FaFile, FaTable, FaTimes, FaCheckCircle,
   FaExclamationTriangle, FaMagic, FaInfoCircle,
-  FaImage
+  FaImage, FaDownload, FaExternalLinkAlt
 } from "react-icons/fa";
-import { FileViewer } from "@smazeeapps/file-viewer";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
 const API = import.meta.env.VITE_API_URL;
@@ -38,15 +37,18 @@ const acceptedFileTypes = {
 // ----------------------------- SEO FILENAME HELPERS -----------------------------
 const splitNameExt = (fileName) => {
   const lastDot = fileName.lastIndexOf(".");
-  if (lastDot <= 0) return { base: fileName, ext: "" };
-  return { base: fileName.slice(0, lastDot), ext: fileName.slice(lastDot + 1).toLowerCase() };
+  if (lastDot === -1) return { base: fileName, ext: "" };
+  return {
+    base: fileName.slice(0, lastDot),
+    ext: fileName.slice(lastDot + 1)
+  };
 };
 
-const toSeoFriendlyName = (fileName) => {
-  const { base, ext } = splitNameExt(fileName);
+const sanitizeForSeo = (name) => {
+  const { base, ext } = splitNameExt(name);
   let slug = base
     .toLowerCase()
-    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .trim()
     .replace(/[_\s]+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
@@ -55,6 +57,460 @@ const toSeoFriendlyName = (fileName) => {
   if (slug.length > 80) slug = slug.slice(0, 80).replace(/-+$/g, "");
   return ext ? `${slug}.${ext}` : slug;
 };
+
+// ----------------------------- REAL-TIME DOCUMENT VIEWERS -----------------------------
+const PdfViewer = ({ url, fileName }) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    let createdUrl = null;
+    setLoading(true);
+    setError(null);
+
+    axios.get(url, { responseType: "blob" })
+      .then((response) => {
+        if (!isMounted) return;
+        createdUrl = URL.createObjectURL(response.data);
+        setBlobUrl(createdUrl);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.error("PDF fetch error:", err);
+        setError("Failed to load PDF preview.");
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-5 bg-light rounded-3" style={{ minHeight: "350px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <Spinner color="danger" />
+        <p className="mt-2 text-muted small">Loading PDF document...</p>
+      </div>
+    );
+  }
+
+  if (error || !blobUrl) {
+    return (
+      <div className="text-center py-5 bg-light rounded-3">
+        <FaFilePdf size={48} className="text-danger mb-2" />
+        <p className="text-danger fw-semibold">{error || "Could not preview PDF directly."}</p>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary">
+          Open PDF in New Window
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: "100%", height: "650px", borderRadius: "8px", overflow: "hidden", background: "#525659" }}>
+      <iframe
+        src={`${blobUrl}#toolbar=1&navpanes=0`}
+        width="100%"
+        height="100%"
+        title={fileName}
+        style={{ border: "none", width: "100%", height: "100%", display: "block" }}
+      />
+    </div>
+  );
+};
+const DocxViewer = ({ url, fileName }) => {
+  const containerRef = React.useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    axios.get(url, { responseType: "blob" })
+      .then(async (response) => {
+        if (!isMounted) return;
+        if (containerRef.current) {
+          containerRef.current.innerHTML = "";
+          try {
+            const { renderAsync } = await import("docx-preview");
+            await renderAsync(response.data, containerRef.current, null, {
+              className: "docx-doc-page",
+              inWrapper: true,
+              ignoreWidth: false,
+              ignoreHeight: false
+            });
+            if (isMounted) setLoading(false);
+          } catch (renderErr) {
+            console.error("DOCX render error:", renderErr);
+            if (isMounted) {
+              setError("Cannot parse this Word Document format.");
+              setLoading(false);
+            }
+          }
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.error("DOCX load error:", err);
+        setError("Failed to fetch Word document.");
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  return (
+    <div className="bg-light rounded-3 p-2 overflow-auto" style={{ maxHeight: "650px", minHeight: "350px" }}>
+      {loading && (
+        <div className="text-center py-5">
+          <Spinner color="primary" />
+          <p className="mt-2 text-muted small">Loading document preview...</p>
+        </div>
+      )}
+      {error && (
+        <div className="text-center py-5">
+          <FaFileAlt size={48} className="text-danger mb-2" />
+          <p className="text-danger fw-semibold">{error}</p>
+          <a href={url} download={fileName} className="btn btn-sm btn-primary">Download File</a>
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        className="docx-preview-content"
+        style={{
+          display: loading || error ? "none" : "block",
+          background: "#fff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          borderRadius: "4px",
+          padding: "20px",
+          textAlign: "left"
+        }}
+      />
+    </div>
+  );
+};
+
+const ExcelViewer = ({ url, fileName }) => {
+  const [sheetData, setSheetData] = useState({});
+  const [sheetNames, setSheetNames] = useState([]);
+  const [activeSheet, setActiveSheet] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filterText, setFilterText] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    axios.get(url, { responseType: "arraybuffer" })
+      .then(async (response) => {
+        if (!isMounted) return;
+        try {
+          const XLSX = await import("xlsx");
+          const workbook = XLSX.read(response.data, { type: "array" });
+          const parsed = {};
+          workbook.SheetNames.forEach((name) => {
+            const worksheet = workbook.Sheets[name];
+            const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+            parsed[name] = rawRows;
+          });
+          if (isMounted) {
+            setSheetData(parsed);
+            setSheetNames(workbook.SheetNames);
+            setActiveSheet(workbook.SheetNames[0] || "");
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error("Excel parse error:", err);
+          if (isMounted) {
+            setError("Failed to parse spreadsheet content.");
+            setLoading(false);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setError("Failed to load spreadsheet.");
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  const currentRows = (activeSheet && sheetData[activeSheet]) || [];
+  const maxCols = currentRows.reduce((max, row) => Math.max(max, row ? row.length : 0), 0);
+
+  const getColLetter = (index) => {
+    let letter = "";
+    let temp = index;
+    while (temp >= 0) {
+      letter = String.fromCharCode((temp % 26) + 65) + letter;
+      temp = Math.floor(temp / 26) - 1;
+    }
+    return letter;
+  };
+
+  const filteredRows = filterText.trim()
+    ? currentRows.filter((row, idx) =>
+        idx === 0 || (row && row.some((cell) => String(cell).toLowerCase().includes(filterText.toLowerCase())))
+      )
+    : currentRows;
+
+  return (
+    <div className="excel-viewer-container bg-white rounded-3 shadow-sm border overflow-hidden" style={{ minHeight: "400px", maxHeight: "650px", display: "flex", flexDirection: "column" }}>
+      {/* Top Excel Bar */}
+      <div className="d-flex justify-content-between align-items-center p-2 bg-light border-bottom flex-wrap gap-2">
+        <div className="d-flex align-items-center gap-2 overflow-auto" style={{ maxWidth: "70%" }}>
+          <span className="badge bg-success px-2 py-1.5 d-flex align-items-center gap-1" style={{ fontSize: "11px" }}>
+            <FaFileExcel /> Sheets:
+          </span>
+          {sheetNames.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className={`btn btn-sm px-2.5 py-1 ${activeSheet === name ? "btn-success fw-bold shadow-sm" : "btn-outline-secondary bg-white"}`}
+              style={{ fontSize: "12px", whiteSpace: "nowrap" }}
+              onClick={() => setActiveSheet(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+        <div className="d-flex align-items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Filter cells..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            className="form-control-sm"
+            style={{ width: "160px", fontSize: "12px" }}
+          />
+          <span className="text-muted small">
+            {currentRows.length} Rows · {maxCols} Cols
+          </span>
+        </div>
+      </div>
+
+      {/* Spreadsheet Grid */}
+      <div className="overflow-auto flex-grow-1 position-relative" style={{ maxHeight: "580px", background: "#f8fafc" }}>
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner color="success" />
+            <p className="mt-2 text-muted small">Loading spreadsheet grid...</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-5">
+            <FaFileExcel size={48} className="text-danger mb-2" />
+            <p className="text-danger fw-semibold">{error}</p>
+            <a href={url} download={fileName} className="btn btn-sm btn-success">Download Spreadsheet</a>
+          </div>
+        )}
+        {!loading && !error && currentRows.length === 0 && (
+          <div className="text-center py-5 text-muted">Spreadsheet is empty.</div>
+        )}
+        {!loading && !error && currentRows.length > 0 && (
+          <div className="table-responsive m-0">
+            <table
+              className="table table-bordered table-sm table-hover m-0 align-middle"
+              style={{
+                fontSize: "12.5px",
+                borderCollapse: "collapse",
+                background: "#fff",
+                minWidth: "100%"
+              }}
+            >
+              <thead className="bg-light sticky-top" style={{ zIndex: 2 }}>
+                <tr className="bg-light text-muted text-center" style={{ fontSize: "11px" }}>
+                  <th style={{ width: "45px", background: "#eef2f6", color: "#64748b", border: "1px solid #cbd5e1" }}>#</th>
+                  {Array.from({ length: maxCols }).map((_, colIdx) => (
+                    <th key={colIdx} style={{ background: "#eef2f6", color: "#475569", fontWeight: "600", minWidth: "120px", border: "1px solid #cbd5e1", padding: "6px 8px" }}>
+                      {getColLetter(colIdx)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row, rowIdx) => {
+                  const isHeaderRow = rowIdx === 0;
+                  return (
+                    <tr key={rowIdx} style={{ backgroundColor: isHeaderRow ? "#f1f5f9" : (rowIdx % 2 === 0 ? "#ffffff" : "#fbfcfe") }}>
+                      <td
+                        className="text-center text-muted fw-semibold select-none"
+                        style={{ width: "45px", background: "#f8fafc", fontSize: "11px", border: "1px solid #e2e8f0" }}
+                      >
+                        {rowIdx + 1}
+                      </td>
+                      {Array.from({ length: maxCols }).map((_, colIdx) => {
+                        const cellVal = row && row[colIdx] !== undefined ? String(row[colIdx]) : "";
+                        return (
+                          <td
+                            key={colIdx}
+                            style={{
+                              border: "1px solid #e2e8f0",
+                              padding: "6px 10px",
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                              fontWeight: isHeaderRow ? "600" : "normal",
+                              color: isHeaderRow ? "#1e293b" : "#334155"
+                            }}
+                          >
+                            {cellVal}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const PptxViewer = ({ url, fileName }) => {
+  const [presentation, setPresentation] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const slideContainerRef = React.useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    axios.get(url, { responseType: "arraybuffer" })
+      .then(async (response) => {
+        if (!isMounted) return;
+        try {
+          const { loadPresentation } = await import("pptx-viewer");
+          const pres = await loadPresentation(response.data);
+          if (isMounted) {
+            setPresentation(pres);
+            setCurrentSlide(0);
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error("PPTX presentation error:", err);
+          if (isMounted) {
+            setError("Cannot parse this PowerPoint presentation layout.");
+            setLoading(false);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setError("Failed to load PowerPoint file.");
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  useEffect(() => {
+    if (!presentation || !slideContainerRef.current) return;
+    slideContainerRef.current.innerHTML = "";
+    import("pptx-viewer").then(({ renderSlideToElement }) => {
+      try {
+        renderSlideToElement(presentation, currentSlide, slideContainerRef.current);
+      } catch (err) {
+        console.error("Slide render error:", err);
+      }
+    });
+  }, [presentation, currentSlide]);
+
+  const totalSlides = presentation?.slides?.length || 0;
+
+  return (
+    <div className="pptx-viewer-container bg-dark rounded-3 shadow border overflow-hidden" style={{ minHeight: "450px", maxHeight: "650px", display: "flex", flexDirection: "column" }}>
+      {/* Top Slide Presentation Toolbar */}
+      <div className="d-flex justify-content-between align-items-center p-2 bg-black bg-opacity-75 text-white flex-wrap gap-2 border-bottom border-secondary">
+        <div className="d-flex align-items-center gap-2">
+          <span className="badge bg-warning text-dark fw-bold px-2 py-1">
+            PPTX Slide {totalSlides > 0 ? currentSlide + 1 : 0} / {totalSlides}
+          </span>
+          <span className="small text-white-50 text-truncate" style={{ maxWidth: "250px" }}>{fileName}</span>
+        </div>
+        <div className="d-flex align-items-center gap-2">
+          <Button
+            size="sm"
+            color="secondary"
+            className="py-0 px-2"
+            disabled={currentSlide <= 0}
+            onClick={() => setCurrentSlide((prev) => Math.max(0, prev - 1))}
+          >
+            ◀ Prev
+          </Button>
+          <Button
+            size="sm"
+            color="warning"
+            className="py-0 px-2 fw-bold text-dark"
+            disabled={currentSlide >= totalSlides - 1}
+            onClick={() => setCurrentSlide((prev) => Math.min(totalSlides - 1, prev + 1))}
+          >
+            Next ▶
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Slide Area */}
+      <div className="flex-grow-1 d-flex align-items-center justify-content-center p-3 position-relative overflow-auto" style={{ background: "#1e293b", maxHeight: "580px" }}>
+        {loading && (
+          <div className="text-center py-5 text-white">
+            <Spinner color="warning" />
+            <p className="mt-2 text-white-50 small">Loading PowerPoint presentation...</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-5 bg-light rounded-3 p-4 m-3">
+            <FaTable size={48} className="text-warning mb-2" />
+            <h6 className="fw-bold text-dark">{fileName}</h6>
+            <p className="text-danger fw-semibold">{error}</p>
+            <a href={url} download={fileName} className="btn btn-sm btn-warning fw-bold">
+              <FaDownload className="me-1" /> Download Presentation
+            </a>
+          </div>
+        )}
+        {!loading && !error && (
+          <div
+            ref={slideContainerRef}
+            className="slide-viewport shadow-lg bg-white rounded"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "520px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden"
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const toSeoFriendlyName = sanitizeForSeo;
 
 const isSeoFriendlyName = (fileName) => {
   const { base } = splitNameExt(fileName);
@@ -72,13 +528,27 @@ const MediaLibraryMangments = () => {
   const [previewFile, setPreviewFile] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const [textContent, setTextContent] = useState("");
+  const [textLoading, setTextLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState(null);
   const [editableName, setEditableName] = useState("");
   const [fileExt, setFileExt] = useState("");
   const [nameIsSeoFriendly, setNameIsSeoFriendly] = useState(true);
+
+  // Generate real-time preview URL for selected file before upload
+  useEffect(() => {
+    if (!selectedFile) {
+      setSelectedFilePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(selectedFile);
+    setSelectedFilePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
 
   const MAX_UPLOAD_SIZE_BYTES = 100 * 1024 * 1024;
   const isValidUploadSize = selectedFile?.size <= MAX_UPLOAD_SIZE_BYTES;
@@ -132,17 +602,33 @@ const MediaLibraryMangments = () => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      try { document.execCommand("copy"); } catch (err) {}
+      try { document.execCommand("copy"); } catch (err) { }
       document.body.removeChild(textArea);
     }
     toast.success("Link copied to clipboard!");
   };
 
-  // ----------------------------- PREVIEW MODAL (UPDATED) -----------------------------
+  // ----------------------------- PREVIEW MODAL (FULL SUPPORT) -----------------------------
   const openPreview = (file) => {
     setPreviewFile(file);
     setPreviewError(false);
+    setTextContent("");
     setPreviewOpen(true);
+
+    const ext = (file?.originalName || "").split(".").pop()?.toLowerCase();
+    if (["txt", "csv", "json", "md", "xml", "html", "css", "js", "jsx", "ts", "tsx"].includes(ext)) {
+      setTextLoading(true);
+      axios.get(`${API}${file.filePath}`, { responseType: "text" })
+        .then((res) => {
+          setTextContent(typeof res.data === "string" ? res.data : JSON.stringify(res.data, null, 2));
+        })
+        .catch(() => {
+          setTextContent("");
+        })
+        .finally(() => {
+          setTextLoading(false);
+        });
+    }
   };
 
   const getPreviewContent = () => {
@@ -156,51 +642,125 @@ const MediaLibraryMangments = () => {
 
     if (previewError) {
       return (
-        <div className="text-center p-5">
-          <FaFileAlt size={90} className="text-muted mb-3" />
-          <p>Cannot preview this file directly.</p>
-          <Button color="primary" href={fileUrl} target="_blank" rel="noopener noreferrer">
-            Download / Open File
-          </Button>
+        <div className="text-center py-5 px-3 bg-light rounded-3">
+          <FaFileAlt size={64} className="text-muted mb-3" />
+          <h5 className="fw-bold mb-2">{previewFile.originalName}</h5>
+          <p className="text-muted mb-3">{formatSize(previewFile.fileSize)}</p>
+          <div className="d-flex justify-content-center gap-2">
+            <a href={fileUrl} download={previewFile.originalName} className="btn btn-primary d-inline-flex align-items-center gap-2">
+              <FaDownload /> Download File
+            </a>
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+              <FaExternalLinkAlt /> Open in Browser
+            </a>
+          </div>
         </div>
       );
     }
 
+    // 1. IMAGE PREVIEW
     if (isImage) {
-      return <img src={fileUrl} alt={previewFile.originalName} style={{ maxWidth: "100%", maxHeight: 560, objectFit: "contain" }} />;
+      return (
+        <div style={{ maxHeight: "600px", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f9fa", borderRadius: "8px", padding: "12px", overflow: "hidden" }}>
+          <img
+            src={fileUrl}
+            alt={previewFile.originalName}
+            style={{ maxWidth: "100%", maxHeight: "550px", objectFit: "contain", borderRadius: "4px" }}
+          />
+        </div>
+      );
     }
 
+    // 2. PDF PREVIEW (Blob-based to prevent cross-origin iframe security blocks)
+    if (extension === "pdf") {
+      return <PdfViewer url={fileUrl} fileName={previewFile.originalName} />;
+    }
+
+    // 3. AUDIO PREVIEW
     if (isAudio) {
       return (
-        <div className="text-center p-4">
-          <audio controls src={fileUrl} style={{ width: "100%" }} />
+        <div className="p-4 bg-light rounded-3 text-center">
+          <div className="mb-3">
+            <FaFile size={48} className="text-purple" />
+          </div>
+          <h6 className="fw-bold mb-1">{previewFile.originalName}</h6>
+          <p className="text-muted small mb-3">{formatSize(previewFile.fileSize)} · Audio File</p>
+          <audio controls src={fileUrl} className="w-100 mt-2 shadow-sm" autoPlay={false} />
         </div>
       );
     }
 
+    // 4. VIDEO PREVIEW
     if (isVideo) {
       return (
-        <div className="text-center p-4">
-          <video controls src={fileUrl} style={{ width: "100%", maxHeight: 560 }} />
+        <div className="bg-dark rounded-3 overflow-hidden d-flex align-items-center justify-content-center p-2" style={{ maxHeight: "600px" }}>
+          <video
+            controls
+            src={fileUrl}
+            style={{ width: "100%", maxHeight: "550px", borderRadius: "6px" }}
+            playsInline
+          />
         </div>
       );
     }
 
-    if (isText) {
+    // 5. DOCX PREVIEW (Word Document)
+    if (extension === "docx") {
+      return <DocxViewer url={fileUrl} fileName={previewFile.originalName} />;
+    }
+
+    // 6. EXCEL & SPREADSHEET PREVIEW (XLSX, XLS, CSV)
+    if (["xlsx", "xls", "csv"].includes(extension)) {
+      return <ExcelViewer url={fileUrl} fileName={previewFile.originalName} />;
+    }
+
+    // 7. POWERPOINT PRESENTATION PREVIEW (PPTX, PPT)
+    if (["pptx", "ppt"].includes(extension)) {
+      return <PptxViewer url={fileUrl} fileName={previewFile.originalName} />;
+    }
+
+    // 8. TEXT / CODE PREVIEW
+    if (isText && extension !== "csv") {
       return (
-        <div className="text-start p-3 border rounded bg-light" style={{ maxHeight: 560, overflow: "auto" }}>
-          <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>{previewFile.originalName}</pre>
+        <div className="text-start p-3 border rounded bg-white" style={{ maxHeight: "550px", overflow: "auto" }}>
+          {textLoading ? (
+            <div className="text-center py-4"><Spinner size="sm" className="me-2" /> Loading preview...</div>
+          ) : (
+            <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "Consolas, Monaco, monospace", fontSize: "12.5px", margin: 0, color: "#1e293b" }}>
+              {textContent || previewFile.originalName}
+            </pre>
+          )}
         </div>
       );
     }
 
+    // 9. OTHER ARCHIVES & DOCUMENTS (ZIP, RAR, 7Z, TAR)
     return (
-      <FileViewer
-        src={fileUrl}
-        fileName={previewFile.originalName}
-        height="600px"
-        onError={() => setPreviewError(true)}
-      />
+      <div className="text-center py-5 px-3 bg-light rounded-3">
+        <div className="mb-3">{getFileIcon(previewFile.originalName)}</div>
+        <h5 className="fw-bold text-dark mb-1">{previewFile.originalName}</h5>
+        <p className="text-muted small mb-4">
+          <Badge color="primary" pill className="me-2 px-2.5 py-1 text-uppercase">{extension}</Badge>
+          {formatSize(previewFile.fileSize)} · Uploaded on {formatDateTime(previewFile.createdAt)}
+        </p>
+        <div className="d-flex justify-content-center gap-2 flex-wrap">
+          <a
+            href={fileUrl}
+            download={previewFile.originalName}
+            className="btn btn-primary px-4 py-2 d-inline-flex align-items-center gap-2 rounded-pill shadow-sm fw-semibold"
+          >
+            <FaDownload /> Download {extension?.toUpperCase()} File
+          </a>
+          <a
+            href={`https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline-secondary px-3 py-2 d-inline-flex align-items-center gap-2 rounded-pill shadow-sm"
+          >
+            <FaExternalLinkAlt /> Open with Viewer
+          </a>
+        </div>
+      </div>
     );
   };
 
@@ -497,12 +1057,11 @@ const MediaLibraryMangments = () => {
                       <div className="d-flex justify-content-between align-items-center mb-2">
                         <Label className="fw-bold mb-0 text-dark d-flex align-items-center" style={{ fontSize: "0.85rem" }}>
                           <FaFileAlt className="text-primary me-2 fs-6" />
-                          File Details
-                          <span className="text-muted fw-normal ms-1" style={{ fontSize: "0.7rem" }}>(Optional) - You Can Modify File Name</span>
+                          File Details & Live Preview
+                          <span className="text-muted fw-normal ms-1" style={{ fontSize: "0.7rem" }}>(Optional) - Modify Name</span>
                         </Label>
 
                         <Button
-
                           outline
                           className="rounded-pill px-2 bg-info text-white py-0 fw-bold d-flex align-items-center shadow-sm"
                           style={{ fontSize: "0.7rem", height: "22px" }}
@@ -515,6 +1074,37 @@ const MediaLibraryMangments = () => {
                           Auto Fix
                         </Button>
                       </div>
+
+                      {/* Live Visual Preview Box */}
+                      {selectedFilePreview && (
+                        <div className="mb-2 p-2 bg-light rounded-2 border d-flex align-items-center justify-content-center" style={{ minHeight: "80px", maxHeight: "160px", overflow: "hidden" }}>
+                          {["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(fileExt.toLowerCase()) ? (
+                            <img
+                              src={selectedFilePreview}
+                              alt="Preview"
+                              style={{ maxHeight: "140px", maxWidth: "100%", objectFit: "contain", borderRadius: "4px" }}
+                            />
+                          ) : ["mp4", "mov", "webm"].includes(fileExt.toLowerCase()) ? (
+                            <video
+                              src={selectedFilePreview}
+                              controls
+                              style={{ maxHeight: "140px", maxWidth: "100%", borderRadius: "4px" }}
+                            />
+                          ) : ["mp3", "wav", "ogg"].includes(fileExt.toLowerCase()) ? (
+                            <div className="w-100 px-2 py-1 text-center">
+                              <audio src={selectedFilePreview} controls className="w-100" />
+                            </div>
+                          ) : (
+                            <div className="d-flex align-items-center gap-2 py-2">
+                              {getFileIcon(selectedFile.name)}
+                              <div className="text-start">
+                                <div className="fw-bold small text-dark">{selectedFile.name}</div>
+                                <small className="text-muted">{formatSize(selectedFile.size)} · {fileExt.toUpperCase()}</small>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Small Input Group */}
                       <InputGroup size="sm" className="mb-2 shadow-sm rounded-2">
@@ -692,7 +1282,7 @@ const MediaLibraryMangments = () => {
       </div>
 
       {/* Media Items */}
-      <div className="p-3">
+      <div className="mt-3">
         {loading ? (
           <div className="text-center py-5"><Spinner /></div>
         ) : filteredFiles.length === 0 ? (
@@ -707,18 +1297,50 @@ const MediaLibraryMangments = () => {
       </div>
 
       {/* Preview Modal */}
-      <Modal isOpen={previewOpen} toggle={() => setPreviewOpen(false)} size="lg" centered scrollable>
-        <ModalHeader toggle={() => setPreviewOpen(false)}>
-          {previewFile?.originalName}
-        </ModalHeader>
-        <ModalBody className="text-center">
-          {getPreviewContent()}
-          <div className="mt-3">
-            <Button color="success" onClick={() => copyLink(previewFile?.filePath)}>
-              <FaCopy className="me-1" /> Copy Link
-            </Button>
+      <Modal
+        isOpen={previewOpen}
+        toggle={() => setPreviewOpen(false)}
+        size={["pdf", "mp4", "mov", "webm", "avi", "txt", "csv", "docx", "doc", "xlsx", "xls", "pptx", "ppt"].includes(previewFile?.originalName?.split(".").pop()?.toLowerCase()) ? "xl" : "lg"}
+        centered
+        scrollable
+      >
+        <ModalHeader toggle={() => setPreviewOpen(false)} className="bg-light">
+          <div className="d-flex align-items-center gap-2">
+            {getFileIcon(previewFile?.originalName)}
+            <div>
+              <div className="fw-bold text-dark" style={{ fontSize: "15px" }}>{previewFile?.originalName}</div>
+              <small className="text-muted">{formatSize(previewFile?.fileSize)} · Uploaded {formatDateTime(previewFile?.createdAt)}</small>
+            </div>
           </div>
+        </ModalHeader>
+        <ModalBody className="p-3 text-center">
+          {getPreviewContent()}
         </ModalBody>
+        <ModalFooter className="d-flex justify-content-between align-items-center bg-light">
+          <div className="text-muted small">
+            <code>{previewFile?.filePath}</code>
+          </div>
+          <div className="d-flex gap-2">
+            <Button color="light" className="border" onClick={() => copyLink(previewFile?.filePath)}>
+              <FaCopy className="me-1 text-success" /> Copy Link
+            </Button>
+            <a
+              href={`${API}${previewFile?.filePath}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-primary d-inline-flex align-items-center gap-1"
+            >
+              <FaExternalLinkAlt size={12} /> Open in New Tab
+            </a>
+            <a
+              href={`${API}${previewFile?.filePath}`}
+              download={previewFile?.originalName}
+              className="btn btn-primary d-inline-flex align-items-center gap-1"
+            >
+              <FaDownload size={12} /> Download
+            </a>
+          </div>
+        </ModalFooter>
       </Modal>
     </>
   );

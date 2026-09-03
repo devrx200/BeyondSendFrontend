@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState, Suspense } from "react";
-import axios from "axios";
+import { Suspense } from "react";
 
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
 import Header from "../components/Header";
@@ -19,13 +18,10 @@ import {
   AdminLogin, AdminDashboard, AdminUserManagement, AdminEducationStats, AdminFeedbackList, MenuManagement,
   HeaderManagement, SliderManagement, FooterSection, AboutSectionMangement, AnnouncementsManagement, NewUpdatesManagement,
   GalleryManagement, ManageCategories, ManageBrands, ContactManagement, ContactCardCMS, ImportantLinksManagement,
-  ImportantPageManagement, PageCreatorManagement, RichContentPageManagements, MediaLibraryMangments, DownloadManagement,
+  QuickAccessManagement, ImportantPageManagement, PageCreatorManagement, RichContentPageManagements, MediaLibraryMangments, DownloadManagement,
   DepartmentNoticeManagement, DirectorateNoticeManagement, HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
   DbBackupManagement
 } from "./LazyLoadingRouter";
-
-/* ─── Constants ───────────────────────────────────────────────────────────── */
-const API_URL = import.meta.env.VITE_API_URL;
 
 /* ─── Main Layout ─────────────────────────────────────────────────────────── */
 const MainLayout = ({ children }) => (
@@ -39,34 +35,7 @@ const MainLayout = ({ children }) => (
 
 /* ─── App Routes ──────────────────────────────────────────────────────────── */
 const AppRoutes = () => {
-  const [pages, setPages] = useState([]);
-  const [staticPages, setStaticPages] = useState([]);
   const location = useLocation();
-  useEffect(() => {
-    fetchPages();
-  }, []);
-
-  const fetchPages = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/menu-list`);
-      const allItems = res.data.data || [];
-
-      const menuItems = allItems;
-      const menuItemsStatic = allItems.filter((item) => item.isDynamic === false && item.isImportant === false);
-      setPages(extractPagesFromMenu(menuItems));
-      setStaticPages(extractPagesFromMenu(menuItemsStatic));
-    } catch (err) {
-      console.error("Page Fetch Error", err);
-    }
-  };
-
-  const extractPagesFromMenu = (menus, pages = [], parentId = null) => {
-    menus.forEach((item) => {
-      pages.push({ _id: item._id, path: item.path, isExternal: item.isExternal, parentId });
-      if (item.submenu?.length) extractPagesFromMenu(item.submenu, pages, item._id);
-    });
-    return pages;
-  };
 
   return (
     <Suspense fallback={<div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>}>
@@ -108,7 +77,7 @@ const AppRoutes = () => {
       </Route>
 
       {/* ── Admin Protected Routes ───────────────────────── */}
-      <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "DEPARTMATE", "NIC"]} />}>
+      <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]} />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
@@ -120,15 +89,15 @@ const AppRoutes = () => {
           <Route path="tutorials" element={<HelpTutorials />} />
 
           {/* ADMIN */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN",]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route path="slider" element={<SliderManagement />} />
             <Route path="about-section" element={<AboutSectionMangement />} />
             <Route path="brands" element={<ManageBrands />} />
             <Route path="contact-management" element={<ContactManagement />} />
             <Route path="important-links" element={<ImportantLinksManagement />} />
+            <Route path="quick-access" element={<QuickAccessManagement />} />
             <Route path="feedbacks" element={<AdminFeedbackList />} />
             <Route path="menu" element={<MenuManagement />} />
-            <Route path="gallery" element={<GalleryManagement />} />
             <Route path="footer-section-manager" element={<FooterSection />} />
             <Route path="important-page-management" element={<ImportantPageManagement />} />
             <Route path="header-management" element={<HeaderManagement />} />
@@ -136,11 +105,12 @@ const AppRoutes = () => {
           </Route>
 
           {/* ADMIN + OFFICER */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT"]} />}>
             <Route path="multi-section-pages-management" element={<PageCreatorManagement />} />
             <Route path="rich-content-pages" element={<RichContentPageManagements />} />
             <Route path="media-library-mangments" element={<MediaLibraryMangments />} />
             <Route path="download-management" element={<DownloadManagement />} />
+            <Route path="gallery" element={<GalleryManagement />} />
           </Route>
 
           {/* ADMIN + OFFICER (DIRECTORATE) */}
@@ -149,7 +119,7 @@ const AppRoutes = () => {
           </Route>
 
           {/* ADMIN + OFFICER (DEPARTMENT) */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DEPARTMENT", "DEPARTMATE"]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DEPARTMENT"]} />}>
             <Route path="department-notices" element={<DepartmentNoticeManagement />} />
           </Route>
 

@@ -87,20 +87,15 @@ const NoticeDepAndDirectorate = () => {
         return list.map((item) => (
             <Card
                 key={item._id}
-                className="mb-2 border-0 shadow-sm"
-                style={{
-                    borderRadius: "12px",
-                    cursor: "pointer",
-                    transition: "all 0.22s ease",
-                    borderLeft: `3px solid ${type === "directorate" ? "#1a3a8f" : "#1a6b3a"} !important`,
-                }}
-                onClick={() =>
+                className={`notice-item-card ${type === "directorate" ? "directorate-card" : "department-card"} mb-2`}
+                onClick={() => {
                     navigate(
                         type === "directorate"
                             ? `/directorate-notice/${item.slug}`
                             : `/department-notice/${item.slug}`
-                    )
-                }
+                    );
+                    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                }}
             >
                 <CardBody className="py-2 px-3">
                     {/* Top row: badge + date */}
@@ -135,7 +130,7 @@ const NoticeDepAndDirectorate = () => {
                         </CardTitle>
                         <FaChevronRight
                             size={10}
-                            className={type === "directorate" ? "text-primary mt-1 flex-shrink-0" : "text-success mt-1 flex-shrink-0"}
+                            className={`notice-card-arrow ${type === "directorate" ? "text-primary" : "text-success"} mt-1 flex-shrink-0`}
                         />
                     </div>
                 </CardBody>
@@ -242,7 +237,10 @@ const NoticeDepAndDirectorate = () => {
                                         flexShrink: 0,
                                         userSelect: "none",
                                     }}
-                                    onClick={() => navigate("/directorate-notices")}
+                                    onClick={() => {
+                                        navigate("/directorate-notices");
+                                        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                                    }}
                                 >
                                     <FaArchive size={11} />
                                     {isHindi ? "सभी देखें" : "View All"}
@@ -350,7 +348,10 @@ const NoticeDepAndDirectorate = () => {
                                         flexShrink: 0,
                                         userSelect: "none",
                                     }}
-                                    onClick={() => navigate("/departments-notices")}
+                                    onClick={() => {
+                                        navigate("/departments-notices");
+                                        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                                    }}
                                 >
                                     <FaArchive size={11} />
                                     {isHindi ? "सभी देखें" : "View All"}

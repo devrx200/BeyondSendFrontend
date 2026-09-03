@@ -2,20 +2,24 @@ import { useEffect, useState } from "react";
 import { Button, UncontrolledTooltip } from "reactstrap";
 import { FaCommentDots } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const FeedbackToggleFloating = () => {
   const navigate = useNavigate();
+  const { isHindi } = useLanguage();
   const [hasToken, setHasToken] = useState(false);
-
   const location = useLocation();
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");
-    setHasToken(!!token); // true if exists
+    setHasToken(!!token);
   }, []);
 
   // Hide on admin routes
-  if (location.pathname.toLowerCase().includes('/admin') || location.pathname.toLowerCase().includes('/dashboard')) {
+  if (
+    location.pathname.toLowerCase().includes("/admin") ||
+    location.pathname.toLowerCase().includes("/dashboard")
+  ) {
     return null;
   }
 
@@ -23,9 +27,9 @@ const FeedbackToggleFloating = () => {
     <div
       style={{
         position: "fixed",
-        left: "15px",
+        left: "16px",
         bottom: "20px",
-        zIndex: 9999
+        zIndex: 9999,
       }}
     >
       <Button
@@ -35,32 +39,27 @@ const FeedbackToggleFloating = () => {
           window.scrollTo(0, 0);
           navigate("/feedback");
         }}
-        className="d-flex align-items-center gap-2 shadow"
+        className="floating-action-btn d-flex align-items-center gap-2"
         style={{
-          borderRadius: "30px",
-          padding: "5px 14px",
-          fontSize: "14px",
-          fontWeight: "bold",
-          transition: "all 0.2s ease"
+          background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+          border: "1.5px solid rgba(255, 255, 255, 0.4)",
+          color: "#0f172a",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.transform = "scale(1.05)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.transform = "scale(1)")
-        }
       >
-        <FaCommentDots size={16} />
-
+        <FaCommentDots size={18} />
         {!hasToken && (
-          <span className="d-none d-md-inline fw-bold">
-            Feedback
-          </span>
+          <span>{isHindi ? "प्रतिक्रिया" : "Feedback"}</span>
         )}
       </Button>
 
-      <UncontrolledTooltip placement="left" target="feedback-btn-floating">
-        {hasToken ? "Send Feedback" : "We Value Your Feedback"}
+      <UncontrolledTooltip placement="right" target="feedback-btn-floating" fade={false}>
+        {hasToken
+          ? isHindi
+            ? "प्रतिक्रिया भेजें"
+            : "Send Feedback"
+          : isHindi
+          ? "आपकी प्रतिक्रिया हमारे लिए मूल्यवान है"
+          : "We Value Your Feedback"}
       </UncontrolledTooltip>
     </div>
   );

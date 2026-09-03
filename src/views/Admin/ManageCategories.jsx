@@ -8,9 +8,19 @@ import axios from "axios";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 
+const getToken = () => {
+  const raw = sessionStorage.getItem("authToken");
+  if (!raw) return "";
+  try {
+    const p = JSON.parse(raw);
+    return p?.token || p?.access || raw;
+  } catch {
+    return raw;
+  }
+};
+
 const ManageCategories = () => {
   const API_URL = import.meta.env.VITE_API_URL;
-  const token = sessionStorage.getItem("authToken");
   const { toasts, toast } = useToast();
 
   /* ---------- CREATE ---------- */
@@ -34,8 +44,10 @@ const ManageCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-categories`);
-      setCategories(res.data.data);
+      const res = await axios.get(`${API_URL}/api/get-categories`, {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      setCategories(res.data.data || []);
     } catch {
       toast.error("Failed to fetch categories");
     } finally {

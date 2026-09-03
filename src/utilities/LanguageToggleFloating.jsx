@@ -9,32 +9,24 @@ const LanguageToggleFloating = () => {
     <div
       style={{
         position: "fixed",
-        right: "15px",
+        right: "16px",
         bottom: "20px",
-        zIndex: 9999
+        zIndex: 9999,
       }}
     >
       <Button
         color="primary"
         onClick={toggleLanguage}
-        className="d-flex align-items-center gap-2 shadow"
+        className="floating-action-btn d-flex align-items-center gap-2"
         style={{
-          borderRadius: "30px",
-          padding: "5px 14px",
-          fontSize: "14px",
-          transition: "all 0.2s ease"
+          background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+          border: "1.5px solid rgba(255, 255, 255, 0.4)",
+          color: "#ffffff",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.transform = "scale(1.05)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.transform = "scale(1)")
-        }
+        title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
       >
-        <FaLanguage size={16} />
-        <span className="d-none d-md-inline">
-          {isHindi ? "English" : "हिंदी"}
-        </span>
+        <FaLanguage size={18} />
+        <span>{isHindi ? "English" : "हिंदी"}</span>
       </Button>
     </div>
   );

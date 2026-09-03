@@ -86,18 +86,7 @@ const validateField = (name, value, isEditing = false) => {
 
 /* ================= HELPERS ================= */
 const headerGradient = {
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-};
-
-const statusColor = (status) => {
-  if (status === "APPROVED") return "success";
-  if (status === "REJECTED") return "danger";
-  return "warning";
-};
-
-const roleColor = (role) => {
-  if (role === "ADMIN") return "primary";
-  return "info";
+  background: "linear-gradient(135deg, #0d9488 0%, #065f46 100%)",
 };
 
 /* ================================================= */
@@ -120,7 +109,6 @@ const AdminUserManagement = () => {
   // Decode Token and Global Object
   const currentUser = token ? jwtDecode(token) : null;
   const currentEmployeeType = window.employeeType || currentUser?.employeeType || "DEPARTMENT";
-  const currentRole = window.userRole || currentUser?.role || "OFFICER";
 
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
@@ -142,15 +130,34 @@ const AdminUserManagement = () => {
     }
   };
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    let isMounted = true;
+    axios.get(`${API_URL}/api/get-all-users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!isMounted) return;
+        const allUsers = res.data?.data || [];
+        const filteredUsers = allUsers.filter(
+          (u) => !(u.role === "ADMIN" && u.employeeType === "DIRECTORATE")
+        );
+        setUsers(filteredUsers);
+      })
+      .catch(() => {
+        if (isMounted) {
+          Swal.fire("Error", "Failed to load users. Please try again.", "error");
+        }
+      });
+    return () => { isMounted = false; };
+  }, [API_URL, token]);
 
   /* ================= MODAL TOGGLE ================= */
   const openModal = () => {
-    setFormData((prev) => ({
+    setFormData({
       ...initialForm,
       employeeType: currentEmployeeType === "DEPARTMENT" ? "DEPARTMENT" : "DIRECTORATE",
-      role: currentEmployeeType === "DEPARTMENT" ? "OFFICER" : "OFFICER"
-    }));
+      role: "OFFICER"
+    });
     setModal(true);
   };
   const closeModal = () => {
@@ -358,7 +365,7 @@ const AdminUserManagement = () => {
             <Button
               color="light"
               size="sm"
-              className="fw-semibold d-flex align-items-center gap-1 text-primary shadow-sm"
+              className="fw-semibold d-flex align-items-center gap-1 text-success shadow-sm"
               onClick={openModal}
             >
               <FaPlus />
@@ -372,46 +379,58 @@ const AdminUserManagement = () => {
 
         {/* ── Stats Row ── */}
         <div
-          className="px-4 py-3 border-bottom d-flex align-items-center gap-3 flex-wrap"
-          style={{ backgroundColor: "#f8f9ff" }}
+          className="px-4 py-2.5 border-bottom d-flex align-items-center gap-4 flex-wrap"
+          style={{ backgroundColor: "#f0fdf4" }}
         >
-          <small className="text-muted fw-semibold">
-            Total Officers:{" "}
-            <Badge color="primary" pill className="ms-1" style={{ fontSize: "12px" }}>
+          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
+            Total Officers:
+            <span
+              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
+              style={{ fontSize: "11.5px", background: "#1d4ed8" }}
+            >
               {users.length}
-            </Badge>
+            </span>
           </small>
-          <small className="text-muted fw-semibold">
-            Active:{" "}
-            <Badge color="success" pill className="ms-1" style={{ fontSize: "12px" }}>
+          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
+            Active:
+            <span
+              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
+              style={{ fontSize: "11.5px", background: "#059669" }}
+            >
               {users.filter((u) => u.isActive).length}
-            </Badge>
+            </span>
           </small>
-          <small className="text-muted fw-semibold">
-            Approved:{" "}
-            <Badge color="success" pill className="ms-1" style={{ fontSize: "12px" }}>
+          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
+            Approved:
+            <span
+              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
+              style={{ fontSize: "11.5px", background: "#059669" }}
+            >
               {users.filter((u) => u.status === "APPROVED").length}
-            </Badge>
+            </span>
           </small>
-          <small className="text-muted fw-semibold">
-            Pending:{" "}
-            <Badge color="warning" pill className="ms-1" style={{ fontSize: "12px" }}>
+          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
+            Pending:
+            <span
+              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
+              style={{ fontSize: "11.5px", background: "#d97706" }}
+            >
               {users.filter((u) => u.status === "PENDING").length}
-            </Badge>
+            </span>
           </small>
         </div>
 
         {/* ── Table ── */}
         <div className="table-responsive">
-          <Table hover striped className="mb-0 align-middle text-success">
-            <thead >
-              <tr className="text-primary">
+          <Table hover striped className="mb-0 align-middle">
+            <thead className="table-light text-uppercase" style={{ fontSize: "0.8rem", letterSpacing: "0.5px" }}>
+              <tr>
                 {["#", "Photo", "Name", "Role", "Email", "Mobile", "Designation", "Permissions", "Controls", "Status", "Actions"].map(
                   (col) => (
                     <th
                       key={col}
-                      className="text-dark fw-semibold"
-                      style={{ fontSize: "13px", whiteSpace: "nowrap", padding: "12px 14px" }}
+                      className="text-dark fw-bold"
+                      style={{ fontSize: "12px", whiteSpace: "nowrap", padding: "12px 14px" }}
                     >
                       {col}
                     </th>
@@ -451,15 +470,15 @@ const AdminUserManagement = () => {
                   <tr
                     key={u._id}
                     style={{
-                      backgroundColor: i % 2 === 0 ? "rgba(102,126,234,0.02)" : "transparent",
+                      backgroundColor: i % 2 === 0 ? "rgba(13,148,136,0.02)" : "transparent",
                       transition: "background 0.15s",
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "rgba(102,126,234,0.06)")
+                      (e.currentTarget.style.backgroundColor = "rgba(13,148,136,0.05)")
                     }
                     onMouseLeave={(e) =>
                     (e.currentTarget.style.backgroundColor =
-                      i % 2 === 0 ? "rgba(102,126,234,0.02)" : "transparent")
+                      i % 2 === 0 ? "rgba(13,148,136,0.02)" : "transparent")
                     }
                   >
                     {/* # */}
@@ -481,8 +500,8 @@ const AdminUserManagement = () => {
                           className="rounded-circle"
                           style={{
                             objectFit: "cover",
-                            border: "2px solid #e0e7ff",
-                            boxShadow: "0 1px 4px rgba(102,126,234,0.25)",
+                            border: "2px solid #a7f3d0",
+                            boxShadow: "0 2px 6px rgba(13,148,136,0.2)",
                           }}
                           onError={(e) => {
                             e.target.style.display = "none";
@@ -495,8 +514,8 @@ const AdminUserManagement = () => {
                             width: 40,
                             height: 40,
                             fontSize: 14,
-                            ...headerGradient,
-                            boxShadow: "0 1px 4px rgba(102,126,234,0.3)",
+                            background: "linear-gradient(135deg, #0d9488 0%, #047857 100%)",
+                            boxShadow: "0 2px 6px rgba(13,148,136,0.25)",
                           }}
                         >
                           {u.name?.charAt(0)?.toUpperCase() || "?"}
@@ -505,62 +524,83 @@ const AdminUserManagement = () => {
                     </td>
 
                     {/* Name */}
-                    <td>
-                      <div className="fw-semibold text-dark" style={{ fontSize: "13px" }}>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <div className="fw-semibold text-dark" style={{ fontSize: "13.5px" }}>
                         {u.name}
                       </div>
                       <small
-                        className="text-muted"
+                        className="text-muted d-inline-flex align-items-center gap-1 mt-0.5"
                         style={{ fontSize: "11px" }}
                       >
-                        {u.isActive ? "🟢 Active" : "⚪ Inactive"}
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: u.isActive ? "#10b981" : "#94a3b8",
+                            display: "inline-block"
+                          }}
+                        />
+                        <span>{u.isActive ? "Active" : "Inactive"}</span>
                       </small>
                     </td>
 
                     {/* Role */}
-                    <td>
-                      <Badge
-                        color={roleColor(u.role)}
-                        pill
-                        style={{ fontSize: "11px", letterSpacing: "0.3px" }}
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <span
+                        className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block text-center"
+                        style={{
+                          fontSize: "11px",
+                          letterSpacing: "0.3px",
+                          background: u.role === "ADMIN" ? "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)" : "linear-gradient(135deg, #0d9488 0%, #047857 100%)"
+                        }}
                       >
                         {u.role}
-                      </Badge>
+                      </span>
                     </td>
 
                     {/* Email */}
                     <td style={{ fontSize: "13px" }}>{u.email}</td>
 
                     {/* Mobile */}
-                    <td style={{ fontSize: "13px" }}>{u.mobile}</td>
+                    <td style={{ fontSize: "13px", whiteSpace: "nowrap" }}>{u.mobile}</td>
 
                     {/* Designation */}
-                    <td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                       {u.userDesignations ? (
-                        <Badge
-                          color="info"
-                          pill
-                          style={{ fontSize: "11px" }}
+                        <span
+                          className="px-2.5 py-0.5 rounded-pill fw-semibold"
+                          style={{
+                            fontSize: "11px",
+                            background: "#f1f5f9",
+                            color: "#334155",
+                            border: "1px solid #cbd5e1"
+                          }}
                         >
                           {u.userDesignations}
-                        </Badge>
+                        </span>
                       ) : (
                         <span className="text-muted">—</span>
                       )}
                     </td>
 
                     {/* Permissions */}
-                    <td style={{ maxWidth: "160px" }}>
+                    <td style={{ maxWidth: "180px" }}>
                       {u.permissions?.length ? (
                         <div className="d-flex flex-wrap gap-1">
                           {u.permissions.map((p, idx) => (
-                            <Badge
+                            <span
                               key={idx}
-                              color="secondary"
-                              style={{ fontSize: "10px" }}
+                              className="px-2 py-0.5 rounded-pill fw-semibold"
+                              style={{
+                                fontSize: "10.5px",
+                                background: "#eff6ff",
+                                color: "#1d4ed8",
+                                border: "1px solid #bfdbfe"
+                              }}
                             >
                               {p}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       ) : (
@@ -569,17 +609,21 @@ const AdminUserManagement = () => {
                     </td>
 
                     {/* Controls */}
-                    <td style={{ maxWidth: "160px" }}>
+                    <td style={{ maxWidth: "180px" }}>
                       {u.controls?.length ? (
                         <div className="d-flex flex-wrap gap-1">
                           {u.controls.map((c, idx) => (
-                            <Badge
+                            <span
                               key={idx}
-                              color="dark"
-                              style={{ fontSize: "10px" }}
+                              className="px-2 py-0.5 rounded-pill fw-bold text-white shadow-xs"
+                              style={{
+                                fontSize: "10.5px",
+                                background: "#1e293b",
+                                border: "1px solid #334155"
+                              }}
                             >
                               {c}
-                            </Badge>
+                            </span>
                           ))}
                         </div>
                       ) : (
@@ -588,22 +632,26 @@ const AdminUserManagement = () => {
                     </td>
 
                     {/* Status */}
-                    <td>
-                      <Badge
-                        color={statusColor(u.status)}
-                        pill
-                        style={{ fontSize: "11px" }}
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <span
+                        className="px-2.5 py-1 rounded-pill fw-bold shadow-xs d-inline-block text-center"
+                        style={{
+                          fontSize: "11px",
+                          background: u.status === "APPROVED" ? "#ecfdf5" : u.status === "REJECTED" ? "#fef2f2" : "#fffbeb",
+                          color: u.status === "APPROVED" ? "#065f46" : u.status === "REJECTED" ? "#b91c1c" : "#b45309",
+                          border: `1px solid ${u.status === "APPROVED" ? "#a7f3d0" : u.status === "REJECTED" ? "#fecaca" : "#fde68a"}`
+                        }}
                       >
                         {u.status}
-                      </Badge>
+                      </span>
                     </td>
 
                     {/* Actions */}
-                    <td>
-                      <div className="d-flex gap-1">
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      <div className="d-flex gap-1.5 align-items-center">
                         <Button
                           size="sm"
-                          color="primary"
+                          color="info"
                           title="Edit Officer"
                           onClick={() => handleEdit(u)}
                           style={{ fontSize: "12px", padding: "4px 8px" }}
@@ -631,17 +679,18 @@ const AdminUserManagement = () => {
         {/* ── Footer info ── */}
         {!loading && users.length > 0 && (
           <div
-            className="px-4 py-2 border-top d-flex align-items-center justify-content-between"
-            style={{ backgroundColor: "#f8f9fa" }}
+            className="px-4 py-2.5 border-top d-flex align-items-center justify-content-between"
+            style={{ backgroundColor: "#f8fafc" }}
           >
             <small className="text-muted">
               Showing <strong>{users.length}</strong> officer(s)
             </small>
             <Button
-              color="outline-primary"
+              color="light"
+              className="border px-3 d-inline-flex align-items-center gap-1.5 shadow-xs"
               size="sm"
               onClick={loadUsers}
-              style={{ fontSize: "12px" }}
+              style={{ fontSize: "12px", fontWeight: 600 }}
             >
               🔄 Refresh
             </Button>
@@ -990,10 +1039,10 @@ const AdminUserManagement = () => {
               Cancel
             </Button>
             <Button
-              color="primary"
+              color="success"
               type="submit"
               disabled={submitting}
-              className="px-4 d-flex align-items-center shadow-sm"
+              className="px-4 d-flex align-items-center shadow-sm text-white"
             >
               {submitting ? (
                 <>

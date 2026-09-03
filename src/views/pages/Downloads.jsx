@@ -76,6 +76,8 @@ const Downloads = () => {
     <PageLayout
       title="Downloads"
       titleHi="डाउनलोड"
+      description="Download official forms, notifications, circulars, and policy documents from the Department of Higher Education, Chhattisgarh."
+      descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के आधिकारिक प्रपत्र, अधिसूचनाएं, परिपत्र एवं नीतियां डाउनलोड करें।"
       showBreadcrumb
     >
       {catLoading ? (

@@ -285,7 +285,13 @@ const Colleges = () => {
   const countCentral = colleges.filter((c) => String(c.collegeType) === '2').length;
 
   return (
-    <PageLayout title={isHindi ? 'महाविद्यालय' : 'Colleges'} titleHi="महाविद्यालय">
+    <PageLayout
+      title={isHindi ? 'महाविद्यालय' : 'Colleges'}
+      titleHi="महाविद्यालय"
+      description="Directory of Government, Private, and Aided Colleges in Chhattisgarh, Department of Higher Education."
+      descriptionHi="छत्तीसगढ़ के शासकीय, निजी एवं अनुदानित महाविद्यालयों की सूची — उच्च शिक्षा विभाग, छत्तीसगढ़ शासन।"
+      showBreadcrumb
+    >
       {/* ── Header card ── */}
       <Card className="border-0 shadow-lg mb-4 overflow-hidden" style={{ borderRadius: 16 }}>
         <CardHeader className="text-white border-0 p-4" style={{ background: 'linear-gradient(135deg,#1e3a8a 0%,#3b5bdb 100%)' }}>

@@ -263,11 +263,12 @@ const Header = () => {
                       src={
                         profile.profileUrl
                           ? `${API_URL}${profile.profileUrl}`
-                          : "/placeholder.png"
+                          : "/default-avatar.svg"
                       }
                       alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
                       className="leader-profile-img"
-                      style={{ objectFit: "contain" }}
+                      style={{ objectFit: "cover", objectPosition: "center top" }}
+                      onError={e => (e.target.src = "/default-avatar.svg")}
                     />
                     <div className="leader-profile-text-wrap">
                       <div className="leader-profile-name">

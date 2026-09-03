@@ -392,6 +392,9 @@ const RichContentPageManagements = () => {
     } catch (e) { toast.error(e?.response?.data?.message || "Delete failed"); }
   };
 
+  const [descEnManuallyEdited, setDescEnManuallyEdited] = useState(false);
+  const [descHiManuallyEdited, setDescHiManuallyEdited] = useState(false);
+
   const handleEdit = (row) => {
     setEditingId(row._id);
     setForm({
@@ -408,6 +411,8 @@ const RichContentPageManagements = () => {
       isActive: row.isActive !== false
     });
     setSlugManuallyEdited(true);
+    setDescEnManuallyEdited(true);
+    setDescHiManuallyEdited(true);
     setSlugError("");
     setEditorKey(k => k + 1);
     setView("form");
@@ -417,6 +422,8 @@ const RichContentPageManagements = () => {
     setEditingId(null);
     setForm(emptyForm());
     setSlugManuallyEdited(false);
+    setDescEnManuallyEdited(false);
+    setDescHiManuallyEdited(false);
     setSlugError("");
     setIsFormFullscreen(false);
     setEditorKey(k => k + 1);
@@ -442,7 +449,22 @@ const RichContentPageManagements = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    if (name === "shortDescriptionEn") setDescEnManuallyEdited(true);
+    if (name === "shortDescriptionHi") setDescHiManuallyEdited(true);
+    setForm(prev => {
+      const updates = { [name]: type === "checkbox" ? checked : value };
+      if (name === "titleEn") {
+        if (!descEnManuallyEdited || !prev.shortDescriptionEn || prev.shortDescriptionEn === prev.titleEn) {
+          updates.shortDescriptionEn = value;
+        }
+      }
+      if (name === "titleHi") {
+        if (!descHiManuallyEdited || !prev.shortDescriptionHi || prev.shortDescriptionHi === prev.titleHi) {
+          updates.shortDescriptionHi = value;
+        }
+      }
+      return { ...prev, ...updates };
+    });
   };
   const handleSlugChange = (e) => {
     setSlugManuallyEdited(true);

@@ -166,53 +166,51 @@ const SchemeAnnouncementDetails = () => {
         </Breadcrumb>
 
         {/* Detail Card */}
-        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+        <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
 
           {/* Gradient Header */}
-          <CardHeader className="detail-card-header">
+          <CardHeader className="detail-card-header p-3 p-md-4">
             {data.isNew && (
-              <Badge color="danger" pill className="px-3 mb-2" style={{ letterSpacing: '1px' }}>
+              <Badge color="danger" pill className="px-2.5 py-1 mb-2" style={{ letterSpacing: '0.5px', fontSize: '10.5px' }}>
                 NEW
               </Badge>
             )}
-            <h1 className="fw-semibold mb-3 lh-base text-white h4">
-              {detailTitle}
+            <h1 className="fw-bold mb-2 lh-base text-white h5 d-flex align-items-start gap-2.5">
+              <span>{detailTitle}</span>
             </h1>
-            <hr className="border-white opacity-25 my-3" />
+            <hr className="border-white opacity-20 my-2.5" />
 
-            <Row className="g-2 align-items-center">
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill shadow-sm">
-                  <FaCalendarAlt size={12} className="text-primary" aria-hidden="true" />
-                  {isHindi ? 'प्रकाशन:' : 'Created:'} {formatDateTime(data.createdAt, isHindi)}
-                </Badge>
-              </Col>
-              <Col xs={12} sm="auto">
-                <Badge color="light" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-normal rounded-pill shadow-sm">
-                  <FaCalendarPlus size={12} className="text-success" aria-hidden="true" />
-                  {isHindi ? 'अपडेट:' : 'Updated:'} {formatDateTime(data.updatedAt, isHindi)}
-                </Badge>
-              </Col>
-              {data.categoryId && (
-                <Col xs={12} sm="auto">
-                  <Badge color="warning" className="text-dark d-inline-flex align-items-center gap-1 px-3 py-2 fw-medium rounded-pill shadow-sm">
-                    <FaTag size={12} aria-hidden="true" />
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(data.createdAt, isHindi)}
+                </span>
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaCalendarPlus size={11} className="text-success" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(data.updatedAt, isHindi)}
+                </span>
+                {data.categoryId && (
+                  <span className="badge bg-warning text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                    <FaTag size={10} aria-hidden="true" />
                     {isHindi
                       ? (data.categoryId?.nameHi || data.categoryId?.categoryNameHi)
                       : (data.categoryId?.nameEn || data.categoryId?.categoryNameEn)}
-                  </Badge>
-                </Col>
-              )}
-              <Col xs={12} md className="d-flex justify-content-start justify-content-md-end mt-2 mt-md-0">
-                <Button
-                  tag={Link} to={listRoute} size="sm"
-                  className="d-inline-flex align-items-center gap-1 fw-semibold text-white bg-dark border-0 shadow-sm rounded-pill px-3 py-2"
-                >
-                  <FaChevronLeft size={11} aria-hidden="true" />
-                  {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
-                </Button>
-              </Col>
-            </Row>
+                  </span>
+                )}
+              </div>
+
+              <Button
+                tag={Link}
+                to={listRoute}
+                size="sm"
+                className="d-inline-flex align-items-center gap-1.5 fw-semibold text-white bg-dark border-0 shadow-sm rounded-pill px-3 py-1 ms-auto ms-sm-0"
+                style={{ fontSize: "12px" }}
+              >
+                <FaChevronLeft size={10} aria-hidden="true" />
+                {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
+              </Button>
+            </div>
           </CardHeader>
 
           {/* Content Body */}

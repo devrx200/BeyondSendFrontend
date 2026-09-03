@@ -19,7 +19,7 @@ import {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const imgUrl = (path) => {
-  if (!path) return '/placeholder.jpg';
+  if (!path) return '/indrawati-bhavan.png';
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const clean = path.startsWith('/') ? path : `/${path}`;
   return `${API_URL}${clean}`;
@@ -57,7 +57,7 @@ const Collage = ({ images = [] }) => {
           alt="cover"
           style={imgStyle}
           loading="lazy"
-          onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+          onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
         />
       </div>
     );
@@ -73,7 +73,7 @@ const Collage = ({ images = [] }) => {
               alt={`preview ${i + 1}`}
               style={imgStyle}
               loading="lazy"
-              onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+              onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
             />
           </div>
         ))}
@@ -90,7 +90,7 @@ const Collage = ({ images = [] }) => {
             alt="preview 1"
             style={imgStyle}
             loading="lazy"
-            onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+            onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
           />
         </div>
         <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 2, height: '100%' }}>
@@ -101,7 +101,7 @@ const Collage = ({ images = [] }) => {
                 alt={`preview ${i + 2}`}
                 style={imgStyle}
                 loading="lazy"
-                onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+                onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
               />
             </div>
           ))}
@@ -119,7 +119,7 @@ const Collage = ({ images = [] }) => {
             alt={`preview ${i + 1}`}
             style={imgStyle}
             loading="lazy"
-            onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+            onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
           />
           {i === 3 && total > 4 && (
             <div
@@ -157,29 +157,31 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
   return (
     <Col xs={12} className="my-2">
       <Card
-        className="border-0 shadow-lg text-white overflow-hidden"
+        className="border-0 shadow-lg overflow-hidden"
         style={{
           borderRadius: 20,
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f766e 100%)',
-          boxShadow: '0 20px 40px rgba(15, 23, 42, 0.35)',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 50%, #e0f2fe 100%)',
+          border: '1px solid #93c5fd',
+          boxShadow: '0 20px 40px rgba(30, 58, 138, 0.12)',
           animation: 'fadeInUp 0.3s ease-out'
         }}
       >
         <CardBody className="p-4 p-md-5">
           {/* Header row */}
-          <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 pb-3 border-bottom border-white border-opacity-10 mb-4">
+          <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 pb-3 border-bottom border-secondary border-opacity-10 mb-4">
             <div>
               <div className="d-flex align-items-center gap-2 mb-2 flex-wrap">
                 <Badge
                   pill
                   style={{
-                    background: 'rgba(45, 212, 191, 0.15)',
-                    color: '#2dd4bf',
-                    border: '1px solid rgba(45, 212, 191, 0.3)',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #93c5fd',
                     padding: '6px 14px',
                     fontSize: '11px',
                     letterSpacing: '1px',
-                    textTransform: 'uppercase'
+                    textTransform: 'uppercase',
+                    fontWeight: 700
                   }}
                 >
                   <FaImages className="me-1" size={10} />
@@ -187,7 +189,7 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
                 </Badge>
 
                 {item.createdAt && (
-                  <span className="text-white-50 small d-inline-flex align-items-center gap-1">
+                  <span className="text-secondary small d-inline-flex align-items-center gap-1">
                     <FaCalendarAlt size={11} />
                     {new Date(item.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
@@ -196,11 +198,12 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
                 <Badge
                   pill
                   style={{
-                    background: '#0d9488',
+                    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
                     color: '#fff',
                     padding: '6px 12px',
                     fontSize: '11px',
-                    fontWeight: 600
+                    fontWeight: 600,
+                    boxShadow: '0 2px 6px rgba(30, 64, 175, 0.25)'
                   }}
                 >
                   <FaCamera className="me-1" size={10} />
@@ -208,16 +211,16 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
                 </Badge>
               </div>
 
-              <h3 className="h4 text-white fw-bold mb-2">{title}</h3>
+              <h3 className="h4 text-dark fw-bold mb-2">{title}</h3>
 
               {desc && (
                 <p
-                  className="mb-0 text-white-50"
+                  className="mb-0 text-secondary"
                   style={{
                     fontSize: 14,
                     lineHeight: 1.7,
                     maxWidth: 800,
-                    borderLeft: '3px solid #2dd4bf',
+                    borderLeft: '3px solid #1e40af',
                     paddingLeft: 12
                   }}
                 >
@@ -230,8 +233,9 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
               {item.link && (
                 <Button
                   size="sm"
-                  color="light"
+                  color="primary"
                   className="rounded-pill px-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
+                  style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)', border: 'none' }}
                   onClick={() => onExternalLink(item)}
                 >
                   <FaExternalLinkAlt size={11} /> {isHindi ? 'लिंक देखें' : 'Visit Link'}
@@ -239,7 +243,7 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
               )}
               <button
                 type="button"
-                className="btn-close btn-close-white p-2 rounded-circle bg-white bg-opacity-10 border border-white border-opacity-25"
+                className="btn-close p-2 rounded-circle bg-white border shadow-sm"
                 onClick={onClose}
                 aria-label={isHindi ? 'बंद करें' : 'Close'}
               />
@@ -249,23 +253,23 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
           {/* Photo Gallery Grid */}
           {detailLoading ? (
             <div className="text-center py-5">
-              <Spinner style={{ color: '#2dd4bf', width: 44, height: 44 }} />
-              <p className="mt-3 text-white-50 small mb-0">
+              <Spinner style={{ color: '#1e40af', width: 44, height: 44 }} />
+              <p className="mt-3 text-secondary small mb-0">
                 {isHindi ? 'फ़ोटो लोड हो रहे हैं…' : 'Loading photos…'}
               </p>
             </div>
           ) : (
             <>
               <div className="d-flex align-items-center justify-content-between mb-3">
-                <span className="small text-white-50">
+                <span className="small text-secondary">
                   {isHindi ? 'ज़ूम करने के लिए किसी भी फ़ोटो पर क्लिक करें' : 'Click on any photo to open high-resolution viewer'}
                 </span>
                 <Button
                   size="sm"
                   outline
-                  color="light"
-                  className="rounded-pill px-3 py-1 small"
-                  style={{ borderColor: 'rgba(255,255,255,0.25)' }}
+                  color="primary"
+                  className="rounded-pill px-3 py-1 small fw-semibold"
+                  style={{ borderColor: '#93c5fd', color: '#1e40af', background: '#ffffff' }}
                   onClick={() => onOpenLightbox(0)}
                 >
                   <FaExpand className="me-1" size={10} /> {isHindi ? 'स्लाइडशो देखें' : 'Start Slideshow'}
@@ -276,11 +280,12 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
                 {images.map((img, idx) => (
                   <Col key={idx} xs={6} sm={4} md={3} lg={2}>
                     <div
-                      className="position-relative rounded-3 overflow-hidden shadow-sm"
+                      className="position-relative rounded-3 overflow-hidden shadow-sm border"
                       style={{
                         paddingBottom: '100%',
                         cursor: 'pointer',
-                        background: '#1e293b'
+                        background: '#ffffff',
+                        borderColor: '#e2e8f0'
                       }}
                       onClick={() => onOpenLightbox(idx)}
                       role="button"
@@ -299,18 +304,19 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
                           objectFit: 'cover',
                           transition: 'transform 0.35s ease'
                         }}
-                        onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
-                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                        onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1.0)'; }}
                       />
                       <div
                         className="position-absolute bottom-0 end-0 m-1 px-2 py-0 rounded"
                         style={{
-                          background: 'rgba(0,0,0,0.65)',
-                          color: '#2dd4bf',
+                          background: 'rgba(30, 58, 138, 0.85)',
+                          color: '#ffd54f',
                           fontSize: 10,
                           fontWeight: 700,
-                          backdropFilter: 'blur(4px)'
+                          backdropFilter: 'blur(4px)',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.25)'
                         }}
                       >
                         {idx + 1}
@@ -471,12 +477,12 @@ const Gallery = () => {
         }
         .gallery-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 16px 32px rgba(15, 118, 110, 0.12);
-          border-color: #99f6e4;
+          box-shadow: 0 16px 32px rgba(30, 58, 138, 0.14);
+          border-color: #93c5fd;
         }
         .gallery-card.is-active {
-          border-color: #0d9488;
-          box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.25), 0 16px 36px rgba(15, 118, 110, 0.15);
+          border-color: #1e40af;
+          box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.25), 0 16px 36px rgba(30, 58, 138, 0.16);
         }
         .gallery-cover-overlay {
           background: linear-gradient(180deg, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.85) 100%);
@@ -495,9 +501,25 @@ const Gallery = () => {
           transition: all 0.2s;
         }
         .gallery-lightbox-nav-btn:hover {
-          background: #0d9488;
+          background: #1e40af;
           color: #fff;
           transform: scale(1.1);
+        }
+        .gallery-lightbox-modal .modal-header,
+        .gallery-lightbox-content .modal-header {
+          background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important;
+          color: #ffffff !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+        .gallery-lightbox-modal .modal-body,
+        .gallery-lightbox-content .modal-body {
+          background: #020617 !important;
+          padding: 0 !important;
+        }
+        .gallery-lightbox-modal .modal-footer,
+        .gallery-lightbox-content .modal-footer {
+          background: #0f172a !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
       `}</style>
 
@@ -509,8 +531,8 @@ const Gallery = () => {
             <Col lg={4} md={6}>
               <div className="d-flex align-items-center gap-3">
                 <div
-                  className="rounded-circle d-flex align-items-center justify-content-center text-white"
-                  style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 100%)' }}
+                  className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                  style={{ width: 44, height: 44, background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)' }}
                 >
                   <FaImages size={18} />
                 </div>
@@ -558,7 +580,7 @@ const Gallery = () => {
                   size="sm"
                   color={viewMode === 'grid' ? 'primary' : 'light'}
                   className={`rounded-pill px-3 border-0 fw-semibold ${viewMode === 'grid' ? 'text-white' : 'text-secondary'}`}
-                  style={viewMode === 'grid' ? { background: '#0f766e' } : {}}
+                  style={viewMode === 'grid' ? { background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)' } : {}}
                   onClick={() => setViewMode('grid')}
                 >
                   <FaThLarge className="me-1" size={12} /> {isHindi ? 'ग्रिड' : 'Grid'}
@@ -567,7 +589,7 @@ const Gallery = () => {
                   size="sm"
                   color={viewMode === 'list' ? 'primary' : 'light'}
                   className={`rounded-pill px-3 border-0 fw-semibold ${viewMode === 'list' ? 'text-white' : 'text-secondary'}`}
-                  style={viewMode === 'list' ? { background: '#0f766e' } : {}}
+                  style={viewMode === 'list' ? { background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)' } : {}}
                   onClick={() => setViewMode('list')}
                 >
                   <FaList className="me-1" size={12} /> {isHindi ? 'सूची' : 'List'}
@@ -581,7 +603,7 @@ const Gallery = () => {
       {/* Main Gallery List Content */}
       {listLoading ? (
         <div className="text-center py-5 my-5">
-          <Spinner style={{ color: '#0f766e', width: 48, height: 48 }} />
+          <Spinner style={{ color: '#1e40af', width: 48, height: 48 }} />
           <h6 className="mt-3 text-muted fw-normal">
             {isHindi ? 'गैलरी लोड हो रही है…' : 'Loading Photo Galleries…'}
           </h6>
@@ -608,7 +630,7 @@ const Gallery = () => {
                 size="sm"
                 color="primary"
                 className="rounded-pill px-3"
-                style={{ background: '#0f766e', borderColor: '#0f766e' }}
+                style={{ background: '#1e40af', borderColor: '#1e40af' }}
                 onClick={() => setSearchQuery('')}
               >
                 {isHindi ? 'सभी देखें' : 'Clear Search'}
@@ -667,10 +689,10 @@ const Gallery = () => {
                             style={{
                               top: 12,
                               right: 12,
-                              background: 'rgba(15, 23, 42, 0.75)',
+                              background: 'rgba(15, 23, 42, 0.8)',
                               backdropFilter: 'blur(6px)',
-                              color: '#2dd4bf',
-                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              color: '#ffd54f',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
                               fontSize: 11,
                               padding: '5px 12px',
                               fontWeight: 600
@@ -696,8 +718,8 @@ const Gallery = () => {
                             size="sm"
                             className="rounded-pill px-3 fw-semibold border-0 shadow-sm d-inline-flex align-items-center gap-1"
                             style={{
-                              background: isActive ? '#0f766e' : '#f1f5f9',
-                              color: isActive ? '#ffffff' : '#0f766e',
+                              background: isActive ? 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)' : '#eff6ff',
+                              color: isActive ? '#ffffff' : '#1e40af',
                               fontSize: 12
                             }}
                           >
@@ -757,7 +779,7 @@ const Gallery = () => {
                                   alt={title}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   loading="lazy"
-                                  onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+                                  onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
                                 />
                               ) : (
                                 <div className="d-flex align-items-center justify-content-center h-100 text-muted">
@@ -768,8 +790,8 @@ const Gallery = () => {
                                 pill
                                 className="position-absolute bottom-0 start-0 m-1"
                                 style={{
-                                  background: 'rgba(15, 23, 42, 0.75)',
-                                  color: '#2dd4bf',
+                                  background: 'rgba(15, 23, 42, 0.8)',
+                                  color: '#ffd54f',
                                   fontSize: 9,
                                   padding: '3px 6px'
                                 }}
@@ -808,8 +830,8 @@ const Gallery = () => {
                                 size="sm"
                                 className="rounded-pill px-3 fw-semibold border-0 shadow-sm"
                                 style={{
-                                  background: isActive ? '#0f766e' : '#f1f5f9',
-                                  color: isActive ? '#ffffff' : '#0f766e',
+                                  background: isActive ? 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)' : '#eff6ff',
+                                  color: isActive ? '#ffffff' : '#1e40af',
                                   fontSize: 12
                                 }}
                               >
@@ -850,15 +872,16 @@ const Gallery = () => {
           toggle={closeLightbox}
           size="xl"
           centered
-          contentClassName="border-0 shadow-2xl rounded-4 overflow-hidden"
+          modalClassName="gallery-lightbox-modal"
+          contentClassName="border-0 shadow-2xl rounded-4 overflow-hidden gallery-lightbox-content"
           style={{ maxWidth: 1100 }}
         >
           {/* Lightbox Header */}
           <ModalHeader
             className="border-0 px-4 py-3 text-white"
             style={{
-              background: '#0f172a',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.15)'
             }}
             close={
               <button
@@ -878,10 +901,12 @@ const Gallery = () => {
               <Badge
                 pill
                 style={{
-                  background: 'rgba(45, 212, 191, 0.15)',
-                  color: '#2dd4bf',
+                  background: 'rgba(255, 255, 255, 0.18)',
+                  color: '#ffd54f',
+                  border: '1px solid rgba(255, 213, 79, 0.5)',
                   fontSize: 11,
-                  padding: '4px 10px'
+                  padding: '4px 10px',
+                  fontWeight: 700
                 }}
               >
                 {lightboxIndex + 1} / {currentImages.length}
@@ -900,7 +925,7 @@ const Gallery = () => {
                 key={lightboxIndex}
                 src={imgUrl(currentImages[lightboxIndex])}
                 alt={`Photo ${lightboxIndex + 1} of ${currentImages.length}`}
-                onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+                onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
                 style={{
                   maxHeight: '68vh',
                   maxWidth: '100%',
@@ -959,7 +984,7 @@ const Gallery = () => {
                   style={{
                     width: 56,
                     height: 56,
-                    border: i === lightboxIndex ? '2px solid #2dd4bf' : '2px solid transparent',
+                    border: i === lightboxIndex ? '2px solid #ffd54f' : '2px solid transparent',
                     opacity: i === lightboxIndex ? 1 : 0.45,
                     transform: i === lightboxIndex ? 'scale(1.05)' : 'scale(1.0)',
                     transition: 'all 0.2s ease',
@@ -971,7 +996,7 @@ const Gallery = () => {
                     src={imgUrl(img)}
                     alt={`Thumbnail ${i + 1}`}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => { e.currentTarget.src = '/placeholder.jpg'; }}
+                    onError={(e) => { e.currentTarget.src = '/indrawati-bhavan.png'; }}
                   />
                 </button>
               ))}
@@ -981,9 +1006,9 @@ const Gallery = () => {
             <div className="d-flex align-items-center gap-2 ms-auto">
               <Button
                 size="sm"
-                outline
-                color="light"
-                className="rounded-pill px-3"
+                color="primary"
+                className="rounded-pill px-3 fw-semibold shadow-sm d-inline-flex align-items-center gap-1"
+                style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 onClick={() => window.open(imgUrl(currentImages[lightboxIndex]), '_blank')}
               >
                 <FaExpand className="me-1" size={11} /> {isHindi ? 'पूर्ण आकार' : 'Full Size'}

@@ -1,113 +1,113 @@
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardBody,
-  Badge,
-  Row,
-  Col,
-  Button,
-  Spinner,
-  Container,
-  Alert,
-  Nav,
-  NavItem,
-  NavLink
-} from "reactstrap";
-import { Link } from "react-router-dom";
-import { FaArrowRight, FaCalendarAlt, FaBullhorn, FaFileAlt } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import {
+  Container, Card, CardBody, Row, Col,
+  Button, Spinner, Alert
+} from "reactstrap";
+import {
+  FaBullhorn, FaFileAlt, FaCalendarAlt,
+  FaArrowRight, FaTag, FaWhatsapp,
+  FaTelegramPlane, FaFacebookF, FaCopy,
+  FaCheck
+} from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const AnnouncementsAndSchemes = () => {
-  const { isHindi } = useLanguage();
-
-  // State Management
-  const [activeTab, setActiveTab] = useState("announcements"); // 'announcements' or 'schemes'
+  const [activeTab, setActiveTab] = useState("announcements");
   const [items, setItems] = useState([]);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    limit: 5,
-    totalPages: 0
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ totalPages: 1, totalItems: 0 });
+  const [copiedId, setCopiedId] = useState(null);
 
-  // Fetch data whenever page or active tab changes
+  const { isHindi } = useLanguage();
+
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, activeTab]);
+    let isMounted = true;
 
-  const fetchData = async () => {
-    try {
+    const fetchContent = async () => {
       setLoading(true);
       setError(null);
+      try {
+        const res = await axios.get(`${API_URL}/api/get-announcements`, {
+          params: {
+            isSchemes: activeTab === "schemes",
+            page,
+            limit: 6,
+          },
+        });
 
-      const isSchemes = activeTab === "schemes";
-      const res = await axios.get(
-        `${API_URL}/api/get-announcements?page=${page}&limit=5&isSchemes=${isSchemes}`
-      );
+        if (isMounted) {
+          if (res.data && res.data.success) {
+            setItems(res.data.data || []);
+            setPagination({
+              totalPages: res.data.pagination?.totalPages || 1,
+              totalItems: res.data.pagination?.total || res.data.pagination?.totalItems || (res.data.data || []).length,
+            });
+          } else {
+            setItems([]);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Error fetching content:", err);
+          setError(
+            isHindi
+              ? "डेटा लोड करने में विफल। कृपया बाद में पुन: प्रयास करें।"
+              : "Failed to load content. Please try again later."
+          );
+          setItems([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-      setItems(res?.data?.data || []);
+    fetchContent();
 
-      const pagData = res?.data?.pagination || {};
-      setPagination({
-        total: pagData.total || 0,
-        limit: pagData.limit || 5,
-        totalPages: Math.ceil((pagData.total || 0) / (pagData.limit || 5))
-      });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setError(
-        isHindi
-          ? "डेटा लोड करने में विफल। कृपया बाद में पुनः प्रयास करें।"
-          : "Failed to load data. Please try again later."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, page, isHindi]);
 
-  // Switch tabs and reset to page 1
   const handleTabChange = (tab) => {
     if (activeTab !== tab) {
       setActiveTab(tab);
       setPage(1);
-      setItems([]); // Clear current items while loading new ones
     }
-  };
-
-  // Logic: Check if item was created in the last 1 week (7 days)
-  const isRecent = (dateString) => {
-    if (!dateString) return false;
-    const itemDate = new Date(dateString);
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    return itemDate >= oneWeekAgo;
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      return new Date(dateString).toLocaleDateString(isHindi ? "hi-IN" : "en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
-    } catch {
-      return "N/A";
-    }
+    if (!dateString) return "";
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString(
+      isHindi ? "hi-IN" : "en-US",
+      options
+    );
+  };
+
+  const isRecent = (dateString) => {
+    if (!dateString) return false;
+    const itemDate = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.ceil(Math.abs(now - itemDate) / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
   };
 
   const stripHtmlTags = (html) => {
     if (!html) return "";
-    return html.replace(/<[^>]*>/g, "");
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
   };
 
-  const truncateText = (text, maxLength = 130) => {
+  const truncateText = (text, maxLength = 100) => {
     if (!text) return "";
     const cleanText = stripHtmlTags(text);
     return cleanText.length > maxLength
@@ -115,192 +115,345 @@ const AnnouncementsAndSchemes = () => {
       : cleanText;
   };
 
+  const getImageUrl = (path) => {
+    if (!path) return "/indrawati-bhavan.png";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const clean = path.startsWith("/") ? path : `/${path}`;
+    return `${API_URL}${clean}`;
+  };
+
+  const getItemUrl = (slug) => {
+    const route = activeTab === "announcements" ? "announcement" : "scheme";
+    return `${window.location.origin}/${route}/${slug || ""}`;
+  };
+
+  const handleShareWhatsapp = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const title = isHindi ? (item.titleHi || item.titleEn) : item.titleEn;
+    const url = getItemUrl(item.slug);
+    const text = `${title}\n${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareTelegram = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const title = isHindi ? (item.titleHi || item.titleEn) : item.titleEn;
+    const url = getItemUrl(item.slug);
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareFacebook = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = getItemUrl(item.slug);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyLink = async (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = getItemUrl(item.slug);
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement("input");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+      }
+      setCopiedId(item._id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+    }
+  };
+
   return (
-    <Container className="">
+    <Container className="py-2">
       {error && (
-        <Alert color="danger" className="mb-4">
+        <Alert color="danger" className="mb-2.5 rounded-3 shadow-sm py-2">
           {error}
         </Alert>
       )}
 
       {/* Main Unified Card container */}
-      <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+      <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
 
-        {/* Header & Filter Tabs */}
-        <div className="bg-white border-bottom px-4 pt-4 pb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
-          <div className="d-flex align-items-center mb-md-2 py-0">
-            <div className="icon-wrapper bg-primary text-white p-2 rounded-circle me-3">
-              {activeTab === "announcements" ? <FaBullhorn size={20} /> : <FaFileAlt size={20} />}
+        {/* Unified Government Theme Header */}
+        <div className="gov-card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+          {/* Left: Icon + Title */}
+          <div className="d-flex align-items-center gap-3">
+            <div className="gov-card-header-icon">
+              {activeTab === "announcements" ? <FaBullhorn size={18} color="#fff" /> : <FaFileAlt size={18} color="#fff" />}
             </div>
-            <h3 className="fw-semibold mb-0 text-dark fs-5">
-              {isHindi ? "घोषणाएं और योजनाएं" : "Announcements & Schemes"}
-            </h3>
+            <div>
+              <h4 className="fw-bold mb-0 text-white" style={{ fontSize: "1.08rem" }}>
+                {isHindi ? "घोषणाएं और योजनाएं" : "Announcements & Schemes"}
+              </h4>
+              <p className="text-white-50 mb-0" style={{ fontSize: "12px", marginTop: "2px" }}>
+                {isHindi ? "नवीनतम सूचनाएं एवं विभागीय कल्याणकारी योजनाएं" : "Latest official updates, notices & government welfare schemes"}
+              </p>
+            </div>
           </div>
 
-          <Nav tabs className="border-0 font-weight-bold">
-            <NavItem>
-              <NavLink
-                className={`cursor-pointer px-3 px-md-4 py-2 py-md-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "announcements"
-                    ? "active border-primary text-primary fw-semibold"
-                    : "border-transparent text-muted"
-                  }`}
+          {/* Right: Clean Segmented Tab Buttons + View All link */}
+          <div className="d-flex align-items-center gap-2 ms-auto ms-sm-0 flex-wrap">
+            <div
+              className="d-flex align-items-center p-1 rounded-pill"
+              style={{ background: "rgba(255, 255, 255, 0.15)", border: "1px solid rgba(255, 255, 255, 0.25)" }}
+            >
+              <button
+                type="button"
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold ${
+                  activeTab === "announcements" ? "btn-light text-primary shadow-sm" : "btn-transparent text-white border-0"
+                }`}
+                style={{
+                  fontSize: "12.5px"
+                }}
                 onClick={() => handleTabChange("announcements")}
-                style={{ cursor: "pointer", background: "none" }}
               >
+                <FaBullhorn className="me-1.5" size={12} />
                 {isHindi ? "घोषणाएं" : "Announcements"}
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                className={`cursor-pointer px-3 px-md-4 py-2 py-md-3 border-0 border-bottom border-3 rounded-0 ${activeTab === "schemes"
-                    ? "active border-success text-success fw-semibold"
-                    : "border-transparent text-muted"
-                  }`}
+              </button>
+
+              <button
+                type="button"
+                className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold ${
+                  activeTab === "schemes" ? "btn-light text-primary shadow-sm" : "btn-transparent text-white border-0"
+                }`}
+                style={{
+                  fontSize: "12.5px"
+                }}
                 onClick={() => handleTabChange("schemes")}
-                style={{ cursor: "pointer", background: "none" }}
               >
+                <FaFileAlt className="me-1.5" size={12} />
                 {isHindi ? "योजनाएं" : "Schemes"}
-              </NavLink>
-            </NavItem>
-          </Nav>
+              </button>
+            </div>
+
+            <Link
+              to={activeTab === "schemes" ? "/schemes" : "/announcements"}
+              className="gov-card-header-btn"
+            >
+              {isHindi ? "सभी देखें" : "View All"}
+              <FaArrowRight size={9} />
+            </Link>
+          </div>
         </div>
 
-        <CardBody className="p-0">
+        <CardBody className="p-3 p-md-3.5">
           {loading && items.length === 0 ? (
-            <div className="text-center py-5">
-              <Spinner color={activeTab === "announcements" ? "primary" : "success"} />
-              <p className="mt-3 text-muted">
+            <div className="text-center py-4">
+              <Spinner color="primary" size="sm" />
+              <p className="mt-2 text-muted small fw-semibold">
                 {isHindi ? "लोड हो रहा है..." : "Loading content..."}
               </p>
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center py-5">
+            <div className="text-center py-4">
               {activeTab === "announcements" ? (
-                <FaBullhorn size={48} className="text-muted mb-3 opacity-25" />
+                <FaBullhorn size={36} className="text-muted mb-2 opacity-25" />
               ) : (
-                <FaFileAlt size={48} className="text-muted mb-3 opacity-25" />
+                <FaFileAlt size={36} className="text-muted mb-2 opacity-25" />
               )}
-              <h5 className="text-muted">
+              <h6 className="text-muted fw-semibold mb-0" style={{ fontSize: "13.5px" }}>
                 {isHindi ? "कोई डेटा उपलब्ध नहीं है" : "No content available right now"}
-              </h5>
+              </h6>
             </div>
           ) : (
-            <div className="news-list">
-              {items.map((item) => (
-                <div key={item._id} className="news-item border-bottom p-4">
-                  <Row className="g-4 align-items-center">
-                    {/* Image Section */}
-                    {item.image && (
-                      <Col xs={12} md={3} lg={2} className="text-center text-md-start">
-                        <img
-                          src={`${API_URL}${item.image}`}
-                          alt={isHindi ? item.titleHi : item.titleEn}
-                          className="img-fluid rounded shadow-sm object-fit-cover w-100"
-                          style={{ height: "100px", maxWidth: "200px" }}
-                          onError={(e) => { e.target.style.display = "none"; }}
-                        />
-                      </Col>
-                    )}
+            /* 2-Column Grid Layout for both Announcements & Schemes */
+            <Row className="g-3">
+              {items.map((item) => {
+                const title = isHindi ? (item.titleHi || item.titleEn) : (item.titleEn || item.titleHi);
+                const shortDesc = isHindi
+                  ? (item.shortDescriptionHi || item.shortDescriptionEn)
+                  : (item.shortDescriptionEn || item.shortDescriptionHi);
+                const targetUrl = `/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`;
+                const imgSrc = getImageUrl(item.image);
 
-                    {/* Content Section */}
-                    <Col xs={12} md={item.image ? 9 : 12} lg={item.image ? 10 : 12}>
-                      <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        {item?.categoryId && (
-                          <Badge color="light" className="text-dark border text-uppercase px-2 py-1">
-                            {isHindi
-                              ? item.categoryId.categoryNameHi || item.categoryId.categoryNameEn
-                              : item.categoryId.categoryNameEn}
-                          </Badge>
-                        )}
-
-                        {/* NEW Logic: Created within last 7 days */}
-                        {isRecent(item.createdAt) && (
-                          <Badge color="danger" pill className="px-2 py-1 shadow-sm pulse-badge">
-                            {isHindi ? "नया" : "NEW"}
-                          </Badge>
-                        )}
-
-                        {item.isExternal && (
-                          <Badge color="info" pill className="px-2 py-1">
-                            {isHindi ? "बाह्य" : "External"}
-                          </Badge>
-                        )}
-
-                        <small className="text-muted ms-auto d-flex align-items-center">
-                          <FaCalendarAlt className="me-2" />
-                          {formatDate(item.fromDate || item.createdAt)}
-                        </small>
-                      </div>
-
-                      <h3 className="fw-semibold mb-2 text-dark fs-6">
-                        <Link
-                          to={`/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`}
-                          className="text-decoration-none text-dark hover-primary-text"
-                        >
-                          {isHindi ? (item.titleHi || item.titleEn) : item.titleEn}
+                return (
+                  <Col xs={12} lg={6} key={item._id}>
+                    <div className="news-grid-card">
+                      {/* Top content row: Thumbnail + Details */}
+                      <div className="d-flex gap-3 align-items-start">
+                        {/* Thumbnail */}
+                        <Link to={targetUrl} className="text-decoration-none flex-shrink-0">
+                          <div className="news-grid-thumb">
+                            <img
+                              src={imgSrc}
+                              alt={title}
+                              className="news-grid-thumb-img"
+                              loading="lazy"
+                              onError={(e) => { e.currentTarget.src = "/indrawati-bhavan.png"; }}
+                            />
+                          </div>
                         </Link>
-                      </h3>
 
-                      <p className="text-muted mb-3 small lh-base">
-                        {truncateText(
-                          isHindi
-                            ? (item.shortDescriptionHi || item.shortDescriptionEn)
-                            : item.shortDescriptionEn
-                        )}
-                      </p>
+                        {/* Text info */}
+                        <div className="flex-grow-1 min-w-0">
+                          {/* Badges & Date */}
+                          <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            {item?.categoryId && (
+                              <span
+                                className="badge fw-semibold text-uppercase px-2 py-0.5 rounded"
+                                style={{
+                                  background: "#eff6ff",
+                                  color: "#1e40af",
+                                  border: "1px solid #bfdbfe",
+                                  fontSize: "11px"
+                                }}
+                              >
+                                <FaTag className="me-1 opacity-75" size={8.5} />
+                                {isHindi
+                                  ? item.categoryId.categoryNameHi || item.categoryId.categoryNameEn
+                                  : item.categoryId.categoryNameEn}
+                              </span>
+                            )}
 
-                      <div className="d-flex justify-content-between align-items-center">
-                        {item.expiryDate && new Date(item.expiryDate) > new Date() ? (
-                          <small className="text-danger fw-semibold bg-danger bg-opacity-10 px-2 py-1 rounded">
-                            {isHindi ? "अंतिम तिथि: " : "Valid till: "}
-                            {formatDate(item.expiryDate)}
-                          </small>
-                        ) : (
-                          <span />
-                        )}
+                            {isRecent(item.createdAt) && (
+                              <span
+                                className="badge bg-danger text-white rounded-pill px-2 py-0.5"
+                                style={{ fontSize: "9.5px", fontWeight: 700 }}
+                              >
+                                {isHindi ? "नया" : "NEW"}
+                              </span>
+                            )}
 
-                        {item.slug && (
-                          <Link
-                            to={`/${activeTab === 'announcements' ? 'announcement' : 'scheme'}/${item.slug}`}
-                            className={`btn btn-sm text-white fw-medium px-3 rounded-pill ${activeTab === 'announcements' ? 'btn-primary' : 'btn-success'}`}
-                          >
-                            {isHindi ? "और पढ़ें" : "Read More"}
-                            <FaArrowRight className="ms-2" style={{ fontSize: "0.8rem" }} />
+                            <span className="text-muted ms-auto d-inline-flex align-items-center" style={{ fontSize: "11.5px" }}>
+                              <FaCalendarAlt className="me-1 text-primary opacity-75" size={10} />
+                              {formatDate(item.fromDate || item.createdAt)}
+                            </span>
+                          </div>
+
+                          {/* Title */}
+                          <Link to={targetUrl} className="text-decoration-none">
+                            <h4 className="news-grid-title">
+                              {title}
+                            </h4>
                           </Link>
-                        )}
+
+                          {/* Excerpt */}
+                          {shortDesc && (
+                            <p className="news-grid-desc">
+                              {truncateText(shortDesc, 85)}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </Col>
-                  </Row>
-                </div>
-              ))}
-            </div>
+
+                      {/* Bottom Action Bar: Social Share + Read More */}
+                      <div
+                        className="d-flex justify-content-between align-items-center mt-auto"
+                        style={{
+                          paddingTop: "8px",
+                          marginTop: "10px",
+                          borderTop: "1px solid #f1f5f9"
+                        }}
+                      >
+                        {/* Share Icons */}
+                        <div className="d-flex align-items-center gap-1">
+                          <span
+                            className="text-muted fw-semibold me-1 d-none d-sm-inline"
+                            style={{ fontSize: "11px", letterSpacing: "0.2px" }}
+                          >
+                            {isHindi ? "शेयर:" : "Share:"}
+                          </span>
+
+                          <button
+                            type="button"
+                            className="share-btn whatsapp"
+                            title={isHindi ? "व्हाट्सएप पर शेयर करें" : "Share on WhatsApp"}
+                            onClick={(e) => handleShareWhatsapp(e, item)}
+                            aria-label="Share on WhatsApp"
+                          >
+                            <FaWhatsapp size={12} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="share-btn telegram"
+                            title={isHindi ? "टेलीग्राम पर शेयर करें" : "Share on Telegram"}
+                            onClick={(e) => handleShareTelegram(e, item)}
+                            aria-label="Share on Telegram"
+                          >
+                            <FaTelegramPlane size={11} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="share-btn facebook"
+                            title={isHindi ? "फेसबुक पर शेयर करें" : "Share on Facebook"}
+                            onClick={(e) => handleShareFacebook(e, item)}
+                            aria-label="Share on Facebook"
+                          >
+                            <FaFacebookF size={11} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="share-btn copy"
+                            title={copiedId === item._id ? (isHindi ? "लिंक कॉपी हो गया!" : "Link Copied!") : (isHindi ? "लिंक कॉपी करें" : "Copy Link")}
+                            onClick={(e) => handleCopyLink(e, item)}
+                            aria-label="Copy Link"
+                          >
+                            {copiedId === item._id ? <FaCheck size={10.5} className="text-success" /> : <FaCopy size={10.5} />}
+                          </button>
+                        </div>
+
+                        {/* Read More Link */}
+                        <Link
+                          to={targetUrl}
+                          className="btn btn-sm text-white fw-semibold px-2.5 rounded-pill shadow-xs d-inline-flex align-items-center gap-1 border-0"
+                          style={{
+                            height: "26px",
+                            background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+                            fontSize: "11px",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          {isHindi ? "और पढ़ें" : "Read More"}
+                          <FaArrowRight size={8} />
+                        </Link>
+                      </div>
+                    </div>
+                  </Col>
+                );
+              })}
+            </Row>
           )}
         </CardBody>
 
         {/* Pagination Section */}
         {pagination.totalPages > 1 && (
-          <div className="bg-light p-3 border-top d-flex justify-content-between align-items-center">
-            <span className="text-muted small fw-medium">
+          <div className="bg-light px-3 px-md-4 py-2 border-top d-flex justify-content-between align-items-center">
+            <span className="text-muted small fw-medium" style={{ fontSize: "12px" }}>
               {isHindi ? "पृष्ठ" : "Page"} <strong>{page}</strong> {isHindi ? "का" : "of"} <strong>{pagination.totalPages}</strong>
             </span>
             <div className="d-flex gap-2">
               <Button
                 size="sm"
-                color={activeTab === "announcements" ? "primary" : "success"}
+                color="primary"
                 outline
                 disabled={page === 1 || loading}
                 onClick={() => setPage(page - 1)}
-                className="px-3"
+                className="px-2.5 py-0.5 rounded-pill"
+                style={{ fontSize: "11.5px" }}
               >
                 {isHindi ? "पिछला" : "Previous"}
               </Button>
               <Button
                 size="sm"
-                color={activeTab === "announcements" ? "primary" : "success"}
+                color="primary"
                 outline
                 disabled={page >= pagination.totalPages || loading}
                 onClick={() => setPage(page + 1)}
-                className="px-4"
+                className="px-3 py-0.5 rounded-pill"
+                style={{ fontSize: "11.5px" }}
               >
                 {isHindi ? "अगला" : "Next"}
               </Button>

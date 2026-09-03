@@ -1,7 +1,16 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+
 const GlobalLinkHandler = () => {
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
+
+  // Automatically scroll to top on every route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname, search]);
+
+  // Global anchor interceptor for HTML content and internal links
   useEffect(() => {
     const handleClick = (e) => {
       const anchor = e.target.closest("a");
@@ -25,14 +34,13 @@ const GlobalLinkHandler = () => {
       if (href.startsWith("/")) {
         e.preventDefault();
         navigate(href);
-        setTimeout(() => {
-          window.scrollTo(0, 0);
-        }, 0);
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       }
     };
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, [navigate]);
+
   return null;
 };
 

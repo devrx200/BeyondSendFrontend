@@ -71,41 +71,51 @@ const Pager = ({ page, setPage, total }) => {
 };
 
 /* ── PDF Item ── */
-const PdfItem = ({ item, onPreview, isHindi }) => (
-  <div className="hs-item d-flex flex-wrap">
-    <div className="hs-item-left">
-      <div className="d-flex align-items-start gap-2 mb-1">
-        <FaFilePdf size={18} className="text-danger flex-shrink-0 mt-1" aria-hidden="true" />
-        <p className="fw-semibold mb-0 text-dark" style={{ fontSize: ".88rem", lineHeight: 1.4 }}>
-          {item.title}
-        </p>
+const getPdfUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const clean = url.startsWith('/') ? url : `/${url}`;
+  return `${API}${clean}`;
+};
+
+const PdfItem = ({ item, onPreview, isHindi }) => {
+  const fullPdfUrl = getPdfUrl(item.pdfUrl);
+  return (
+    <div className="hs-item d-flex flex-wrap">
+      <div className="hs-item-left">
+        <div className="d-flex align-items-start gap-2 mb-1">
+          <FaFilePdf size={18} className="text-danger flex-shrink-0 mt-1" aria-hidden="true" />
+          <p className="fw-semibold mb-0 text-dark" style={{ fontSize: ".88rem", lineHeight: 1.4 }}>
+            {item.title}
+          </p>
+        </div>
+        {item.description && (
+          <p className="text-muted mb-1" style={{ fontSize: ".78rem", paddingLeft: 26 }}>
+            {item.description}
+          </p>
+        )}
+        <div className="d-flex flex-wrap gap-2 ps-1">
+          <Badge color="light" className="border text-secondary" style={{ fontSize: ".7rem" }}>
+            {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
+          </Badge>
+        </div>
       </div>
-      {item.description && (
-        <p className="text-muted mb-1" style={{ fontSize: ".78rem", paddingLeft: 26 }}>
-          {item.description}
-        </p>
-      )}
-      <div className="d-flex flex-wrap gap-2 ps-1">
-        <Badge color="light" className="border text-secondary" style={{ fontSize: ".7rem" }}>
-          {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
-        </Badge>
-      </div>
-    </div>
-    <div className="hs-item-right">
-      <Button size="sm" color="primary" className="w-100" onClick={() => onPreview(API + item.pdfUrl, item.title)}
-        style={{ borderRadius: 6, fontSize: ".78rem" }}>
-        <FaEye className="me-1" aria-hidden="true" />
-        {isHindi ? "देखें" : "Preview"}
-      </Button>
-      <a href={API + item.pdfUrl} target="_blank" rel="noreferrer" className="w-100">
-        <Button size="sm" color="danger" className="w-100" style={{ borderRadius: 6, fontSize: ".78rem" }}>
-          <FaDownload className="me-1" aria-hidden="true" />
-          {isHindi ? "डाउनलोड" : "Download"}
+      <div className="hs-item-right">
+        <Button size="sm" color="primary" className="w-100" onClick={() => onPreview(fullPdfUrl, item.title)}
+          style={{ borderRadius: 6, fontSize: ".78rem" }}>
+          <FaEye className="me-1" aria-hidden="true" />
+          {isHindi ? "देखें" : "Preview"}
         </Button>
-      </a>
+        <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="w-100">
+          <Button size="sm" color="danger" className="w-100" style={{ borderRadius: 6, fontSize: ".78rem" }}>
+            <FaDownload className="me-1" aria-hidden="true" />
+            {isHindi ? "डाउनलोड" : "Download"}
+          </Button>
+        </a>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ── Video Item ── */
 const VideoItem = ({ item, onPreview, isHindi }) => {
@@ -254,7 +264,13 @@ const HelpSupport = () => {
   return (
     <>
 
-      <PageLayout title="Help & Support" titleHi="सहायता एवं मार्गदर्शन" showBreadcrumb>
+      <PageLayout
+        title="Help & Support"
+        titleHi="सहायता एवं मार्गदर्शन"
+        description="Help, tutorials, user manuals, and video guidance for the Department of Higher Education portal, Chhattisgarh."
+        descriptionHi="उच्च शिक्षा विभाग पोर्टल हेतु सहायता, मार्गदर्शिका, उपयोगकर्ता नियमावली एवं वीडियो ट्यूटोरियल।"
+        showBreadcrumb
+      >
         <Row className="g-4">
           <Col xs={12} lg={6}>
             <Section

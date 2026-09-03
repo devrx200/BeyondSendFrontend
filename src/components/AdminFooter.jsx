@@ -18,8 +18,8 @@ const AdminFooter = () => {
         © {year} Department of Higher Education, Government of Chhattisgarh.
       </div>
       <div className="adm-footer-center">
-        <span className="adm-footer-pill is-accent text-white border-white bg-black" >
-          <FaShieldAlt /> HEWebCMS - { HEWebCMSVersion  }
+        <span className="adm-side-version-chip text-white" style={{ background: "#000000", border: "1px solid rgba(255,255,255,0.2)" }}>
+          <FaShieldAlt style={{ color: "#10b981" }} /> HEWebCMS <span className="adm-version-num">v{HEWebCMSVersion || "0.1"}</span>
         </span>
       </div>
       <div className="adm-footer-right">

@@ -179,6 +179,8 @@ const Contact = () => {
     <PageLayout
       title="Contact Details"
       titleHi="संपर्क विवरण"
+      description="Official contact details, helpline numbers, and directory for the Department of Higher Education, Government of Chhattisgarh."
+      descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के आधिकारिक संपर्क विवरण, हेल्पलाइन नंबर एवं पता।"
       showBreadcrumb
     >
       {/* ── Top Info Cards ── */}

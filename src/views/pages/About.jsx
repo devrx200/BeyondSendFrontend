@@ -41,6 +41,8 @@ const About = () => {
     <PageLayout
       title="About Us"
       titleHi="हमारे बारे में"
+      description="Learn about the Department of Higher Education, Government of Chhattisgarh — vision, mission, and key focus areas."
+      descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के बारे में जानें — दृष्टिकोण, उद्देश्य एवं मुख्य कार्य क्षेत्र।"
       showBreadcrumb
     >
       {/* ── Department Overview ── */}

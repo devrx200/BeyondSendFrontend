@@ -22,15 +22,25 @@ import {
   TabContent,
   TabPane
 } from "reactstrap";
-import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft , FaBullhorn} from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft, FaBullhorn, FaCopy, FaCheck, FaExternalLinkAlt } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import DynamicContentEditor from "../../utilities/DynamicContentEditor";
+
+const getToken = () => {
+  const raw = sessionStorage.getItem("authToken");
+  if (!raw) return "";
+  try {
+    const p = JSON.parse(raw);
+    return p?.token || p?.access || raw;
+  } catch {
+    return raw;
+  }
+};
 
 const DirectorateNoticeManagement = () => {
   const API = import.meta.env.VITE_API_URL;
-  const token = sessionStorage.getItem("authToken");
+  const token = getToken();
   const [list, setList] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -79,27 +89,39 @@ const DirectorateNoticeManagement = () => {
     return initialState;
   });
 
+  const [copiedId, setCopiedId] = useState(null);
+
+  const handleCopyUrl = (slug, id) => {
+    const fullUrl = `${window.location.origin}/directorate-notice/${slug}`;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+      }).catch(() => {});
+    } else {
+      const input = document.createElement("input");
+      input.value = fullUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
   const generateSlug = (text) =>
     text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
-
-  const quillModules = {
-    toolbar: [
-      [{ header: [1, 2, false] }],
-      ["bold", "italic", "underline"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"]
-    ]
-  };
 
   /* ================= FETCH DATA ================= */
   const fetchList = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/api/get-directorate-notice-all`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${getToken()}` }
       });
       setList(res.data.data || []);
+      setCurrentPage(1);
     } catch {
       Swal.fire("Error", "Failed to load notices", "error");
     } finally {
@@ -107,24 +129,40 @@ const DirectorateNoticeManagement = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const res = await axios.get(`${API}/api/get-categories`);
-      setCategories(res.data.data || []);
-    } catch {
-      console.error("Category load failed");
-    }
-  };
-
   useEffect(() => {
-    fetchList();
-    fetchCategories();
+    let isMounted = true;
+    const initData = async () => {
+      setLoading(true);
+      try {
+        const [noticesRes, catRes] = await Promise.allSettled([
+          axios.get(`${API}/api/get-directorate-notice-all`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API}/api/get-categories`)
+        ]);
+
+        if (!isMounted) return;
+
+        if (noticesRes.status === "fulfilled") {
+          setList(noticesRes.value.data?.data || []);
+        } else {
+          Swal.fire("Error", "Failed to load notices", "error");
+        }
+
+        if (catRes.status === "fulfilled") {
+          setCategories(catRes.value.data?.data || []);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [API, token]);
-
-  // Reset to page 1 when list changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [list.length]);
 
   // Save active tab to sessionStorage whenever it changes
   useEffect(() => {
@@ -225,7 +263,7 @@ const DirectorateNoticeManagement = () => {
     try {
       const res = await axios.delete(
         `${API}/api/directorate-notice/delete/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${getToken()}` } }
       );
 
       Swal.fire(
@@ -264,7 +302,7 @@ const DirectorateNoticeManagement = () => {
           {
             headers: {
               "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${getToken()}`
             }
           }
         );
@@ -276,7 +314,7 @@ const DirectorateNoticeManagement = () => {
           {
             headers: {
               "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${getToken()}`
             }
           }
         );
@@ -503,7 +541,45 @@ const DirectorateNoticeManagement = () => {
                           <td>{indexOfFirstItem + i + 1}</td>
                           <td>
                             <div className="fw-semibold">{item.titleEn}</div>
-                            <small className="text-muted">{item.slug}</small>
+                            {item.titleHi && (
+                              <div className="text-secondary small">{item.titleHi}</div>
+                            )}
+                            <div className="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                              <code
+                                className="px-2 py-0.5 rounded bg-light border text-primary"
+                                style={{ fontSize: "11px", wordBreak: "break-all" }}
+                              >
+                                {`${window.location.origin}/directorate-notice/${item.slug}`}
+                              </code>
+                              <Button
+                                size="sm"
+                                color={copiedId === item._id ? "success" : "light"}
+                                className="border py-0 px-1.5 d-inline-flex align-items-center gap-1"
+                                style={{ fontSize: "11px", height: "22px" }}
+                                onClick={() => handleCopyUrl(item.slug, item._id)}
+                                title={copiedId === item._id ? "Copied!" : "Copy Full URL"}
+                              >
+                                {copiedId === item._id ? (
+                                  <>
+                                    <FaCheck size={10} /> <span style={{ fontSize: "10.5px" }}>Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <FaCopy size={10} /> <span style={{ fontSize: "10.5px" }}>Copy</span>
+                                  </>
+                                )}
+                              </Button>
+                              <a
+                                href={`/directorate-notice/${item.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn btn-sm btn-light border py-0 px-1.5 d-inline-flex align-items-center text-secondary"
+                                style={{ fontSize: "11px", height: "22px" }}
+                                title="Open in new tab"
+                              >
+                                <FaExternalLinkAlt size={9} />
+                              </a>
+                            </div>
                           </td>
                           <td>
                             <Badge color="info" pill>
@@ -551,35 +627,68 @@ const DirectorateNoticeManagement = () => {
         {/* TAB 2 - FORM VIEW */}
         <TabPane tabId="2">
           <CardBody>
-            {/* Back to List Button */}
-            <div className="mb-4 d-flex justify-content-between align-items-center">
-              <Button
-                color="link"
-                onClick={goBackToList}
-                className="text-decoration-none p-0"
-                style={{ fontWeight: 500 }}
-              >
-                <FaArrowLeft className="me-2" />
-                Back to List
-              </Button>
-              {editingId && (
-                <Button
-                  color="primary"
-                  size="sm"
-                  onClick={handleAddNew}
-                >
-                  <FaPlus className="me-1" />
-                  Add New
-                </Button>
-              )}
-            </div>
-
             <Form onSubmit={handleSubmit}>
-              <div className="p-3">
-                <h5 className="mb-4">
-                  {editingId ? "✏️ Edit Notice" : "➕ Create Notice"}
-                </h5>
+              {/* Back to List & Top Action Buttons */}
+              <div className="mb-4 pb-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <Button
+                    type="button"
+                    color="link"
+                    onClick={goBackToList}
+                    className="text-decoration-none p-0 fw-semibold text-secondary d-flex align-items-center"
+                  >
+                    <FaArrowLeft className="me-2" />
+                    Back to List
+                  </Button>
+                  <Badge color={editingId ? "warning" : "success"} className="px-3 py-2 rounded-pill ms-2">
+                    {editingId ? "Editing Notice" : "New Notice"}
+                  </Badge>
+                </div>
 
+                <div className="d-flex align-items-center gap-2">
+                  {editingId && (
+                    <Button
+                      type="button"
+                      color="outline-primary"
+                      size="sm"
+                      onClick={handleAddNew}
+                      className="d-flex align-items-center gap-1 fw-semibold py-1.5 px-3 rounded-3"
+                    >
+                      <FaPlus size={11} className="me-1" />
+                      Add New
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    color="light"
+                    className="border px-3 py-1.5 fw-semibold rounded-3 d-flex align-items-center gap-1"
+                    onClick={goBackToList}
+                    disabled={submitting}
+                  >
+                    <FaTimes className="me-1" /> Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    color="success"
+                    className="px-3 py-1.5 fw-semibold shadow-sm rounded-3 d-flex align-items-center gap-1"
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <>
+                        <Spinner size="sm" className="me-1" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <FaSave className="me-1" />
+                        {editingId ? "Update Notice" : "Create Notice"}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-1">
                 {/* Titles */}
                 <Row>
                   <Col md={6}>
@@ -691,40 +800,29 @@ const DirectorateNoticeManagement = () => {
                   </Col>
                 </Row>
 
-                {/* Description */}
-                <Row>
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label>Description (English)</Label>
-                      <ReactQuill
-                        theme="snow"
-                        value={formData.descriptionEn}
-                        onChange={(value) =>
-                          setFormData({ ...formData, descriptionEn: value })
-                        }
-                        modules={quillModules}
-                        placeholder="Write detailed description in English..."
-                        style={{ height: "200px", marginBottom: "50px" }}
-                      />
-                    </FormGroup>
-                  </Col>
-
-                  <Col md={6}>
-                    <FormGroup>
-                      <Label>Description (Hindi)</Label>
-                      <ReactQuill
-                        theme="snow"
-                        value={formData.descriptionHi}
-                        onChange={(value) =>
-                          setFormData({ ...formData, descriptionHi: value })
-                        }
-                        modules={quillModules}
-                        placeholder="Write detailed description in Hindi..."
-                        style={{ height: "200px", marginBottom: "50px" }}
-                      />
-                    </FormGroup>
-                  </Col>
-                </Row>
+                {/* Rich Description: DynamicContentEditor */}
+                <div className="mb-4">
+                  <Label className="fw-bold text-dark fs-6 mb-2">
+                    Detailed Description (Dynamic Editor - English & Hindi)
+                  </Label>
+                  <div className="border rounded-3 overflow-hidden p-1 bg-white">
+                    <DynamicContentEditor
+                      engField="descriptionEn"
+                      hinField="descriptionHi"
+                      height={380}
+                      initialEn={formData.descriptionEn}
+                      initialHi={formData.descriptionHi}
+                      onChange={(contentObj) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          descriptionEn: contentObj.descriptionEn,
+                          descriptionHi: contentObj.descriptionHi
+                        }));
+                      }}
+                      instanceId="directorate_notice_dynamic_editor"
+                    />
+                  </div>
+                </div>
 
                 {/* File */}
                 <Row className="mt-4">

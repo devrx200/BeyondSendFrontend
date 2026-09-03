@@ -41,7 +41,11 @@ import {
   FaSignOutAlt,
   FaExclamationCircle,
   FaUserShield,
-  FaShieldAlt
+  FaShieldAlt,
+  FaBolt,
+  FaThLarge,
+  FaBuilding,
+  FaFileContract
 } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
@@ -72,29 +76,29 @@ const adminMenu = [
     submenu: [
       {
         id: "new-updates",
-        icon: FaBullhorn,
+        icon: FaBolt,
         path: "/admin/new-updates",
         label: {
-          en: "Latest Updates Tiker",
-          hi: "नवीन अपडेट स्लाइडर"
+          en: "Latest Updates Ticker",
+          hi: "नवीन अपडेट टिकर"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
       {
         id: "announcements",
         icon: FaBullhorn,
         path: "/admin/announcements",
         label: {
-          en: "Announcements",
-          hi: "घोषणाएं"
+          en: "Announcements & Schemes",
+          hi: "घोषणाएं एवं योजनाएं"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
       {
         id: "directorate-notices",
-        icon: FaBullhorn,
+        icon: FaBuilding,
         path: "/admin/directorate-notices",
         label: {
           en: "Directorate Notices",
@@ -105,14 +109,14 @@ const adminMenu = [
       },
       {
         id: "department-notices",
-        icon: FaBullhorn,
+        icon: FaFileContract,
         path: "/admin/department-notices",
         label: {
           en: "Department Notices",
           hi: "विभागीय सूचनाएं"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DEPARTMENT"]
       }
     ]
   },
@@ -135,7 +139,7 @@ const adminMenu = [
           hi: "बहु-खंड पृष्ठ"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
 
       {
@@ -147,7 +151,7 @@ const adminMenu = [
           hi: "समृद्ध सामग्री पृष्ठ"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
       {
         id: "important-page-management",
@@ -172,7 +176,7 @@ const adminMenu = [
       hi: "मीडिया, संसाधन एवं लाइब्रेरी"
     },
     allowedRoles: ["ADMIN", "OFFICER"],
-    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
 
   },
   {
@@ -214,7 +218,7 @@ const adminMenu = [
           hi: "फोटो गैलरी पेज"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
 
       {
@@ -226,7 +230,7 @@ const adminMenu = [
           hi: "डाउनलोड पेज"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       }
     ]
   },
@@ -248,7 +252,7 @@ const adminMenu = [
           hi: "श्रेणियाँ"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "DEPARTMATE"]
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       }
     ]
   },
@@ -314,6 +318,17 @@ const adminMenu = [
         },
         allowedRoles: ["ADMIN", "NIC"],
         allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+      },
+      {
+        id: "quick-access",
+        icon: FaThLarge,
+        path: "/admin/quick-access",
+        label: {
+          en: "Quick Access",
+          hi: "त्वरित पहुंच"
+        },
+        allowedRoles: ["ADMIN", "NIC", "OFFICER"],
+        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "NIC"]
       },
       {
         id: "brands",
@@ -496,20 +511,17 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const navigate = useNavigate();
 
   const [openMenu, setOpenMenu] = useState(null);
-  const [decoded, setDecoded] = useState(null);
-  const [expiresIn, setExpiresIn] = useState("");
-
-  // ── Decode JWT ──────────────────────────────────────────
-  useEffect(() => {
+  const [decoded] = useState(() => {
     const token = sessionStorage.getItem("authToken");
-    if (!token) return;
+    if (!token) return null;
     try {
-      setDecoded(jwtDecode(token));
+      return jwtDecode(token);
     } catch (error) {
       console.error("JWT Decode Error:", error);
-      setDecoded(null);
+      return null;
     }
-  }, []);
+  });
+  const [expiresIn, setExpiresIn] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -602,6 +614,38 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const userRole = (storedUser?.role || decoded?.role || "").toUpperCase();
   const userEmployeeType = (storedUser?.employeeType || decoded?.employeeType || "").toUpperCase();
 
+  const userProfile = {
+    name: storedUser?.name || decoded?.name || "Administrator",
+    role: userRole || "ADMIN",
+    employeeType: userEmployeeType || "DEPARTMENT",
+    userDesignations:
+      storedUser?.userDesignations ||
+      storedUser?.userDeginations ||
+      decoded?.userDesignations ||
+      decoded?.userDeginations ||
+      "",
+    profileImage: storedUser?.profileImage || decoded?.profileImage || "",
+    email: storedUser?.email || decoded?.email || "",
+  };
+
+  // ── Floating Tooltip State for Pro Hover Info ──────────
+  const [hoveredTooltip, setHoveredTooltip] = useState({ visible: false, text: "", top: 0, left: 0 });
+
+  const handleMouseEnter = (e, text) => {
+    if (!text) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHoveredTooltip({
+      visible: true,
+      text,
+      top: rect.top + rect.height / 2,
+      left: rect.right + 10
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredTooltip((prev) => ({ ...prev, visible: false }));
+  };
+
   // ── Build filtered menu ─────────────────────────────────
   const visibleMenu = filterMenu(adminMenu, userRole, userEmployeeType);
 
@@ -621,7 +665,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             src={`${import.meta.env.BASE_URL || "/"}Chhattisgarh.svg`}
             alt="Chhattisgarh Government"
             className="adm-side-brand-logo"
-            onError={e => (e.target.src = "/Chhattisgarh.svg")}
+            onError={(e) => (e.target.src = "/Chhattisgarh.svg")}
           />
           <div className="adm-side-brand-text lh-sm">
             <div className="fw-bold text-white" style={{ fontSize: "0.55rem" }}>
@@ -636,33 +680,33 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
         <div className="adm-side-avatar-wrap">
           <img
             src={
-              decoded?.profileImage
-                ? `${API_URL}${decoded.profileImage}`
-                : "https://ui-avatars.com/api/?name=Admin&background=0d9488&color=fff"
+              userProfile?.profileImage
+                ? `${API_URL}${userProfile.profileImage}`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "Admin")}&background=0d9488&color=fff&bold=true`
             }
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "Admin")}&background=0d9488&color=fff&bold=true`;
+            }}
             alt="Profile"
             className="adm-side-avatar"
           />
-          {decoded && (
-            <>
-              <div className="adm-side-name">
-                {decoded?.name || "AdminPanel"}
-                {decoded?.role && (
-                  <div className="adm-side-role-badge">{decoded.role}</div>
-                )}
-              </div>
-              {decoded?.userDesignations && (
-                <div className="adm-side-designation">
-                  {decoded.userDesignations}
-                </div>
-              )}
-              {expiresIn && (
-                <div className="adm-side-session">
-                  <FaClock style={{ marginRight: 6 }} />
-                  Session Left : {expiresIn}
-                </div>
-              )}
-            </>
+          <div className="adm-side-name" title={userProfile?.name}>
+            <span>{userProfile?.name || "Admin"}</span>
+            {userProfile?.role && (
+              <span className="adm-side-role-badge">{userProfile.role}</span>
+            )}
+          </div>
+          {userProfile?.userDesignations && (
+            <div className="adm-side-designation" title={userProfile.userDesignations}>
+              {userProfile.userDesignations}
+            </div>
+          )}
+          {expiresIn && (
+            <div className="adm-side-session">
+              <FaClock style={{ marginRight: 6 }} />
+              Session Left : {expiresIn}
+            </div>
           )}
         </div>
       </div>
@@ -679,8 +723,9 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
               <NavLink
                 key={item.id}
                 to={item.path}
-                title={collapsed ? label : ""}
                 onClick={handleNavClick}
+                onMouseEnter={(e) => handleMouseEnter(e, label)}
+                onMouseLeave={handleMouseLeave}
                 className={({ isActive }) =>
                   `adm-side-item ${isActive ? "is-active" : ""}`
                 }
@@ -698,9 +743,10 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             <div key={item.id}>
               <button
                 type="button"
-                title={collapsed ? label : ""}
                 className={`adm-side-item ${isOpen ? "is-active" : ""}`}
                 onClick={() => setOpenMenu(isOpen ? null : item.id)}
+                onMouseEnter={(e) => handleMouseEnter(e, label)}
+                onMouseLeave={handleMouseLeave}
               >
                 <Icon />
                 <span className="adm-side-item-label">{label}</span>
@@ -719,8 +765,9 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
                       <NavLink
                         key={sub.id}
                         to={sub.path}
-                        title={collapsed ? subLabel : ""}
                         onClick={handleNavClick}
+                        onMouseEnter={(e) => handleMouseEnter(e, subLabel)}
+                        onMouseLeave={handleMouseLeave}
                         className={({ isActive }) =>
                           `adm-side-item ${isActive ? "is-active" : ""}`
                         }
@@ -737,19 +784,77 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
         })}
       </div>
 
-      {/* FOOTER */}
+      {/* PRO SOFTWARE FOOTER WITH INLINE USER CARD & LOGOUT */}
       <div className="adm-side-footer">
-        <button type="button" className="adm-signout-btn" onClick={logout}>
-          <FaSignOutAlt />
-          <span>Sign Out</span>
-        </button>
-        <hr />
-        <span className="adm-footer-pill is-accent text-white border-white bg-black adm-signout-btn" >
-          <FaShieldAlt /> HEWebCMS - {HEWebCMSVersion}
-        </span>
+        <div className="adm-side-user-card" title={collapsed ? userProfile.name : ""}>
+          <div className="adm-side-user-avatar-wrap">
+            <img
+              src={
+                userProfile.profileImage
+                  ? `${API_URL}${userProfile.profileImage}`
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name || "Admin")}&background=0d9488&color=fff&bold=true`
+              }
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name || "Admin")}&background=0d9488&color=fff&bold=true`;
+              }}
+              alt={userProfile.name}
+              className="adm-side-user-avatar"
+            />
+            <span className="adm-user-status-dot" title="Active" />
+          </div>
+
+          {!collapsed && (
+            <div className="adm-side-user-meta">
+              <div className="adm-side-user-name" title={userProfile.name}>
+                {userProfile.name}
+              </div>
+              <div className="adm-side-user-sub">
+                <span className="adm-side-user-role-badge">
+                  {userProfile.userDesignations || userProfile.role}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="adm-side-inline-logout"
+            onClick={logout}
+            title="Sign Out"
+            aria-label="Sign Out"
+          >
+            <FaSignOutAlt />
+          </button>
+        </div>
+
+        {!collapsed && (
+          <div className="adm-side-version-bar">
+            <span className="adm-side-version-chip">
+              <FaShieldAlt className="adm-version-icon" />
+              <span>HEWebCMS</span>
+              <span className="adm-version-num">v{HEWebCMSVersion || "0.1"}</span>
+            </span>
+          </div>
+        )}
       </div>
 
-    </aside >
+      {/* PRO FLOATING HOVER TOOLTIP */}
+      {hoveredTooltip.visible && (
+        <div
+          className="adm-floating-tooltip"
+          style={{
+            position: "fixed",
+            top: `${hoveredTooltip.top}px`,
+            left: `${hoveredTooltip.left}px`,
+            transform: "translateY(-50%)"
+          }}
+        >
+          {hoveredTooltip.text}
+        </div>
+      )}
+
+    </aside>
   );
 };
 

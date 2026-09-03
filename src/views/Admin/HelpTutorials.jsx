@@ -18,12 +18,89 @@ import { jwtDecode } from "jwt-decode";
 const API = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 6;
 
+const formatDate = (date) => {
+  if (!date) return "—";
+  try {
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric"
+    });
+  } catch { return "—"; }
+};
+
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return "";
+  try {
+    const trimmed = url.trim();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      return `${API}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+    }
+    const parsed = new URL(trimmed);
+    let id = "";
+    if (parsed.searchParams.has("v")) {
+      id = parsed.searchParams.get("v");
+    } else if (parsed.pathname.includes("/shorts/")) {
+      id = parsed.pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0];
+    } else if (parsed.pathname.includes("/embed/")) {
+      id = parsed.pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0];
+    } else if (parsed.hostname.includes("youtu.be")) {
+      id = parsed.pathname.slice(1).split("?")[0];
+    }
+    if (id) {
+      return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+    }
+    if (parsed.hostname.includes("drive.google.com")) {
+      return trimmed.replace(/\/view(\?.*)?$/, "/preview").replace(/\/edit(\?.*)?$/, "/preview");
+    }
+    return trimmed;
+  } catch { return url; }
+};
+
+const getYoutubeThumbnail = (url) => {
+  if (!url) return "";
+  try {
+    const trimmed = url.trim();
+    const parsed = new URL(trimmed);
+    let id = "";
+    if (parsed.searchParams.has("v")) {
+      id = parsed.searchParams.get("v");
+    } else if (parsed.pathname.includes("/shorts/")) {
+      id = parsed.pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0];
+    } else if (parsed.pathname.includes("/embed/")) {
+      id = parsed.pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0];
+    } else if (parsed.hostname.includes("youtu.be")) {
+      id = parsed.pathname.slice(1).split("?")[0];
+    }
+    return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
+  } catch { return ""; }
+};
+
+const isVideoFile = (url) => {
+  if (!url) return false;
+  const clean = url.split("?")[0].toLowerCase();
+  return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg") || clean.endsWith(".mov");
+};
+
+const isPdfFile = (url) => {
+  if (!url) return false;
+  const clean = url.split("?")[0].toLowerCase();
+  return clean.endsWith(".pdf") || url.toLowerCase().includes("/pdf");
+};
+
 const HelpTutorials = () => {
   const { isHindi } = useLanguage();
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
+  const [role] = useState(() => {
+    const token = sessionStorage.getItem("authToken");
+    if (!token) return "";
+    try {
+      const decoded = jwtDecode(token);
+      return decoded?.role || "";
+    } catch {
+      return "";
+    }
+  });
 
   const [pdfPage, setPdfPage] = useState(1);
   const [videoPage, setVideoPage] = useState(1);
@@ -32,67 +109,29 @@ const HelpTutorials = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewTitle, setPreviewTitle] = useState("");
 
-  // track which card ids are expanded
   const [expandedIds, setExpandedIds] = useState({});
 
   useEffect(() => {
-    const token = sessionStorage.getItem("authToken");
-    if (!token) return;
-    try {
-      const decoded = jwtDecode(token);
-      setRole(decoded.role);
-    } catch (err) {
-      console.log(err);
-    }
-  }, []);
+    let isMounted = true;
+    const loadHelp = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API}/api/get-active-guidance-by-role`, {
+          params: { role }
+        });
+        if (isMounted) setData(res?.data?.data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (role) fetchHelp();
+    loadHelp();
+    return () => {
+      isMounted = false;
+    };
   }, [role]);
-
-  const fetchHelp = async () => {
-    try {
-      const res = await axios.get(`${API}/api/get-active-guidance-by-role`, {
-        params: { role }
-      });
-      setData(res?.data?.data || []);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "—";
-    try {
-      return new Date(date).toLocaleDateString("en-IN", {
-        day: "2-digit", month: "short", year: "numeric"
-      });
-    } catch { return "—"; }
-  };
-
-  const getYoutubeEmbedUrl = (url) => {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url);
-      let id = "";
-      if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v");
-      if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.slice(1);
-      return id ? `https://www.youtube.com/embed/${id}` : "";
-    } catch { return ""; }
-  };
-
-  const getYoutubeThumbnail = (url) => {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url);
-      let id = "";
-      if (parsed.hostname.includes("youtube.com")) id = parsed.searchParams.get("v");
-      if (parsed.hostname.includes("youtu.be")) id = parsed.pathname.slice(1);
-      return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
-    } catch { return ""; }
-  };
 
   const pdfData = data.filter(i => i.contentType?.toLowerCase() === "pdf");
   const videoData = data.filter(i => i.contentType?.toLowerCase() === "video");
@@ -113,8 +152,18 @@ const HelpTutorials = () => {
 
   const t = (en, hi) => (isHindi ? (hi || en) : en);
 
-  /* ── PAGINATION ── */
-  const Pagination = ({ page, setPage, arr }) => {
+  if (loading) {
+    return (
+      <div className="d-flex flex-column align-items-center justify-content-center py-5">
+        <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
+        <p className="text-muted mt-3 small">
+          {t("Loading resources...", "सामग्री लोड हो रही है...")}
+        </p>
+      </div>
+    );
+  }
+
+  const renderPagination = (page, setPage, arr) => {
     const pages = totalPages(arr);
     if (pages <= 1) return null;
     return (
@@ -140,25 +189,21 @@ const HelpTutorials = () => {
     );
   };
 
-  /* ── PDF CARD ── */
-  const PdfCard = ({ item }) => {
+  const renderPdfCard = (item) => {
     const isOpen = !!expandedIds[item._id];
     const hasLongDesc = item.description && item.description.length > 80;
 
     return (
-      <Card className="border-0 shadow-sm rounded-3 mb-2 overflow-hidden">
+      <Card key={item._id} className="border-0 shadow-sm rounded-3 mb-2 overflow-hidden">
         <div className="bg-danger" style={{ height: 3 }} />
         <CardBody className="p-3">
           <div className="d-flex gap-3 align-items-start">
-
-            {/* icon block */}
             <div
               className="bg-danger bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
               style={{ width: 44, height: 44 }}>
               <FaFilePdf className="text-danger" size={20} />
             </div>
 
-            {/* content */}
             <div className="flex-grow-1 min-w-0">
               <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: "0.88rem" }}>
                 {item.title}
@@ -166,7 +211,6 @@ const HelpTutorials = () => {
 
               {item.description && (
                 <>
-                  {/* truncated line when collapsed */}
                   {!isOpen && (
                     <p
                       className="text-muted mb-1"
@@ -182,7 +226,6 @@ const HelpTutorials = () => {
                     </p>
                   )}
 
-                  {/* full description when expanded */}
                   <Collapse isOpen={isOpen}>
                     <p
                       className="text-muted mb-1"
@@ -195,7 +238,6 @@ const HelpTutorials = () => {
                     </p>
                   </Collapse>
 
-                  {/* show more / less toggle */}
                   {hasLongDesc && (
                     <button
                       onClick={() => toggleExpand(item._id)}
@@ -219,13 +261,11 @@ const HelpTutorials = () => {
                 </>
               )}
 
-              {/* only created date for PDF */}
               <small className="text-muted" style={{ fontSize: "0.7rem" }}>
                 📅 {formatDate(item.createdAt)}
               </small>
             </div>
 
-            {/* actions — match video card style */}
             <div className="d-flex flex-column gap-1 flex-shrink-0">
               <Button
                 size="sm"
@@ -245,27 +285,23 @@ const HelpTutorials = () => {
                 </Button>
               </a>
             </div>
-
           </div>
         </CardBody>
       </Card>
     );
   };
 
-  /* ── VIDEO CARD ── */
-  const VideoCard = ({ item }) => {
+  const renderVideoCard = (item) => {
     const embedUrl = getYoutubeEmbedUrl(item.videoUrl);
     const thumb = getYoutubeThumbnail(item.videoUrl);
     const isOpen = !!expandedIds[item._id];
     const hasLongDesc = item.description && item.description.length > 80;
 
     return (
-      <Card className="border-0 shadow-sm rounded-3 mb-2 overflow-hidden">
+      <Card key={item._id} className="border-0 shadow-sm rounded-3 mb-2 overflow-hidden">
         <div className="bg-primary" style={{ height: 3 }} />
         <CardBody className="p-3">
           <div className="d-flex gap-3 align-items-start">
-
-            {/* thumbnail or icon */}
             <div
               className="flex-shrink-0 rounded-3 overflow-hidden"
               style={{ width: 64, height: 44, background: "#e9ecef" }}>
@@ -282,7 +318,6 @@ const HelpTutorials = () => {
               )}
             </div>
 
-            {/* content */}
             <div className="flex-grow-1 min-w-0">
               <h6 className="fw-bold mb-1 text-dark" style={{ fontSize: "0.88rem" }}>
                 {item.title}
@@ -348,7 +383,6 @@ const HelpTutorials = () => {
               </small>
             </div>
 
-            {/* actions */}
             <div className="d-flex flex-column gap-1 flex-shrink-0">
               <Button
                 size="sm"
@@ -372,15 +406,13 @@ const HelpTutorials = () => {
                 </Button>
               </a>
             </div>
-
           </div>
         </CardBody>
       </Card>
     );
   };
 
-  /* ── SECTION ── */
-  const Section = ({ type, arr, page, setPage }) => {
+  const renderSection = (type, arr, page, setPage) => {
     const isPdf = type === "pdf";
     const items = paginate(arr, page);
 
@@ -420,10 +452,10 @@ const HelpTutorials = () => {
             <>
               {items.map(item =>
                 isPdf
-                  ? <PdfCard key={item._id} item={item} />
-                  : <VideoCard key={item._id} item={item} />
+                  ? renderPdfCard(item)
+                  : renderVideoCard(item)
               )}
-              <Pagination page={page} setPage={setPage} arr={arr} />
+              {renderPagination(page, setPage, arr)}
             </>
           )}
         </CardBody>
@@ -431,23 +463,10 @@ const HelpTutorials = () => {
     );
   };
 
-  /* ── LOADING ── */
-  if (loading) {
-    return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5">
-        <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-        <p className="text-muted mt-3 small">
-          {t("Loading resources...", "सामग्री लोड हो रही है...")}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <Container fluid="xl" className="py-4">
       <div className="min-vh-100">
         <div className="px-3 px-md-4">
-
           {/* ── PAGE HEADER ── */}
           <CardHeader className="adm-card-header p-3 border border-white d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded">
             <div>
@@ -471,13 +490,12 @@ const HelpTutorials = () => {
           {/* ── SECTIONS ── */}
           <Row className="g-4">
             <Col xs={12} lg={6}>
-              <Section type="pdf" arr={pdfData} page={pdfPage} setPage={setPdfPage} />
+              {renderSection("pdf", pdfData, pdfPage, setPdfPage)}
             </Col>
             <Col xs={12} lg={6}>
-              <Section type="video" arr={videoData} page={videoPage} setPage={setVideoPage} />
+              {renderSection("video", videoData, videoPage, setVideoPage)}
             </Col>
           </Row>
-
         </div>
 
         {/* ── PREVIEW MODAL ── */}
@@ -488,18 +506,75 @@ const HelpTutorials = () => {
           centered>
           <ModalHeader
             toggle={() => setPreviewModal(false)}
-            className="border-0 fw-bold">
-            👁️ {previewTitle}
+            className="border-0 fw-bold bg-dark text-white">
+            <span className="text-truncate" style={{ fontSize: "1rem" }}>👁️ {previewTitle}</span>
           </ModalHeader>
-          <ModalBody className="p-0" style={{ height: "75vh" }}>
-            <iframe
-              src={previewUrl}
-              width="100%"
-              height="100%"
-              style={{ border: "none", display: "block" }}
-              title="Preview"
-              allowFullScreen
-            />
+          <div className="bg-light border-bottom px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <small className="text-muted text-truncate" style={{ maxWidth: "60%" }}>
+              🔗 <span className="user-select-all">{previewUrl}</span>
+            </small>
+            <div className="d-flex gap-2">
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+                style={{ fontSize: "0.78rem" }}
+              >
+                <FaExternalLinkAlt size={10} />
+                <span>{t("Open in New Tab", "नए टैब में खोलें")}</span>
+              </a>
+              {isPdfFile(previewUrl) && (
+                <a
+                  href={previewUrl}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+                  style={{ fontSize: "0.78rem" }}
+                >
+                  <FaDownload size={10} />
+                  <span>{t("Download", "डाउनलोड")}</span>
+                </a>
+              )}
+            </div>
+          </div>
+          <ModalBody className="p-0 bg-dark" style={{ height: "72vh" }}>
+            {isVideoFile(previewUrl) ? (
+              <video
+                src={previewUrl}
+                controls
+                autoPlay
+                className="w-100 h-100"
+                style={{ objectFit: "contain", background: "#000" }}
+              />
+            ) : isPdfFile(previewUrl) ? (
+              <object
+                data={previewUrl}
+                type="application/pdf"
+                width="100%"
+                height="100%"
+                style={{ display: "block" }}
+              >
+                <iframe
+                  src={previewUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: "none" }}
+                  title={previewTitle}
+                />
+              </object>
+            ) : (
+              <iframe
+                src={previewUrl}
+                width="100%"
+                height="100%"
+                style={{ border: "none", display: "block" }}
+                title={previewTitle}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            )}
           </ModalBody>
         </Modal>
       </div>

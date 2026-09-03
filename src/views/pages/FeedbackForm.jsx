@@ -104,9 +104,11 @@ const FeedbackForm = () => {
     <PageLayout
       title="Feedback"
       titleHi="प्रतिक्रिया"
+      description="Submit your feedback, suggestions, or queries to the Department of Higher Education, Government of Chhattisgarh."
+      descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन को अपने सुझाव, प्रतिक्रिया अथवा शिकायतें भेजें।"
       showBreadcrumb
     >
-      <div className="py-4 py-md-5 px-3 px-md-4 rounded-4 bg-light">
+      <div className="py-3 py-md-5 px-2 px-md-4 rounded-4 bg-light">
         <Row className="align-items-center justify-content-center g-4">
 
           {/* Left Illustration — hidden on small screens */}

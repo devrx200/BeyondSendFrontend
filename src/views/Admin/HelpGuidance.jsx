@@ -8,7 +8,8 @@ import {
 import {
   FaPlus, FaEdit, FaTrash,
   FaFilePdf, FaVideo, FaEye, FaSearch,
-  FaTh, FaList, FaChevronDown, FaChevronUp
+  FaTh, FaList, FaChevronDown, FaChevronUp,
+  FaExternalLinkAlt, FaDownload
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -43,6 +44,52 @@ const HelpGuidance = () => {
     status: "active",
     accessBy: "USER"
   });
+
+  const getEmbedUrl = (url) => {
+    if (!url) return "";
+    try {
+      const trimmed = url.trim();
+      if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+        return `${API_URL}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+      }
+      const parsed = new URL(trimmed);
+      let id = "";
+      if (parsed.searchParams.has("v")) {
+        id = parsed.searchParams.get("v");
+      } else if (parsed.pathname.includes("/shorts/")) {
+        id = parsed.pathname.split("/shorts/")[1]?.split("/")[0]?.split("?")[0];
+      } else if (parsed.pathname.includes("/embed/")) {
+        id = parsed.pathname.split("/embed/")[1]?.split("/")[0]?.split("?")[0];
+      } else if (parsed.hostname.includes("youtu.be")) {
+        id = parsed.pathname.slice(1).split("?")[0];
+      }
+      if (id) {
+        return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+      }
+      if (parsed.hostname.includes("drive.google.com")) {
+        return trimmed.replace(/\/view(\?.*)?$/, "/preview").replace(/\/edit(\?.*)?$/, "/preview");
+      }
+      return trimmed;
+    } catch { return url; }
+  };
+
+  const isVideoFile = (url) => {
+    if (!url) return false;
+    const clean = url.split("?")[0].toLowerCase();
+    return clean.endsWith(".mp4") || clean.endsWith(".webm") || clean.endsWith(".ogg") || clean.endsWith(".mov");
+  };
+
+  const isPdfFile = (url) => {
+    if (!url) return false;
+    const clean = url.split("?")[0].toLowerCase();
+    return clean.endsWith(".pdf") || url.toLowerCase().includes("/pdf");
+  };
+
+  const openPreview = (item) => {
+    setPreviewUrl(item.contentType === "pdf" || item.contentType === "PDF" ? `${API_URL}${item.pdfUrl}` : getEmbedUrl(item.videoUrl));
+    setPreviewTitle(item.title);
+    setPreviewModal(true);
+  };
 
   /* ── LOAD ── */
   const loadData = useCallback(async () => {
@@ -79,26 +126,44 @@ const HelpGuidance = () => {
     }
   }, [API_URL, accessFilter, page, search, statusFilter, token]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    let isMounted = true;
+    const init = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/get-help-guidance`,
+          {
+            params: {
+              page,
+              limit: 6,
+              search,
+              status: statusFilter,
+              accessBy: accessFilter
+            },
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        if (isMounted) {
+          setList(res.data?.data || []);
+          setTotalPages(res.data?.totalPages || 1);
+        }
+      } catch (err) {
+        if (isMounted) {
+          Swal.fire("Error", err?.response?.data?.message || "Failed", "error");
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-  /* ── HELPERS ── */
-  const getEmbedUrl = (url) => {
-    if (!url) return "";
-    try {
-      const parsed = new URL(url);
-      if (parsed.hostname.includes("youtube.com"))
-        return `https://www.youtube.com/embed/${parsed.searchParams.get("v")}`;
-      if (parsed.hostname.includes("youtu.be"))
-        return `https://www.youtube.com/embed/${parsed.pathname.slice(1)}`;
-      return url;
-    } catch { return url; }
-  };
-
-  const openPreview = (item) => {
-    setPreviewUrl(item.contentType === "pdf" ? `${API_URL}${item.pdfUrl}` : getEmbedUrl(item.videoUrl));
-    setPreviewTitle(item.title);
-    setPreviewModal(true);
-  };
+    init();
+    return () => {
+      isMounted = false;
+    };
+  }, [API_URL, accessFilter, page, search, statusFilter, token]);
 
   const toggleModal = () => { setModal(!modal); if (modal) resetForm(); };
 
@@ -499,18 +564,75 @@ const HelpGuidance = () => {
 
           {/* ── PREVIEW MODAL ── */}
           <Modal isOpen={previewModal} toggle={() => setPreviewModal(false)} size="xl" centered>
-            <ModalHeader toggle={() => setPreviewModal(false)} className="border-0 fw-bold">
-              👁️ {previewTitle}
+            <ModalHeader toggle={() => setPreviewModal(false)} className="border-0 fw-bold bg-dark text-white">
+              <span className="text-truncate" style={{ fontSize: "1rem" }}>👁️ {previewTitle}</span>
             </ModalHeader>
-            <ModalBody className="p-0" style={{ height: "70vh" }}>
-              <iframe
-                src={previewUrl}
-                width="100%"
-                height="100%"
-                style={{ border: "none", display: "block" }}
-                title={previewTitle}
-                allowFullScreen
-              />
+            <div className="bg-light border-bottom px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <small className="text-muted text-truncate" style={{ maxWidth: "60%" }}>
+                🔗 <span className="user-select-all">{previewUrl}</span>
+              </small>
+              <div className="d-flex gap-2">
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-sm btn-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+                  style={{ fontSize: "0.78rem" }}
+                >
+                  <FaExternalLinkAlt size={10} />
+                  <span>{t("Open in New Tab", "नए टैब में खोलें")}</span>
+                </a>
+                {isPdfFile(previewUrl) && (
+                  <a
+                    href={previewUrl}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+                    style={{ fontSize: "0.78rem" }}
+                  >
+                    <FaDownload size={10} />
+                    <span>{t("Download", "डाउनलोड")}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+            <ModalBody className="p-0 bg-dark" style={{ height: "72vh" }}>
+              {isVideoFile(previewUrl) ? (
+                <video
+                  src={previewUrl}
+                  controls
+                  autoPlay
+                  className="w-100 h-100"
+                  style={{ objectFit: "contain", background: "#000" }}
+                />
+              ) : isPdfFile(previewUrl) ? (
+                <object
+                  data={previewUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="100%"
+                  style={{ display: "block" }}
+                >
+                  <iframe
+                    src={previewUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: "none" }}
+                    title={previewTitle}
+                  />
+                </object>
+              ) : (
+                <iframe
+                  src={previewUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: "none", display: "block" }}
+                  title={previewTitle}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              )}
             </ModalBody>
           </Modal>
 

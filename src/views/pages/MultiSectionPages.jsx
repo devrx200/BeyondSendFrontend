@@ -198,29 +198,39 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
           </ol>
         </nav>
 
-        <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
-          <CardHeader className="detail-card-header">
-            <h1 className="fw-semibold mb-3 text-white h4 d-flex align-items-center gap-2">
-              <FaNewspaper size={20} aria-hidden="true" /> {title}
+        <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
+          <CardHeader className="detail-card-header p-3 p-md-4">
+            <h1 className="fw-bold mb-2 text-white h5 d-flex align-items-start gap-2.5 lh-base">
+              <FaNewspaper size={20} className="mt-1 flex-shrink-0 opacity-90" aria-hidden="true" />
+              <span>{title}</span>
             </h1>
-            <hr className="border-white opacity-25 my-3" />
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-              {page.categoryId && (
-                <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                  <FaUserTie size={12} aria-hidden="true" />
-                  {isHindi ? page.categoryId?.categoryNameHi : page.categoryId?.categoryNameEn}
-                </Badge>
-              )}
-              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                <FaCalendarAlt size={12} aria-hidden="true" />
-                <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Published:'}</span> {formatDateTime(publishDate, isHindi)}
-              </Badge>
-              <Badge color="light" className="text-dark px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2">
-                <FaClock size={12} aria-hidden="true" />
-                <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(page.updatedAt, isHindi)}
-              </Badge>
-              <Button tag={Link} to={listPath} color="dark" size="sm" className="fw-semibold px-3 d-inline-flex align-items-center gap-2 ms-md-auto mt-2 mt-md-0">
-                <FaChevronLeft size={11} aria-hidden="true" />
+            <hr className="border-white opacity-20 my-2.5" />
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                {page.categoryId && (
+                  <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                    <FaUserTie size={11} className="text-primary" aria-hidden="true" />
+                    {isHindi ? page.categoryId?.categoryNameHi : page.categoryId?.categoryNameEn}
+                  </span>
+                )}
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Published:'}</span> {formatDateTime(publishDate, isHindi)}
+                </span>
+                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
+                  <FaClock size={11} className="text-success" aria-hidden="true" />
+                  <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(page.updatedAt, isHindi)}
+                </span>
+              </div>
+              <Button
+                tag={Link}
+                to={listPath}
+                color="dark"
+                size="sm"
+                className="fw-semibold px-3 py-1 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5 ms-auto ms-sm-0"
+                style={{ fontSize: "12px" }}
+              >
+                <FaChevronLeft size={10} aria-hidden="true" />
                 {isHindi ? 'सूची पर वापस जाएं' : 'Back to List'}
               </Button>
             </div>
@@ -407,52 +417,103 @@ const MultiSectionListView = ({ prefetchedData, isHindi, onPageChange, onFilterC
           </CardHeader>
         </Card>
 
-        {/* Filter Toolbar */}
-        <Card className="border-0 shadow-sm rounded-4 mb-4">
-          <CardBody className="py-3">
-            <Row className="g-3 align-items-end">
-              <Col xs={12} sm={6} md={3}>
-                <Label for="msp-sortBy" className="small fw-semibold text-secondary mb-1 d-flex align-items-center gap-1">
-                  <FaFilter size={11} aria-hidden="true" /> {isHindi ? 'क्रमबद्ध करें' : 'Sort By'}
-                </Label>
-                <Input id="msp-sortBy" type="select" bsSize="sm" value={sortBy} onChange={handleSortByChange}>
-                  <option value="createdAt">{isHindi ? 'निर्माण तिथि' : 'Created Date'}</option>
-                  <option value="updatedAt">{isHindi ? 'अपडेट तिथि' : 'Updated Date'}</option>
-                </Input>
-              </Col>
+        {/* Compact Inline Filter Toolbar */}
+        <Card className="border-0 shadow-sm rounded-3 mb-3 bg-white" style={{ border: "1px solid #e2e8f0" }}>
+          <CardBody className="py-2 px-3">
+            <div className="d-flex flex-wrap align-items-center gap-2 justify-content-between">
+              
+              {/* Left group: Sort By & Order */}
+              <div className="d-flex align-items-center flex-wrap gap-2">
+                <div className="d-flex align-items-center gap-1.5">
+                  <span className="small fw-semibold text-secondary d-flex align-items-center gap-1" style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
+                    <FaFilter size={11} className="text-primary" /> {isHindi ? 'क्रमबद्ध:' : 'Sort:'}
+                  </span>
+                  <Input
+                    id="msp-sortBy"
+                    type="select"
+                    bsSize="sm"
+                    value={sortBy}
+                    onChange={handleSortByChange}
+                    className="py-1 px-2 rounded-2"
+                    style={{ fontSize: "12.5px", width: "auto", minWidth: "125px", height: "32px", borderColor: "#cbd5e1" }}
+                  >
+                    <option value="createdAt">{isHindi ? 'निर्माण तिथि' : 'Created Date'}</option>
+                    <option value="updatedAt">{isHindi ? 'अपडेट तिथि' : 'Updated Date'}</option>
+                  </Input>
+                </div>
 
-              <Col xs={12} sm={6} md={2}>
-                <Label className="small fw-semibold text-secondary mb-1 d-block">{isHindi ? 'क्रम' : 'Order'}</Label>
-                <Button type="button" size="sm" color="outline-primary" className="w-100 d-flex align-items-center justify-content-center gap-2" onClick={handleSortOrderToggle}>
-                  {sortOrder === 'desc' ? <FaSortAmountDown aria-hidden="true" /> : <FaSortAmountUp aria-hidden="true" />}
-                  {sortOrder === 'desc' ? (isHindi ? 'नवीनतम पहले' : 'Newest First') : (isHindi ? 'पुराने पहले' : 'Oldest First')}
-                </Button>
-              </Col>
-
-              <Col xs={12} sm={6} md={3}>
-                <Label for="msp-dateFrom" className="small fw-semibold text-secondary mb-1">{isHindi ? 'तिथि से' : 'Date From'}</Label>
-                <Input id="msp-dateFrom" type="date" bsSize="sm" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} />
-              </Col>
-
-              <Col xs={12} sm={6} md={3}>
-                <Label for="msp-dateTo" className="small fw-semibold text-secondary mb-1">{isHindi ? 'तिथि तक' : 'Date To'}</Label>
-                <Input id="msp-dateTo" type="date" bsSize="sm" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} />
-              </Col>
-
-              <Col xs={12} md={1}>
-                <Button type="button" size="sm" color="primary" className="w-100" onClick={handleDateApply}>
-                  {isHindi ? 'लागू' : 'Apply'}
-                </Button>
-              </Col>
-            </Row>
-
-            {(dateFrom || dateTo || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
-              <div className="mt-3 d-flex justify-content-end">
-                <Button type="button" size="sm" color="link" className="text-secondary d-flex align-items-center gap-1 p-0" onClick={handleReset}>
-                  <FaRedo size={11} aria-hidden="true" /> {isHindi ? 'फ़िल्टर रीसेट करें' : 'Reset Filters'}
+                <Button
+                  type="button"
+                  size="sm"
+                  color="outline-primary"
+                  className="rounded-2 px-2.5 py-1 d-inline-flex align-items-center gap-1 fw-semibold"
+                  style={{ fontSize: "12px", height: "32px" }}
+                  onClick={handleSortOrderToggle}
+                  title={isHindi ? 'क्रम बदलें' : 'Toggle Order'}
+                >
+                  {sortOrder === 'desc' ? <FaSortAmountDown size={11} /> : <FaSortAmountUp size={11} />}
+                  <span>{sortOrder === 'desc' ? (isHindi ? 'नवीनतम' : 'Newest') : (isHindi ? 'पुराने' : 'Oldest')}</span>
                 </Button>
               </div>
-            )}
+
+              {/* Right group: Date range + Apply + Reset */}
+              <div className="d-flex align-items-center flex-wrap gap-2 ms-auto ms-sm-0">
+                <div className="d-flex align-items-center gap-1">
+                  <span className="small fw-semibold text-secondary" style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
+                    <FaCalendarAlt size={11} className="text-primary me-1" />
+                    {isHindi ? 'दिनांक:' : 'Date:'}
+                  </span>
+                  <Input
+                    id="msp-dateFrom"
+                    type="date"
+                    bsSize="sm"
+                    value={dateFrom}
+                    max={dateTo || undefined}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="py-1 px-2 rounded-2"
+                    style={{ fontSize: "12px", width: "125px", height: "32px", borderColor: "#cbd5e1" }}
+                  />
+                  <span className="text-muted small">-</span>
+                  <Input
+                    id="msp-dateTo"
+                    type="date"
+                    bsSize="sm"
+                    value={dateTo}
+                    min={dateFrom || undefined}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="py-1 px-2 rounded-2"
+                    style={{ fontSize: "12px", width: "125px", height: "32px", borderColor: "#cbd5e1" }}
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  color="primary"
+                  className="rounded-2 px-3 py-1 fw-semibold shadow-sm"
+                  style={{ fontSize: "12px", height: "32px" }}
+                  onClick={handleDateApply}
+                >
+                  {isHindi ? 'लागू' : 'Apply'}
+                </Button>
+
+                {(dateFrom || dateTo || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    color="outline-secondary"
+                    className="rounded-2 px-2 py-1 d-inline-flex align-items-center gap-1"
+                    style={{ fontSize: "12px", height: "32px" }}
+                    onClick={handleReset}
+                    title={isHindi ? 'रीसेट करें' : 'Reset'}
+                  >
+                    <FaRedo size={10} />
+                    <span className="d-none d-md-inline">{isHindi ? 'रीसेट' : 'Reset'}</span>
+                  </Button>
+                )}
+              </div>
+
+            </div>
           </CardBody>
         </Card>
 

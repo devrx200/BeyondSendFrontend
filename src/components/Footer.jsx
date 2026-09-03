@@ -55,100 +55,63 @@ const FlipCounter = ({ count }) => {
 };
 
 
+const EMSIGN_SEAL_URL = "https://security-seal.emsign.com/getSiteDetails?t=42c08805642179c4a5c95bde45f19ca034c4690359ef9d4b716076d9096b2e43";
+
 const SecuritySeal = () => {
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !containerRef.current) return;
-
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("title", "security-seal");
-    // Allow scripts and same-origin for the iframe content when using srcdoc.
-    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups");
-    iframe.setAttribute("loading", "lazy");
-    iframe.style.border = "0";
-    iframe.style.width = "175px";
-    iframe.style.height = "100px";
-    iframe.style.display = "block";
-    iframe.style.overflow = "hidden";
-    iframe.style.background = "transparent";
-    iframe.setAttribute("scrolling", "no");
-
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/><style>html,body{margin:0;padding:0;background:transparent}</style></head><body><div id="siteSeal"></div><script src="https://security-seal.emsign.com/generateSeal?width=175"></script></body></html>`;
-
-    let blobUrl = null;
-    let fallbackTimer = null;
-
-    const showFallback = () => {
-      try {
-        if (!containerRef.current) return;
-        containerRef.current.innerHTML = `
-          <div class="security-seal-fallback text-center">
-            <a href="https://security-seal.emsign.com/" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none">View Security Seal</a>
-          </div>`;
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    const handleLoad = () => {
-      // Try to detect if the seal element was injected. Accessing contentDocument may fail if cross-origin.
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        const siteSeal = doc && doc.getElementById && doc.getElementById('siteSeal');
-        if (siteSeal && siteSeal.children.length > 0) {
-          // Seal present — clear fallback timer
-          if (fallbackTimer) clearTimeout(fallbackTimer);
-          return;
-        }
-      } catch (err) {
-        // Cross-origin access; cannot introspect
-      }
-      // If no content injected after a short delay, show fallback
-      fallbackTimer = setTimeout(() => {
-        showFallback();
-      }, 2000);
-    };
-
-    const handleError = () => {
-      showFallback();
-    };
-
-    iframe.addEventListener('load', handleLoad);
-    iframe.addEventListener('error', handleError);
-
-    // Try srcdoc first (works well for many browsers). If that fails, fallback to blob URL.
-    try {
-      iframe.srcdoc = html;
-    } catch (e) {
-      const blob = new Blob([html], { type: 'text/html' });
-      blobUrl = URL.createObjectURL(blob);
-      iframe.src = blobUrl;
-    }
-
-    containerRef.current.innerHTML = "";
-    containerRef.current.appendChild(iframe);
-
-    // if the seal doesn't appear in X ms, show fallback
-    fallbackTimer = setTimeout(() => {
-      showFallback();
-    }, 4000);
-
-    return () => {
-      try {
-        iframe.removeEventListener('load', handleLoad);
-        iframe.removeEventListener('error', handleError);
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-        if (containerRef.current) containerRef.current.innerHTML = "";
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-      } catch (e) {
-        // ignore
-      }
-    };
-  }, []);
+  const handleSealClick = (e) => {
+    e.preventDefault();
+    const width = 660;
+    const height = 620;
+    const left = window.screen.width ? (window.screen.width - width) / 2 : 100;
+    const top = window.screen.height ? (window.screen.height - height) / 2 : 100;
+    
+    window.open(
+      EMSIGN_SEAL_URL,
+      "emSignSiteDetails",
+      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=yes`
+    );
+  };
 
   return (
-    <div id="emsign-security-seal" ref={containerRef} className="text-center" aria-live="polite" />
+    <div className="security-seal-wrapper d-inline-flex text-start my-1">
+      <a
+        href={EMSIGN_SEAL_URL}
+        onClick={handleSealClick}
+        className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-3 text-decoration-none shadow-sm"
+        style={{
+          background: "rgba(255, 255, 255, 0.07)",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+          color: "#ffffff",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+        }}
+        title="Website SSL / TLS Security Certified by emSign - Click to verify"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#22c55e"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+        <div style={{ textAlign: "left", lineHeight: "1.15" }}>
+          <div style={{ color: "#22c55e", fontSize: "10px", fontWeight: "800", letterSpacing: "0.5px" }}>
+            SSL SECURED
+          </div>
+          <div style={{ color: "#cbd5e1", fontSize: "11px", fontWeight: "500" }}>
+            emSign Verified
+          </div>
+        </div>
+      </a>
+    </div>
   );
 };
 
@@ -199,32 +162,32 @@ const Footer = () => {
     <footer className="footer mt-0 pt-0">
       <span className="footer-top-pattern mb-1" />
       <Container className="py-2">
-        <Row className="g-4">
+        <Row className="g-4 align-items-start">
 
           {/* ── Contact Info ── */}
-          <Col xs={12} sm={6} md={4}>
+          <Col xs={12} sm={6} md={6} lg={4}>
             <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
             <img
               src="/cg-hiedu-full-logo.jpg"
               alt="Higher Education Department Chhattisgarh"
-              className="img-fluid mb-2 rounded"
+              className="img-fluid mb-2 rounded bg-white p-1"
               style={{ height: "clamp(36px, 5vw, 52px)", width: "auto", objectFit: "contain" }}
             />
             <p className="small text-white mb-2 fw-bold ">
               {isHindi ? contactInfo.departmentNameHi : contactInfo.departmentNameEn}
             </p>
             <p className="small text-white mb-2">
-              <FaMapMarkerAlt className="me-2" aria-hidden="true" />
+              <FaMapMarkerAlt className="me-2 text-warning" aria-hidden="true" />
               {isHindi ? contactInfo.addressHi : contactInfo.addressEn}
             </p>
             <p className="small text-white mb-2">
-              <FaPhone className="me-2" aria-hidden="true" />
+              <FaPhone className="me-2 text-warning" aria-hidden="true" />
               <a href={`tel:${contactInfo.phone}`} className="text-white text-decoration-none">
                 {contactInfo.phone}
               </a>
             </p>
             <p className="small text-white mb-0">
-              <FaEnvelope className="me-2" aria-hidden="true" />
+              <FaEnvelope className="me-2 text-warning" aria-hidden="true" />
               <a href={`mailto:${contactInfo.email}`} className="text-white text-decoration-none">
                 {contactInfo.email}
               </a>
@@ -232,7 +195,7 @@ const Footer = () => {
           </Col>
 
           {/* ── Quick Links ── */}
-          <Col xs={6} sm={6} md={3}>
+          <Col xs={6} sm={3} md={3} lg={2}>
             <h5>{isHindi ? "त्वरित लिंक" : "Quick Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
               {quickLinks.map((link, i) => (
@@ -246,7 +209,7 @@ const Footer = () => {
           </Col>
 
           {/* ── Important Links ── */}
-          <Col xs={6} sm={6} md={3}>
+          <Col xs={6} sm={3} md={3} lg={3}>
             <h5>{isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
               {importantLinks.map((link, i) => (
@@ -259,39 +222,41 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* ── Follow Us + Visitor Counter ── */}
-          <Col xs={12} sm={6} md={2} className="">
-            <Row className="gy-0 gx-2 mx-0">
-              <Col xs={6} md={12} className="px-0">
-                <h5>{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
-                <div className="d-flex gap-3 flex-wrap mb-4 mb-md-4">
+          {/* ── Follow Us (LEFT) + Visitor Counter (RIGHT) on phone ── */}
+          <Col xs={12} sm={12} md={12} lg={3}>
+            <div className="d-flex flex-row flex-lg-column justify-content-between align-items-start gap-3">
+              {/* Follow Us */}
+              <div>
+                <h5 className="mb-2 mb-lg-3">{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
+                <div className="d-flex gap-2 flex-wrap align-items-center">
                   {socialLinks.map((s, i) => (
                     <a
                       key={i}
                       href={s.url}
-                      className="text-white"
+                      className="footer-social-icon text-white"
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.platform}
-                      style={{ fontSize: "1.4rem", transition: "color .2s" }}
                     >
                       {SOCIAL_ICONS[s.platform?.toLowerCase()] || <FaLinkedin />}
                     </a>
                   ))}
                 </div>
-              </Col>
+              </div>
 
-              <Col xs={6} md={12} className="px-0">
-                <h5>
-                  {isHindi ? "आगंतुक संख्या" : "Site Visitors"}
-                </h5>
-                <div className="d-flex">
+              {/* Visitor Counter */}
+              <div className="text-end text-lg-start">
+                <h5 className="mb-2">{isHindi ? "आगंतुक संख्या" : "Site Visitors"}</h5>
+                <div className="d-flex justify-content-end justify-content-lg-start mb-1">
                   <FlipCounter count={visitorCount} />
                 </div>
-                <SecuritySeal />
-              </Col>
+              </div>
+            </div>
 
-            </Row>
+            {/* Security Seal — Centered & Inline on mobile */}
+            <div className="d-flex justify-content-center justify-content-lg-start align-items-center mt-3">
+              <SecuritySeal />
+            </div>
           </Col>
 
         </Row>
@@ -326,11 +291,12 @@ const Footer = () => {
               <strong className="text-white small">Managed By National Informatics Centre</strong>
               <br />
               <img
-                src={`${API_URL}${contactInfo.organizerLogo}`}
+                src={contactInfo.organizerLogo ? `${API_URL}${contactInfo.organizerLogo}` : "/nic-logo.jpg"}
                 height={44}
-                className="mt-2 mb-1"
-                alt="Organizer Logo"
+                className="mt-2 mb-1 rounded"
+                alt="NIC Logo"
                 loading="lazy"
+                onError={(e) => { e.currentTarget.src = "/nic-logo.jpg"; }}
               />
             </Col>
             <Col xs={12}><hr className="border-secondary my-1" /></Col>
@@ -345,13 +311,13 @@ const Footer = () => {
                 <Link to="/help-and-support">Help &amp; Support</Link>
               </small>
             </Col>
-            <Col xs={12} md={6} className="text-center text-md-end">
+            <Col xs={12} md={6} className="text-center text-md-end pb-4 pb-md-2">
               <small>{isHindi ? "अंतिम अपडेट" : "Last Updated"}: {lastUpdated}</small>
             </Col>
           </Row>
         </Container>
       </div>
-      <span className=" mb-0 footer-pattern-strip" />
+      <span className="mb-0 footer-pattern-strip" />
     </footer>
   );
 };

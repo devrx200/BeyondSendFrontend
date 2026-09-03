@@ -35,6 +35,7 @@ export const ManageBrands = lazy(() => import("../views/Admin/ManageBrands"));
 export const ContactManagement = lazy(() => import("../views/Admin/ContactManagement"));
 export const ContactCardCMS = lazy(() => import("../views/Admin/ContactCardForm"));
 export const ImportantLinksManagement = lazy(() => import("../views/Admin/ImportantLinksManagement"));
+export const QuickAccessManagement = lazy(() => import("../views/Admin/QuickAccessManagement"));
 export const ImportantPageManagement = lazy(() => import("../views/Admin/ImportantPageManagement"));
 export const PageCreatorManagement = lazy(() => import("../views/Admin/MultiSectionPagesMangagement"));
 export const RichContentPageManagements = lazy(() => import("../views/Admin/RichContentPageManagements"));
