@@ -13,7 +13,7 @@ import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
 
 /* ─── Public Pages ────────────────────────────────────────────────────────── */
 import {
-  Home, About, Contact, Gallery, Universities, Colleges, Downloads, FeedbackForm, HelpSupport,
+  Home, Contact, Gallery, Universities, Colleges, Downloads, FeedbackForm, HelpSupport,
   SchemeAnnouncementDetails, SchemeAnnouncementListView, MultiSectionPages, SlugResolver, DepDirectorateNoticesListView,
   AdminLogin, AdminDashboard, AdminUserManagement, AdminEducationStats, AdminFeedbackList, MenuManagement,
   HeaderManagement, SliderManagement, FooterSection, AboutSectionMangement, AnnouncementsManagement, NewUpdatesManagement,
@@ -43,8 +43,6 @@ const AppRoutes = () => {
 
       {/* ── Public Routes ─────────────────────────────────────────────────── */}
       <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-      <Route path="/about" element={<MainLayout><About /></MainLayout>} />
-      <Route path="/about-us" element={<MainLayout><About /></MainLayout>} />
       <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
       <Route path="/contact-us" element={<MainLayout><Contact /></MainLayout>} />
       <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
@@ -124,7 +122,7 @@ const AppRoutes = () => {
           </Route>
 
           {/* ADMIN + NIC */}
-          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "NIC"]} />}>
+          <Route element={<AuthMiddleware allowedRoles={["ADMIN", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]} />}>
             <Route path="users-management" element={<AdminUserManagement />} />
           </Route>
 

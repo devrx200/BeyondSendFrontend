@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter,
   Form, FormGroup, Label, Input, Badge, Row, Col,
-  Spinner, Alert,
+  Spinner, InputGroup, InputGroupText
 } from "reactstrap";
 import {
   FaUsers, FaPlus, FaEdit, FaTrash,
-  FaEye, FaEyeSlash, FaUserShield,
+  FaEye, FaEyeSlash, FaUserShield, FaCheck, FaTimes,
+  FaSearch, FaFilter, FaBuilding, FaUserTie, FaShieldAlt,
+  FaSyncAlt
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -27,13 +29,13 @@ const initialForm = {
   permissions: [],
   controls: [],
   profileImage: null,
-  status: "PENDING",
+  status: "APPROVED",
   isActive: true,
 };
 
-/* ================= REGEX ================= */
+/* ================= REGEX VALIDATORS ================= */
 const ENGLISH_TEXT_ONLY = /^[A-Za-z .,!?'"()\-\n\r]+$/;
-const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-\n\r]+$/;
+const ENGLISH_WITH_NUMBERS = /^[A-Za-z0-9 .,!?'"()\-_/\n\r]+$/;
 const PHONE_REGEX = /^(\+91[- ]?)?[6-9][0-9]{9}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX =
@@ -41,14 +43,17 @@ const PASSWORD_REGEX =
 
 /* ================= FIELD VALIDATOR ================= */
 const validateField = (name, value, isEditing = false) => {
-  if (name === "password" && isEditing) return "";
+  if (name === "password" && isEditing && !value) return "";
   if (["profileImage", "isActive", "role", "status", "employeeType"].includes(name)) return "";
 
   const trimmed = Array.isArray(value)
     ? value.join(",").trim()
-    : (value ?? "").trim();
+    : (value ?? "").toString().trim();
 
-  if (!trimmed) return "This field is required.";
+  if (!trimmed && ["name", "email", "mobile", "userDesignations"].includes(name)) {
+    return "This field is required.";
+  }
+  if (!trimmed) return "";
 
   switch (name) {
     case "name":
@@ -67,7 +72,7 @@ const validateField = (name, value, isEditing = false) => {
       break;
     case "email":
       if (!EMAIL_REGEX.test(trimmed))
-        return "Enter a valid email address (e.g. john@example.com).";
+        return "Enter a valid email address (e.g. officer@gov.in).";
       break;
     case "password":
       if (!PASSWORD_REGEX.test(trimmed))
@@ -76,7 +81,7 @@ const validateField = (name, value, isEditing = false) => {
     case "permissions":
     case "controls":
       if (!ENGLISH_WITH_NUMBERS.test(trimmed.replace(/,/g, " ")))
-        return "Only English letters and numbers are allowed.";
+        return "Only letters, numbers, and hyphens/underscores allowed.";
       break;
     default:
       break;
@@ -84,9 +89,35 @@ const validateField = (name, value, isEditing = false) => {
   return "";
 };
 
-/* ================= HELPERS ================= */
+/* ================= HELPERS & THEMES ================= */
 const headerGradient = {
   background: "linear-gradient(135deg, #0d9488 0%, #065f46 100%)",
+};
+
+const getEmployeeTypeBadge = (type) => {
+  switch (type?.toUpperCase()) {
+    case "NIC":
+      return { bg: "#7c3aed", color: "#ffffff", label: "NIC SuperAdmin" };
+    case "DIRECTORATE":
+      return { bg: "#0f766e", color: "#ffffff", label: "Directorate" };
+    case "DEPARTMENT":
+      return { bg: "#0d9488", color: "#ffffff", label: "Department" };
+    default:
+      return { bg: "#64748b", color: "#ffffff", label: type || "N/A" };
+  }
+};
+
+const getRoleBadge = (role) => {
+  switch (role?.toUpperCase()) {
+    case "NIC":
+      return { bg: "#6d28d9", color: "#ffffff", label: "NIC" };
+    case "ADMIN":
+      return { bg: "#0f766e", color: "#ffffff", label: "Admin" };
+    case "OFFICER":
+      return { bg: "#059669", color: "#ffffff", label: "Officer" };
+    default:
+      return { bg: "#475569", color: "#ffffff", label: role || "Officer" };
+  }
 };
 
 /* ================================================= */
@@ -106,9 +137,40 @@ const AdminUserManagement = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Decode Token and Global Object
-  const currentUser = token ? jwtDecode(token) : null;
-  const currentEmployeeType = window.employeeType || currentUser?.employeeType || "DEPARTMENT";
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterEmployeeType, setFilterEmployeeType] = useState("ALL");
+  const [filterRole, setFilterRole] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ALL");
+
+  // Decode Token and Logged-In User Information
+  const currentUser = useMemo(() => {
+    if (!token) return null;
+    try {
+      return jwtDecode(token);
+    } catch {
+      return null;
+    }
+  }, [token]);
+
+  const storedUser = useMemo(() => {
+    try {
+      const data = sessionStorage.getItem("userData") || sessionStorage.getItem("user");
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const loggedInId = currentUser?._id || currentUser?.id || currentUser?.userId || storedUser?._id || storedUser?.id || storedUser?.userId;
+  const loggedInEmail = (currentUser?.email || storedUser?.email || "").toLowerCase().trim();
+
+  const loggedRole = (currentUser?.role || storedUser?.role || window.userRole || "").toUpperCase();
+  const loggedEmployeeType = (currentUser?.employeeType || storedUser?.employeeType || window.employeeType || "").toUpperCase();
+
+  const isNIC = loggedRole === "NIC" || loggedEmployeeType === "NIC";
+  const isDirectorateAdmin = loggedRole === "ADMIN" && loggedEmployeeType === "DIRECTORATE";
+  const isDepartmentAdmin = loggedRole === "ADMIN" && loggedEmployeeType === "DEPARTMENT";
 
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
@@ -118,12 +180,34 @@ const AdminUserManagement = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const allUsers = res.data?.data || [];
-      // Do not show ADMIN DIRECTORATE users on the list
-      const filteredUsers = allUsers.filter(
-        (u) => !(u.role === "ADMIN" && u.employeeType === "DIRECTORATE")
-      );
-      setUsers(filteredUsers);
-    } catch {
+
+      // Hierarchy filtering:
+      // 1. NIC: Sees ALL users without restriction
+      // 2. Directorate Admin: Sees ALL Directorate and Department users (he is the boss of the portal)
+      // 3. Department Admin: Sees only DEPARTMENT users
+      let visibleUsers = allUsers;
+      if (isNIC) {
+        visibleUsers = allUsers;
+      } else if (isDirectorateAdmin) {
+        // Directorate Admin sees all Directorate and Department users (filters out NIC superadmin if any)
+        visibleUsers = allUsers.filter((u) => u.employeeType !== "NIC" && u.role !== "NIC");
+      } else if (isDepartmentAdmin) {
+        visibleUsers = allUsers.filter((u) => u.employeeType === "DEPARTMENT");
+      }
+
+      // Filter out self account so the logged-in user does not see themselves in the management list
+      visibleUsers = visibleUsers.filter((u) => {
+        const uId = u._id || u.id;
+        const uEmail = (u.email || "").toLowerCase().trim();
+        const isSelf =
+          (loggedInId && uId && String(uId) === String(loggedInId)) ||
+          (loggedInEmail && uEmail && uEmail === loggedInEmail);
+        return !isSelf;
+      });
+
+      setUsers(visibleUsers);
+    } catch (err) {
+      console.error("Failed to load users", err);
       Swal.fire("Error", "Failed to load users. Please try again.", "error");
     } finally {
       setLoading(false);
@@ -131,35 +215,65 @@ const AdminUserManagement = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-    axios.get(`${API_URL}/api/get-all-users`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (!isMounted) return;
-        const allUsers = res.data?.data || [];
-        const filteredUsers = allUsers.filter(
-          (u) => !(u.role === "ADMIN" && u.employeeType === "DIRECTORATE")
-        );
-        setUsers(filteredUsers);
-      })
-      .catch(() => {
-        if (isMounted) {
-          Swal.fire("Error", "Failed to load users. Please try again.", "error");
-        }
-      });
-    return () => { isMounted = false; };
+    loadUsers();
   }, [API_URL, token]);
 
-  /* ================= MODAL TOGGLE ================= */
+  /* ================= FILTERED USERS ================= */
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchSearch =
+        !searchQuery ||
+        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.mobile?.includes(searchQuery) ||
+        u.userDesignations?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchEmpType =
+        filterEmployeeType === "ALL" || u.employeeType === filterEmployeeType;
+
+      const matchRole =
+        filterRole === "ALL" || u.role === filterRole;
+
+      const matchStatus =
+        filterStatus === "ALL" ||
+        (filterStatus === "ACTIVE" && u.isActive) ||
+        (filterStatus === "INACTIVE" && !u.isActive) ||
+        u.status === filterStatus;
+
+      return matchSearch && matchEmpType && matchRole && matchStatus;
+    });
+  }, [users, searchQuery, filterEmployeeType, filterRole, filterStatus]);
+
+  /* ================= MODAL TOGGLE & INITIALIZATION ================= */
   const openModal = () => {
+    let defaultEmpType = "DIRECTORATE";
+    let defaultRole = "OFFICER";
+
+    if (isDepartmentAdmin) {
+      defaultEmpType = "DEPARTMENT";
+      defaultRole = "OFFICER";
+    } else if (isDirectorateAdmin) {
+      defaultEmpType = "DIRECTORATE";
+      defaultRole = "OFFICER";
+    } else if (isNIC) {
+      defaultEmpType = "DIRECTORATE";
+      defaultRole = "OFFICER";
+    }
+
     setFormData({
       ...initialForm,
-      employeeType: currentEmployeeType === "DEPARTMENT" ? "DEPARTMENT" : "DIRECTORATE",
-      role: "OFFICER"
+      employeeType: defaultEmpType,
+      role: defaultRole,
+      status: "APPROVED",
+      isActive: true,
     });
+    setErrors({});
+    setImagePreview(null);
+    setShowPassword(false);
+    setEditing(null);
     setModal(true);
   };
+
   const closeModal = () => {
     setModal(false);
     setEditing(null);
@@ -180,6 +294,8 @@ const AdminUserManagement = () => {
       setImagePreview(file ? URL.createObjectURL(file) : null);
     } else if (name === "permissions" || name === "controls") {
       newValue = value.split(",").map((v) => v.trim()).filter(Boolean);
+    } else if (name === "isActive") {
+      newValue = value === "true" || value === true;
     } else if (type === "checkbox") {
       newValue = checked;
     } else {
@@ -188,13 +304,19 @@ const AdminUserManagement = () => {
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: newValue };
+
+      // Role adjustment on employeeType change if not editing
       if (name === "employeeType") {
-        if (currentEmployeeType === "DIRECTORATE" && newValue === "DEPARTMENT") {
-          updated.role = "ADMIN";
-        } else {
+        if (newValue === "DEPARTMENT") {
+          // If Directorate Admin creates for Department, can default to ADMIN or OFFICER
+          updated.role = isDirectorateAdmin ? "ADMIN" : "OFFICER";
+        } else if (newValue === "DIRECTORATE") {
           updated.role = "OFFICER";
+        } else if (newValue === "NIC") {
+          updated.role = "NIC";
         }
       }
+
       return updated;
     });
 
@@ -203,10 +325,11 @@ const AdminUserManagement = () => {
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  /* ================= FULL FORM VALIDATE ================= */
+  /* ================= FORM VALIDATION ================= */
   const validateForm = () => {
     const fieldsToValidate = ["name", "email", "mobile", "userDesignations"];
     if (!editing) fieldsToValidate.push("password");
+    else if (formData.password) fieldsToValidate.push("password");
 
     const newErrors = {};
     fieldsToValidate.forEach((key) => {
@@ -221,15 +344,15 @@ const AdminUserManagement = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  /* ================= SUBMIT ================= */
+  /* ================= SUBMIT CREATE / EDIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      Swal.fire(
-        "Validation Error",
-        "Please fix the highlighted fields before saving.",
-        "warning"
-      );
+      Swal.fire({
+        icon: "warning",
+        title: isHindi ? "अमान्य फ़ील्ड" : "Validation Error",
+        text: isHindi ? "कृपया हाइलाइट की गई त्रुटियों को ठीक करें।" : "Please fix the highlighted fields before saving."
+      });
       return;
     }
 
@@ -238,6 +361,7 @@ const AdminUserManagement = () => {
       const payload = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value === null || value === undefined) return;
+        if (key === "password" && editing && !value) return; // don't send empty password on edit
         if (Array.isArray(value)) {
           payload.append(key, JSON.stringify(value));
         } else {
@@ -252,7 +376,13 @@ const AdminUserManagement = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        Swal.fire("Updated!", "User updated successfully.", "success");
+        Swal.fire({
+          icon: "success",
+          title: isHindi ? "सफल" : "Updated!",
+          text: isHindi ? "उपयोगकर्ता विवरण सफलतापूर्वक अद्यतन किया गया।" : "User details updated successfully.",
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await axios.post(`${API_URL}/api/create-user`, payload, {
           headers: {
@@ -260,24 +390,36 @@ const AdminUserManagement = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        Swal.fire("Created!", "User created successfully.", "success");
+        Swal.fire({
+          icon: "success",
+          title: isHindi ? "सफल" : "Created!",
+          text: isHindi ? "नया उपयोगकर्ता सफलतापूर्वक जोड़ा गया।" : "New user created successfully.",
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
 
       closeModal();
       loadUsers();
     } catch (err) {
-      Swal.fire(
-        "Error",
-        err.response?.data?.message || "Operation failed. Please try again.",
-        "error"
-      );
+      console.error("Submit Error:", err);
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: err.response?.data?.message || "Operation failed. Please try again."
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  /* ================= EDIT ================= */
+  /* ================= EDIT USER ================= */
   const handleEdit = (user) => {
+    // Check permission:
+    if (user.role === "NIC" && !isNIC) {
+      return Swal.fire("Permission Denied", "Only NIC SuperAdmins can edit NIC accounts.", "warning");
+    }
+
     setEditing(user);
     setFormData({
       name: user.name || "",
@@ -285,30 +427,34 @@ const AdminUserManagement = () => {
       mobile: user.mobile || "",
       password: "",
       role: user.role || "OFFICER",
-      employeeType: user.employeeType || "DEPARTMENT",
+      employeeType: user.employeeType || "DIRECTORATE",
       userDesignations: user.userDesignations || "",
       permissions: user.permissions || [],
       controls: user.controls || [],
       profileImage: null,
-      status: user.status || "PENDING",
+      status: user.status || "APPROVED",
       isActive: user.isActive ?? true,
     });
     setErrors({});
-    setImagePreview(null);
-    openModal();
+    setImagePreview(user.profileImage ? `${API_URL}${user.profileImage}` : null);
+    setModal(true);
   };
 
-  /* ================= DELETE ================= */
-  const handleDelete = async (id) => {
+  /* ================= DELETE USER ================= */
+  const handleDelete = async (user) => {
+    if (user.role === "NIC" && !isNIC) {
+      return Swal.fire("Permission Denied", "Only NIC SuperAdmins can delete NIC accounts.", "warning");
+    }
+
     const result = await Swal.fire({
-      title: isHindi ? "क्या आप निश्चित हैं?" : "Are you sure?",
+      title: isHindi ? "क्या आप निश्चित हैं?" : `Delete "${user.name}"?`,
       text: isHindi
         ? "यह उपयोगकर्ता हमेशा के लिए हटाया जाएगा।"
-        : "This user will be permanently deleted.",
+        : "This user account will be permanently removed.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#6c757d",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
       confirmButtonText: isHindi ? "हाँ, हटाएँ" : "Yes, Delete",
       cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
     });
@@ -316,393 +462,503 @@ const AdminUserManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await axios.delete(`${API_URL}/api/delete-user/${id}`, {
+      await axios.delete(`${API_URL}/api/delete-user/${user._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Swal.fire("Deleted!", "User has been deleted.", "success");
       loadUsers();
-    } catch {
-      Swal.fire("Error", "Failed to delete user.", "error");
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || "Failed to delete user.", "error");
     }
   };
 
-  /* ================= RENDER ================= */
-  return (
-    <Card className="border-0 shadow-sm overflow-hidden">
+  /* ================= QUICK APPROVE / REJECT ================= */
+  const handleQuickStatus = async (user, newStatus) => {
+    try {
+      const payload = new FormData();
+      payload.append("status", newStatus);
 
-      {/* ── Gradient Header ── */}
-      <CardHeader
-        className="border-0 py-4"
-        style={headerGradient}
-      >
-        <Row className="align-items-center">
-          <Col>
-            <h4 className="fw-bold mb-1 text-white d-flex align-items-center gap-2">
-              <FaUsers />
-              {isHindi ? "उपयोगकर्ता प्रबंधन" : "User Management"}
-            </h4>
-            <p className="text-white-50 mb-0 small">
-              {isHindi
-                ? "अधिकारियों का प्रबंधन करें"
-                : "Manage officers, roles & permissions"}
-            </p>
+      await axios.put(`${API_URL}/api/update-user/${user._id}`, payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: `Status set to ${newStatus}`,
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      loadUsers();
+    } catch (err) {
+      Swal.fire("Error", "Failed to update status", "error");
+    }
+  };
+
+  /* ================= QUICK ACTIVE TOGGLE ================= */
+  const handleToggleActive = async (user) => {
+    try {
+      const payload = new FormData();
+      payload.append("isActive", !user.isActive);
+
+      await axios.put(`${API_URL}/api/update-user/${user._id}`, payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: user.isActive ? "User Deactivated" : "User Activated",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+      loadUsers();
+    } catch (err) {
+      Swal.fire("Error", "Failed to toggle status", "error");
+    }
+  };
+
+  /* ================= PERMISSION CHECKS FOR ACTIONS ================= */
+  const canCreateUser = isNIC || isDirectorateAdmin || isDepartmentAdmin;
+
+  return (
+    <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+      {/* ── GRADIENT HEADER ── */}
+      <CardHeader className="border-0 py-3.5 px-4 text-white" style={headerGradient}>
+        <Row className="align-items-center g-2">
+          <Col xs={12} sm={6}>
+            <div className="d-flex align-items-center gap-2.5">
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20 flex-shrink-0"
+                style={{ width: "42px", height: "42px" }}
+              >
+                <FaUsers size={20} />
+              </div>
+              <div>
+                <h5 className="fw-bold mb-0 text-white" style={{ letterSpacing: "-0.2px" }}>
+                  {isHindi ? "उपयोगकर्ता एवं अधिकारी प्रबंधन" : "User & Officer Management"}
+                </h5>
+                <small className="text-white-50" style={{ fontSize: "11.5px" }}>
+                  {isNIC
+                    ? "NIC Central SuperAdmin Control"
+                    : isDirectorateAdmin
+                      ? "Directorate Apex Administrative Management"
+                      : "Department Administrative Management"}
+                </small>
+              </div>
+            </div>
           </Col>
-          <Col xs="auto" className="d-flex gap-2 flex-wrap justify-content-end">
-            {/* Session Manager Button */}
+
+          <Col xs={12} sm={6} className="d-flex gap-2 justify-content-sm-end align-items-center flex-wrap">
+            {/* Session Manager (NIC or Directorate) */}
+            {(isNIC || isDirectorateAdmin) && (
+              <Button
+                color="light"
+                size="sm"
+                className="fw-semibold d-flex align-items-center gap-1.5 border-white border-opacity-40 text-white shadow-xs"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+                onClick={() => navigate("/admin/session-manager")}
+                title="View Active Sessions"
+              >
+                <FaUserShield size={13} />
+                <span>{isHindi ? "सक्रिय सत्र" : "Sessions"}</span>
+              </Button>
+            )}
+
+            {/* Refresh Button */}
             <Button
               color="light"
               size="sm"
-              className="fw-semibold d-flex align-items-center gap-1 border-white border-opacity-50 text-white"
-              style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.4)" }}
-              onClick={() => navigate("/admin/session-manager")}
-              title="View Session Manager"
+              className="fw-semibold d-flex align-items-center gap-1.5 border-white border-opacity-40 text-white shadow-xs"
+              style={{ background: "rgba(255,255,255,0.15)" }}
+              onClick={loadUsers}
+              title="Refresh user list"
             >
-              <FaUserShield />
-              {isHindi ? "सेशन" : "Sessions"}
+              <FaSyncAlt size={12} className={loading ? "fa-spin" : ""} />
+              <span className="d-none d-md-inline">{isHindi ? "रिफ्रेश" : "Refresh"}</span>
             </Button>
 
             {/* Add User Button */}
-            <Button
-              color="light"
-              size="sm"
-              className="fw-semibold d-flex align-items-center gap-1 text-success shadow-sm"
-              onClick={openModal}
-            >
-              <FaPlus />
-              {isHindi ? "नया उपयोगकर्ता" : "Add User"}
-            </Button>
+            {canCreateUser && (
+              <Button
+                color="light"
+                size="sm"
+                className="fw-bold d-flex align-items-center gap-1.5 shadow-sm px-3"
+                style={{ color: "#065f46" }}
+                onClick={openModal}
+              >
+                <FaPlus size={12} />
+                <span>{isHindi ? "नया उपयोगकर्ता" : "Add New User"}</span>
+              </Button>
+            )}
           </Col>
         </Row>
       </CardHeader>
 
       <CardBody className="p-0">
+        {/* ── STATS & FILTERS BAR ── */}
+        <div className="p-3 bg-light border-bottom">
+          <Row className="g-2 align-items-center">
+            {/* Search Box */}
+            <Col xs={12} md={4} lg={3}>
+              <InputGroup size="sm" className="shadow-xs">
+                <InputGroupText className="bg-white border-end-0 text-muted">
+                  <FaSearch size={12} />
+                </InputGroupText>
+                <Input
+                  type="text"
+                  placeholder={isHindi ? "नाम, ईमेल, मोबाइल से खोजें..." : "Search name, email, mobile..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="border-start-0 ps-0 bg-white"
+                />
+              </InputGroup>
+            </Col>
 
-        {/* ── Stats Row ── */}
-        <div
-          className="px-4 py-2.5 border-bottom d-flex align-items-center gap-4 flex-wrap"
-          style={{ backgroundColor: "#f0fdf4" }}
-        >
-          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
-            Total Officers:
-            <span
-              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
-              style={{ fontSize: "11.5px", background: "#1d4ed8" }}
-            >
-              {users.length}
-            </span>
-          </small>
-          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
-            Active:
-            <span
-              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
-              style={{ fontSize: "11.5px", background: "#059669" }}
-            >
-              {users.filter((u) => u.isActive).length}
-            </span>
-          </small>
-          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
-            Approved:
-            <span
-              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
-              style={{ fontSize: "11.5px", background: "#059669" }}
-            >
-              {users.filter((u) => u.status === "APPROVED").length}
-            </span>
-          </small>
-          <small className="text-dark fw-semibold d-inline-flex align-items-center gap-1.5">
-            Pending:
-            <span
-              className="px-2.5 py-0.5 rounded-pill fw-bold text-white shadow-xs"
-              style={{ fontSize: "11.5px", background: "#d97706" }}
-            >
-              {users.filter((u) => u.status === "PENDING").length}
-            </span>
-          </small>
+            {/* Filter: Employee Type */}
+            <Col xs={6} md={2}>
+              <Input
+                type="select"
+                size="sm"
+                value={filterEmployeeType}
+                onChange={(e) => setFilterEmployeeType(e.target.value)}
+                className="shadow-xs bg-white fw-semibold cursor-pointer"
+              >
+                <option value="ALL">All Units</option>
+                <option value="DIRECTORATE">Directorate</option>
+                <option value="DEPARTMENT">Department</option>
+                {isNIC && <option value="NIC">NIC</option>}
+              </Input>
+            </Col>
+
+            {/* Filter: Role */}
+            <Col xs={6} md={2}>
+              <Input
+                type="select"
+                size="sm"
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="shadow-xs bg-white fw-semibold cursor-pointer"
+              >
+                <option value="ALL">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="OFFICER">Officer</option>
+                {isNIC && <option value="NIC">NIC</option>}
+              </Input>
+            </Col>
+
+            {/* Filter: Status */}
+            <Col xs={6} md={2}>
+              <Input
+                type="select"
+                size="sm"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="shadow-xs bg-white fw-semibold cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="APPROVED">Approved</option>
+                <option value="PENDING">Pending</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="ACTIVE">Active (Allowed)</option>
+                <option value="INACTIVE">Inactive (Blocked)</option>
+              </Input>
+            </Col>
+
+            {/* Stats Summary Badges */}
+            <Col xs={12} md={12} lg={3} className="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+              <Badge color="primary" className="py-1.5 px-2.5 rounded-pill shadow-xs fw-semibold">
+                Total: {users.length}
+              </Badge>
+              <Badge color="success" className="py-1.5 px-2.5 rounded-pill shadow-xs fw-semibold">
+                Active: {users.filter((u) => u.isActive).length}
+              </Badge>
+              <Badge color="warning" className="py-1.5 px-2.5 rounded-pill shadow-xs text-dark fw-semibold">
+                Pending: {users.filter((u) => u.status === "PENDING").length}
+              </Badge>
+            </Col>
+          </Row>
         </div>
 
-        {/* ── Table ── */}
+        {/* ── USERS TABLE ── */}
         <div className="table-responsive">
           <Table hover striped className="mb-0 align-middle">
-            <thead className="table-light text-uppercase" style={{ fontSize: "0.8rem", letterSpacing: "0.5px" }}>
+            <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
               <tr>
-                {["#", "Photo", "Name", "Role", "Email", "Mobile", "Designation", "Permissions", "Controls", "Status", "Actions"].map(
-                  (col) => (
-                    <th
-                      key={col}
-                      className="text-dark fw-bold"
-                      style={{ fontSize: "12px", whiteSpace: "nowrap", padding: "12px 14px" }}
-                    >
-                      {col}
-                    </th>
-                  )
-                )}
+                <th className="text-center" style={{ width: "45px" }}>#</th>
+                <th style={{ width: "55px" }}>Photo</th>
+                <th>User Details</th>
+                <th>Unit / Dept</th>
+                <th>Role</th>
+                <th>Contact</th>
+                <th>Designation</th>
+                <th>Permissions</th>
+                <th>Access / Status</th>
+                <th className="text-center" style={{ width: "110px" }}>Actions</th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody style={{ fontSize: "13px" }}>
               {loading ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-5">
+                  <td colSpan="10" className="text-center py-5">
                     <Spinner color="primary" style={{ width: "2.5rem", height: "2.5rem" }} />
-                    <p className="text-muted mt-2 mb-0 fw-semibold" style={{ fontSize: "14px" }}>
-                      Loading officers...
-                    </p>
+                    <p className="text-muted mt-2 mb-0 fw-semibold">Loading users & officers...</p>
                   </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="11" className="text-center py-5">
-                    <div style={{ fontSize: "3rem", lineHeight: 1 }}>👤</div>
-                    <p className="text-muted mt-2 mb-0 fw-semibold" style={{ fontSize: "14px" }}>
-                      No officers found.{" "}
-                      <span
-                        className="text-primary"
-                        style={{ cursor: "pointer", textDecoration: "underline" }}
-                        onClick={openModal}
-                      >
-                        Add one now
-                      </span>
-                    </p>
+                  <td colSpan="10" className="text-center py-5 text-muted">
+                    <div style={{ fontSize: "2.5rem" }}>👥</div>
+                    <p className="fw-semibold mb-1">No users found matching your criteria.</p>
+                    {canCreateUser && (
+                      <Button color="primary" size="sm" onClick={openModal} className="mt-2">
+                        <FaPlus className="me-1" /> Add New User
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ) : (
-                users.map((u, i) => (
-                  <tr
-                    key={u._id}
-                    style={{
-                      backgroundColor: i % 2 === 0 ? "rgba(13,148,136,0.02)" : "transparent",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "rgba(13,148,136,0.05)")
-                    }
-                    onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      i % 2 === 0 ? "rgba(13,148,136,0.02)" : "transparent")
-                    }
-                  >
-                    {/* # */}
-                    <td
-                      className="fw-bold text-muted text-center"
-                      style={{ fontSize: "13px", width: "48px" }}
-                    >
-                      {i + 1}
-                    </td>
+                filteredUsers.map((u, i) => {
+                  const empBadge = getEmployeeTypeBadge(u.employeeType);
+                  const roleBadge = getRoleBadge(u.role);
 
-                    {/* Photo */}
-                    <td style={{ width: "56px" }}>
-                      {u.profileImage ? (
-                        <img
-                          src={`${API_URL}${u.profileImage}`}
-                          height="40"
-                          width="40"
-                          alt={u.name}
-                          className="rounded-circle"
+                  return (
+                    <tr key={u._id || i}>
+                      {/* # */}
+                      <td className="text-center fw-bold text-muted">{i + 1}</td>
+
+                      {/* Photo */}
+                      <td>
+                        {u.profileImage ? (
+                          <img
+                            src={`${API_URL}${u.profileImage}`}
+                            alt={u.name}
+                            className="rounded-circle shadow-xs"
+                            style={{
+                              width: "38px",
+                              height: "38px",
+                              objectFit: "cover",
+                              border: "2px solid #e2e8f0"
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs"
+                            style={{
+                              width: "38px",
+                              height: "38px",
+                              fontSize: "13px",
+                              background: "linear-gradient(135deg, #1e40af 0%, #0d9488 100%)"
+                            }}
+                          >
+                            {u.name?.charAt(0)?.toUpperCase() || "U"}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Name & Email */}
+                      <td>
+                        <div className="fw-bold text-dark">{u.name}</div>
+                        <small className="text-muted">{u.email}</small>
+                      </td>
+
+                      {/* Unit / Employee Type */}
+                      <td>
+                        <span
+                          className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block"
                           style={{
-                            objectFit: "cover",
-                            border: "2px solid #a7f3d0",
-                            boxShadow: "0 2px 6px rgba(13,148,136,0.2)",
-                          }}
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
-                          style={{
-                            width: 40,
-                            height: 40,
-                            fontSize: 14,
-                            background: "linear-gradient(135deg, #0d9488 0%, #047857 100%)",
-                            boxShadow: "0 2px 6px rgba(13,148,136,0.25)",
+                            fontSize: "10.5px",
+                            letterSpacing: "0.2px",
+                            backgroundColor: empBadge.bg
                           }}
                         >
-                          {u.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Name */}
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <div className="fw-semibold text-dark" style={{ fontSize: "13.5px" }}>
-                        {u.name}
-                      </div>
-                      <small
-                        className="text-muted d-inline-flex align-items-center gap-1 mt-0.5"
-                        style={{ fontSize: "11px" }}
-                      >
-                        <span
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: "50%",
-                            background: u.isActive ? "#10b981" : "#94a3b8",
-                            display: "inline-block"
-                          }}
-                        />
-                        <span>{u.isActive ? "Active" : "Inactive"}</span>
-                      </small>
-                    </td>
-
-                    {/* Role */}
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <span
-                        className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block text-center"
-                        style={{
-                          fontSize: "11px",
-                          letterSpacing: "0.3px",
-                          background: u.role === "ADMIN" ? "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)" : "linear-gradient(135deg, #0d9488 0%, #047857 100%)"
-                        }}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-
-                    {/* Email */}
-                    <td style={{ fontSize: "13px" }}>{u.email}</td>
-
-                    {/* Mobile */}
-                    <td style={{ fontSize: "13px", whiteSpace: "nowrap" }}>{u.mobile}</td>
-
-                    {/* Designation */}
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      {u.userDesignations ? (
-                        <span
-                          className="px-2.5 py-0.5 rounded-pill fw-semibold"
-                          style={{
-                            fontSize: "11px",
-                            background: "#f1f5f9",
-                            color: "#334155",
-                            border: "1px solid #cbd5e1"
-                          }}
-                        >
-                          {u.userDesignations}
+                          {empBadge.label}
                         </span>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
+                      </td>
 
-                    {/* Permissions */}
-                    <td style={{ maxWidth: "180px" }}>
-                      {u.permissions?.length ? (
-                        <div className="d-flex flex-wrap gap-1">
-                          {u.permissions.map((p, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 rounded-pill fw-semibold"
-                              style={{
-                                fontSize: "10.5px",
-                                background: "#eff6ff",
-                                color: "#1d4ed8",
-                                border: "1px solid #bfdbfe"
-                              }}
-                            >
-                              {p}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-
-                    {/* Controls */}
-                    <td style={{ maxWidth: "180px" }}>
-                      {u.controls?.length ? (
-                        <div className="d-flex flex-wrap gap-1">
-                          {u.controls.map((c, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 rounded-pill fw-bold text-white shadow-xs"
-                              style={{
-                                fontSize: "10.5px",
-                                background: "#1e293b",
-                                border: "1px solid #334155"
-                              }}
-                            >
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted">—</span>
-                      )}
-                    </td>
-
-                    {/* Status */}
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <span
-                        className="px-2.5 py-1 rounded-pill fw-bold shadow-xs d-inline-block text-center"
-                        style={{
-                          fontSize: "11px",
-                          background: u.status === "APPROVED" ? "#ecfdf5" : u.status === "REJECTED" ? "#fef2f2" : "#fffbeb",
-                          color: u.status === "APPROVED" ? "#065f46" : u.status === "REJECTED" ? "#b91c1c" : "#b45309",
-                          border: `1px solid ${u.status === "APPROVED" ? "#a7f3d0" : u.status === "REJECTED" ? "#fecaca" : "#fde68a"}`
-                        }}
-                      >
-                        {u.status}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td style={{ whiteSpace: "nowrap" }}>
-                      <div className="d-flex gap-1.5 align-items-center">
-                        <Button
-                          size="sm"
-                          color="info"
-                          title="Edit Officer"
-                          onClick={() => handleEdit(u)}
-                          style={{ fontSize: "12px", padding: "4px 8px" }}
+                      {/* Role */}
+                      <td>
+                        <span
+                          className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block"
+                          style={{
+                            fontSize: "10.5px",
+                            letterSpacing: "0.2px",
+                            backgroundColor: roleBadge.bg
+                          }}
                         >
-                          <FaEdit />
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="danger"
-                          title="Delete Officer"
-                          onClick={() => handleDelete(u._id)}
-                          style={{ fontSize: "12px", padding: "4px 8px" }}
-                        >
-                          <FaTrash />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {roleBadge.label}
+                        </span>
+                      </td>
+
+                      {/* Mobile */}
+                      <td className="text-nowrap">{u.mobile || "—"}</td>
+
+                      {/* Designation */}
+                      <td>
+                        {u.userDesignations ? (
+                          <span
+                            className="px-2 py-0.5 rounded-pill fw-semibold"
+                            style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155" }}
+                          >
+                            {u.userDesignations}
+                          </span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+
+                      {/* Permissions */}
+                      <td style={{ maxWidth: "160px" }}>
+                        {u.permissions?.length ? (
+                          <div className="d-flex flex-wrap gap-1">
+                            {u.permissions.slice(0, 3).map((p, pIdx) => (
+                              <span
+                                key={pIdx}
+                                className="px-1.5 py-0.5 rounded bg-light border text-dark fw-semibold"
+                                style={{ fontSize: "10px" }}
+                              >
+                                {p}
+                              </span>
+                            ))}
+                            {u.permissions.length > 3 && (
+                              <span className="badge bg-secondary" style={{ fontSize: "9.5px" }}>
+                                +{u.permissions.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted small">Standard</span>
+                        )}
+                      </td>
+
+                      {/* Access & Approval Status */}
+                      <td>
+                        <div className="d-flex flex-column gap-1">
+                          {/* Approval Status Badge */}
+                          <span
+                            className="px-2 py-0.5 rounded-pill fw-bold text-center"
+                            style={{
+                              fontSize: "10.5px",
+                              background:
+                                u.status === "APPROVED"
+                                  ? "#ecfdf5"
+                                  : u.status === "REJECTED"
+                                    ? "#fef2f2"
+                                    : "#fffbeb",
+                              color:
+                                u.status === "APPROVED"
+                                  ? "#047857"
+                                  : u.status === "REJECTED"
+                                    ? "#b91c1c"
+                                    : "#b45309",
+                              border: `1px solid ${
+                                u.status === "APPROVED"
+                                  ? "#a7f3d0"
+                                  : u.status === "REJECTED"
+                                    ? "#fecaca"
+                                    : "#fde68a"
+                              }`
+                            }}
+                          >
+                            {u.status === "APPROVED" ? "✅ Approved" : u.status === "REJECTED" ? "❌ Rejected" : "⏳ Pending"}
+                          </span>
+
+                          {/* Active / Inactive switch badge */}
+                          <span
+                            role="button"
+                            onClick={() => handleToggleActive(u)}
+                            className={`badge ${u.isActive ? "bg-success" : "bg-danger"} shadow-xs cursor-pointer`}
+                            title="Click to toggle active status"
+                            style={{ fontSize: "10px", cursor: "pointer" }}
+                          >
+                            {u.isActive ? "🟢 Active" : "🔴 Inactive"}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="text-center text-nowrap">
+                        <div className="d-inline-flex gap-1.5 align-items-center">
+                          {/* Quick Approve / Reject for Pending */}
+                          {u.status === "PENDING" && (
+                            <>
+                              <Button
+                                size="sm"
+                                color="success"
+                                className="p-1 px-1.5"
+                                title="Approve User"
+                                onClick={() => handleQuickStatus(u, "APPROVED")}
+                              >
+                                <FaCheck size={11} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="warning"
+                                className="p-1 px-1.5 text-dark"
+                                title="Reject User"
+                                onClick={() => handleQuickStatus(u, "REJECTED")}
+                              >
+                                <FaTimes size={11} />
+                              </Button>
+                            </>
+                          )}
+
+                          {/* Edit Button */}
+                          <Button
+                            size="sm"
+                            color="info"
+                            className="p-1 px-2 text-white"
+                            title="Edit User"
+                            onClick={() => handleEdit(u)}
+                          >
+                            <FaEdit size={12} />
+                          </Button>
+
+                          {/* Delete Button */}
+                          <Button
+                            size="sm"
+                            color="danger"
+                            className="p-1 px-2"
+                            title="Delete User"
+                            onClick={() => handleDelete(u)}
+                          >
+                            <FaTrash size={12} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </Table>
         </div>
 
-        {/* ── Footer info ── */}
-        {!loading && users.length > 0 && (
-          <div
-            className="px-4 py-2.5 border-top d-flex align-items-center justify-content-between"
-            style={{ backgroundColor: "#f8fafc" }}
-          >
-            <small className="text-muted">
-              Showing <strong>{users.length}</strong> officer(s)
-            </small>
-            <Button
-              color="light"
-              className="border px-3 d-inline-flex align-items-center gap-1.5 shadow-xs"
-              size="sm"
-              onClick={loadUsers}
-              style={{ fontSize: "12px", fontWeight: 600 }}
-            >
-              🔄 Refresh
-            </Button>
-          </div>
-        )}
+        {/* ── FOOTER BAR ── */}
+        <div className="px-4 py-2.5 bg-light border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <small className="text-muted fw-semibold">
+            Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> user(s)
+          </small>
+          <small className="text-muted">
+            Department of Higher Education, Govt. of Chhattisgarh
+          </small>
+        </div>
       </CardBody>
-      <Modal isOpen={modal} toggle={closeModal} size="xl" backdrop="static" centered>
-        {/* HEADER */}
+
+      {/* ── MODAL: CREATE / EDIT USER ── */}
+      <Modal isOpen={modal} toggle={closeModal} size="lg" backdrop="static" centered>
         <ModalHeader
           toggle={closeModal}
-          className="border-bottom-0 shadow-sm"
-          style={{ ...headerGradient, color: "#fff" }}
+          className="border-bottom-0 shadow-sm text-white"
+          style={headerGradient}
           close={
             <button
               className="btn-close btn-close-white"
@@ -712,35 +968,32 @@ const AdminUserManagement = () => {
           }
         >
           {editing
-            ? (isHindi ? "✏️ उपयोगकर्ता संपादित करें" : "✏️ Edit User")
-            : (isHindi ? "➕ नया उपयोगकर्ता जोड़ें" : "➕ Add New User")}
+            ? (isHindi ? "✏️ उपयोगकर्ता विवरण संपादित करें" : "✏️ Edit User Details")
+            : (isHindi ? "➕ नया उपयोगकर्ता / अधिकारी जोड़ें" : "➕ Add New User / Officer")}
         </ModalHeader>
 
         <Form onSubmit={handleSubmit} noValidate>
           <ModalBody className="p-4 bg-light">
-
-            {/* PROFILE IMAGE SECTION (Centered at the top) */}
+            {/* AVATAR UPLOAD */}
             <div className="d-flex flex-column align-items-center mb-4 pb-3 border-bottom">
-              <div className="position-relative mb-3">
-                {/* Avatar Image */}
+              <div className="position-relative mb-2">
                 <img
-                  src={imagePreview || "https://ui-avatars.com/api/?name=Officer&background=e9ecef&color=6c757d&size=120"}
-                  alt="Profile Preview"
+                  src={imagePreview || "https://ui-avatars.com/api/?name=Officer&background=e2e8f0&color=1e40af&size=120"}
+                  alt="Avatar Preview"
                   className="rounded-circle shadow-sm bg-white"
                   style={{
-                    width: "110px",
-                    height: "110px",
+                    width: "100px",
+                    height: "100px",
                     objectFit: "cover",
-                    border: "3px solid #fff"
+                    border: "3px solid #ffffff"
                   }}
                 />
-                {/* Remove Image Button */}
                 {imagePreview && (
                   <Button
                     color="danger"
                     size="sm"
                     className="position-absolute top-0 start-100 translate-middle rounded-circle p-0 d-flex justify-content-center align-items-center shadow"
-                    style={{ width: "28px", height: "28px" }}
+                    style={{ width: "24px", height: "24px" }}
                     onClick={() => {
                       setImagePreview(null);
                       setFormData((prev) => ({ ...prev, profileImage: null }));
@@ -752,55 +1005,49 @@ const AdminUserManagement = () => {
                 )}
               </div>
 
-              {/* File Input */}
-              <div className="text-center">
-                <Input
-                  id="profileImage"
-                  type="file"
-                  name="profileImage"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleChange}
-                  className="form-control form-control-sm shadow-sm mx-auto"
-                  style={{ maxWidth: "250px" }}
-                />
-                <small className="text-muted d-block mt-1" style={{ fontSize: "12px" }}>
-                  JPG, PNG or WEBP. Max 2MB.
-                </small>
-              </div>
+              <Input
+                id="profileImage"
+                type="file"
+                name="profileImage"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleChange}
+                className="form-control form-control-sm shadow-xs"
+                style={{ maxWidth: "240px" }}
+              />
+              <small className="text-muted mt-1" style={{ fontSize: "11px" }}>
+                JPG, PNG or WEBP (Max 2MB)
+              </small>
             </div>
 
-            {/* FORM FIELDS GRID */}
-            <div className="bg-white p-4 rounded-3 shadow-sm border">
-              <Row className="g-4">
-
-                {/* NAME */}
-                <Col md={4}>
+            {/* FORM INPUTS */}
+            <div className="bg-white p-3.5 p-md-4 rounded-3 shadow-xs border">
+              <Row className="g-3">
+                {/* FULL NAME */}
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="name" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                    <Label className="fw-bold text-dark small mb-1">
                       Full Name <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="name"
                       name="name"
                       placeholder="e.g. Rajesh Kumar"
                       value={formData.name}
                       onChange={handleChange}
                       invalid={!!errors.name}
-                      autoComplete="off"
-                      className="shadow-sm"
+                      className="shadow-xs"
+                      required
                     />
                     {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                   </FormGroup>
                 </Col>
 
                 {/* EMAIL */}
-                <Col md={4}>
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="email" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                    <Label className="fw-bold text-dark small mb-1">
                       Email Address <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="email"
                       type="email"
                       name="email"
                       placeholder="e.g. officer@gov.in"
@@ -808,225 +1055,217 @@ const AdminUserManagement = () => {
                       onChange={handleChange}
                       disabled={!!editing}
                       invalid={!!errors.email}
-                      autoComplete="off"
-                      className="shadow-sm"
+                      className="shadow-xs"
+                      required
                     />
-                    {editing && <small className="text-info" style={{ fontSize: "11px" }}>Email cannot be changed after creation.</small>}
+                    {editing && <small className="text-muted" style={{ fontSize: "11px" }}>Email cannot be altered once registered.</small>}
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </FormGroup>
                 </Col>
 
                 {/* MOBILE */}
-                <Col md={4}>
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="mobile" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                    <Label className="fw-bold text-dark small mb-1">
                       Mobile Number <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="mobile"
                       name="mobile"
                       placeholder="e.g. 9876543210"
                       value={formData.mobile}
                       onChange={handleChange}
                       invalid={!!errors.mobile}
                       maxLength={13}
-                      autoComplete="off"
-                      className="shadow-sm"
+                      className="shadow-xs"
+                      required
                     />
                     {errors.mobile && <div className="invalid-feedback">{errors.mobile}</div>}
                   </FormGroup>
                 </Col>
 
                 {/* DESIGNATION */}
-                <Col md={4}>
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="userDesignations" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
+                    <Label className="fw-bold text-dark small mb-1">
                       Designation <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="userDesignations"
                       name="userDesignations"
-                      placeholder="e.g. District Officer"
+                      placeholder="e.g. District Officer / Section Officer"
                       value={formData.userDesignations}
                       onChange={handleChange}
                       invalid={!!errors.userDesignations}
-                      autoComplete="off"
-                      className="shadow-sm"
+                      className="shadow-xs"
+                      required
                     />
                     {errors.userDesignations && <div className="invalid-feedback">{errors.userDesignations}</div>}
                   </FormGroup>
                 </Col>
 
-                {/* PASSWORD (Only on create) */}
-                {!editing && (
-                  <Col md={4}>
-                    <FormGroup className="mb-0">
-                      <Label for="password" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                        Password <span className="text-danger">*</span>
-                      </Label>
-                      <div className="position-relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          name="password"
-                          placeholder="Min 8 chars, A-Z, 0-9, @$!%*?&"
-                          value={formData.password}
-                          onChange={handleChange}
-                          invalid={!!errors.password}
-                          autoComplete="new-password"
-                          className="shadow-sm"
-                          style={{ paddingRight: "2.5rem" }}
-                        />
-                        <span
-                          role="button"
-                          onClick={() => setShowPassword((p) => !p)}
-                          className="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted"
-                          style={{ cursor: "pointer", zIndex: 5 }}
-                        >
-                          {showPassword ? <FaEyeSlash /> : <FaEye />}
-                        </span>
-                      </div>
-                      {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
-                    </FormGroup>
-                  </Col>
-                )}
-
-                {/* EMPLOYEE TYPE */}
-                <Col md={4}>
+                {/* EMPLOYEE TYPE (UNIT) */}
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="employeeType" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      Employee Type
+                    <Label className="fw-bold text-dark small mb-1">
+                      Employee Unit Type <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="employeeType"
                       type="select"
                       name="employeeType"
                       value={formData.employeeType}
                       onChange={handleChange}
-                      className="shadow-sm cursor-pointer"
+                      className="shadow-xs fw-semibold cursor-pointer"
                     >
-                      {currentEmployeeType === "DIRECTORATE" && (
-                        <option value="DIRECTORATE">Directorate</option>
+                      {/* NIC can select all */}
+                      {isNIC && (
+                        <>
+                          <option value="DIRECTORATE">Directorate</option>
+                          <option value="DEPARTMENT">Department</option>
+                          <option value="NIC">NIC</option>
+                        </>
                       )}
-                      <option value="DEPARTMENT">Department</option>
+
+                      {/* Directorate Admin can create Directorate or Department */}
+                      {isDirectorateAdmin && (
+                        <>
+                          <option value="DIRECTORATE">Directorate</option>
+                          <option value="DEPARTMENT">Department</option>
+                        </>
+                      )}
+
+                      {/* Department Admin only creates Department */}
+                      {isDepartmentAdmin && (
+                        <option value="DEPARTMENT">Department</option>
+                      )}
                     </Input>
                   </FormGroup>
                 </Col>
 
-                {/* ROLE */}
-                <Col md={4}>
+                {/* ROLE ALLOCATION */}
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="role" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      Role Allocation
+                    <Label className="fw-bold text-dark small mb-1">
+                      Role Allocation <span className="text-danger">*</span>
                     </Label>
                     <Input
-                      id="role"
                       type="select"
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="shadow-sm cursor-pointer"
+                      className="shadow-xs fw-semibold cursor-pointer"
                     >
-                      {currentEmployeeType === "DIRECTORATE" && formData.employeeType === "DEPARTMENT" ? (
-                        <option value="ADMIN">Admin</option>
-                      ) : (
+                      {/* NIC can assign any role */}
+                      {isNIC && (
+                        <>
+                          <option value="OFFICER">Officer</option>
+                          <option value="ADMIN">Admin</option>
+                          <option value="NIC">NIC SuperAdmin</option>
+                        </>
+                      )}
+
+                      {/* Directorate Admin can assign ADMIN or OFFICER */}
+                      {isDirectorateAdmin && (
+                        <>
+                          <option value="OFFICER">Officer</option>
+                          <option value="ADMIN">Admin</option>
+                        </>
+                      )}
+
+                      {/* Department Admin creates Officer */}
+                      {isDepartmentAdmin && (
                         <option value="OFFICER">Officer</option>
                       )}
                     </Input>
                   </FormGroup>
                 </Col>
 
-                {/* PERMISSIONS (Full Width) */}
-                <Col md={4}>
+                {/* PASSWORD */}
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="permissions" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      Permissions <small className="text-muted fw-normal">(Comma separated)</small>
+                    <Label className="fw-bold text-dark small mb-1">
+                      {editing ? "Password (Leave blank to keep current)" : "Password"} {!editing && <span className="text-danger">*</span>}
                     </Label>
-                    <Input
-                      id="permissions"
-                      name="permissions"
-                      placeholder="e.g. view_reports, manage_users, edit_data"
-                      value={formData.permissions.join(", ")}
-                      onChange={handleChange}
-                      invalid={!!errors.permissions}
-                      autoComplete="off"
-                      className="shadow-sm"
-                    />
-                    {errors.permissions && <div className="invalid-feedback">{errors.permissions}</div>}
+                    <InputGroup className="shadow-xs">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        placeholder={editing ? "Enter new password if changing" : "Min 8 chars (A-Z, a-z, 0-9, @$!%*?&)"}
+                        value={formData.password}
+                        onChange={handleChange}
+                        invalid={!!errors.password}
+                        autoComplete="new-password"
+                      />
+                      <InputGroupText
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </InputGroupText>
+                    </InputGroup>
+                    {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
                   </FormGroup>
                 </Col>
 
-                {/* CONTROLS (Full Width) */}
-                <Col md={4}>
+                {/* SYSTEM ACCESS (ACTIVE / INACTIVE) */}
+                <Col md={6}>
                   <FormGroup className="mb-0">
-                    <Label for="controls" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      Controls <small className="text-muted fw-normal">(Comma separated)</small>
-                    </Label>
-                    <Input
-                      id="controls"
-                      name="controls"
-                      placeholder="e.g. dashboard, reports, users"
-                      value={formData.controls.join(", ")}
-                      onChange={handleChange}
-                      invalid={!!errors.controls}
-                      autoComplete="off"
-                      className="shadow-sm"
-                    />
-                    {errors.controls && <div className="invalid-feedback">{errors.controls}</div>}
-                  </FormGroup>
-                </Col>
-
-
-                {/* ACTIVE STATUS (Always visible) */}
-                <Col md={editing ? 4 : 4}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                      System Access (Active/Inactive)
+                    <Label className="fw-bold text-dark small mb-1">
+                      System Access
                     </Label>
                     <Input
                       type="select"
                       name="isActive"
-                      value={formData.isActive}
+                      value={formData.isActive ? "true" : "false"}
                       onChange={handleChange}
-                      className={`shadow-sm fw-semibold cursor-pointer ${formData.isActive === "true" ? "text-success border-success bg-success bg-opacity-10" :
-                        formData.isActive === "false" ? "text-danger border-danger bg-danger bg-opacity-10" : ""
-                        }`}
+                      className="shadow-xs fw-semibold cursor-pointer"
                     >
-                      <option value="">🟡 Select Status</option>
-                      <option value="true">🟢 Active (Allowed)</option>
-                      <option value="false">🔴 Inactive (Blocked)</option>
+                      <option value="true">🟢 Active (Allowed to Login)</option>
+                      <option value="false">🔴 Inactive (Blocked / Suspended)</option>
                     </Input>
                   </FormGroup>
                 </Col>
 
-                {/* APPROVAL STATUS (Only visible on Edit) */}
-                {editing && (
-                  <Col md={6}>
-                    <FormGroup className="mb-0">
-                      <Label for="status" className="fw-bold text-secondary mb-1" style={{ fontSize: "13px" }}>
-                        Approval Status
-                      </Label>
-                      <Input
-                        id="status"
-                        type="select"
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        className="shadow-sm cursor-pointer"
-                      >
-                        <option value="PENDING">⏳ Pending</option>
-                        <option value="APPROVED">✅ Approved</option>
-                        <option value="REJECTED">❌ Rejected</option>
-                      </Input>
-                    </FormGroup>
-                  </Col>
-                )}
+                {/* APPROVAL STATUS */}
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="fw-bold text-dark small mb-1">
+                      Approval Status
+                    </Label>
+                    <Input
+                      type="select"
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="shadow-xs fw-semibold cursor-pointer"
+                    >
+                      <option value="APPROVED">✅ Approved</option>
+                      <option value="PENDING">⏳ Pending Review</option>
+                      <option value="REJECTED">❌ Rejected</option>
+                    </Input>
+                  </FormGroup>
+                </Col>
 
+                {/* PERMISSIONS */}
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="fw-bold text-dark small mb-1">
+                      Permissions <small className="text-muted">(Comma separated)</small>
+                    </Label>
+                    <Input
+                      name="permissions"
+                      placeholder="e.g. view_reports, manage_notices, edit_pages"
+                      value={formData.permissions.join(", ")}
+                      onChange={handleChange}
+                      invalid={!!errors.permissions}
+                      className="shadow-xs"
+                    />
+                    {errors.permissions && <div className="invalid-feedback">{errors.permissions}</div>}
+                  </FormGroup>
+                </Col>
               </Row>
             </div>
           </ModalBody>
 
-          {/* FOOTER */}
+          {/* MODAL FOOTER */}
           <ModalFooter className="bg-white border-top shadow-sm">
             <Button
               color="secondary"
@@ -1039,15 +1278,16 @@ const AdminUserManagement = () => {
               Cancel
             </Button>
             <Button
-              color="success"
+              color="primary"
               type="submit"
               disabled={submitting}
-              className="px-4 d-flex align-items-center shadow-sm text-white"
+              className="px-4 shadow-sm text-white"
+              style={{ background: "linear-gradient(135deg, #0d9488 0%, #065f46 100%)", border: "none" }}
             >
               {submitting ? (
                 <>
                   <Spinner size="sm" className="me-2" />
-                  {editing ? "Saving..." : "Creating..."}
+                  {editing ? "Saving Changes..." : "Creating User..."}
                 </>
               ) : (
                 editing ? "💾 Save Changes" : "✅ Create User"
@@ -1056,7 +1296,6 @@ const AdminUserManagement = () => {
           </ModalFooter>
         </Form>
       </Modal>
-
     </Card>
   );
 };

@@ -791,7 +791,7 @@ const ImportantPageManagement = () => {
     const filters = [{ k: "all", l: "All" }, { k: "published", l: "Published" }, { k: "draft", l: "Draft" }, { k: "active", l: "Active" }, { k: "inactive", l: "Inactive" }];
 
     return (
-      <div className="wp-page-wrap">
+      <>
         <ToastContainer toasts={toasts} onRemove={toast.remove} />
         {/* PAGE HEADER */}
         <ReactstrapCard className="adm-card mb-4">
@@ -925,7 +925,7 @@ const ImportantPageManagement = () => {
             <div style={{ height: 20 }} />
           </CardBody>
         </ReactstrapCard>
-      </div>
+      </>
     );
   }
 

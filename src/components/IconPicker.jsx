@@ -25,7 +25,7 @@ const IconPicker = ({ isOpen, toggle, onSelect }) => {
     >
       {/* DEFAULT CLOSE BUTTON */}
       <ModalHeader toggle={toggle}>
-        <strong className="text-primary">Search & Select An Icon</strong>
+        <strong className="text-white ">Search & Select An Icon</strong>
       </ModalHeader>
 
       <ModalBody>

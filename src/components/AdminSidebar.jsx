@@ -327,8 +327,8 @@ const adminMenu = [
           en: "Quick Access",
           hi: "त्वरित पहुंच"
         },
-        allowedRoles: ["ADMIN", "NIC", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "NIC"]
+        allowedRoles: ["ADMIN", "NIC",],
+        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
       },
       {
         id: "brands",
@@ -430,7 +430,7 @@ const adminMenu = [
       hi: "उपयोगकर्ता प्रबंधन"
     },
     allowedRoles: ["ADMIN", "NIC"],
-    allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "NIC"]
   },
   // NIC
   {
