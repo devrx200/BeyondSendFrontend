@@ -2,7 +2,6 @@ import { lazy } from 'react';
 
 /* ─── Public Pages ────────────────────────────────────────────────────────── */
 export const Home = lazy(() => import("../views/pages/Home"));
-export const About = lazy(() => import("../views/pages/About"));
 export const Contact = lazy(() => import("../views/pages/Contact"));
 export const Gallery = lazy(() => import("../views/pages/Gallery"));
 export const Universities = lazy(() => import("../views/pages/Universities"));
