@@ -34,11 +34,11 @@ const ContactRow = ({ icon, label, value, href, colorClass = 'bg-primary' }) => 
 /* ── Contact card (Dept / Directorate) ── */
 const ContactCard = ({ item, isHindi }) => {
   const isPrimary = item.color === 'primary';
-  const accent    = isPrimary ? 'primary' : 'success';
-  const bgGrad    = isPrimary
+  const accent = isPrimary ? 'primary' : 'success';
+  const bgGrad = isPrimary
     ? 'linear-gradient(135deg,#e8f0fe 0%,#fff 70%)'
     : 'linear-gradient(135deg,#d1fae5 0%,#fff 70%)';
-  const border    = isPrimary
+  const border = isPrimary
     ? 'rgba(13,110,253,0.1)' : 'rgba(25,135,84,0.1)';
 
   return (
@@ -78,7 +78,7 @@ const ContactCard = ({ item, isHindi }) => {
       <div className="px-4 pb-3 d-flex gap-1 align-items-center" aria-hidden="true">
         <div className={`bg-${accent} rounded-pill`} style={{ width: 28, height: 4 }} />
         <div className="rounded-pill" style={{ width: 14, height: 4, background: isPrimary ? '#4f83e7' : '#0e9f6e' }} />
-        <div className="rounded-pill" style={{ width: 7,  height: 4, background: isPrimary ? '#c7d8fc' : '#bbf7d0' }} />
+        <div className="rounded-pill" style={{ width: 7, height: 4, background: isPrimary ? '#c7d8fc' : '#bbf7d0' }} />
       </div>
     </Card>
   );
@@ -140,7 +140,7 @@ const Contact = () => {
 
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cards,   setCards]   = useState([]);
+  const [cards, setCards] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -160,23 +160,13 @@ const Contact = () => {
     load();
   }, []);
 
-  if (loading) {
-    return (
-      <PageLayout
-        title="Contact Details"
-        titleHi="संपर्क विवरण"
-        showBreadcrumb
-      >
-        <PageLoader inline={true} />
-      </PageLayout>
-    );
-  }
 
-  const address      = contact?.address      || {};
-  const officeHours  = contact?.officeHours  || {};
-  const officials    = contact?.officials    || [];
-  const deptCards    = cards.filter((c) => c.type === 'department');
-  const dirCards     = cards.filter((c) => c.type === 'directorate');
+
+  const address = contact?.address || {};
+  const officeHours = contact?.officeHours || {};
+  const officials = contact?.officials || [];
+  const deptCards = cards.filter((c) => c.type === 'department');
+  const dirCards = cards.filter((c) => c.type === 'directorate');
 
   return (
     <PageLayout
@@ -186,7 +176,7 @@ const Contact = () => {
       descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के आधिकारिक संपर्क विवरण, हेल्पलाइन नंबर एवं पता।"
       showBreadcrumb
     >
-      {/* ── Top Info Cards ── */}
+      {loading && <PageLoader />}
       <Row className="g-4 mb-4">
         <Col xs={12} md={4}>
           <Card className="border-0 shadow-sm h-100">
@@ -368,10 +358,10 @@ const Contact = () => {
             : <EmptyCard isDirectorate isHindi={isHindi} />}
         </Col>
       </Row>
-
+      <hr className="mt-4" />
       {/* ── Building Image ── */}
-      <Row className="mt-4">
-        <Col>
+      <Row >
+        <Col >
           <img
             src={indrawatiBhavan}
             alt={isHindi ? 'इंद्रावती भवन' : 'Indrawati Bhavan'}

@@ -4,11 +4,13 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import PageLoader from "../components/PageLoader";
 const API_URL = import.meta.env.VITE_API_URL;
+let authInFlightPromise = null;
+let lastAuthValidationTime = 0;
+
 const AuthMiddleware = ({ allowedRoles = [],
   allowedEmployeeTypes = []
 }) => {
   const navigate = useNavigate();
-
   const location = useLocation();
 
   const userRole = sessionStorage.getItem("userRole");
@@ -35,7 +37,24 @@ const AuthMiddleware = ({ allowedRoles = [],
         redirectToLogin("Session Expired. Please Login Again.");
         return;
       }
-      const res = await axios.post(`${API_URL}/api/check-auth-token`, { token });
+
+      const now = Date.now();
+      if (now - lastAuthValidationTime < 3000 && isPreAuthorized) {
+        setIsAuthorized(true);
+        setLoading(false);
+        return;
+      }
+
+      if (!authInFlightPromise) {
+        authInFlightPromise = axios.post(`${API_URL}/api/check-auth-token`, { token })
+          .finally(() => {
+            setTimeout(() => {
+              authInFlightPromise = null;
+            }, 300);
+          });
+      }
+
+      const res = await authInFlightPromise;
       if (
         res.status !== 200 ||
         !res.data?.success
@@ -43,6 +62,7 @@ const AuthMiddleware = ({ allowedRoles = [],
         redirectToLogin("Authentication Failed.");
         return;
       }
+      lastAuthValidationTime = Date.now();
       const user = res.data?.user || {};
       const role = user?.role?.toUpperCase();
       const employeeType = user?.employeeType?.toUpperCase();
@@ -131,15 +151,16 @@ const AuthMiddleware = ({ allowedRoles = [],
     }); navigate("/admin/dashboard", { replace: true });
   };
 
-  if (loading) {
+  if (!isAuthorized) {
     return <PageLoader />;
   }
 
-  if (!isAuthorized) {
-    return null;
-  }
-
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      {loading && <PageLoader />}
+    </>
+  );
 };
 
 export default AuthMiddleware;

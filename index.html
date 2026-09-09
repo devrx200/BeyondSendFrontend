@@ -107,7 +107,12 @@
       </div>
     </div>
   </noscript>
-  <div id="root"></div>
+  <div id="root">
+    <div class="site-global-loader-backdrop" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(1px);z-index:999999;">
+      <img src="/loader.gif" alt="Loading..." style="width:68px;height:auto;" />
+      <span style="margin-top:8px;font-size:12.5px;font-weight:600;color:#1e293b;font-family:system-ui,-apple-system,sans-serif;">कृपया प्रतीक्षा करें...</span>
+    </div>
+  </div>
 </body>
 
 </html>

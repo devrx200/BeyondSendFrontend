@@ -65,9 +65,8 @@ const AppRoutes = () => {
         <Route path="/auth/login" element={<MainLayout><AdminLogin /></MainLayout>} />
       </Route>
 
-      {/* ── Admin Protected Routes ───────────────────────── */}
-      <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]} />}>
-        <Route element={<AdminLayout />}>
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="announcements" element={<AnnouncementsManagement />} />
@@ -77,7 +76,6 @@ const AppRoutes = () => {
           <Route path="help-guidance" element={<HelpGuidance />} />
           <Route path="tutorials" element={<HelpTutorials />} />
 
-          {/* ADMIN */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route path="slider" element={<SliderManagement />} />
             <Route path="about-section" element={<AboutSectionMangement />} />
@@ -93,7 +91,6 @@ const AppRoutes = () => {
             <Route path="contact-card-management" element={<ContactCardCMS />} />
           </Route>
 
-          {/* ADMIN + OFFICER */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT"]} />}>
             <Route path="multi-section-pages-management" element={<PageCreatorManagement />} />
             <Route path="rich-content-pages" element={<RichContentPageManagements />} />
@@ -102,22 +99,18 @@ const AppRoutes = () => {
             <Route path="gallery" element={<GalleryManagement />} />
           </Route>
 
-          {/* ADMIN + OFFICER (DIRECTORATE) */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DIRECTORATE"]} />}>
             <Route path="directorate-notices" element={<DirectorateNoticeManagement />} />
           </Route>
 
-          {/* ADMIN + OFFICER (DEPARTMENT) */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "OFFICER"]} allowedEmployeeTypes={["DEPARTMENT"]} />}>
             <Route path="department-notices" element={<DepartmentNoticeManagement />} />
           </Route>
 
-          {/* ADMIN + NIC */}
           <Route element={<AuthMiddleware allowedRoles={["ADMIN", "NIC"]} allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]} />}>
             <Route path="users-management" element={<AdminUserManagement />} />
           </Route>
 
-          {/* NIC */}
           <Route element={<AuthMiddleware allowedRoles={["NIC"]} allowedEmployeeTypes={["NIC"]} />}>
             <Route path="session-manager" element={<SessionManager />} />
             <Route path="activity-logs" element={<ActivityLogManagement />} />

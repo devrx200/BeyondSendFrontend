@@ -3764,13 +3764,7 @@ html {
   }
 }
 
-/* ── Server Down Page ── */
 .server-down-bg {
-  background-image: url('/page-bg.svg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #eef4fa;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -6506,7 +6500,7 @@ body {
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.28);
+  background: transparent !important;
   backdrop-filter: blur(2.5px);
   -webkit-backdrop-filter: blur(1px);
   z-index: 999999;
