@@ -1,0 +1,139 @@
+<svg viewBox="0 0 500 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="svg404_blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <linearGradient id="svg404_amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="svg404_shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1e3a8a" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <circle cx="90" cy="50" r="5" fill="#f59e0b" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="50;42;50" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="410" cy="65" r="6" fill="#3b82f6" opacity="0.6">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="65;57;65" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="250" cy="25" r="4" fill="#10b981" opacity="0.6">
+    <animate attributeName="opacity" values="0.2;0.9;0.2" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="cy" values="25;20;25" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="70" cy="180" r="4" fill="#3b82f6" opacity="0.5">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4s" repeatCount="indefinite" />
+  </circle>
+  <circle cx="430" cy="170" r="5" fill="#f59e0b" opacity="0.6">
+    <animate attributeName="opacity" values="0.2;1;0.2" dur="4s" repeatCount="indefinite" />
+  </circle>
+
+  <g filter="url(#svg404_shadow)">
+    <g transform="translate(0, 0)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values="0,0; 0,-8; 0,0"
+        dur="4s"
+        repeatCount="indefinite"
+      />
+      <text
+        x="145"
+        y="180"
+        text-anchor="middle"
+        fill="url(#svg404_blue)"
+        font-size="155"
+        font-weight="900"
+        font-family="system-ui, -apple-system, sans-serif"
+      >
+        4
+      </text>
+    </g>
+
+    <g transform="translate(0, 0)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values="0,0; 0,-6; 0,0"
+        dur="4s"
+        repeatCount="indefinite"
+      />
+      <circle cx="250" cy="120" r="62" stroke="url(#svg404_blue)" stroke-width="18" fill="none" />
+      <circle
+        cx="250"
+        cy="120"
+        r="45"
+        stroke="#60a5fa"
+        stroke-width="2.5"
+        stroke-dasharray="8 6"
+        fill="none"
+      >
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from="0 250 120"
+          to="360 250 120"
+          dur="8s"
+          repeatCount="indefinite"
+        />
+      </circle>
+
+      <g>
+        <animateTransform
+          attributeName="transform"
+          type="translate"
+          values="-14,-8; 14,8; -14,-8"
+          dur="4s"
+          repeatCount="indefinite"
+        />
+        <circle cx="250" cy="120" r="22" fill="#3b82f6" opacity="0.12" />
+        <circle cx="250" cy="120" r="12" fill="#1e40af" />
+        <circle cx="247" cy="117" r="4" fill="#ffffff" />
+      </g>
+
+      <g transform="translate(285, 155) rotate(45)">
+        <rect x="0" y="-3.5" width="28" height="7" rx="3.5" fill="url(#svg404_amber)">
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            values="0; 6; 0; -6; 0"
+            dur="4s"
+            repeatCount="indefinite"
+          />
+        </rect>
+      </g>
+    </g>
+
+    <g transform="translate(0, 0)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values="0,0; 0,-8; 0,0"
+        dur="4s"
+        begin="0.4s"
+        repeatCount="indefinite"
+      />
+      <text
+        x="355"
+        y="180"
+        text-anchor="middle"
+        fill="url(#svg404_blue)"
+        font-size="155"
+        font-weight="900"
+        font-family="system-ui, -apple-system, sans-serif"
+      >
+        4
+      </text>
+    </g>
+  </g>
+
+  <ellipse cx="250" cy="222" rx="170" ry="9" fill="#1e3a8a" opacity="0.08">
+    <animate attributeName="rx" values="170;150;170" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.08;0.04;0.08" dur="4s" repeatCount="indefinite" />
+  </ellipse>
+</svg>

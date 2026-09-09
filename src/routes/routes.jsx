@@ -35,6 +35,8 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/contact-us" element={<Contact />} />
+        <Route path="/about" element={<SlugResolver key="about" />} />
+        <Route path="/about-us" element={<SlugResolver key="about-us" />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/universities" element={<Universities />} />
         <Route path="/colleges" element={<Colleges />} />

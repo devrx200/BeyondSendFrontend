@@ -343,7 +343,7 @@ const Contact = () => {
       </Row>
 
       {/* ── Department & Directorate Cards ── */}
-      <Row className="g-0 mb-3">
+      <Row className="g-0 mb-4">
         {/* Department */}
         <Col xs={12} lg={6} className="pe-lg-2">
           {deptCards.length > 0
