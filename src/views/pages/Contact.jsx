@@ -177,7 +177,7 @@ const Contact = () => {
       showBreadcrumb
     >
       {loading && <PageLoader />}
-      <Row className="g-4 mb-4">
+      <Row className="g-4 mb-3">
         <Col xs={12} md={4}>
           <Card className="border-0 shadow-sm h-100">
             <CardBody>
@@ -239,7 +239,7 @@ const Contact = () => {
       </Row>
 
       {/* ── Key Officials ── */}
-      <Row className="mb-4">
+      <Row className="mb-3">
         <Col>
           <Card className="border-0 shadow-sm">
             <CardBody>
@@ -343,7 +343,7 @@ const Contact = () => {
       </Row>
 
       {/* ── Department & Directorate Cards ── */}
-      <Row className="g-0">
+      <Row className="g-0 mb-3">
         {/* Department */}
         <Col xs={12} lg={6} className="pe-lg-2">
           {deptCards.length > 0
@@ -358,14 +358,14 @@ const Contact = () => {
             : <EmptyCard isDirectorate isHindi={isHindi} />}
         </Col>
       </Row>
-      <hr className="mt-4" />
+
       {/* ── Building Image ── */}
       <Row >
         <Col >
           <img
             src={indrawatiBhavan}
             alt={isHindi ? 'इंद्रावती भवन' : 'Indrawati Bhavan'}
-            className="img-fluid rounded-3 shadow-sm w-100"
+            className="img-fluid rounded-3 shadow-sm w-100 mt-3"
             style={{ maxHeight: 400, objectFit: 'cover' }}
             loading="lazy"
           />
