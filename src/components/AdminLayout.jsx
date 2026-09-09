@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
 import BreadcrumbBar from "./AdminBreadcrumbBar";
+import PageLoader from "./PageLoader";
 import { useToast, ToastContainer } from "../utilities/WPToast";
 import "../css/AdminTheme.css";
 import "../css/WPStyleTheme.css";
@@ -62,9 +63,9 @@ const AdminLayout = () => {
         <BreadcrumbBar />
 
         <div className="adm-content-scroll">
-
-          <Outlet />
-
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
 
         <AdminFooter />

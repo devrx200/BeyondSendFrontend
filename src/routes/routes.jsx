@@ -1,19 +1,20 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Suspense } from "react";
 
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import GovtBrandCarousel from "../components/GovtBrandCarousel";
+import MainLayout from "../components/MainLayout";
 import AdminLayout from "../components/AdminLayout";
+import PageLoader from "../components/PageLoader";
+
+/* ─── Eager Public Pages ─────────────────────────────────────────────────── */
+import Home from "../views/pages/Home";
 
 /* ─── Middleware ──────────────────────────────────────────────────────────── */
 import AuthMiddleware from "../Middlewares/AuthMiddleware";
 import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
 
-/* ─── Public Pages ────────────────────────────────────────────────────────── */
+/* ─── Public Pages (Lazy) ─────────────────────────────────────────────────── */
 import {
-  Home, Contact, Gallery, Universities, Colleges, Downloads, FeedbackForm, HelpSupport,
+  Contact, Gallery, Universities, Colleges, Downloads, FeedbackForm, HelpSupport,
   SchemeAnnouncementDetails, SchemeAnnouncementListView, MultiSectionPages, SlugResolver, DepDirectorateNoticesListView,
   AdminLogin, AdminDashboard, AdminUserManagement, AdminEducationStats, AdminFeedbackList, MenuManagement,
   HeaderManagement, SliderManagement, FooterSection, AboutSectionMangement, AnnouncementsManagement, NewUpdatesManagement,
@@ -23,51 +24,41 @@ import {
   DbBackupManagement
 } from "./LazyLoadingRouter";
 
-/* ─── Main Layout ─────────────────────────────────────────────────────────── */
-const MainLayout = ({ children }) => (
-  <div className="app-wrapper d-flex flex-column min-vh-100">
-    <Header />
-    <main className="flex-grow-1">{children}</main>
-    <GovtBrandCarousel />
-    <Footer />
-  </div>
-);
-
 /* ─── App Routes ──────────────────────────────────────────────────────────── */
 const AppRoutes = () => {
   const location = useLocation();
 
   return (
-    <Suspense fallback={<div className="d-flex justify-content-center align-items-center vh-100">Loading...</div>}>
-      <Routes>
+    <Routes>
+      {/* ── Public Routes with Persistent MainLayout ──────────────────────── */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/contact-us" element={<Contact />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/universities" element={<Universities />} />
+        <Route path="/colleges" element={<Colleges />} />
+        <Route path="/downloads" element={<Downloads />} />
+        <Route path="/feedback" element={<FeedbackForm />} />
+        <Route path="/help-and-support" element={<HelpSupport />} />
 
-      {/* ── Public Routes ─────────────────────────────────────────────────── */}
-      <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-      <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-      <Route path="/contact-us" element={<MainLayout><Contact /></MainLayout>} />
-      <Route path="/gallery" element={<MainLayout><Gallery /></MainLayout>} />
-      <Route path="/universities" element={<MainLayout><Universities /></MainLayout>} />
-      <Route path="/colleges" element={<MainLayout><Colleges /></MainLayout>} />
-      <Route path="/downloads" element={<MainLayout><Downloads /></MainLayout>} />
-      <Route path="/feedback" element={<MainLayout><FeedbackForm /></MainLayout>} />
-      <Route path="/help-and-support" element={<MainLayout><HelpSupport /></MainLayout>} />
+        {/* Announcements & Schemes */}
+        <Route path="/announcements" element={<SchemeAnnouncementListView />} />
+        <Route path="/announcements/:slug" element={<SchemeAnnouncementDetails />} />
+        <Route path="/announcement/:slug" element={<SchemeAnnouncementDetails />} />
+        <Route path="/schemes" element={<SchemeAnnouncementListView />} />
+        <Route path="/schemes/:slug" element={<SchemeAnnouncementDetails />} />
+        <Route path="/scheme/:slug" element={<SchemeAnnouncementDetails />} />
 
-      {/* Announcements & Schemes */}
-      <Route path="/announcements" element={<MainLayout><SchemeAnnouncementListView /></MainLayout>} />
-      <Route path="/announcements/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
-      <Route path="/announcement/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
-      <Route path="/schemes" element={<MainLayout><SchemeAnnouncementListView /></MainLayout>} />
-      <Route path="/schemes/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
-      <Route path="/scheme/:slug" element={<MainLayout><SchemeAnnouncementDetails /></MainLayout>} />
+        {/* Notices */}
+        <Route path="/directorate-notices" element={<DepDirectorateNoticesListView />} />
+        <Route path="/directorate-notice/:slug" element={<DepDirectorateNoticesListView />} />
+        <Route path="/departments-notices" element={<DepDirectorateNoticesListView />} />
+        <Route path="/department-notice/:slug" element={<DepDirectorateNoticesListView />} />
 
-      {/* Notices */}
-      <Route path="/directorate-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
-      <Route path="/directorate-notice/:slug" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
-      <Route path="/departments-notices" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
-      <Route path="/department-notice/:slug" element={<MainLayout><DepDirectorateNoticesListView /></MainLayout>} />
-
-      {/* Important + Rich Content Pages +  Multi-Section Pages  – supports any nested path */}
-      <Route path="*" element={<MainLayout> <SlugResolver key={location.pathname} /></MainLayout>} />
+        {/* Important + Rich Content Pages + Multi-Section Pages */}
+        <Route path="*" element={<SlugResolver key={location.pathname} />} />
+      </Route>
 
       {/* ── Admin: Login (Public) ──────────────────────────────────────────── */}
       <Route element={<PublicAdminRoute />}>
@@ -137,7 +128,6 @@ const AppRoutes = () => {
       </Route>
 
     </Routes>
-    </Suspense>
   );
 };
 

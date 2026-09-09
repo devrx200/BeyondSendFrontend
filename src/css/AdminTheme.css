@@ -570,6 +570,7 @@
   justify-content: center;
   padding: 4px !important;
   margin-bottom: 8px;
+  cursor: pointer;
 }
 
 .adm-sidebar.is-collapsed .adm-side-brand-logo {
@@ -579,6 +580,57 @@
 
 .adm-sidebar.is-collapsed .adm-side-brand-text {
   display: none;
+}
+
+.adm-sidebar.is-collapsed .adm-side-avatar-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px 0 2px !important;
+  margin: 0 auto !important;
+  gap: 6px !important;
+}
+
+.adm-sidebar.is-collapsed .adm-side-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 auto !important;
+  cursor: pointer !important;
+  grid-row: auto !important;
+  align-self: center !important;
+}
+
+.adm-sidebar.is-collapsed .adm-side-name,
+.adm-sidebar.is-collapsed .adm-side-designation {
+  display: none !important;
+}
+
+.adm-sidebar.is-collapsed .adm-side-session {
+  margin: 4px auto 0 !important;
+  padding: 4px 6px !important;
+  font-size: 0.65rem !important;
+  width: auto !important;
+  max-width: 66px !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  text-align: center !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  grid-column: auto !important;
+}
+
+.adm-sidebar.is-collapsed .adm-side-session svg {
+  font-size: 0.82rem !important;
+  margin: 0 !important;
+}
+
+.adm-sidebar.is-collapsed .adm-side-session-time-compact {
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.2px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
 }
 
 .adm-sidebar.is-collapsed .adm-side-item {

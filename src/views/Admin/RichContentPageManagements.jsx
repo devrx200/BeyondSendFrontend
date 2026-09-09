@@ -8,6 +8,7 @@ import {
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
+import PageLoader from "../../components/PageLoader";
 
 const API = import.meta.env.VITE_API_URL;
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
@@ -599,7 +600,7 @@ const RichContentPageManagements = () => {
           <div className="wp-table-container">
             <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => p - 1)} onNext={() => setCurrentPage(p => p + 1)} />
             {loading ? (
-              <div className="text-center py-4"><Spinner size="sm" /></div>
+              <PageLoader inline={true} />
             ) : pages.length === 0 ? (
               <div className="text-center py-4 text-muted">
                 <p className="mb-2">No pages found.</p>

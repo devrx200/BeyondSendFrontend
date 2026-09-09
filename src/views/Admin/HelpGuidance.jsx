@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const HelpGuidance = () => {
@@ -315,12 +316,8 @@ const HelpGuidance = () => {
             </Row>
           </div>
 
-          {/* ── CONTENT ── */}
           {loading ? (
-            <div className="text-center py-5">
-              <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-              <p className="text-muted mt-3 mb-0">{t("Loading resources...", "संसाधन लोड हो रहे हैं...")}</p>
-            </div>
+            <PageLoader inline={true} />
           ) : list.length === 0 ? (
             <Card className="adm-card text-center py-5">
               <CardBody>

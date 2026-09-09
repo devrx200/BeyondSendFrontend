@@ -8,6 +8,7 @@ import {
 import { FaUniversity } from 'react-icons/fa';
 import { FaMapLocation } from 'react-icons/fa6';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
 
@@ -273,10 +274,7 @@ const Universities = () => {
                 {TABS.map(({ id }) => (
                   <TabPane tabId={id} key={id}>
                     {loading ? (
-                      <div className="text-center py-5">
-                        <Spinner color="primary" size="sm" className="me-2" />
-                        <span className="text-muted" style={{ fontSize: 13 }}>{isHindi ? 'लोड हो रहा है...' : 'Loading...'}</span>
-                      </div>
+                      <PageLoader inline={true} />
                     ) : filtered.length > 0 ? (
                       <div className="d-flex flex-column gap-2">
                         {filtered.map((university) => (

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../components/PageLoader";
 const API_URL = import.meta.env.VITE_API_URL;
 const AuthMiddleware = ({ allowedRoles = [],
   allowedEmployeeTypes = []
@@ -10,11 +11,16 @@ const AuthMiddleware = ({ allowedRoles = [],
 
   const location = useLocation();
 
-  const [loading, setLoading] =
-    useState(true);
+  const userRole = sessionStorage.getItem("userRole");
+  const employeeType = sessionStorage.getItem("employeeType");
+  const token = sessionStorage.getItem("authToken");
 
-  const [isAuthorized, setIsAuthorized] =
-    useState(false);
+  const hasRolePermission = !allowedRoles.length || (userRole && allowedRoles.includes(userRole));
+  const hasEmpPermission = !allowedEmployeeTypes.length || (employeeType && allowedEmployeeTypes.includes(employeeType));
+  const isPreAuthorized = Boolean(token && userRole && hasRolePermission && hasEmpPermission);
+
+  const [loading, setLoading] = useState(!isPreAuthorized);
+  const [isAuthorized, setIsAuthorized] = useState(isPreAuthorized);
 
   const alertShownRef = useRef(false);
 
@@ -126,15 +132,7 @@ const AuthMiddleware = ({ allowedRoles = [],
   };
 
   if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }} >
-        <div className="spinner-border text-primary" role="status" >
-          <span className="visually-hidden">
-            Loading...
-          </span>
-        </div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!isAuthorized) {

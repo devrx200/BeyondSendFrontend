@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { FaTicketSimple } from 'react-icons/fa6';
 import axios from 'axios';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const API = import.meta.env.VITE_API_URL;
@@ -105,7 +106,6 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
     win.print();
   };
 
-  /* Loading */
   if (loading) {
     return (
       <>
@@ -114,10 +114,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
           <title>{isHindi ? 'लोड हो रहा है...' : 'Loading...'} - {SITE_TITLE_SUFFIX}</title>
           <meta name="robots" content="noindex" />
         </Helmet>
-        <Container className="py-5 text-center">
-          <Spinner color="primary" />
-          <p className="mt-3 text-muted">{isHindi ? 'लोड हो रहा है...' : 'Loading...'}</p>
-        </Container>
+        <PageLoader inline={true} />
       </>
     );
   }

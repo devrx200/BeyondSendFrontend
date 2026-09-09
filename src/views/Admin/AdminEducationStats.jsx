@@ -23,6 +23,7 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaSearch, FaFilter } from "react-icons/fa";
 
 
@@ -482,12 +483,8 @@ const AdminEducationStats = () => {
           </div>
         </div>
 
-        {/* TABLE */}
         {loading ? (
-          <div className="text-center py-5">
-            <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-            <p className="mt-3 text-muted">Loading statistics...</p>
-          </div>
+          <PageLoader inline={true} />
         ) : (
           <>
             <Table responsive striped hover>

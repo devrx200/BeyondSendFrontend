@@ -60,8 +60,4 @@ const decodeBase64 = (base64RowContent) => {
     }
 };
 
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = { encodeBase64, decodeBase64 };
-}
-
 export { encodeBase64, decodeBase64 };

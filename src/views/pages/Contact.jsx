@@ -5,6 +5,7 @@ import {
   FaEnvelope, FaBuilding, FaUniversity, FaFax,
 } from 'react-icons/fa';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from 'axios';
 import indrawatiBhavan from '/indrawati-bhavan.png';
@@ -161,11 +162,13 @@ const Contact = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">{isHindi ? 'लोड हो रहा है...' : 'Loading...'}</span>
-        </div>
-      </div>
+      <PageLayout
+        title="Contact Details"
+        titleHi="संपर्क विवरण"
+        showBreadcrumb
+      >
+        <PageLoader inline={true} />
+      </PageLayout>
     );
   }
 

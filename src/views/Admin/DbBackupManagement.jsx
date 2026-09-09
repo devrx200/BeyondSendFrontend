@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API = import.meta.env.VITE_API_URL;
@@ -291,14 +292,8 @@ const DbBackupManagement = () => {
               </CardHeader>
               <CardBody className="p-3" style={{ minHeight: "200px" }}>
 
-                {/* Clean Pro-Software Table Loader Context Overlay */}
                 {loading ? (
-                  <div className="d-flex flex-column align-items-center justify-content-center py-5">
-                    <Spinner color="primary" style={{ width: "2.5rem", height: "2.5rem" }} />
-                    <p className="text-muted mt-2 small mb-0">
-                      {t("Updating backup records...", "बैकअप रिकॉर्ड अपडेट हो रहे हैं...")}
-                    </p>
-                  </div>
+                  <PageLoader inline={true} />
                 ) : paginatedBackups.length === 0 ? (
                   <div className="text-center text-muted py-5">
                     <FaFolderOpen size={42} className="mb-2 text-secondary opacity-50" />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal, ModalHeader, ModalBody, Card, CardBody, CardHeader, Spinner } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 
 const getToken = () => {
   const token = sessionStorage.getItem("authToken");
@@ -128,11 +129,7 @@ const AdminFeedbackList = () => {
   };
 
   if (loading) {
-    return (
-      <Container className="py-4 text-center">
-        <Spinner color="primary" /> Loading feedbacks...
-      </Container>
-    );
+    return <PageLoader inline={true} />;
   }
 
   if (error) {
@@ -245,9 +242,7 @@ const AdminFeedbackList = () => {
           </ModalHeader>
           <ModalBody>
             {detailLoading ? (
-              <div className="text-center py-3">
-                <Spinner color="primary" /> Loading...
-              </div>
+              <PageLoader inline={true} />
             ) : selectedFeedback ? (
               <>
                 <p>

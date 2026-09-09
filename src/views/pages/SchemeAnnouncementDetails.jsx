@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { decodeBase64 } from '../../utilities/rXBase64';
+import PageLoader from '../../components/PageLoader';
 import {
   FaCalendarAlt, FaHome, FaTag, FaChevronLeft,
   FaCalendarPlus, FaExclamationTriangle,
@@ -77,17 +78,28 @@ const SchemeAnnouncementDetails = () => {
         <Helmet>
           <html lang={isHindi ? 'hi' : 'en'} />
           <title>{isHindi ? 'लोड हो रहा है...' : 'Loading...'} - {SITE_TITLE_SUFFIX}</title>
-          <meta name="robots" content="noindex" />
         </Helmet>
-        <Container className="py-5">
-          <Row className="justify-content-center text-center">
-            <Col xs="auto">
-              <Spinner color="primary" style={{ width: '3rem', height: '3rem' }} />
-              <p className="mt-3 text-muted fw-semibold">
-                {isHindi ? 'लोड हो रहा है...' : 'Loading, please wait…'}
-              </p>
-            </Col>
-          </Row>
+        <Container className="py-4 position-relative" style={{ minHeight: '420px' }}>
+          <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center flex-wrap">
+            <BreadcrumbItem>
+              <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+                <FaHome size={13} aria-hidden="true" />
+                {isHindi ? 'होम' : 'Home'}
+              </Link>
+            </BreadcrumbItem>
+            <BreadcrumbItem>
+              <Link to={listRoute} className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
+                <ListIcon size={13} aria-hidden="true" />
+                {listTitle}
+              </Link>
+            </BreadcrumbItem>
+            <BreadcrumbItem active className="fw-semibold text-secondary">
+              {isHindi ? 'लोड हो रहा है...' : 'Loading...'}
+            </BreadcrumbItem>
+          </Breadcrumb>
+          <Card className="border-0 shadow-sm rounded-4 p-4 text-center" style={{ minHeight: '280px', border: '1px solid #e2e8f0' }}>
+            <PageLoader inline={true} />
+          </Card>
         </Container>
       </>
     );

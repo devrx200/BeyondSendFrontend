@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -81,9 +82,7 @@ const Downloads = () => {
       showBreadcrumb
     >
       {catLoading ? (
-        <div className="text-center py-5">
-          <Spinner color="primary" />
-        </div>
+        <PageLoader inline={true} />
       ) : (
         <Row>
           <Col lg={12}>
@@ -143,8 +142,7 @@ const Downloads = () => {
                           {loading ? (
                             <tr>
                               <td colSpan={6} className="text-center py-4">
-                                <Spinner size="sm" className="me-2" />
-                                {isHindi ? 'लोड हो रहा है...' : 'Loading...'}
+                                <PageLoader inline={true} />
                               </td>
                             </tr>
                           ) : downloads.length === 0 ? (

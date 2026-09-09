@@ -170,34 +170,30 @@ const Header = () => {
       <span className="nav-pattern-strip" />
       {/* ── TOP BAR ── */}
       <div className="top-bar fw-bold py-0 text-white border-2 border-warning " role="banner">
-        <Container>
-          {/* 3-column layout: Phone LEFT · Email CENTER · Language RIGHT */}
+        <Container fluid className="px-2 px-sm-3 px-lg-4 px-xxl-5">
           <div
-            className="container-inner d-flex align-items-center justify-content-between"
-            style={{ minHeight: 34, gap: 8 }}
+            className="container-inner d-flex align-items-center justify-content-between flex-nowrap"
+            style={{ minHeight: 34, gap: 6 }}
           >
-            {/* LEFT — Phone */}
-            <div className="top-item-left d-flex align-items-center">
+            <div className="top-item-left d-flex align-items-center flex-nowrap gap-2 gap-md-3">
               {headerData?.phone && (
-                <a href={`tel:${headerData.phone}`} className="top-link" aria-label={`Call ${headerData.phone}`}>
-                  <FaPhone size={11} aria-hidden="true" />
+                <a href={`tel:${headerData.phone}`} className="top-link text-nowrap" aria-label={`Call ${headerData.phone}`}>
+                  <FaPhone size={10} aria-hidden="true" />
                   <span>{headerData.phone}</span>
                 </a>
               )}
-            </div>
-
-            {/* CENTER — Email */}
-            <div className="top-item-center d-flex align-items-center justify-content-center text-center">
+              {headerData?.phone && headerData?.email && (
+                <span className="top-bar-divider text-white-50" aria-hidden="true">|</span>
+              )}
               {headerData?.email && (
-                <a href={`mailto:${headerData.email}`} className="top-link" aria-label={`Email ${headerData.email}`}>
-                  <FaEnvelope size={11} aria-hidden="true" />
+                <a href={`mailto:${headerData.email}`} className="top-link text-nowrap" aria-label={`Email ${headerData.email}`}>
+                  <FaEnvelope size={10} aria-hidden="true" />
                   <span>{headerData.email}</span>
                 </a>
               )}
             </div>
 
-            {/* RIGHT — Language button & controls */}
-            <div className="top-item-right d-flex align-items-center justify-content-end gap-1">
+            <div className="top-item-right d-flex align-items-center justify-content-end gap-1 flex-nowrap">
               <div className="d-none d-md-flex gap-1">
                 <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={decreaseFontSize} title="Decrease font size">A-</Badge>
                 <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={resetFontSize} title="Reset font size">A</Badge>
@@ -205,7 +201,7 @@ const Header = () => {
               </div>
               <Badge
                 color="light"
-                className="ctrl-badge text-dark d-flex align-items-center gap-1"
+                className="ctrl-badge text-dark d-flex align-items-center gap-1 text-nowrap"
                 role="button"
                 onClick={toggleLanguage}
                 title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
@@ -213,11 +209,11 @@ const Header = () => {
                 <FaLanguage aria-hidden="true" />
                 {isHindi ? "English" : "हिंदी"}
               </Badge>
-              <Link to="/accessibility-statement" className="top-link d-none d-lg-inline-flex">
+              <Link to="/accessibility-statement" className="top-link d-none d-lg-inline-flex text-nowrap">
                 <FaUniversalAccess aria-hidden="true" />
                 {t("Accessibility", "अभिगम्यता")}
               </Link>
-              <Link to="/sitemap" className="top-link d-none d-lg-inline-flex">
+              <Link to="/sitemap" className="top-link d-none d-lg-inline-flex text-nowrap">
                 <FaSitemap aria-hidden="true" />
                 {t("Sitemap", "साइट मानचित्र")}
               </Link>
@@ -227,26 +223,29 @@ const Header = () => {
       </div>
 
       {/* ── LOGO BAR ── */}
-      <div className="logo-bar py-3">
-        <Container >
+      <div className="logo-bar py-2 py-lg-3">
+        <Container fluid className="px-3 px-lg-4 px-xxl-5">
           <div className="d-flex justify-content-between align-items-center flex-nowrap gap-2 gap-xl-3">
-            {/* Left — logo + title (Desktop only) */}
-            <div className="d-none d-lg-flex align-items-center gap-3 flex-shrink-0" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+            <div
+              className="d-none d-lg-flex align-items-center gap-3 header-brand-left flex-shrink-0"
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate("/")}
+            >
               <img
                 src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
                 alt="Chhattisgarh Logo"
-                className="main-logo"
-                height={80}
+                className="main-logo flex-shrink-0"
+                height={76}
                 style={{ objectFit: "contain" }}
                 onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)}
               />
-              <div>
-                <h4 className="mb-0">
+              <div className="flex-shrink-0">
+                <h4 className="mb-0 text-nowrap" style={{ fontSize: "1.25rem", fontWeight: 700 }}>
                   {isHindi
                     ? (headerData?.titleHin || "उच्च शिक्षा विभाग")
                     : (headerData?.titleEng || "Department of Higher Education")}
                 </h4>
-                <p className="mb-0">
+                <p className="mb-0 text-nowrap" style={{ fontSize: "0.85rem" }}>
                   {isHindi
                     ? (headerData?.subtitleHin || "छत्तीसगढ़ सरकार")
                     : (headerData?.subtitleEng || "Government of Chhattisgarh")}
@@ -254,50 +253,55 @@ const Header = () => {
               </div>
             </div>
 
-            {/* CENTER — top 3 department leader profiles (1 single horizontal row on all devices) */}
             {leaderProfiles.length > 0 && (
-              <div className="d-flex align-items-center justify-content-center justify-content-lg-center w-100 w-lg-auto mx-auto leader-profiles-wrap py-1">
-                {leaderProfiles.map(profile => (
-                  <div key={profile._id} className="leader-profile-item">
-                    <img
-                      src={
-                        profile.profileUrl
-                          ? `${API_URL}${profile.profileUrl}`
-                          : "/default-avatar.svg"
-                      }
-                      alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
-                      className="leader-profile-img"
-                      style={{ objectFit: "cover", objectPosition: "center top" }}
-                      onError={e => (e.target.src = "/default-avatar.svg")}
-                    />
-                    <div className="leader-profile-text-wrap">
-                      <div className="leader-profile-name">
-                        {isHindi ? profile.imgNameHin : profile.imgNameEng}
+              <div className="d-flex align-items-center justify-content-center header-profiles-center flex-grow-1 mx-2 mx-xl-4">
+                <div className="d-flex align-items-center justify-content-center leader-profiles-wrap py-1">
+                  {leaderProfiles.map(profile => {
+                    const designation = isHindi ? profile.designationHin : profile.designationEng;
+                    const hasComma = designation && designation.includes(",");
+                    const mainDes = hasComma ? designation.split(",")[0].trim() : designation;
+                    const subDes = hasComma ? designation.split(",").slice(1).join(", ").trim() : null;
+
+                    return (
+                      <div key={profile._id} className="leader-profile-item">
+                        <img
+                          src={
+                            profile.profileUrl
+                              ? `${API_URL}${profile.profileUrl}`
+                              : "/default-avatar.svg"
+                          }
+                          alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
+                          className="leader-profile-img"
+                          style={{ objectFit: "cover", objectPosition: "center top" }}
+                          onError={e => (e.target.src = "/default-avatar.svg")}
+                        />
+                        <div className="leader-profile-text-wrap">
+                          <div className="leader-profile-name">
+                            {isHindi ? profile.imgNameHin : profile.imgNameEng}
+                          </div>
+                          <div className="leader-profile-designation">
+                            {mainDes}
+                          </div>
+                          {subDes && (
+                            <div className="leader-profile-sub-designation">
+                              {subDes}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="leader-profile-designation">
-                        {isHindi ? profile.designationHin : profile.designationEng}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
-            {/* Right — Digital India + Emblem (Desktop only) */}
-            <div className="d-none d-lg-flex align-items-center gap-2">
-              {/* <img
-                src={headerData?.digitalLogo ? `${API_URL}${headerData.digitalLogo}` : `${BASE_URL}Digital_India_logo.svg`}
-                className={`right-logo ${!isHindi ? "hide-digital-india-eng" : ""}`}
-                height={52}
-                alt="Digital India"
-                style={{ objectFit: "contain", cursor: "pointer" }}
-                onClick={() => navigate("/")}
-                onError={e => (e.target.src = `${BASE_URL}Digital_India_logo.svg`)}
-              /> */}
+            <div
+              className="d-none d-lg-flex align-items-center justify-content-end header-emblem-right flex-shrink-0"
+            >
               <img
                 src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : `${BASE_URL}Emblem_of_India.svg`}
-                className="right-logo"
-                height={80}
+                className="right-logo flex-shrink-0"
+                height={76}
                 alt="Emblem of India"
                 style={{ objectFit: "contain", cursor: "pointer" }}
                 onClick={() => navigate("/")}

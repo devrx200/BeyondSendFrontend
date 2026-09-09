@@ -13,6 +13,7 @@ import {
   FaRedo, FaSortAmountDown, FaSortAmountUp, FaUserTie,
 } from 'react-icons/fa';
 import { FaEye } from 'react-icons/fa6';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { decodeBase64 } from '../../utilities/rXBase64';
 
@@ -78,12 +79,7 @@ const MultiSectionPages = ({ prefetchedData, mode, fullSlug, onPageChange, onFil
   }, [fullSlug, mode]);
 
   if (!prefetchedData) {
-    return (
-      <Container className="py-5 text-center">
-        <Spinner color="primary" />
-        <p className="mt-3">{isHindi ? 'लोड हो रहा है...' : 'Loading...'}</p>
-      </Container>
-    );
+    return <PageLoader inline={true} />;
   }
 
   if (mode === 'multi-list') {

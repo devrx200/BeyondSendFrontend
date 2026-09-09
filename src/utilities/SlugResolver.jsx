@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Spinner, Container } from "reactstrap";
+import PageLoader from "../components/PageLoader";
 import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 import RichContentPages from "../views/pages/RichContentPages";
 import MultiSectionPages from "../views/pages/MultiSectionPages";
@@ -78,10 +79,7 @@ const SlugResolver = ({ preview = false }) => {
           <html lang={isHindi ? "hi" : "en"} />
           <title>{isHindi ? "लोड हो रहा है..." : "Loading..."} - {SITE_TITLE_SUFFIX}</title>
         </Helmet>
-        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100">
-          <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-          <p className="mt-3 text-muted fw-semibold">{isHindi ? "लोड हो रहा है..." : "Loading..."}</p>
-        </div>
+        <PageLoader inline={true} />
       </>
     );
   }

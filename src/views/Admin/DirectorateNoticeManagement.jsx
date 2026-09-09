@@ -25,6 +25,7 @@ import {
 import { FaPlus, FaEdit, FaTrash, FaList, FaPlusCircle, FaSave, FaTimes, FaArrowLeft, FaBullhorn, FaCopy, FaCheck, FaExternalLinkAlt } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 
 const getToken = () => {
@@ -499,12 +500,8 @@ const DirectorateNoticeManagement = () => {
               </div>
             </div>
 
-            {/* Table */}
             {loading ? (
-              <div className="text-center py-5">
-                <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-                <p className="mt-3 text-muted">Loading notices...</p>
-              </div>
+              <PageLoader inline={true} />
             ) : (
               <>
                 <Table bordered hover responsive>

@@ -8,6 +8,7 @@ import {
   Spinner,
   Badge
 } from "reactstrap";
+import PageLoader from "../../components/PageLoader";
 import {
   FaUniversity,
   FaSchool,
@@ -265,12 +266,10 @@ const AdminDashboard = () => {
         </CardHeader>
       </Card>
 
-      {/* ================= STATS CARDS ================= */}
       <Row className="g-3 mb-4">
         {loading ? (
-          <Col xs={12} className="text-center py-4 bg-white rounded-4 shadow-sm">
-            <Spinner color="primary" />
-            <p className="mt-2 text-muted small mb-0">Loading dashboard stats...</p>
+          <Col xs={12} className="py-4 bg-white rounded-4 shadow-sm">
+            <PageLoader inline={true} />
           </Col>
         ) : (
           stats.map((item, i) => {

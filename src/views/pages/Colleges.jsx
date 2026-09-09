@@ -7,6 +7,7 @@ import {
   Spinner, Pagination, PaginationItem, PaginationLink,
 } from 'reactstrap';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const API_URL  = import.meta.env.VITE_EXTERNAL_API_URL;
@@ -384,10 +385,7 @@ const Colleges = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="text-center py-5">
-          <Spinner color="primary" style={{ width: 40, height: 40 }} />
-          <div className="text-muted mt-3 small">{isHindi ? 'महाविद्यालय की जानकारी लोड हो रही है...' : 'Loading college data...'}</div>
-        </div>
+        <PageLoader inline={true} text={isHindi ? 'महाविद्यालय की जानकारी लोड हो रही है...' : 'Loading college data...'} />
       ) : pageSlice.length === 0 ? (
         <Card className="border-0 shadow-sm text-center" style={{ borderRadius: 14 }}>
           <CardBody className="py-5">

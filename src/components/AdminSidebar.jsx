@@ -632,7 +632,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const [hoveredTooltip, setHoveredTooltip] = useState({ visible: false, text: "", top: 0, left: 0 });
 
   const handleMouseEnter = (e, text) => {
-    if (!text) return;
+    if (!collapsed || !text) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredTooltip({
       visible: true,
@@ -646,10 +646,8 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     setHoveredTooltip((prev) => ({ ...prev, visible: false }));
   };
 
-  // ── Build filtered menu ─────────────────────────────────
   const visibleMenu = filterMenu(adminMenu, userRole, userEmployeeType);
 
-  // ── Render ──────────────────────────────────────────────
   const sidebarClasses = [
     "adm-sidebar",
     collapsed ? "is-collapsed" : "",
@@ -658,9 +656,12 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
 
   return (
     <aside className={sidebarClasses}>
-      {/* PROFILE SECTION */}
       <div className="adm-side-profile">
-        <div className="adm-side-brand">
+        <div
+          className="adm-side-brand"
+          onMouseEnter={(e) => handleMouseEnter(e, isHindi ? "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन" : "Department of Higher Education, Government of Chhattisgarh")}
+          onMouseLeave={handleMouseLeave}
+        >
           <img
             src={`${import.meta.env.BASE_URL || "/"}Chhattisgarh.svg`}
             alt="Chhattisgarh Government"
@@ -690,22 +691,42 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             }}
             alt="Profile"
             className="adm-side-avatar"
+            onMouseEnter={(e) =>
+              handleMouseEnter(
+                e,
+                `${userProfile?.name || "Admin"}${userProfile?.role ? " (" + userProfile.role + ")" : ""}${userProfile?.userDesignations ? " - " + userProfile.userDesignations : ""}`
+              )
+            }
+            onMouseLeave={handleMouseLeave}
           />
-          <div className="adm-side-name" title={userProfile?.name}>
-            <span>{userProfile?.name || "Admin"}</span>
-            {userProfile?.role && (
-              <span className="adm-side-role-badge">{userProfile.role}</span>
-            )}
-          </div>
-          {userProfile?.userDesignations && (
-            <div className="adm-side-designation" title={userProfile.userDesignations}>
-              {userProfile.userDesignations}
-            </div>
+          {!collapsed && (
+            <>
+              <div className="adm-side-name" title={userProfile?.name}>
+                <span>{userProfile?.name || "Admin"}</span>
+                {userProfile?.role && (
+                  <span className="adm-side-role-badge">{userProfile.role}</span>
+                )}
+              </div>
+              {userProfile?.userDesignations && (
+                <div className="adm-side-designation" title={userProfile.userDesignations}>
+                  {userProfile.userDesignations}
+                </div>
+              )}
+            </>
           )}
           {expiresIn && (
-            <div className="adm-side-session">
-              <FaClock style={{ marginRight: 6 }} />
-              Session Left : {expiresIn}
+            <div
+              className="adm-side-session"
+              onMouseEnter={(e) => handleMouseEnter(e, `Session Left : ${expiresIn}`)}
+              onMouseLeave={handleMouseLeave}
+              title={`Session Left : ${expiresIn}`}
+            >
+              <FaClock />
+              {!collapsed ? (
+                <span>Session Left : {expiresIn}</span>
+              ) : (
+                <span className="adm-side-session-time-compact">{expiresIn}</span>
+              )}
             </div>
           )}
         </div>
@@ -787,7 +808,16 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
       {/* PRO SOFTWARE FOOTER WITH INLINE USER CARD & LOGOUT */}
       <div className="adm-side-footer">
         <div className="adm-side-user-card" title={collapsed ? userProfile.name : ""}>
-          <div className="adm-side-user-avatar-wrap">
+          <div
+            className="adm-side-user-avatar-wrap"
+            onMouseEnter={(e) =>
+              handleMouseEnter(
+                e,
+                `${userProfile?.name || "Admin"}${userProfile?.role ? " (" + userProfile.role + ")" : ""}${userProfile?.userDesignations ? " - " + userProfile.userDesignations : ""}`
+              )
+            }
+            onMouseLeave={handleMouseLeave}
+          >
             <img
               src={
                 userProfile.profileImage
@@ -821,6 +851,8 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             type="button"
             className="adm-side-inline-logout"
             onClick={logout}
+            onMouseEnter={(e) => handleMouseEnter(e, "Sign Out")}
+            onMouseLeave={handleMouseLeave}
             title="Sign Out"
             aria-label="Sign Out"
           >

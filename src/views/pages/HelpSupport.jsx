@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import PageLayout from "../../components/PageLayout";
+import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const API = import.meta.env.VITE_API_URL;
@@ -251,12 +252,7 @@ const HelpSupport = () => {
   if (loading) {
     return (
       <PageLayout title="Help & Support" titleHi="सहायता एवं मार्गदर्शन" showBreadcrumb>
-        <div className="text-center py-5">
-          <Spinner color="primary" style={{ width: 44, height: 44 }} />
-          <p className="mt-3 text-muted small fw-semibold">
-            {isHindi ? "लोड हो रहा है..." : "Loading..."}
-          </p>
-        </div>
+        <PageLoader inline={true} text={isHindi ? "लोड हो रहा है..." : "Loading..."} />
       </PageLayout>
     );
   }

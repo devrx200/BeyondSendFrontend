@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   FaCamera, FaCalendarAlt, FaExternalLinkAlt,
@@ -252,12 +253,7 @@ const DetailPanel = ({ item, galleryDetail, detailLoading, isHindi, onClose, onO
 
           {/* Photo Gallery Grid */}
           {detailLoading ? (
-            <div className="text-center py-5">
-              <Spinner style={{ color: '#1e40af', width: 44, height: 44 }} />
-              <p className="mt-3 text-secondary small mb-0">
-                {isHindi ? 'फ़ोटो लोड हो रहे हैं…' : 'Loading photos…'}
-              </p>
-            </div>
+            <PageLoader inline={true} text={isHindi ? 'फ़ोटो लोड हो रहे हैं…' : 'Loading photos…'} />
           ) : (
             <>
               <div className="d-flex align-items-center justify-content-between mb-3">
@@ -602,12 +598,7 @@ const Gallery = () => {
 
       {/* Main Gallery List Content */}
       {listLoading ? (
-        <div className="text-center py-5 my-5">
-          <Spinner style={{ color: '#1e40af', width: 48, height: 48 }} />
-          <h6 className="mt-3 text-muted fw-normal">
-            {isHindi ? 'गैलरी लोड हो रही है…' : 'Loading Photo Galleries…'}
-          </h6>
-        </div>
+        <PageLoader inline={true} text={isHindi ? 'गैलरी लोड हो रही है…' : 'Loading Photo Galleries…'} />
       ) : filteredGalleries.length === 0 ? (
         <Card className="border-0 shadow-sm rounded-4 text-center py-5 my-4 bg-white">
           <CardBody className="py-5">

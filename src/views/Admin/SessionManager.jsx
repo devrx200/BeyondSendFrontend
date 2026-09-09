@@ -27,6 +27,7 @@ import {
   ButtonGroup,
   Progress,
 } from "reactstrap";
+import PageLoader from "../../components/PageLoader";
 
 const API = import.meta.env.VITE_API_URL;
 const token = sessionStorage.getItem("authToken");
@@ -773,15 +774,10 @@ const SessionManager = () => {
         </CardBody>
       </Card>
 
-      {/* ══════════ Loading ══════════ */}
       {loading && (
         <Card className="border-0 shadow-sm text-center py-5 mb-4">
           <CardBody className="py-5">
-            <Spinner
-              color="primary"
-              style={{ width: "3rem", height: "3rem" }}
-            />
-            <p className="mt-3 text-muted fw-semibold mb-0">Loading sessions...</p>
+            <PageLoader inline={true} />
           </CardBody>
         </Card>
       )}

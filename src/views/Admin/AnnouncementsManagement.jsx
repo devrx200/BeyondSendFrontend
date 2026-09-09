@@ -22,6 +22,7 @@ import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaImage, FaCalendar, FaArrowLeft, 
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
+import PageLoader from "../../components/PageLoader";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 
@@ -480,13 +481,9 @@ const AnnouncementsManagement = () => {
         </Nav>
 
         <TabContent activeTab={activeTab}>
-          {/* LIST TAB */}
           <TabPane tabId="list">
             {loading ? (
-              <div className="text-center py-5">
-                <Spinner color="primary" />
-                <p className="mt-3 text-muted">{isHindi ? "लोड हो रहा है..." : "Loading..."}</p>
-              </div>
+              <PageLoader inline={true} />
             ) : (
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0">

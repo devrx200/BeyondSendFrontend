@@ -1,19 +1,27 @@
-import React, { useState, useRef } from "react";
-import { Card, CardHeader, CardBody, Button, Spinner, ButtonGroup } from "reactstrap";
+import React, { useState, useRef, useEffect } from "react";
+import { Card, CardHeader, CardBody, Button } from "reactstrap";
 import {
   FaRedo,
   FaExpand,
   FaCompress
 } from "react-icons/fa";
+import PageLoader from "./PageLoader";
 
 const CGStateCalendar = () => {
-  const [lang, setLang] = useState("hi"); // 'hi' or 'en'
+  const [lang, setLang] = useState("hi");
   const [loading, setLoading] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const iframeRef = useRef(null);
 
   const directUrl = lang === "hi" ? "https://cgstate.gov.in/hi/calendar" : "https://cgstate.gov.in/en/calendar";
   const frameSrc = `/cg-calendar-frame/${lang}/calendar`;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [lang]);
 
   const handleIframeLoad = () => {
     setLoading(false);
@@ -34,15 +42,12 @@ const CGStateCalendar = () => {
             margin: 0 !important;
             overflow-x: hidden !important;
           }
-          body > *:not(#main-content) {
-            display: none !important;
-          }
           header, footer, nav, .header, .footer, .site-header, .site-footer,
           .top-header, .navbar, .breadcrumb, .top-bar, .marquee, .sub-header,
           #header, #footer, .skip-to-content, #top-header, .bg-header, .portal-header,
           .quick-links, .social-links-header, .bhashini-widget, .footer-section,
           .gov-header, .global-header, .global-footer, .cg-chatbot, .uw-widget-custom-trigger,
-          .rbt-progress-parent, a.close_side_menu {
+          .rbt-progress-parent, a.close_side_menu, .rbt-header {
             display: none !important;
           }
           #main-content {
@@ -58,14 +63,13 @@ const CGStateCalendar = () => {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
-            padding: 20px 0 !important;
-            margin-bottom: 10px !important;
+            padding: 16px 0 !important;
+            margin-bottom: 8px !important;
           }
           .page-list {
             display: flex !important;
             visibility: visible !important;
           }
-          /* Hide Android and iOS app download buttons */
           .download-btn,
           .download-btn.android,
           .download-btn.ios,
@@ -85,19 +89,15 @@ const CGStateCalendar = () => {
           }
         `;
 
-        // Direct DOM isolation
         const main = doc.getElementById("main-content");
         if (main && doc.body) {
-          Array.from(doc.body.children).forEach((el) => {
-            if (el !== main && el.tagName !== "SCRIPT" && el.tagName !== "STYLE") {
-              el.style.setProperty("display", "none", "important");
-            }
-          });
           main.style.setProperty("display", "block", "important");
+          main.style.setProperty("visibility", "visible", "important");
+          main.style.setProperty("opacity", "1", "important");
         }
       }
     } catch (e) {
-      console.warn("Iframe style injection:", e);
+      console.warn(e);
     }
   };
 
@@ -117,14 +117,14 @@ const CGStateCalendar = () => {
 
   return (
     <Card
-      className={`shadow-sm border-0 mb-4 transition-all ${isFullscreen ? "position-fixed top-0 start-0 w-100 h-100 rounded-0" : "rounded-3"
-        }`}
+      className={`shadow-sm border-0 mb-4 transition-all ${
+        isFullscreen ? "position-fixed top-0 start-0 w-100 h-100 rounded-0" : "rounded-3"
+      }`}
       style={{
         zIndex: isFullscreen ? 9999 : 1,
         maxHeight: isFullscreen ? "100vh" : "none"
       }}
     >
-      {/* Header Banner */}
       <CardHeader
         className="p-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3 text-white border-0"
         style={{
@@ -155,14 +155,13 @@ const CGStateCalendar = () => {
           </div>
         </div>
 
-        {/* Toolbar Controls */}
         <div className="d-flex flex-wrap align-items-center gap-2">
-          {/* Language Switch */}
           <div className="btn-group btn-group-sm bg-black bg-opacity-25 p-1 rounded-pill">
             <Button
               size="sm"
-              className={`px-3 py-1 fw-bold rounded-pill border-0 transition-all ${lang === "hi" ? "bg-white text-dark shadow-sm" : "bg-transparent text-white"
-                }`}
+              className={`px-3 py-1 fw-bold rounded-pill border-0 transition-all ${
+                lang === "hi" ? "bg-white text-dark shadow-sm" : "bg-transparent text-white"
+              }`}
               style={{ fontSize: "12.5px" }}
               onClick={() => handleLangChange("hi")}
             >
@@ -170,8 +169,9 @@ const CGStateCalendar = () => {
             </Button>
             <Button
               size="sm"
-              className={`px-3 py-1 fw-bold rounded-pill border-0 transition-all ${lang === "en" ? "bg-white text-dark shadow-sm" : "bg-transparent text-white"
-                }`}
+              className={`px-3 py-1 fw-bold rounded-pill border-0 transition-all ${
+                lang === "en" ? "bg-white text-dark shadow-sm" : "bg-transparent text-white"
+              }`}
               style={{ fontSize: "12.5px" }}
               onClick={() => handleLangChange("en")}
             >
@@ -179,7 +179,6 @@ const CGStateCalendar = () => {
             </Button>
           </div>
 
-          {/* Refresh Button */}
           <Button
             size="sm"
             color="light"
@@ -191,7 +190,6 @@ const CGStateCalendar = () => {
             <FaRedo size={11} className={loading ? "fa-spin" : ""} /> Refresh
           </Button>
 
-          {/* Fullscreen Toggle */}
           <Button
             size="sm"
             color="light"
@@ -207,22 +205,20 @@ const CGStateCalendar = () => {
 
       <CardBody
         className="p-0 position-relative overflow-hidden"
-        style={{ height: isFullscreen ? "calc(100vh - 75px)" : "760px" }}
+        style={{ height: isFullscreen ? "calc(100vh - 75px)" : "820px" }}
       >
-        {/* Loading Spinner Overlay */}
         {loading && (
           <div
             className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white"
             style={{ zIndex: 5 }}
           >
-            <Spinner color="success" style={{ width: "3rem", height: "3rem" }} />
-            <p className="mt-3 text-muted fw-semibold">
-              {lang === "hi" ? "शासकीय कैलेंडर लोड हो रहा है..." : "Loading Official Calendar..."}
-            </p>
+            <PageLoader
+              inline={true}
+              subtext={lang === "hi" ? "शासकीय कैलेंडर लोड हो रहा है..." : "Loading Official Calendar..."}
+            />
           </div>
         )}
 
-        {/* Direct Live Government Website Iframe */}
         <iframe
           key={lang}
           ref={iframeRef}

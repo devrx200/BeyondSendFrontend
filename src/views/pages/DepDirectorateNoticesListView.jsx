@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
 import PageLayout from '../../components/PageLayout';
+import PageLoader from '../../components/PageLoader';
 
 const API = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = 'Department of Higher Education, Government of Chhattisgarh India.';
@@ -111,15 +112,28 @@ const DepDirectorateNoticesListView = () => {
       <>
         <Helmet>
           <html lang={isHindi ? 'hi' : 'en'} />
-          <title>{isHindi ? 'लोड हो रहा है...' : 'Loading...'} - {SITE_TITLE_SUFFIX}</title>
-          <meta name="robots" content="noindex" />
+          <title>{pageTitleText} - {SITE_TITLE_SUFFIX}</title>
         </Helmet>
-        <Container className="py-5 text-center">
-          <Spinner color="primary" style={{ width: '3rem', height: '3rem' }} />
-          <p className="mt-3 text-muted fw-semibold">
-            {isHindi ? 'लोड हो रहा है...' : 'Loading, please wait…'}
-          </p>
-        </Container>
+        <PageLayout title={pageTitleText} titleHi={pageTitleText} showBreadcrumb>
+          <div className="notice-list-container position-relative" style={{ minHeight: '420px' }}>
+            <Card className="border-0 shadow-sm mb-4 rounded-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b5bdb 100%)' }}>
+              <CardBody className="py-4 px-4">
+                <Row className="align-items-center g-2">
+                  <Col>
+                    <h2 className="mb-1 fw-bold h5 d-flex align-items-center gap-2 text-white">
+                      <FaNewspaper aria-hidden="true" />
+                      {isHindi ? 'सभी सूचनाएं' : 'All Notices'}
+                    </h2>
+                    <p className="mb-0 small opacity-75 text-white">
+                      {isHindi ? 'नवीनतम सूचनाओं की सूची नीचे दी गई है' : 'Browse the latest official notices below'}
+                    </p>
+                  </Col>
+                </Row>
+              </CardBody>
+            </Card>
+            <PageLoader inline={true} />
+          </div>
+        </PageLayout>
       </>
     );
   }

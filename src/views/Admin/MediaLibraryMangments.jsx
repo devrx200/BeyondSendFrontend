@@ -15,6 +15,7 @@ import {
   FaImage, FaDownload, FaExternalLinkAlt
 } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
+import PageLoader from "../../components/PageLoader";
 
 const API = import.meta.env.VITE_API_URL;
 const getToken = () => sessionStorage.getItem("authToken");
@@ -95,8 +96,7 @@ const PdfViewer = ({ url, fileName }) => {
   if (loading) {
     return (
       <div className="text-center py-5 bg-light rounded-3" style={{ minHeight: "350px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <Spinner color="danger" />
-        <p className="mt-2 text-muted small">Loading PDF document...</p>
+        <PageLoader inline={true} />
       </div>
     );
   }
@@ -173,10 +173,7 @@ const DocxViewer = ({ url, fileName }) => {
   return (
     <div className="bg-light rounded-3 p-2 overflow-auto" style={{ maxHeight: "650px", minHeight: "350px" }}>
       {loading && (
-        <div className="text-center py-5">
-          <Spinner color="primary" />
-          <p className="mt-2 text-muted small">Loading document preview...</p>
-        </div>
+        <PageLoader inline={true} />
       )}
       {error && (
         <div className="text-center py-5">
@@ -308,10 +305,7 @@ const ExcelViewer = ({ url, fileName }) => {
       {/* Spreadsheet Grid */}
       <div className="overflow-auto flex-grow-1 position-relative" style={{ maxHeight: "580px", background: "#f8fafc" }}>
         {loading && (
-          <div className="text-center py-5">
-            <Spinner color="success" />
-            <p className="mt-2 text-muted small">Loading spreadsheet grid...</p>
-          </div>
+          <PageLoader inline={true} />
         )}
         {error && (
           <div className="text-center py-5">
@@ -476,10 +470,7 @@ const PptxViewer = ({ url, fileName }) => {
       {/* Main Slide Area */}
       <div className="flex-grow-1 d-flex align-items-center justify-content-center p-3 position-relative overflow-auto" style={{ background: "#1e293b", maxHeight: "580px" }}>
         {loading && (
-          <div className="text-center py-5 text-white">
-            <Spinner color="warning" />
-            <p className="mt-2 text-white-50 small">Loading PowerPoint presentation...</p>
-          </div>
+          <PageLoader inline={true} />
         )}
         {error && (
           <div className="text-center py-5 bg-light rounded-3 p-4 m-3">
@@ -724,7 +715,7 @@ const MediaLibraryMangments = () => {
       return (
         <div className="text-start p-3 border rounded bg-white" style={{ maxHeight: "550px", overflow: "auto" }}>
           {textLoading ? (
-            <div className="text-center py-4"><Spinner size="sm" className="me-2" /> Loading preview...</div>
+            <PageLoader inline={true} />
           ) : (
             <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "Consolas, Monaco, monospace", fontSize: "12.5px", margin: 0, color: "#1e293b" }}>
               {textContent || previewFile.originalName}
@@ -1281,10 +1272,9 @@ const MediaLibraryMangments = () => {
         </div>
       </div>
 
-      {/* Media Items */}
       <div className="mt-3">
         {loading ? (
-          <div className="text-center py-5"><Spinner /></div>
+          <PageLoader inline={true} />
         ) : filteredFiles.length === 0 ? (
           <Card className="text-center py-5 shadow-sm border-0">
             <CardBody>

@@ -43,6 +43,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
+import PageLoader from "../../components/PageLoader";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 
 const STORAGE_KEYS = {
@@ -465,12 +466,8 @@ const DepartmentNoticeManagement = () => {
                 </Col>
               </Row>
 
-              {/* Table */}
               {loading ? (
-                <div className="text-center py-5">
-                  <Spinner color="success" />
-                  <p className="text-muted mt-2 small">{isHindi ? "लोड हो रहा है..." : "Loading notices..."}</p>
-                </div>
+                <PageLoader inline={true} />
               ) : filteredList.length === 0 ? (
                 <div className="text-center py-5 bg-light rounded-4 my-3">
                   <FaBuilding size={42} className="text-muted opacity-50 mb-3" />

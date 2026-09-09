@@ -33,7 +33,40 @@ function cgCalendarProxyPlugin() {
 
   return {
     name: "cg-calendar-proxy",
+    transformIndexHtml() {
+      return [
+        {
+          tag: "script",
+          children: "var __SERVER_FORWARD_CONSOLE__ = false; window.__SERVER_FORWARD_CONSOLE__ = false;",
+          injectTo: "head-prepend",
+        },
+      ];
+    },
+    transform(code) {
+      if (typeof code === "string" && code.includes("__SERVER_FORWARD_CONSOLE__")) {
+        return code.replace(/__SERVER_FORWARD_CONSOLE__/g, "false");
+      }
+    },
     configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && req.url.includes("/@vite/client")) {
+          const _write = res.write;
+          const _end = res.end;
+          const chunks = [];
+          res.write = function (chunk) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            return true;
+          };
+          res.end = function (chunk) {
+            if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+            let body = Buffer.concat(chunks).toString("utf8");
+            body = "var __SERVER_FORWARD_CONSOLE__ = false;\n" + body.replace(/__SERVER_FORWARD_CONSOLE__/g, "false");
+            res.setHeader("content-length", Buffer.byteLength(body));
+            _end.call(res, body);
+          };
+        }
+        next();
+      });
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
         if (
@@ -107,10 +140,10 @@ function cgCalendarProxyPlugin() {
                   enc === "gzip"
                     ? proxyRes.pipe(zlib.createGunzip())
                     : enc === "deflate"
-                    ? proxyRes.pipe(zlib.createInflate())
-                    : enc === "br"
-                    ? proxyRes.pipe(zlib.createBrotliDecompress())
-                    : proxyRes;
+                      ? proxyRes.pipe(zlib.createInflate())
+                      : enc === "br"
+                        ? proxyRes.pipe(zlib.createBrotliDecompress())
+                        : proxyRes;
 
                 stream.on("data", (chunk) => chunks.push(chunk));
                 stream.on("end", () => {
@@ -271,12 +304,14 @@ export default defineConfig({
   plugins: [react(), cgCalendarProxyPlugin()],
   define: {
     __BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
+    __SERVER_FORWARD_CONSOLE__: false,
   },
   base: "/",
   server: {
     host: true,
     port: 5175,
     strictPort: true,
+    forwardConsole: false,
     hmr: {
       overlay: false,
     },

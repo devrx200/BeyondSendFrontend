@@ -15,6 +15,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
+import PageLoader from "../../components/PageLoader";
 import { jwtDecode } from "jwt-decode";
 
 /* ================= INITIAL FORM ================= */
@@ -705,9 +706,8 @@ const AdminUserManagement = () => {
             <tbody style={{ fontSize: "13px" }}>
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="text-center py-5">
-                    <Spinner color="primary" style={{ width: "2.5rem", height: "2.5rem" }} />
-                    <p className="text-muted mt-2 mb-0 fw-semibold">Loading users & officers...</p>
+                  <td colSpan="10" className="text-center py-4">
+                    <PageLoader inline={true} />
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (

@@ -20,6 +20,7 @@ import {
 } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 import IconPicker from "../../components/IconPicker";
 import { ICONS } from "../../utilities/icons";
 import {
@@ -323,10 +324,7 @@ const QuickAccessManagement = () => {
 
         <CardBody className="p-0">
           {loading ? (
-            <div className="text-center py-5">
-              <Spinner color="primary" />
-              <p className="text-muted mt-2 small">{isHindi ? "लोड हो रहा है..." : "Loading records..."}</p>
-            </div>
+            <PageLoader inline={true} />
           ) : items.length === 0 ? (
             <div className="text-center py-5">
               <FaThLarge size={36} className="text-muted mb-2" />

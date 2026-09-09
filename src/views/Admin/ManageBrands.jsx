@@ -7,6 +7,7 @@ import {
 import axios from "axios";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
+import PageLoader from "../../components/PageLoader";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -189,7 +190,7 @@ const ManageBrands = () => {
             </CardHeader>
             <CardBody className="p-0">
               {loading ? (
-                <div className="text-center p-4"><Spinner /></div>
+                <PageLoader inline={true} />
               ) : (
                 <Table bordered hover responsive className="mb-0 wp-table">
                   <thead className="table-light">

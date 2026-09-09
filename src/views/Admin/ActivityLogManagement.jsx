@@ -8,6 +8,7 @@ import { FaTrash, FaEye, FaSyncAlt, FaTrashAlt, FaSearch, FaInfoCircle } from 'r
 import { useLanguage } from '../../contexts/LanguageContext';
 import axios from "axios";
 import Swal from "sweetalert2";
+import PageLoader from "../../components/PageLoader";
 
 const ActivityLogManagement = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -324,12 +325,8 @@ const ActivityLogManagement = () => {
             </Col>
           </Row>
 
-          {/* Logs Table */}
           {loading ? (
-            <div className="text-center py-5">
-              <Spinner color="primary" />
-              <p className="mt-2 text-muted">{isHindi ? 'लोड हो रहा है...' : 'Loading logs...'}</p>
-            </div>
+            <PageLoader inline={true} />
           ) : logs.length === 0 ? (
             <div className="text-center py-5 bg-light rounded">
               <p className="text-muted mb-0">
@@ -433,7 +430,7 @@ const ActivityLogManagement = () => {
         </ModalHeader>
         <ModalBody>
           {viewLoading ? (
-            <div className="text-center py-4"><Spinner color="info" /></div>
+            <PageLoader inline={true} />
           ) : selectedLog ? (
             <div>
               <Row className="mb-3">

@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import { useLanguage } from "../../contexts/LanguageContext";
+import PageLoader from "../../components/PageLoader";
 import { jwtDecode } from "jwt-decode";
 
 const API = import.meta.env.VITE_API_URL;
@@ -153,14 +154,7 @@ const HelpTutorials = () => {
   const t = (en, hi) => (isHindi ? (hi || en) : en);
 
   if (loading) {
-    return (
-      <div className="d-flex flex-column align-items-center justify-content-center py-5">
-        <Spinner color="primary" style={{ width: "3rem", height: "3rem" }} />
-        <p className="text-muted mt-3 small">
-          {t("Loading resources...", "सामग्री लोड हो रही है...")}
-        </p>
-      </div>
-    );
+    return <PageLoader inline={true} />;
   }
 
   const renderPagination = (page, setPage, arr) => {

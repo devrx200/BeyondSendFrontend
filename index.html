@@ -2,6 +2,11 @@
 <html lang="hi">
 
 <head>
+  <script>
+    self.__SERVER_FORWARD_CONSOLE__ = false;
+    window.__SERVER_FORWARD_CONSOLE__ = false;
+    globalThis.__SERVER_FORWARD_CONSOLE__ = false;
+  </script>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,10 +41,53 @@
   <meta name="theme-color" content="#0c3c78">
   <meta name="format-detection" content="telephone=no">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap">
+  <meta name="geo.region" content="IN-CT">
+  <meta name="geo.placename" content="Raipur, Chhattisgarh">
+  <meta name="geo.position" content="21.2514;81.6296">
+  <meta name="ICBM" content="21.2514, 81.6296">
+
+  <!-- Schema.org JSON-LD Structured Data for Rich Snippet SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "GovernmentOrganization",
+        "@id": "https://highereducation.cg.gov.in/#organization",
+        "name": "Department of Higher Education, Government of Chhattisgarh",
+        "alternateName": "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन",
+        "url": "https://highereducation.cg.gov.in/",
+        "logo": "https://highereducation.cg.gov.in/Chhattisgarh.svg",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Block-03, Third Floor, Indravati Bhavan, Nava Raipur Atal Nagar",
+          "addressLocality": "Nava Raipur",
+          "addressRegion": "Chhattisgarh",
+          "postalCode": "492002",
+          "addressCountry": "IN"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Customer Support",
+          "telephone": "+91-771-2510260",
+          "email": "highereducation.cg@gov.in",
+          "areaServed": "IN-CT",
+          "availableLanguage": ["Hindi", "English"]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://highereducation.cg.gov.in/#website",
+        "url": "https://highereducation.cg.gov.in/",
+        "name": "Department of Higher Education Portal Chhattisgarh",
+        "publisher": {
+          "@id": "https://highereducation.cg.gov.in/#organization"
+        },
+        "inLanguage": ["hi", "en"]
+      }
+    ]
+  }
+  </script>
 
   <script type="module" src="/src/main.jsx"></script>
 </head>
