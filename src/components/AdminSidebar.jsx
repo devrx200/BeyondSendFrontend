@@ -632,7 +632,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const [hoveredTooltip, setHoveredTooltip] = useState({ visible: false, text: "", top: 0, left: 0 });
 
   const handleMouseEnter = (e, text) => {
-    if (!collapsed || !text) return;
+    if (!text) return;
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredTooltip({
       visible: true,

@@ -52,7 +52,7 @@ const FeedbackToggleFloating = () => {
         )}
       </Button>
 
-      <UncontrolledTooltip placement="right" target="feedback-btn-floating" fade={false}>
+      <UncontrolledTooltip placement="right" target="feedback-btn-floating">
         {hasToken
           ? isHindi
             ? "प्रतिक्रिया भेजें"

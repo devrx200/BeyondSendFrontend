@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import Swal from "sweetalert2";
 
 const T = {
@@ -143,13 +143,13 @@ export const useToast = (autoClose = 4500) => {
     return () => Object.values(ts).forEach(clearTimeout);
   }, []);
 
-  const toast = {
+  const toast = useMemo(() => ({
     success: (msg) => add("success", msg),
     error: (msg) => add("error", msg),
     warning: (msg) => add("warning", msg),
     info: (msg) => add("info", msg),
     remove,
-  };
+  }), [add, remove]);
 
   return { toasts, toast };
 };

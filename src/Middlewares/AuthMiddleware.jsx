@@ -155,12 +155,7 @@ const AuthMiddleware = ({ allowedRoles = [],
     return <PageLoader />;
   }
 
-  return (
-    <>
-      <Outlet />
-      {loading && <PageLoader />}
-    </>
-  );
+  return <Outlet />;
 };
 
 export default AuthMiddleware;

@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
-import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button } from "reactstrap";
+import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button, UncontrolledTooltip } from "reactstrap";
 import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
   FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand,
-  FaCompress, FaTimes, FaFileUpload, FaPlus
+  FaCompress, FaTimes, FaFileUpload, FaPlus, FaFolder
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
@@ -115,8 +115,9 @@ const StatusBadge = ({ published, active }) => (
   </div>
 );
 
-const CopyBtn = ({ text }) => {
+const CopyBtn = ({ text, label, id }) => {
   const [copied, setCopied] = useState(false);
+  const autoId = useMemo(() => id || (text ? `cp-${Math.random().toString(36).substring(2, 9)}` : undefined), [id, text]);
   const handleCopy = async (e) => {
     e.stopPropagation();
     if (!text) return;
@@ -127,14 +128,22 @@ const CopyBtn = ({ text }) => {
     }
   };
   return (
-    <button
-      onClick={handleCopy}
-      disabled={!text}
-      type="button"
-      className={`wp-copy-btn ${copied ? "is-copied" : ""}`}>
-      {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
-      {copied ? "Copied" : "Copy"}
-    </button>
+    <>
+      <button
+        id={autoId}
+        onClick={handleCopy}
+        disabled={!text}
+        type="button"
+        className={`wp-copy-btn ${copied ? "is-copied" : ""}`}>
+        {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
+        {copied ? "Copied" : (label || "Copy")}
+      </button>
+      {autoId && (
+        <UncontrolledTooltip placement="top" target={autoId}>
+          {copied ? "Copied to clipboard!" : "Copy page URL"}
+        </UncontrolledTooltip>
+      )}
+    </>
   );
 };
 
@@ -435,6 +444,8 @@ const ImportantPageManagement = () => {
   const [view, setView] = useState(initView);
   const [form, setForm] = useState(initForm);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [pageSize, setPageSize] = useState(10);
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -450,6 +461,8 @@ const ImportantPageManagement = () => {
   const [excerptLang, setExcerptLang] = useState("en");
   const [file, setFile] = useState(null);
   const [editorKey, setEditorKey] = useState(0);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkAction, setBulkAction] = useState("");
 
   const slugDebounceRef = useRef(null);
 
@@ -468,7 +481,15 @@ const ImportantPageManagement = () => {
     return () => { if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current); };
   }, [form.titleEn, slugManuallyEdited, form.slug]);
 
-  useEffect(() => { getAllPages(); }, [currentPage, filterStatus, search, sortBy, sortOrder]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => { getAllPages(); }, [currentPage, pageSize, filterStatus, search, sortBy, sortOrder]);
   useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
@@ -478,19 +499,37 @@ const ImportantPageManagement = () => {
   const getAllPages = async () => {
     setLoading(true);
     try {
-      const params = { page: currentPage, limit: 100, search, sortBy, sortOrder };
+      const params = { page: currentPage, limit: pageSize, search, sortBy, sortOrder };
       if (filterStatus === "published") params.isPublished = true;
       if (filterStatus === "draft") params.isPublished = false;
       if (filterStatus === "active") params.isActive = true;
       if (filterStatus === "inactive") params.isActive = false;
       const res = await axios.get(`${API}/api/get-all-important-pages`, { headers: authH(), params });
-      const data = res.data.data || [];
+      const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setPages(data);
-      const ti = res.data.pagination?.totalItems ?? data.length;
-      setTotalPages(res.data.pagination?.totalPages || 1);
+      const ti = res.data?.pagination?.totalItems ?? res.data?.pagination?.totalDocuments ?? data.length;
+      setTotalPages(res.data?.pagination?.totalPages || 1);
       setTotalItems(ti);
-      setCounts({ all: ti, published: data.filter(p => p.isPublished).length, draft: data.filter(p => !p.isPublished).length, active: data.filter(p => p.isActive).length, inactive: data.filter(p => !p.isActive).length });
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      if (filterStatus === "all" && !search) {
+        setCounts({
+          all: ti,
+          published: data.filter(p => p.isPublished).length,
+          draft: data.filter(p => !p.isPublished).length,
+          active: data.filter(p => p.isActive).length,
+          inactive: data.filter(p => !p.isActive).length
+        });
+      } else {
+        setCounts(prev => ({
+          ...prev,
+          [filterStatus]: ti,
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to load pages");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const buildPayload = (f) => {
@@ -515,6 +554,10 @@ const ImportantPageManagement = () => {
       toast.warning("English title is required before saving.");
       return;
     }
+    if (!form.titleHi?.trim()) {
+      toast.warning("Hindi title is required before saving.");
+      return;
+    }
     if (!form.slug?.trim()) {
       setSlugError("Slug is required");
       toast.warning("Page slug is required before saving.");
@@ -536,7 +579,7 @@ const ImportantPageManagement = () => {
         lastRes = await axios.put(`${API}/api/update-important-page/${editingId}`, fd, { headers: multipartH });
       } else {
         lastRes = await axios.post(`${API}/api/create-important-page`, fd, { headers: multipartH });
-        savedId = lastRes.data.data?._id || lastRes.data._id;
+        savedId = lastRes.data?.data?._id || lastRes.data?._id;
         if (savedId) setEditingId(savedId);
       }
       if (publishAfter && savedId) {
@@ -617,23 +660,10 @@ const ImportantPageManagement = () => {
     [SS_EDITING_ID, SS_FORM, SS_FULLSCREEN].forEach(k => sessionStorage.removeItem(k));
   }, []);
 
-  const goBackToList = useCallback(async () => {
-    if (form.titleEn?.trim() || form.descriptionEn?.trim()) {
-      try {
-        const fd = buildPayload(form);
-        const multipartH = { ...authH(), "Content-Type": "multipart/form-data" };
-        if (editingId) {
-          await axios.put(`${API}/api/update-important-page/${editingId}`, fd, { headers: multipartH });
-        } else {
-          const res = await axios.post(`${API}/api/create-important-page`, fd, { headers: multipartH });
-          const newId = res.data.data?._id || res.data._id;
-          if (newId) setEditingId(newId);
-        }
-      } catch (err) { console.error("Save on back failed", err); }
-    }
+  const goBackToList = useCallback(() => {
     resetForm();
     setView("list");
-  }, [form, editingId, resetForm]);
+  }, [resetForm]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -668,7 +698,83 @@ const ImportantPageManagement = () => {
     return new Date(ds).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true });
   };
 
-  // --- Top bar for form ---
+  const formatWpDate = (item) => {
+    const d = item.isPublished && item.publishDate ? item.publishDate : item.updatedAt || item.createdAt;
+    if (!d) return "—";
+    const dateObj = new Date(d);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const dd = String(dateObj.getDate()).padStart(2, "0");
+    const hours = dateObj.getHours();
+    const mins = String(dateObj.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
+    const formattedHours = hours % 12 || 12;
+    return `${yyyy}/${mm}/${dd} at ${formattedHours}:${mins} ${ampm}`;
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(pages.map(p => p._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkApply = async () => {
+    if (!bulkAction) {
+      toast.warning("Please select a bulk action.");
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.warning("No items selected.");
+      return;
+    }
+    const count = selectedIds.length;
+    const label = count === 1 ? "page" : "pages";
+    if (bulkAction === "trash") {
+      const isConfirmed = await wpSwal.confirm(`Delete ${count} ${label}?`, "This will permanently remove the selected pages.");
+      if (!isConfirmed) return;
+      try {
+        await Promise.all(selectedIds.map(id => axios.delete(`${API}/api/delete-important-page/${id}`, { headers: authH() })));
+        toast.success(`${count} ${label} deleted.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        getAllPages();
+      } catch (err) {
+        toast.error("Failed to delete some items.");
+        getAllPages();
+      }
+    } else if (bulkAction === "publish") {
+      try {
+        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/important-page/publish/${id}`, {}, { headers: authH() })));
+        toast.success(`${count} ${label} published.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        getAllPages();
+      } catch (err) {
+        toast.error("Failed to publish some items.");
+        getAllPages();
+      }
+    } else if (bulkAction === "draft") {
+      try {
+        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/important-page/draft/${id}`, {}, { headers: authH() })));
+        toast.info(`${count} ${label} moved to draft.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        getAllPages();
+      } catch (err) {
+        toast.error("Failed to update some items.");
+        getAllPages();
+      }
+    }
+  };
+
   const renderFormTopBar = (fullscreen) => (
     <div className={`wp-top-bar ${fullscreen ? "is-fullscreen" : ""}`}>
       {/* Left */}
@@ -813,7 +919,7 @@ const ImportantPageManagement = () => {
 
         <ReactstrapCard className="adm-card shadow-sm border-0 mb-4">
           <CardBody>
-            <div className="wp-filter-bar">
+            <div className="wp-filter-bar mb-3">
               <div className="wp-filter-tabs">
                 {filters.map((f, i) => (
                   <React.Fragment key={f.k}>
@@ -829,17 +935,47 @@ const ImportantPageManagement = () => {
               </div>
               <div className="wp-search-box">
                 <input
-                  value={search}
-                  onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+                  value={searchInput}
+                  onChange={e => setSearchInput(e.target.value)}
                   placeholder="Search pages…"
                   className="wp-input wp-search-input"
                 />
-                <BtnBlue size="sm" onClick={getAllPages}>Search</BtnBlue>
+                <BtnBlue size="sm" onClick={() => { setSearch(searchInput); setCurrentPage(1); }}>Search</BtnBlue>
+                <select
+                  value={pageSize}
+                  onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="wp-input w-auto text-center"
+                  style={{ padding: "4px 8px", fontSize: 12, height: "auto" }}
+                  title="Items per page"
+                >
+                  {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                </select>
               </div>
             </div>
 
             <div className="wp-table-container">
-              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => p - 1)} onNext={() => setCurrentPage(p => p + 1)} />
+              <div className="wp-tablenav">
+                <div className="wp-tablenav-left">
+                  <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}>
+                    <option value="">Bulk actions</option>
+                    <option value="trash">Move to Trash</option>
+                    <option value="publish">Publish</option>
+                    <option value="draft">Move to Draft</option>
+                  </select>
+                  <button type="button" className="wp-btn wp-btn-secondary wp-btn-sm" onClick={handleBulkApply}>Apply</button>
+                </div>
+                <div className="wp-tablenav-right">
+                  <span className="wp-count-text">{totalItems} {totalItems === 1 ? "item" : "items"}</span>
+                  {totalPages > 1 && (
+                    <div className="wp-pagination-controls">
+                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="wp-btn wp-btn-secondary wp-btn-sm">‹</button>
+                      <span>{currentPage} of {totalPages}</span>
+                      <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="wp-btn wp-btn-secondary wp-btn-sm">›</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {loading ? (
                 <PageLoader inline={true} />
               ) : pages.length === 0 ? (
@@ -852,76 +988,208 @@ const ImportantPageManagement = () => {
                   <table className="wp-table">
                     <thead>
                       <tr>
-                        <th className="wp-th" style={{ width: 28 }}><input type="checkbox" /></th>
-                        <th className="wp-th">SNo.</th>
-                        <th className="wp-th">Title / Hindi / Link</th>
-                        <th className="wp-th">Category</th>
-                        <th onClick={() => handleSort("createdAt")} className="wp-th is-sortable">Created{sortIcon("createdAt")}</th>
-                        <th onClick={() => handleSort("publishDate")} className="wp-th is-sortable">Published{sortIcon("publishDate")}</th>
-                        <th onClick={() => handleSort("updatedAt")} className="wp-th is-sortable">Updated{sortIcon("updatedAt")}</th>
-                        <th className="wp-th text-end">Actions</th>
-                        <th className="wp-th">Status</th>
+                        <th className="wp-th" style={{ width: 32 }}>
+                          <input
+                            type="checkbox"
+                            checked={pages.length > 0 && selectedIds.length === pages.length}
+                            onChange={handleSelectAll}
+                          />
+                        </th>
+                        <th onClick={() => handleSort("titleEn")} className="wp-th is-sortable">
+                          Title{sortIcon("titleEn")}
+                        </th>
+                        <th className="wp-th" style={{ width: 140 }}>Category</th>
+                        <th onClick={() => handleSort("publishDate")} className="wp-th is-sortable" style={{ width: 180 }}>
+                          Date{sortIcon("publishDate")}
+                        </th>
+                        <th className="wp-th text-end" style={{ width: 150 }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pages.map((item, idx) => (
-                        <tr key={item._id} onMouseEnter={() => setHoveredRow(item._id)} onMouseLeave={() => setHoveredRow(null)} className="wp-tr-hover">
-                          <td className="wp-td" style={{ width: 28 }}><input type="checkbox" style={{ cursor: "pointer" }} /></td>
-                          <td className="wp-td">{(currentPage - 1) * 100 + idx + 1}</td>
+                      {pages.map((item) => (
+                        <tr key={item._id} className="wp-tr-hover">
+                          <td className="wp-td" style={{ width: 32 }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(item._id)}
+                              onChange={() => handleToggleSelect(item._id)}
+                              style={{ cursor: "pointer" }}
+                            />
+                          </td>
                           <td className="wp-td">
                             <div className="d-flex flex-column gap-1">
+                              {/* English Title + Taxonomy Badges */}
                               <div className="d-flex align-items-center gap-2 flex-wrap">
-                                <button onClick={() => handleEdit(item)} className="wp-link-btn fw-bold">
-                                  {item.titleEn ? (item.titleEn.length > 35 ? `${item.titleEn.slice(0, 35)}...` : item.titleEn) : <em className="wp-count-text">Untitled</em>}
+                                <button onClick={() => handleEdit(item)} className="wp-link-btn text-start wp-post-title">
+                                  {item.titleEn || <em className="wp-count-text">Untitled</em>}
                                 </button>
-                                {item.titleHi && (
-                                  <span title={item.titleHi} style={{ fontSize: 10, background: "var(--wp-blue-bg)", color: "var(--wp-blue)", padding: "2px 5px", borderRadius: 3 }}>
-                                    हि {item.titleHi.length > 20 ? item.titleHi.slice(0, 20) + "…" : item.titleHi}
-                                  </span>
+                                {(item.mainSlug || item.baseSlug) && (
+                                  <>
+                                    <span
+                                      id={`imp-slug-${item._id}`}
+                                      className="wp-main-slug-badge"
+                                    >
+                                      <FaFolder size={10} /> {item.mainSlug || item.baseSlug}
+                                    </span>
+                                    <UncontrolledTooltip placement="top" target={`imp-slug-${item._id}`}>
+                                      Main Slug: {item.mainSlug || item.baseSlug}
+                                    </UncontrolledTooltip>
+                                  </>
                                 )}
                               </div>
-                              <div className="d-flex align-items-center gap-2 mt-1">
-                                <FaLink size={10} className="wp-count-text" />
-                                <a href={`${SITE_URL}/${item.slug}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--wp-blue)", textDecoration: "none" }}>{SITE_URL}/{item.slug}</a>
-                                <CopyBtn text={`${SITE_URL}/${item.slug}`} />
-                              </div>
-                              {hoveredRow === item._id && !isMobile && (
-                                <div className="wp-row-actions mt-1">
-                                  <button className="wp-link-btn" onClick={() => handleEdit(item)}><FaEdit size={10} /> Edit</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  <button className="wp-link-btn is-danger" onClick={() => handleDelete(item._id, item.titleEn)}><FaTrashAlt size={10} /> Trash</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  <button className="wp-link-btn" onClick={() => window.open(`${SITE_URL}/${item.slug}`, "_blank")}><FaEye size={10} /> View</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  {item.isPublished
-                                    ? <button className="wp-link-btn" onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> Move to Draft</button>
-                                    : <button className="wp-link-btn is-green" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> Publish</button>}
+
+                              {/* Hindi Title Subtitle */}
+                              {item.titleHi && (
+                                <div className="wp-hi-subtitle">
+                                  <span id={`imp-hi-${item._id}`} className="wp-hi-pill">हि</span>
+                                  <UncontrolledTooltip placement="top" target={`imp-hi-${item._id}`}>
+                                    Hindi Title
+                                  </UncontrolledTooltip>
+                                  <span className="wp-hi-text">{item.titleHi}</span>
                                 </div>
                               )}
+
+                              {/* URL Permalink */}
+                              <div className="d-flex align-items-center gap-2 mt-1">
+                                <FaLink size={10} className="wp-count-text flex-shrink-0" />
+                                <a
+                                  id={`imp-url-${item._id}`}
+                                  href={`${SITE_URL}/${item.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="wp-slug-link text-truncate"
+                                  style={{ maxWidth: 520 }}
+                                >
+                                  {SITE_URL}/{item.slug}
+                                </a>
+                                <UncontrolledTooltip placement="top" target={`imp-url-${item._id}`}>
+                                  Open page URL in new tab
+                                </UncontrolledTooltip>
+                                <CopyBtn text={`${SITE_URL}/${item.slug}`} id={`imp-cp-${item._id}`} />
+                              </div>
+                              <div className="wp-row-actions">
+                                <button onClick={() => handleEdit(item)}><FaEdit size={10} /> Edit</button>
+                                <span className="wp-filter-sep">|</span>
+                                <button className="is-danger" onClick={() => handleDelete(item._id, item.titleEn)}><FaTrashAlt size={10} /> Trash</button>
+                                <span className="wp-filter-sep">|</span>
+                                <button onClick={() => window.open(`${SITE_URL}/${item.slug}`, "_blank")}><FaEye size={10} /> View</button>
+                                <span className="wp-filter-sep">|</span>
+                                {item.isPublished ? (
+                                  <button onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> Move to Draft</button>
+                                ) : (
+                                  <button className="is-green" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> Publish</button>
+                                )}
+                                <span className="wp-filter-sep">|</span>
+                                <button onClick={() => copyToClipboard(`${SITE_URL}/${item.slug}`)}><FaCopy size={10} /> Copy link</button>
+                              </div>
                             </div>
                           </td>
                           <td className="wp-td">{categories.find(c => c._id === item.categoryId)?.categoryNameEn || <span className="wp-crumb-sep">—</span>}</td>
-                          <td className="wp-td text-nowrap">{formatDate(item.createdAt)}</td>
-                          <td className="wp-td text-nowrap">{item.isPublished && item.publishDate ? formatDate(item.publishDate) : <span className="wp-crumb-sep">—</span>}</td>
-                          <td className="wp-td text-nowrap">{formatDate(item.updatedAt)}</td>
-                          <td className="wp-td is-action text-end">
-                            <div className="wp-action-group justify-content-end">
-                              <BtnSecondary size="sm" onClick={() => handleEdit(item)}><FaEdit size={10} /> {!isMobile && "Edit"}</BtnSecondary>
-                              <BtnSecondary size="sm" onClick={() => window.open(`${SITE_URL}/preview/${item.slug}`, "_blank")}><FaEye size={10} /> {!isMobile && "Preview"}</BtnSecondary>
-                              {item.isPublished
-                                ? <BtnSecondary size="sm" onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> {!isMobile && "Move to Draft"}</BtnSecondary>
-                                : <BtnGreen size="sm" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> {!isMobile && "Publish"}</BtnGreen>}
-                              <BtnDanger size="sm" onClick={() => handleDelete(item._id, item.titleEn)}><FaTrashAlt size={10} /> {!isMobile && "Delete"}</BtnDanger>
+                          <td className="wp-td">
+                            <div style={{ fontWeight: 600, color: item.isPublished ? "var(--wp-text)" : "var(--wp-amber)" }}>
+                              {item.isPublished ? "Published" : "Draft"}
+                            </div>
+                            <div className="wp-count-text" style={{ fontSize: 11 }}>
+                              {formatWpDate(item)}
                             </div>
                           </td>
-                          <td className="wp-td"><StatusBadge published={item.isPublished} active={item.isActive} /></td>
+                          <td className="wp-td is-action text-end">
+                            <div className="wp-action-group justify-content-end">
+                              <button
+                                id={`imp-edit-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-edit"
+                                onClick={() => handleEdit(item)}
+                              >
+                                <FaEdit size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`imp-edit-${item._id}`}>
+                                Edit
+                              </UncontrolledTooltip>
+
+                              <button
+                                id={`imp-view-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-view"
+                                onClick={() => window.open(`${SITE_URL}/${item.slug}`, "_blank")}
+                              >
+                                <FaEye size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`imp-view-${item._id}`}>
+                                View
+                              </UncontrolledTooltip>
+
+                              {item.isPublished ? (
+                                <>
+                                  <button
+                                    id={`imp-status-${item._id}`}
+                                    type="button"
+                                    className="wp-icon-btn wp-icon-btn-draft"
+                                    onClick={() => handleDraft(item._id)}
+                                  >
+                                    <FaFileAlt size={11} />
+                                  </button>
+                                  <UncontrolledTooltip placement="top" target={`imp-status-${item._id}`}>
+                                    Move to Draft
+                                  </UncontrolledTooltip>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    id={`imp-status-${item._id}`}
+                                    type="button"
+                                    className="wp-icon-btn wp-icon-btn-publish"
+                                    onClick={() => handlePublish(item._id)}
+                                  >
+                                    <FaCloudUploadAlt size={12} />
+                                  </button>
+                                  <UncontrolledTooltip placement="top" target={`imp-status-${item._id}`}>
+                                    Publish
+                                  </UncontrolledTooltip>
+                                </>
+                              )}
+
+                              <button
+                                id={`imp-del-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-delete"
+                                onClick={() => handleDelete(item._id, item.titleEn)}
+                              >
+                                <FaTrashAlt size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`imp-del-${item._id}`}>
+                                Move to Trash
+                              </UncontrolledTooltip>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-              <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => p - 1)} onNext={() => setCurrentPage(p => p + 1)} />
+
+              <div className="wp-tablenav bottom">
+                <div className="wp-tablenav-left">
+                  <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}>
+                    <option value="">Bulk actions</option>
+                    <option value="trash">Move to Trash</option>
+                    <option value="publish">Publish</option>
+                    <option value="draft">Move to Draft</option>
+                  </select>
+                  <button type="button" className="wp-btn wp-btn-secondary wp-btn-sm" onClick={handleBulkApply}>Apply</button>
+                </div>
+                <div className="wp-tablenav-right">
+                  <span className="wp-count-text">{totalItems} {totalItems === 1 ? "item" : "items"}</span>
+                  {totalPages > 1 && (
+                    <div className="wp-pagination-controls">
+                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="wp-btn wp-btn-secondary wp-btn-sm">‹</button>
+                      <span>{currentPage} of {totalPages}</span>
+                      <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="wp-btn wp-btn-secondary wp-btn-sm">›</button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div style={{ height: 20 }} />
           </CardBody>

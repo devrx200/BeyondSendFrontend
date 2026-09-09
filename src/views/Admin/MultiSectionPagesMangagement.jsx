@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import axios from "axios";
-import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button } from "reactstrap";
+import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button, UncontrolledTooltip } from "reactstrap";
 import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
   FaCopy, FaCheck, FaSave, FaLink, FaArrowLeft, FaExpand, FaCompress, FaTimes,
-  FaPlus, FaFilePdf, FaFileWord, FaFileExcel
+  FaPlus, FaFilePdf, FaFileWord, FaFileExcel, FaFolder
 } from "react-icons/fa";
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
@@ -133,8 +133,9 @@ const StatusBadge = ({ published, active }) => (
   </div>
 );
 
-const CopyBtn = ({ text, label }) => {
+const CopyBtn = ({ text, label, id }) => {
   const [copied, setCopied] = useState(false);
+  const autoId = useMemo(() => id || (text ? `cp-${Math.random().toString(36).substring(2, 9)}` : undefined), [id, text]);
   const handleCopy = async (e) => {
     e.stopPropagation();
     if (!text) return;
@@ -145,15 +146,22 @@ const CopyBtn = ({ text, label }) => {
     }
   };
   return (
-    <button
-      onClick={handleCopy}
-      disabled={!text}
-      type="button"
-      title={text || "Nothing to copy"}
-      className={`wp-copy-btn ${copied ? "is-copied" : ""}`}>
-      {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
-      {copied ? "Copied" : (label || "Copy")}
-    </button>
+    <>
+      <button
+        id={autoId}
+        onClick={handleCopy}
+        disabled={!text}
+        type="button"
+        className={`wp-copy-btn ${copied ? "is-copied" : ""}`}>
+        {copied ? <FaCheck size={9} /> : <FaCopy size={9} />}
+        {copied ? "Copied" : (label || "Copy")}
+      </button>
+      {autoId && (
+        <UncontrolledTooltip placement="top" target={autoId}>
+          {copied ? "Copied to clipboard!" : "Copy page URL"}
+        </UncontrolledTooltip>
+      )}
+    </>
   );
 };
 
@@ -324,8 +332,39 @@ const MultiSectionPagesManagement = () => {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [slugError, setSlugError] = useState("");
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(!!initEditingId());
-  const [hoveredRow, setHoveredRow] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkAction, setBulkAction] = useState("");
+  const [selectedBaseSlug, setSelectedBaseSlug] = useState("");
+  const [selectedMainSlug, setSelectedMainSlug] = useState("");
+
+  const availableBaseSlugs = useMemo(() => {
+    const set = new Set();
+    pages.forEach(p => {
+      if (p.baseSlug && typeof p.baseSlug === "string" && p.baseSlug.trim()) {
+        set.add(p.baseSlug.trim());
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [pages]);
+
+  const availableMainSlugs = useMemo(() => {
+    const set = new Set();
+    pages.forEach(p => {
+      if (selectedBaseSlug && (p.baseSlug || "").trim() !== selectedBaseSlug) return;
+      if (p.mainSlug && typeof p.mainSlug === "string" && p.mainSlug.trim()) {
+        set.add(p.mainSlug.trim());
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [pages, selectedBaseSlug]);
+
+  const filteredPages = useMemo(() => {
+    return pages.filter(item => {
+      if (selectedBaseSlug && (item.baseSlug || "").trim() !== selectedBaseSlug) return false;
+      if (selectedMainSlug && (item.mainSlug || "").trim() !== selectedMainSlug) return false;
+      return true;
+    });
+  }, [pages, selectedBaseSlug, selectedMainSlug]);
   const [isFormFullscreen, setIsFormFullscreen] = useState(initFullscreen);
   const [excerptLang, setExcerptLang] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -362,13 +401,20 @@ const MultiSectionPagesManagement = () => {
       const total = res.data?.pagination?.totalDocuments ?? res.data?.pagination?.totalItems ?? rawData.length;
       setTotalItems(total);
       setTotalPages(res.data?.pagination?.totalPages || 1);
-      setCounts({
-        all: total,
-        published: rawData.filter(p => p.isPublished).length,
-        draft: rawData.filter(p => !p.isPublished).length,
-        active: rawData.filter(p => p.isActive !== false).length,
-        inactive: rawData.filter(p => p.isActive === false).length,
-      });
+      if (filterStatus === "all" && !search) {
+        setCounts({
+          all: total,
+          published: rawData.filter(p => p.isPublished).length,
+          draft: rawData.filter(p => !p.isPublished).length,
+          active: rawData.filter(p => p.isActive !== false).length,
+          inactive: rawData.filter(p => p.isActive === false).length,
+        });
+      } else {
+        setCounts(prev => ({
+          ...prev,
+          [filterStatus]: total,
+        }));
+      }
     } catch (err) {
       console.error("Error loading data:", err);
       toast.error(err.response?.data?.message || err.message || "Error loading pages");
@@ -380,7 +426,7 @@ const MultiSectionPagesManagement = () => {
   useEffect(() => {
     if (view !== "list") return;
     loadData(currentPage);
-  }, [view, currentPage, filterStatus, sortBy, sortOrder, search, pageSize, loadData]);
+  }, [view, currentPage, filterStatus, sortBy, sortOrder, search, pageSize]);
 
   // --- Top bar for form ---
   const renderFormTopBar = (fullscreen) => (
@@ -758,6 +804,11 @@ const MultiSectionPagesManagement = () => {
     fd.append("htmlContent", encodeBase64(form.htmlContent || ""));
     fd.append("htmlContentHi", encodeBase64(form.htmlContentHi || ""));
     fd.append("isActive", form.isActive);
+    if (form.categoryId) fd.append("categoryId", form.categoryId);
+    if (form.shortDescriptionEn) fd.append("shortDescriptionEn", form.shortDescriptionEn);
+    if (form.shortDescriptionHin) fd.append("shortDescriptionHin", form.shortDescriptionHin);
+    fd.append("metaKeywords", JSON.stringify(form.metaKeywords.split(",").map(x => x.trim()).filter(Boolean)));
+    fd.append("tags", JSON.stringify(form.tags.split(",").map(x => x.trim()).filter(Boolean)));
 
     const docs = form.documentsUpdate.map((doc, idx) => {
       const obj = {
@@ -779,12 +830,13 @@ const MultiSectionPagesManagement = () => {
     return fd;
   };
 
-  // publish = true  -> Save (create/update) then call the dedicated publish endpoint
-  // publish = false -> Save only. If the page is already published, this just
-  //                     updates its content and DOES NOT touch publish/draft state.
   const handleSubmit = async (publish = false) => {
     if (!form.titleEng?.trim()) {
       toast.warning("English title is required before saving.");
+      return;
+    }
+    if (!form.titleHin?.trim()) {
+      toast.warning("Hindi title is required before saving.");
       return;
     }
     if (!form.slug?.trim()) {
@@ -810,14 +862,15 @@ const MultiSectionPagesManagement = () => {
         ? await axios.put(url, isMultipart ? buildFormData() : buildPayload(), config)
         : await axios.post(url, isMultipart ? buildFormData() : buildPayload(), config);
 
-      const savedId = res.data.data._id;
-      if (!editingId) setEditingId(savedId);
+      const savedId = res.data?.data?._id || res.data?._id;
+      if (!editingId && savedId) setEditingId(savedId);
       let lastRes = res;
-      if (publish) {
+      if (publish && savedId) {
         lastRes = await axios.post(`${API}/api/publish-content/${savedId}`, {}, { headers: authH() });
         setPageStatus({ isPublished: true, isDraft: false });
       }
       toast.success(lastRes.data?.message || (publish ? "Page published successfully." : pageStatus.isPublished ? "Published page updated." : "Draft saved."));
+      loadData(currentPage);
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
@@ -908,6 +961,83 @@ const MultiSectionPagesManagement = () => {
 
   const fullPath = buildFullPath(form);
   const fullUrlForForm = fullPath ? `${SITE_URL}/${fullPath}` : "";
+
+  const formatWpDate = (item) => {
+    const d = item.isPublished && item.publishDate ? item.publishDate : item.updatedAt || item.createdAt;
+    if (!d) return "—";
+    const dateObj = new Date(d);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const dd = String(dateObj.getDate()).padStart(2, "0");
+    const hours = dateObj.getHours();
+    const mins = String(dateObj.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
+    const formattedHours = hours % 12 || 12;
+    return `${yyyy}/${mm}/${dd} at ${formattedHours}:${mins} ${ampm}`;
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredPages.map(p => p._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkApply = async () => {
+    if (!bulkAction) {
+      toast.warning("Please select a bulk action.");
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.warning("No items selected.");
+      return;
+    }
+    const count = selectedIds.length;
+    const label = count === 1 ? "page" : "pages";
+    if (bulkAction === "trash") {
+      const isConfirmed = await wpSwal.confirm(`Delete ${count} ${label}?`, "This will permanently remove the selected pages.");
+      if (!isConfirmed) return;
+      try {
+        await Promise.all(selectedIds.map(id => axios.delete(`${API}/api/delete-content/${id}`, { headers: authH() })));
+        toast.success(`${count} ${label} deleted.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        loadData(currentPage);
+      } catch (err) {
+        toast.error("Failed to delete some items.");
+        loadData(currentPage);
+      }
+    } else if (bulkAction === "publish") {
+      try {
+        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/publish-content/${id}`, {}, { headers: authH() })));
+        toast.success(`${count} ${label} published.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        loadData(currentPage);
+      } catch (err) {
+        toast.error("Failed to publish some items.");
+        loadData(currentPage);
+      }
+    } else if (bulkAction === "draft") {
+      try {
+        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/draft-content/${id}`, {}, { headers: authH() })));
+        toast.info(`${count} ${label} moved to draft.`);
+        setSelectedIds([]);
+        setBulkAction("");
+        loadData(currentPage);
+      } catch (err) {
+        toast.error("Failed to update some items.");
+        loadData(currentPage);
+      }
+    }
+  };
 
 
 
@@ -1227,6 +1357,7 @@ const MultiSectionPagesManagement = () => {
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
       {/* PAGE HEADER */}
       <ReactstrapCard className="adm-card mb-4">
         <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -1262,6 +1393,51 @@ const MultiSectionPagesManagement = () => {
                 </React.Fragment>
               ))}
             </div>
+
+            {/* BASE SLUG & MAIN SLUG FILTERS */}
+            <div className="wp-slug-filters">
+              <select
+                value={selectedBaseSlug}
+                onChange={e => {
+                  setSelectedBaseSlug(e.target.value);
+                  setSelectedMainSlug("");
+                }}
+                className="wp-slug-select"
+                title="Filter by Base Slug"
+              >
+                <option value="">All Base Slugs {availableBaseSlugs.length > 0 ? `(${availableBaseSlugs.length})` : ""}</option>
+                {availableBaseSlugs.map(slug => (
+                  <option key={slug} value={slug}>{slug}</option>
+                ))}
+              </select>
+
+              <select
+                value={selectedMainSlug}
+                onChange={e => setSelectedMainSlug(e.target.value)}
+                className="wp-slug-select"
+                title="Filter by Main Slug"
+              >
+                <option value="">All Main Slugs {availableMainSlugs.length > 0 ? `(${availableMainSlugs.length})` : ""}</option>
+                {availableMainSlugs.map(slug => (
+                  <option key={slug} value={slug}>{slug}</option>
+                ))}
+              </select>
+
+              {(selectedBaseSlug || selectedMainSlug) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBaseSlug("");
+                    setSelectedMainSlug("");
+                  }}
+                  className="wp-btn-clear-filters"
+                  title="Clear slug filters"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
             <div className="wp-search-box">
               <input
                 value={searchInput}
@@ -1282,84 +1458,245 @@ const MultiSectionPagesManagement = () => {
           </div>
 
           <div className="wp-table-container">
-            <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => Math.max(1, p - 1))} onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+            <div className="wp-tablenav">
+              <div className="wp-tablenav-left">
+                <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}>
+                  <option value="">Bulk actions</option>
+                  <option value="trash">Move to Trash</option>
+                  <option value="publish">Publish</option>
+                  <option value="draft">Move to Draft</option>
+                </select>
+                <button type="button" className="wp-btn wp-btn-secondary wp-btn-sm" onClick={handleBulkApply}>Apply</button>
+              </div>
+              <div className="wp-tablenav-right">
+                <span className="wp-count-text">
+                  {(selectedBaseSlug || selectedMainSlug) ? `${filteredPages.length} of ${totalItems}` : totalItems} {totalItems === 1 ? "item" : "items"}
+                </span>
+                {totalPages > 1 && (
+                  <div className="wp-pagination-controls">
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="wp-btn wp-btn-secondary wp-btn-sm">‹</button>
+                    <span>{currentPage} of {totalPages}</span>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="wp-btn wp-btn-secondary wp-btn-sm">›</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {loading ? (
               <PageLoader inline={true} />
-            ) : pages.length === 0 ? (
+            ) : filteredPages.length === 0 ? (
               <div className="text-center py-4 text-muted">
-                <p className="mb-2">No pages found.</p>
-                <BtnBlue onClick={() => { resetForm(); setView("form"); }}>Add New Page</BtnBlue>
+                <p className="mb-2">
+                  {selectedBaseSlug || selectedMainSlug
+                    ? "No pages match the selected slug filters."
+                    : "No pages found."}
+                </p>
+                {selectedBaseSlug || selectedMainSlug ? (
+                  <button className="wp-btn-clear-filters" onClick={() => { setSelectedBaseSlug(""); setSelectedMainSlug(""); }}>Clear Filters</button>
+                ) : (
+                  <BtnBlue onClick={() => { resetForm(); setView("form"); }}>Add New Page</BtnBlue>
+                )}
               </div>
             ) : (
               <div className="wp-table-wrapper">
                 <table className="wp-table">
                   <thead>
                     <tr>
-                      <th className="wp-th">#</th>
-                      <th className="wp-th is-sortable" onClick={() => handleSort("titleEng")}>Title{sortIcon("titleEng")}</th>
-                      <th className="wp-th">Permalink</th>
-                      <th className="wp-th">Department</th>
-                      <th className="wp-th text-center">Docs</th>
-                      <th className="wp-th is-sortable" onClick={() => handleSort("isPublished")}>Status{sortIcon("isPublished")}</th>
-                      <th className="wp-th text-end">Actions</th>
+                      <th className="wp-th" style={{ width: 32 }}>
+                        <input
+                          type="checkbox"
+                          checked={filteredPages.length > 0 && selectedIds.length === filteredPages.length}
+                          onChange={handleSelectAll}
+                        />
+                      </th>
+                      <th onClick={() => handleSort("titleEng")} className="wp-th is-sortable">
+                        Title{sortIcon("titleEng")}
+                      </th>
+                      <th className="wp-th" style={{ width: 140 }}>Department</th>
+                      <th onClick={() => handleSort("publishDate")} className="wp-th is-sortable" style={{ width: 180 }}>
+                        Date{sortIcon("publishDate")}
+                      </th>
+                      <th className="wp-th text-end" style={{ width: 150 }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pages.map((item, idx) => {
+                    {filteredPages.map((item) => {
                       const path = buildFullPath(item);
                       const fullUrl = buildFullUrl(item);
                       return (
-                        <tr key={item._id} onMouseEnter={() => setHoveredRow(item._id)} onMouseLeave={() => setHoveredRow(null)} className="wp-tr-hover">
-                          <td className="wp-td">{(currentPage - 1) * pageSize + idx + 1}</td>
+                        <tr key={item._id} className="wp-tr-hover">
+                          <td className="wp-td" style={{ width: 32 }}>
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(item._id)}
+                              onChange={() => handleToggleSelect(item._id)}
+                              style={{ cursor: "pointer" }}
+                            />
+                          </td>
                           <td className="wp-td">
                             <div className="d-flex flex-column gap-1">
-                              <button className="wp-link-btn fw-bold text-start" onClick={() => handleEdit(item)}>
-                                {item.titleEng || <em className="wp-count-text">Untitled</em>}
-                              </button>
-                              {item.titleHin && <div className="wp-count-text small">{item.titleHin}</div>}
-                              {hoveredRow === item._id && !isMobile && (
-                                <div className="wp-row-actions mt-1">
-                                  <button className="wp-link-btn" onClick={() => handleEdit(item)}><FaEdit size={10} /> Edit</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  <button className="wp-link-btn is-danger" onClick={() => handleDelete(item._id, item.titleEng)}><FaTrashAlt size={10} /> Trash</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  <button className="wp-link-btn" onClick={() => path && window.open(fullUrl, "_blank")} disabled={!path}><FaEye size={10} /> View</button>
-                                  <span className="wp-filter-sep">|</span>
-                                  {item.isPublished
-                                    ? <button className="wp-link-btn" onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> Move to Draft</button>
-                                    : <button className="wp-link-btn is-green" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> Publish</button>}
+                              {/* English Title + Taxonomy Badges */}
+                              <div className="d-flex align-items-center gap-2 flex-wrap">
+                                <button onClick={() => handleEdit(item)} className="wp-link-btn text-start wp-post-title">
+                                  {item.titleEng || <em className="wp-count-text">Untitled</em>}
+                                </button>
+                                {(item.mainSlug || item.baseSlug) && (
+                                  <>
+                                    <span
+                                      id={`multi-slug-${item._id}`}
+                                      className="wp-main-slug-badge"
+                                    >
+                                      <FaFolder size={10} /> {item.mainSlug || item.baseSlug}
+                                    </span>
+                                    <UncontrolledTooltip placement="top" target={`multi-slug-${item._id}`}>
+                                      Main Slug: {item.mainSlug || item.baseSlug}
+                                    </UncontrolledTooltip>
+                                  </>
+                                )}
+                                {item.documentsUpdate?.length > 0 && (
+                                  <>
+                                    <span
+                                      id={`multi-doc-${item._id}`}
+                                      className="wp-doc-count-badge"
+                                    >
+                                      <FaFileAlt size={9} /> {item.documentsUpdate.length} {item.documentsUpdate.length === 1 ? "doc" : "docs"}
+                                    </span>
+                                    <UncontrolledTooltip placement="top" target={`multi-doc-${item._id}`}>
+                                      {item.documentsUpdate.length} {item.documentsUpdate.length === 1 ? "document attached" : "documents attached"}
+                                    </UncontrolledTooltip>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Hindi Title Subtitle */}
+                              {item.titleHin && (
+                                <div className="wp-hi-subtitle">
+                                  <span id={`multi-hi-${item._id}`} className="wp-hi-pill">हि</span>
+                                  <UncontrolledTooltip placement="top" target={`multi-hi-${item._id}`}>
+                                    Hindi Title
+                                  </UncontrolledTooltip>
+                                  <span className="wp-hi-text">{item.titleHin}</span>
                                 </div>
                               )}
+
+                              {/* URL Permalink */}
+                              <div className="d-flex align-items-center gap-2 mt-1">
+                                <FaLink size={10} className="wp-count-text flex-shrink-0" />
+                                {path ? (
+                                  <>
+                                    <a
+                                      id={`multi-url-${item._id}`}
+                                      href={fullUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="wp-slug-link text-truncate"
+                                      style={{ maxWidth: 520 }}
+                                    >
+                                      {fullUrl}
+                                    </a>
+                                    <UncontrolledTooltip placement="top" target={`multi-url-${item._id}`}>
+                                      Open page URL in new tab
+                                    </UncontrolledTooltip>
+                                  </>
+                                ) : (
+                                  <span className="wp-crumb-sep">No slug set</span>
+                                )}
+                                <CopyBtn text={path ? fullUrl : ""} id={`multi-cp-${item._id}`} />
+                              </div>
+                              <div className="wp-row-actions">
+                                <button onClick={() => handleEdit(item)}><FaEdit size={10} /> Edit</button>
+                                <span className="wp-filter-sep">|</span>
+                                <button className="is-danger" onClick={() => handleDelete(item._id, item.titleEng)}><FaTrashAlt size={10} /> Trash</button>
+                                <span className="wp-filter-sep">|</span>
+                                <button onClick={() => path && window.open(fullUrl, "_blank")} disabled={!path}><FaEye size={10} /> View</button>
+                                <span className="wp-filter-sep">|</span>
+                                {item.isPublished ? (
+                                  <button onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> Move to Draft</button>
+                                ) : (
+                                  <button className="is-green" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> Publish</button>
+                                )}
+                                <span className="wp-filter-sep">|</span>
+                                <button onClick={() => path && copyToClipboard(fullUrl)} disabled={!path}><FaCopy size={10} /> Copy link</button>
+                              </div>
                             </div>
                           </td>
+                          <td className="wp-td">{item.department || categories.find(c => c._id === (item.categoryId?._id || item.categoryId))?.categoryNameEn || <span className="wp-crumb-sep">—</span>}</td>
                           <td className="wp-td">
-                            <div className="d-flex align-items-center gap-2">
-                              <FaLink size={10} className="wp-count-text" />
-                              {path ? (
-                                <a href={fullUrl} target="_blank" rel="noopener noreferrer" title={fullUrl} style={{ color: "var(--wp-blue)", textDecoration: "none", fontSize: 11 }}>
-                                  /{path}
-                                </a>
-                              ) : (
-                                <span className="wp-crumb-sep">No slug set</span>
-                              )}
-                              <CopyBtn text={path ? fullUrl : ""} />
+                            <div style={{ fontWeight: 600, color: item.isPublished ? "var(--wp-text)" : "var(--wp-amber)" }}>
+                              {item.isPublished ? "Published" : "Draft"}
+                            </div>
+                            <div className="wp-count-text" style={{ fontSize: 11 }}>
+                              {formatWpDate(item)}
                             </div>
                           </td>
-                          <td className="wp-td">{item.department || <span className="wp-crumb-sep">—</span>}</td>
-                          <td className="wp-td text-center">
-                            <span className="badge rounded-pill bg-light text-primary border px-2 py-1">
-                              {item.documentsUpdate?.length || 0}
-                            </span>
-                          </td>
-                          <td className="wp-td"><StatusBadge published={item.isPublished} active={item.isActive} /></td>
                           <td className="wp-td is-action text-end">
                             <div className="wp-action-group justify-content-end">
-                              <button className="wp-btn wp-btn-secondary wp-btn-sm" onClick={() => handleEdit(item)}><FaEdit size={10} /> {!isMobile && "Edit"}</button>
-                              <button className="wp-btn wp-btn-secondary wp-btn-sm" onClick={() => path && window.open(fullUrl, "_blank", "noopener,noreferrer")} disabled={!path}><FaEye size={10} /> {!isMobile && "View"}</button>
-                              {item.isPublished
-                                ? <button className="wp-btn wp-btn-secondary wp-btn-sm" onClick={() => handleDraft(item._id)}><FaFileAlt size={10} /> {!isMobile && "Draft"}</button>
-                                : <button className="wp-btn wp-btn-green wp-btn-sm" onClick={() => handlePublish(item._id)}><FaCloudUploadAlt size={10} /> {!isMobile && "Publish"}</button>}
-                              <button className="wp-btn wp-btn-danger wp-btn-sm" onClick={() => handleDelete(item._id, item.titleEng)}><FaTrashAlt size={10} /> {!isMobile && "Delete"}</button>
+                              <button
+                                id={`multi-edit-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-edit"
+                                onClick={() => handleEdit(item)}
+                              >
+                                <FaEdit size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`multi-edit-${item._id}`}>
+                                Edit
+                              </UncontrolledTooltip>
+
+                              <button
+                                id={`multi-view-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-view"
+                                onClick={() => path && window.open(fullUrl, "_blank")}
+                                disabled={!path}
+                              >
+                                <FaEye size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`multi-view-${item._id}`}>
+                                View
+                              </UncontrolledTooltip>
+
+                              {item.isPublished ? (
+                                <>
+                                  <button
+                                    id={`multi-status-${item._id}`}
+                                    type="button"
+                                    className="wp-icon-btn wp-icon-btn-draft"
+                                    onClick={() => handleDraft(item._id)}
+                                  >
+                                    <FaFileAlt size={11} />
+                                  </button>
+                                  <UncontrolledTooltip placement="top" target={`multi-status-${item._id}`}>
+                                    Move to Draft
+                                  </UncontrolledTooltip>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    id={`multi-status-${item._id}`}
+                                    type="button"
+                                    className="wp-icon-btn wp-icon-btn-publish"
+                                    onClick={() => handlePublish(item._id)}
+                                  >
+                                    <FaCloudUploadAlt size={12} />
+                                  </button>
+                                  <UncontrolledTooltip placement="top" target={`multi-status-${item._id}`}>
+                                    Publish
+                                  </UncontrolledTooltip>
+                                </>
+                              )}
+
+                              <button
+                                id={`multi-del-${item._id}`}
+                                type="button"
+                                className="wp-icon-btn wp-icon-btn-delete"
+                                onClick={() => handleDelete(item._id, item.titleEng)}
+                              >
+                                <FaTrashAlt size={12} />
+                              </button>
+                              <UncontrolledTooltip placement="top" target={`multi-del-${item._id}`}>
+                                Move to Trash
+                              </UncontrolledTooltip>
                             </div>
                           </td>
                         </tr>
@@ -1369,7 +1706,28 @@ const MultiSectionPagesManagement = () => {
                 </table>
               </div>
             )}
-            <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} shown={pages.length} onPrev={() => setCurrentPage(p => Math.max(1, p - 1))} onNext={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+
+            <div className="wp-tablenav bottom">
+              <div className="wp-tablenav-left">
+                <select value={bulkAction} onChange={e => setBulkAction(e.target.value)}>
+                  <option value="">Bulk actions</option>
+                  <option value="trash">Move to Trash</option>
+                  <option value="publish">Publish</option>
+                  <option value="draft">Move to Draft</option>
+                </select>
+                <button type="button" className="wp-btn wp-btn-secondary wp-btn-sm" onClick={handleBulkApply}>Apply</button>
+              </div>
+              <div className="wp-tablenav-right">
+                <span className="wp-count-text">{totalItems} {totalItems === 1 ? "item" : "items"}</span>
+                {totalPages > 1 && (
+                  <div className="wp-pagination-controls">
+                    <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="wp-btn wp-btn-secondary wp-btn-sm">‹</button>
+                    <span>{currentPage} of {totalPages}</span>
+                    <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="wp-btn wp-btn-secondary wp-btn-sm">›</button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardBody>
       </ReactstrapCard>

@@ -964,7 +964,6 @@ const SessionManager = () => {
                           <UncontrolledTooltip
                             target={`tok-${session._id}`}
                             placement="top"
-                            fade={false}
                           >
                             {session.token}
                           </UncontrolledTooltip>

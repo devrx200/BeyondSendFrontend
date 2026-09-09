@@ -128,7 +128,7 @@ const HeroSlider = () => {
                   width="1920"
                   height="640"
                   loading={index === 0 ? "eager" : "lazy"}
-                  fetchPriority={index === 0 ? "high" : "low"}
+                  fetchpriority={index === 0 ? "high" : "low"}
                   decoding="async"
                   itemProp="contentUrl"
                   onError={(e) => {
