@@ -28,7 +28,6 @@ export const LanguageProvider = ({ children }) => {
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'hi' ? 'en' :'hi' );
   };
-
   // Helper function: show Hindi first when isHindi is true
   const t = (en, hi) => (language === 'hi' ? hi : en);
 
@@ -40,7 +39,6 @@ export const LanguageProvider = ({ children }) => {
     isEnglish: language === 'en',
     t  // Export the helper function
   };
-
   return (
     <LanguageContext.Provider value={value}>
       {children}

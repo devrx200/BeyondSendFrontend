@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import { Container, Row, Col, Button, Card, CardBody, Modal, ModalHeader, ModalBody } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
-  FaArrowRight, FaUniversity, FaGraduationCap,
-  FaBuilding, FaLandmark, FaAward, FaUserTie, FaChevronRight
+  FaArrowRight, FaPaperPlane, FaBullhorn, FaChartLine, FaHeadset,
+  FaLandmark, FaUserTie, FaChevronRight
 } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -78,14 +78,14 @@ const AboutSection = () => {
                         }}
                       >
                         <FaLandmark className="me-1 text-primary" size={13} />
-                        {isHindi ? "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन" : "Higher Education Department, Govt. of CG"}
+                        {isHindi ? "बियॉन्डसेंड कस्टमर प्लेटफॉर्म" : "BeyondSend Customer Platform"}
                       </span>
                     </div>
 
                     {/* Section Title */}
                     <h2 className="about-heading-accent mb-3 fs-4">
                       {(isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng) ||
-                        (isHindi ? "हमारे विभाग के बारे में" : "About Department")}
+                        (isHindi ? "बियॉन्डसेंड के बारे में" : "About BeyondSend")}
                     </h2>
 
                     {/* Paragraph Text */}
@@ -108,8 +108,8 @@ const AboutSection = () => {
                       ) : (
                         <p className="mb-2" style={{ fontSize: "14.5px", lineHeight: 1.7, color: "#334155" }}>
                           {isHindi
-                            ? "उच्च शिक्षा विभाग छत्तीसगढ़ राज्य में उच्च शिक्षण संस्थानों के विस्तार, विकास एवं गुणवत्तापूर्ण शिक्षा उपलब्ध कराने हेतु निरंतर प्रयासरत है।"
-                            : "The Department of Higher Education is committed to expanding quality higher education and fostering excellence across Chhattisgarh state."}
+                            ? "बियॉन्डसेंड एक आधुनिक कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म है, जो व्यवसायों को ग्राहकों से जुड़े रहने, अभियान संचालित करने और परिणाम मापने की सुविधा एक ही कंसोल से देता है।"
+                            : "BeyondSend is a modern customer communication and marketing automation platform that helps businesses engage customers, run multi-channel campaigns and measure results from a single console."}
                         </p>
                       )}
                     </div>
@@ -119,12 +119,12 @@ const AboutSection = () => {
                       <div className="col-6 col-sm-3">
                         <div className="stat-chip">
                           <div style={{ color: "#1e40af" }}>
-                            <FaUniversity size={16} />
+                            <FaPaperPlane size={16} />
                           </div>
                           <div>
-                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>9+</div>
+                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>Multi</div>
                             <small className="text-muted" style={{ fontSize: 11 }}>
-                              {isHindi ? "शासकीय वि.वि." : "Govt Univ"}
+                              {isHindi ? "चैनल" : "Channel"}
                             </small>
                           </div>
                         </div>
@@ -133,12 +133,12 @@ const AboutSection = () => {
                       <div className="col-6 col-sm-3">
                         <div className="stat-chip">
                           <div style={{ color: "#f59e0b" }}>
-                            <FaBuilding size={16} />
+                            <FaBullhorn size={16} />
                           </div>
                           <div>
-                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>21+</div>
+                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>Smart</div>
                             <small className="text-muted" style={{ fontSize: 11 }}>
-                              {isHindi ? "निजी वि.वि." : "Private Univ"}
+                              {isHindi ? "कैंपेन" : "Campaigns"}
                             </small>
                           </div>
                         </div>
@@ -146,11 +146,11 @@ const AboutSection = () => {
 
                       <div className="col-6 col-sm-3">
                         <div style={{ color: "#2563eb" }} className="stat-chip">
-                          <FaGraduationCap size={16} />
+                          <FaChartLine size={16} />
                           <div>
-                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>343+</div>
+                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>Live</div>
                             <small className="text-muted" style={{ fontSize: 11 }}>
-                              {isHindi ? "शासकीय कॉलेज" : "Govt Colleges"}
+                              {isHindi ? "एनालिटिक्स" : "Analytics"}
                             </small>
                           </div>
                         </div>
@@ -158,11 +158,11 @@ const AboutSection = () => {
 
                       <div className="col-6 col-sm-3">
                         <div style={{ color: "#d97706" }} className="stat-chip">
-                          <FaAward size={16} />
+                          <FaHeadset size={16} />
                           <div>
-                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>314+</div>
+                            <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>24×7</div>
                             <small className="text-muted" style={{ fontSize: 11 }}>
-                              {isHindi ? "अशासकीय कॉलेज" : "Private Colleges"}
+                              {isHindi ? "सहायता" : "Support"}
                             </small>
                           </div>
                         </div>
@@ -201,7 +201,7 @@ const AboutSection = () => {
                           <FaUserTie size={12} />
                         </div>
                         <h4 className="fw-bold mb-0 text-dark" style={{ fontSize: "0.98rem" }}>
-                          {isHindi ? "विभागीय नेतृत्व" : "Department Leadership"}
+                          {isHindi ? "नेतृत्व" : "Leadership"}
                         </h4>
                       </div>
                       <small className="text-muted" style={{ fontSize: "11px" }}>
@@ -316,13 +316,13 @@ const AboutSection = () => {
             >
               <div className="d-flex align-items-center gap-2">
                 <img
-                  src="/Chhattisgarh.svg"
-                  alt="Emblem"
+                  src="/beyondsend-logo.svg"
+                  alt="BeyondSend"
                   style={{ width: 28, height: 28, objectFit: "contain" }}
-                  onError={(e) => { e.currentTarget.src = "/Chhattisgarh.svg"; }}
+                  onError={(e) => { e.currentTarget.src = "/beyondsend-logo.svg"; }}
                 />
                 <span className="fw-bold fs-6">
-                  {isHindi ? "विभागीय नेतृत्व परिचय" : "Department Leadership Profile"}
+                  {isHindi ? "नेतृत्व परिचय" : "Leadership Profile"}
                 </span>
               </div>
             </ModalHeader>
@@ -349,7 +349,7 @@ const AboutSection = () => {
                   </div>
                   <div className="mt-2.5 pt-1">
                     <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 fw-bold">
-                      {isHindi ? "छत्तीसगढ़ शासन" : "Govt. of Chhattisgarh"}
+                      {isHindi ? "बियॉन्डसेंड" : "BeyondSend"}
                     </span>
                   </div>
                 </Col>
@@ -379,12 +379,12 @@ const AboutSection = () => {
 
                     <div className="leader-modal-details p-3 rounded-3" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
                       <div className="d-flex align-items-center gap-2 mb-2 text-secondary fw-bold" style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                        <FaLandmark /> {isHindi ? "विभाग एवं दायित्व" : "Department & Responsibilities"}
+                        <FaLandmark /> {isHindi ? "भूमिका एवं दायित्व" : "Role & Responsibilities"}
                       </div>
                       <p className="mb-0 text-slate-700" style={{ fontSize: "14px", lineHeight: "1.6" }}>
                         {isHindi
-                          ? `उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के अंतर्गत ${selectedLeader.designationHin || selectedLeader.designationEng} के रूप में उच्च शिक्षण संस्थानों के सशक्तिकरण एवं शैक्षणिक गुणवत्ता संवर्धन हेतु समर्पित।`
-                          : `Dedicated to strengthening higher educational institutions, policy direction, and academic excellence under the Government of Chhattisgarh as ${selectedLeader.designationEng || selectedLeader.designationHin}.`}
+                          ? `बियॉन्डसेंड में ${selectedLeader.designationHin || selectedLeader.designationEng} के रूप में ग्राहक संचार, अभियान प्रबंधन एवं प्लेटफॉर्म विकास की दिशा में योगदान।`
+                          : `Contributing to customer communication, campaign management and platform growth at BeyondSend as ${selectedLeader.designationEng || selectedLeader.designationHin}.`}
                       </p>
                     </div>
                   </div>

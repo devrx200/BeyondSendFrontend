@@ -1,25 +1,22 @@
 import { Helmet } from 'react-helmet-async';
-import HeroSlider from "../../components/HeroSlider";
-import NoticeTicker from "../../components/NoticeTicker";
-import AfterCarousel from "../../components/AfterCarousel";
 import AboutSection from "../../components/AboutSection";
-import ImportantLinksSection from "../../components/ImportantLinksSection";
-import AnnouncementsAndSchemes from "../../components/AnnouncementsAndSchemes";
-import NoticeDepAndDirectorate from "../../components/NoticeDepAndDirectorate";
 import QuickAccess from "../../components/QuickAccess";
+import HeroSection from "../../components/HeroSection";
+import FeaturesSection from "../../components/FeaturesSection";
 import { useLanguage } from "../../contexts/LanguageContext";
+
 const Home = () => {
   const { isHindi } = useLanguage();
   const pageTitle = isHindi
-    ? "उच्च शिक्षा विभाग की आधिकारिक वेबसाइट, छत्तीसगढ़ सरकार, भारत"
-    : "Department of Higher Education, Government of Chhattisgarh, India";
+    ? "बियॉन्डसेंड - कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म"
+    : "BeyondSend - Customer Communication & Marketing Automation Platform";
 
   const metaDescription = isHindi
-    ? "छत्तीसगढ़ राज्य में उच्च शिक्षा विभाग उत्कृष्टता को केन्द्र में रखकर, विश्वविद्यालयों एवं महाविद्यालयों का विस्तार करते हुये उच्च शिक्षा की सुविधा अधिकाधिक युवाओं तक पहुँचाने के लिये दृढप्रतिज्ञ है। यहाँ आपको राज्य के 9 शासकीय विश्वविद्यालय, 335 शासकीय महाविद्यालय, और प्रमुख छात्रवृत्तियों (मुख्यमंत्री उच्च शिक्षा प्रोत्साहन योजना, बीपीएल छात्रवृत्ति) के बारे में विस्तृत जानकारी मिलेगी।"
-    : "The Department of Higher Education, Government of Chhattisgarh, is committed to expanding access to quality higher education across the state. It oversees 9 government universities, and 335 government colleges. The department implements key initiatives like the Mukhyamantri Uchcha Shiksha Protsahan Yojana, BPL scholarships, and the PM-USHA scheme to promote equity, excellence, and skill development for the youth of Chhattisgarh. This is the official website for all updates, policies, and recruitment notifications.";
+    ? "बियॉन्डसेंड एक आधुनिक कस्टमर कम्युनिकेशन, कैंपेन ऑटोमेशन एवं डेटा-ड्रिवन मार्केटिंग प्लेटफॉर्म है जो व्यवसायों को ग्राहकों से जुड़े रहने, अभियान चलाने और परिणाम मापने में मदद करता है।"
+    : "BeyondSend is a modern customer communication and marketing automation platform that helps businesses engage customers, run multi-channel campaigns, and measure results from a single console.";
 
-  const canonicalUrl = "https://highereducation.cg.gov.in";
-  const ogImage = "/Chhattisgarh.svg";
+  const canonicalUrl = "https://beyondsend.in";
+  const ogImage = "/beyondsend-logo.svg";
 
   return (
     <>
@@ -33,7 +30,7 @@ const Home = () => {
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:image" content={ogImage} />
-        <meta property="og:site_name" content="Department of Higher Education, Chhattisgarh" />
+        <meta property="og:site_name" content="BeyondSend" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={metaDescription} />
@@ -42,14 +39,10 @@ const Home = () => {
       </Helmet>
 
       <div>
-        <HeroSlider />
-        <NoticeTicker />
-        <AfterCarousel />
+        <HeroSection />
+        <FeaturesSection />
         <AboutSection />
         <QuickAccess isHindi={isHindi} />
-        <NoticeDepAndDirectorate />
-        <AnnouncementsAndSchemes />
-        <ImportantLinksSection />
       </div>
     </>
   );

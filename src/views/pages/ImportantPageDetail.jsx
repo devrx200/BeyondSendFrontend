@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import {
-  Container, Row, Col, Card, CardBody, CardHeader, CardFooter,
-  Badge, Button, Spinner, Breadcrumb, BreadcrumbItem,
-} from 'reactstrap';
+import { Container, Row, Col, Spinner } from 'reactstrap';
 import {
   FaCalendarAlt, FaCalendarPlus, FaChevronLeft,
-  FaDownload, FaHome, FaList, FaPrint,
+  FaDownload, FaHome, FaList, FaPrint, FaArrowLeft,
 } from 'react-icons/fa';
 import { FaTicketSimple } from 'react-icons/fa6';
 import axios from 'axios';
@@ -15,7 +12,7 @@ import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const API = import.meta.env.VITE_API_URL;
-const SITE_TITLE_SUFFIX = 'Department of Higher Education, Government of Chhattisgarh India.';
+const SITE_TITLE_SUFFIX = 'BeyondSend';
 
 const formatDateTime = (date, isHindi) => {
   if (!date) return '';
@@ -85,7 +82,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
         </head>
         <body>
           <div class="header">
-            <h2>${isHindi ? 'उच्च शिक्षा विभाग, छत्तीसगढ़ शासन, भारत' : 'Department of Higher Education, Government of Chhattisgarh, India'}</h2>
+            <h2>${isHindi ? 'बियॉन्डसेंड, भारत' : 'BeyondSend, India'}</h2>
           </div>
           <div class="title">${isHindi ? detail?.titleHi : detail?.titleEn}</div>
           <div class="content">${printContent}</div>
@@ -132,21 +129,26 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
         <Container className="py-5">
           <Row className="justify-content-center">
             <Col md={8} lg={6}>
-              <Card className="border-0 shadow-lg text-center rounded-4" style={{ background: 'linear-gradient(135deg,#f8fbff,#eef4ff)' }}>
-                <CardBody className="p-5">
-                  <p className="fw-bold mb-3" style={{ fontSize: '80px', color: '#0d6efd', lineHeight: 1 }}>404</p>
-                  <h1 className="h4 fw-semibold mb-2">{isHindi ? 'उफ़! पृष्ठ नहीं मिला' : 'Oops! Page Not Found'}</h1>
+              <div className="pub-card text-center" style={{ borderRadius: 'var(--pub-radius-lg)' }}>
+                <div className="detail-card-header">
+                  <div className="pub-dot-grid" aria-hidden="true" />
+                </div>
+                <div className="p-5">
+                  <p className="fw-bold mb-3" style={{ fontSize: '80px', background: 'linear-gradient(135deg,#2563eb,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>404</p>
+                  <h1 className="h4 fw-semibold mb-2" style={{ fontFamily: 'var(--pub-font)', color: 'var(--pub-navy-900)' }}>
+                    {isHindi ? 'उफ़! पृष्ठ नहीं मिला' : 'Oops! Page Not Found'}
+                  </h1>
                   <p className="text-muted mb-4">
                     {isHindi
-                      ? 'आप जिस पृष्ठ को खोज रहे हैं, उसे हटा दिया गया होगा या अस्थायी रूप से अनुपलब्ध है।'
+                      ? 'आप जिस पृष्ठ को खोज रहे हैं, उसे हटा दिया गया होगा।'
                       : 'The page you are looking for might have been removed or is temporarily unavailable.'}
                   </p>
-                  <Button tag={Link} to="/" color="primary" size="lg" className="rounded-pill px-4">
-                    <FaHome className="me-2" aria-hidden="true" />
+                  <Link to="/" className="rich-action-btn rich-action-btn-primary" style={{ display: 'inline-flex' }}>
+                    <FaHome size={14} />
                     {isHindi ? 'होम पर जाएं' : 'Go to Home'}
-                  </Button>
-                </CardBody>
-              </Card>
+                  </Link>
+                </div>
+              </div>
             </Col>
           </Row>
         </Container>
@@ -182,87 +184,89 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
         <meta name="author" content={SITE_TITLE_SUFFIX} />
       </Helmet>
 
-      <Container className="py-4">
+      <Container className="rich-content-container">
         {/* Breadcrumb */}
-        <Breadcrumb listClassName="bg-white px-3 py-2 rounded-3 shadow-sm border mb-4 align-items-center flex-wrap">
-          <BreadcrumbItem>
-            <Link to="/" className="text-decoration-none text-primary d-flex align-items-center gap-1 fw-medium">
-              <FaHome size={13} aria-hidden="true" />
-              {isHindi ? 'होम' : 'Home'}
-            </Link>
-          </BreadcrumbItem>
-          <BreadcrumbItem active className="fw-semibold d-flex align-items-center gap-1 text-secondary" style={{ maxWidth: '100%' }}>
-            <FaList size={13} className="flex-shrink-0" aria-hidden="true" />
-            <span className="text-truncate">{pageTitle}</span>
-          </BreadcrumbItem>
-        </Breadcrumb>
+        <div className="pub-breadcrumb mb-4">
+          <Link to="/" className="d-inline-flex align-items-center gap-1">
+            <FaHome size={13} aria-hidden="true" />
+            {isHindi ? 'होम' : 'Home'}
+          </Link>
+          <span className="sep">›</span>
+          <span className="active d-inline-flex align-items-center gap-1">
+            <FaList size={13} className="flex-shrink-0" />
+            <span className="text-truncate" style={{ maxWidth: '60vw' }}>{pageTitle}</span>
+          </span>
+        </div>
 
-        <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
+        <div className="pub-card overflow-hidden" style={{ borderRadius: 'var(--pub-radius-lg)' }}>
           {/* Gradient Header */}
-          <CardHeader className="detail-card-header p-3 p-md-4">
-            <h1 className="fw-bold mb-2 text-white h5 d-flex align-items-start gap-2.5 lh-base">
+          <div className="detail-card-header p-3 p-md-4">
+            <div className="pub-dot-grid" aria-hidden="true" />
+            <h1
+              className="fw-bold mb-2 text-white d-flex align-items-start gap-2"
+              style={{ fontFamily: 'var(--pub-font)', fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', letterSpacing: '-0.3px', lineHeight: 1.3, position: 'relative', zIndex: 1 }}
+            >
               <FaTicketSimple size={20} className="mt-1 flex-shrink-0 opacity-90" aria-hidden="true" />
               <span>{pageTitle}</span>
             </h1>
-            <hr className="border-white opacity-20 my-2.5" />
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+
+            <hr style={{ borderColor: 'rgba(255,255,255,0.15)', margin: '12px 0' }} />
+
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2" style={{ position: 'relative', zIndex: 1 }}>
               <div className="d-flex flex-wrap align-items-center gap-2">
-                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
-                  <FaCalendarAlt size={11} className="text-primary" aria-hidden="true" />
-                  <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span> {formatDateTime(detail.createdAt, isHindi)}
+                <span className="rich-meta-badge">
+                  <FaCalendarAlt size={11} className="text-teal" />
+                  <span className="fw-semibold">{isHindi ? 'प्रकाशन:' : 'Created:'}</span>
+                  {formatDateTime(detail.createdAt, isHindi)}
                 </span>
-                <span className="badge bg-white text-dark px-2.5 py-1.5 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5" style={{ fontSize: "11.5px" }}>
-                  <FaCalendarPlus size={11} className="text-success" aria-hidden="true" />
-                  <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span> {formatDateTime(detail.updatedAt, isHindi)}
+                <span className="rich-meta-badge">
+                  <FaCalendarPlus size={11} />
+                  <span className="fw-semibold">{isHindi ? 'अपडेट:' : 'Updated:'}</span>
+                  {formatDateTime(detail.updatedAt, isHindi)}
                 </span>
               </div>
-              <Button
-                tag={Link}
-                to="/"
-                color="dark"
-                size="sm"
-                className="fw-semibold px-3 py-1 rounded-pill shadow-sm d-inline-flex align-items-center gap-1.5 ms-auto ms-sm-0"
-                style={{ fontSize: "12px" }}
-              >
-                <FaChevronLeft size={10} aria-hidden="true" />
+              <Link to="/" className="rich-back-btn ms-auto ms-sm-0">
+                <FaChevronLeft size={10} />
                 {isHindi ? 'मुख्य पृष्ठ' : 'Back To Home'}
-              </Button>
+              </Link>
             </div>
-          </CardHeader>
+          </div>
 
           {/* Content */}
-          <CardBody className="p-4">
+          <div className="p-4">
             <div
               id="printable-content"
-              className="lh-lg text-secondary cms-content"
+              className="lh-lg cms-content"
               dangerouslySetInnerHTML={{ __html: rawDesc }}
             />
-            <hr />
+            <hr style={{ borderColor: '#e2e8f0', margin: '24px 0' }} />
+
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
               {detail.file && (
-                <Button
-                  tag="a" href={`${API}${detail.file}`} download
-                  color="danger" size="sm"
-                  className="d-inline-flex align-items-center gap-1"
+                <a
+                  href={`${API}${detail.file}`}
+                  download
+                  className="rich-action-btn rich-action-btn-danger"
                 >
                   <FaDownload size={13} aria-hidden="true" />
                   {isHindi ? 'डाउनलोड' : 'Download'}
-                </Button>
+                </a>
               )}
-              <Button
-                onClick={handlePrint} color="primary" size="sm"
-                className="ms-auto d-inline-flex align-items-center gap-1"
+              <button
+                onClick={handlePrint}
+                className="rich-action-btn rich-action-btn-primary ms-auto"
               >
                 <FaPrint size={13} aria-hidden="true" />
                 {isHindi ? 'प्रिंट करें' : 'Print'}
-              </Button>
+              </button>
             </div>
-          </CardBody>
+          </div>
 
-          <CardFooter className="bg-light text-center fw-semibold text-muted py-3">
+          {/* Footer */}
+          <div className="rich-card-footer">
             {isHindi ? 'धन्यवाद !' : 'Thanks For Reading !'}
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       </Container>
     </>
   );

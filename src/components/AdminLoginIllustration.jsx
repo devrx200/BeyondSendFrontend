@@ -31,7 +31,7 @@ const AdminLoginIllustration = ({ isHindi }) => {
             letterSpacing: "0.3px"
           }}
         >
-          🎓 {isHindi ? "उच्च शिक्षा विभाग छत्तीसगढ़ " : "Higher Education Department Chhattisgarh"}
+          🎓 {isHindi ? "बियॉन्डसेंड " : "BeyondSend "}
         </Badge>
       </div>
 
@@ -366,16 +366,16 @@ const AdminLoginIllustration = ({ isHindi }) => {
       <div className="z-1  mt-1 ">
 
         <a
-          href="https://heonline.cg.nic.in/"
+          href="https://beyondsend.in/"
           target="_blank"
           rel="noopener noreferrer"
           className="d-inline-flex align-items-center gap-1 text-primary text-decoration-none fw-semibold small bg-white bg-opacity-75 px-3 py-1  rounded-pill border border-primary border-opacity-25 shadow-xs"
-          title={isHindi ? "उच्च शिक्षा पोर्टल वेब एप्लिकेशन खोलें" : "Visit Higher Education WebApplication"}
+          title={isHindi ? "बियॉन्डसेंड वेबसाइट खोलें" : "Visit BeyondSend Website"}
           style={{ fontSize: "12px" }}
         >
           <span>🌐</span>
-          <span>{isHindi ? "वेब एप्लिकेशन देखें:" : "Visit WebApplication:"}</span>
-          <span className="text-primary">https://heonline.cg.nic.in</span>
+          <span>{isHindi ? "वेबसाइट देखें:" : "Visit Website:"}</span>
+          <span className="text-primary">https://beyondsend.in</span>
           <FaExternalLinkAlt size={10} className="ms-1 opacity-75" />
         </a>
       </div>

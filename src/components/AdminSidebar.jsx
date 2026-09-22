@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Collapse } from "reactstrap";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -7,145 +7,86 @@ import { jwtDecode } from "jwt-decode";
 
 import {
   FaTachometerAlt,
-  FaLayerGroup,
-  FaBars,
-  FaFileAlt,
+  FaNewspaper,
+  FaBolt,
   FaListAlt,
+  FaExclamationCircle,
+  FaFolderOpen,
+  FaDownload,
+  FaLayerGroup,
   FaWindowMaximize,
   FaWindowMinimize,
-  FaFolderOpen,
-  FaFolder,
-  FaUpload,
-  FaCloudUploadAlt,
-  FaDownload,
-  FaNewspaper,
-  FaBullhorn,
-  FaChartBar,
-  FaUniversity,
-  FaSchool,
-  FaDatabase,
-  FaTags,
-  FaLink,
-  FaImages,
-  FaPhotoVideo,
+  FaBars,
   FaImage,
-  FaHeadset,
-  FaPhoneAlt,
+  FaThLarge,
+  FaTags,
+  FaAddressBook,
   FaIdCard,
+  FaHeadset,
   FaHandsHelping,
+  FaBookOpen,
   FaCommentDots,
   FaUsers,
   FaHistory,
+  FaUserShield,
+  FaDatabase,
   FaChevronRight,
   FaClock,
   FaSignOutAlt,
-  FaExclamationCircle,
-  FaUserShield,
-  FaShieldAlt,
-  FaBolt,
-  FaThLarge,
-  FaBuilding,
-  FaFileContract
+  FaShieldAlt
 } from "react-icons/fa";
 
-import { useLanguage } from "../contexts/LanguageContext";
 import { FaPager } from "react-icons/fa6";
 
+import { useLanguage } from "../contexts/LanguageContext";
+
 const API_URL = import.meta.env.VITE_API_URL;
-const HEWebCMSVersion = import.meta.env.VITE_PORTAL_VERSION;
+const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
 
 
 const adminMenu = [
   {
     id: "dashboard",
     icon: FaTachometerAlt,
-    path: "/admin/dashboard",
+    path: "/authorized/dashboard",
     label: {
-      en: "Main Dashboard Home",
-      hi: "मुख्य डैशबोर्ड घर"
+      en: "Dashboard",
+      hi: "डैशबोर्ड"
     }
   },
 
   {
-    id: "news-notices",
+    id: "content-management",
     icon: FaNewspaper,
     label: {
-      en: "Add News & Notices",
-      hi: "समाचार एवं सूचनाएं जोड़ें "
+      en: "Content Management",
+      hi: "सामग्री प्रबंधन"
     },
     submenu: [
       {
         id: "new-updates",
         icon: FaBolt,
-        path: "/admin/new-updates",
+        path: "/authorized/new-updates",
         label: {
-          en: "Latest Updates Ticker",
-          hi: "नवीन अपडेट टिकर"
+          en: "Latest Updates",
+          hi: "नवीन अपडेट"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
       {
-        id: "announcements",
-        icon: FaBullhorn,
-        path: "/admin/announcements",
+        id: "categories",
+        icon: FaListAlt,
+        path: "/authorized/categories",
         label: {
-          en: "Announcements & Schemes",
-          hi: "घोषणाएं एवं योजनाएं"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
+          en: "Categories",
+          hi: "श्रेणियाँ"
+        }
       },
-      {
-        id: "directorate-notices",
-        icon: FaBuilding,
-        path: "/admin/directorate-notices",
-        label: {
-          en: "Directorate Notices",
-          hi: "संचालनालय सूचनाएं"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "department-notices",
-        icon: FaFileContract,
-        path: "/admin/department-notices",
-        label: {
-          en: "Department Notices",
-          hi: "विभागीय सूचनाएं"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DEPARTMENT"]
-      }
-    ]
-  },
-
-  {
-    id: "page-management",
-    icon: FaPager,
-    label: {
-      en: "All Page Management",
-      hi: " सभी पेज प्रबंधन"
-    },
-    submenu: [
-
-      {
-        id: "multi-section-pages-management",
-        icon: FaLayerGroup,
-        path: "/admin/multi-section-pages-management",
-        label: {
-          en: "Multi Section Pages",
-          hi: "बहु-खंड पृष्ठ"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
-      },
-
       {
         id: "rich-content-pages",
         icon: FaPager,
-        path: "/admin/rich-content-pages",
+        path: "/authorized/rich-content-pages",
         label: {
           en: "Rich Content Pages",
           hi: "समृद्ध सामग्री पृष्ठ"
@@ -156,78 +97,43 @@ const adminMenu = [
       {
         id: "important-page-management",
         icon: FaExclamationCircle,
-        path: "/admin/important-page-management",
+        path: "/authorized/important-page-management",
         label: {
           en: "Important Pages",
           hi: "महत्वपूर्ण पृष्ठ"
         },
         allowedRoles: ["ADMIN"],
         allowedEmployeeTypes: ["DIRECTORATE"]
-      },
+      }
     ]
   },
 
   {
-    id: "media-library",
+    id: "media-management",
     icon: FaFolderOpen,
-    path: "/admin/media-library-mangments",
     label: {
-      en: "Media, Resources & Library",
-      hi: "मीडिया, संसाधन एवं लाइब्रेरी"
-    },
-    allowedRoles: ["ADMIN", "OFFICER"],
-    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
-
-  },
-  {
-    id: "education-management",
-    icon: FaUniversity,
-    label: {
-      en: "Education Management",
-      hi: "शिक्षा प्रबंधन"
+      en: "Media & Downloads",
+      hi: "मीडिया एवं डाउनलोड"
     },
     submenu: [
       {
-        id: "education-stats",
-        icon: FaChartBar,
-        path: "/admin/admin-education-stats",
+        id: "media-library",
+        icon: FaFolderOpen,
+        path: "/authorized/media-library-mangments",
         label: {
-          en: "Education Statistics",
-          hi: "शिक्षा सांख्यिकी"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-
-    ]
-  },
-  {
-    id: "media-and-download-management",
-    icon: FaPhotoVideo,
-    label: {
-      en: "Gallery & Download Pages",
-      hi: "गैलरी एवं डाउनलोड पृष्ठ"
-    },
-    submenu: [
-      {
-        id: "gallery-page",
-        icon: FaImages,
-        path: "/admin/gallery",
-        label: {
-          en: "Photo Galleries Page",
-          hi: "फोटो गैलरी पेज"
+          en: "Media Library",
+          hi: "मीडिया लाइब्रेरी"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
       },
-
       {
-        id: "downloads-management",
+        id: "download-management",
         icon: FaDownload,
-        path: "/admin/download-management",
+        path: "/authorized/download-management",
         label: {
-          en: "Download Page",
-          hi: "डाउनलोड पेज"
+          en: "Downloads",
+          hi: "डाउनलोड"
         },
         allowedRoles: ["ADMIN", "OFFICER"],
         allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
@@ -236,137 +142,94 @@ const adminMenu = [
   },
 
   {
-    id: "master-management",
-    icon: FaDatabase,
-    label: {
-      en: "Master Management",
-      hi: "मास्टर प्रबंधन"
-    },
-    submenu: [
-      {
-        id: "categories",
-        icon: FaListAlt,
-        path: "/admin/categories",
-        label: {
-          en: "Categories",
-          hi: "श्रेणियाँ"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
-      }
-    ]
-  },
-  {
-    id: "website-management",
+    id: "website-setup",
     icon: FaLayerGroup,
     label: {
-      en: "Website Management",
-      hi: "वेबसाइट प्रबंधन"
+      en: "Website Setup",
+      hi: "वेबसाइट सेटअप"
     },
     submenu: [
       {
         id: "header-management",
         icon: FaWindowMaximize,
-        path: "/admin/header-management",
+        path: "/authorized/header-management",
         label: {
           en: "Header Management",
           hi: "हेडर प्रबंधन"
         },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "menu-management",
         icon: FaBars,
-        path: "/admin/menu",
+        path: "/authorized/menu",
         label: {
           en: "Menu Management",
           hi: "मेनू प्रबंधन"
         },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
-      },
-      {
-        id: "slider",
-        icon: FaImages,
-        path: "/admin/slider",
-        label: {
-          en: "Home Slider",
-          hi: "होम स्लाइडर"
-        },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "about-content",
         icon: FaImage,
-        path: "/admin/about-section",
+        path: "/authorized/about-section",
         label: {
           en: "About Section",
           hi: "परिचय अनुभाग"
         },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
-      },
-      {
-        id: "important-links",
-        icon: FaLink,
-        path: "/admin/important-links",
-        label: {
-          en: "Important Links",
-          hi: "महत्वपूर्ण लिंक"
-        },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "quick-access",
         icon: FaThLarge,
-        path: "/admin/quick-access",
+        path: "/authorized/quick-access",
         label: {
           en: "Quick Access",
           hi: "त्वरित पहुंच"
         },
-        allowedRoles: ["ADMIN", "NIC",],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "brands",
         icon: FaTags,
-        path: "/admin/brands",
+        path: "/authorized/brands",
         label: {
           en: "Footer Brands",
-          hi: "फुटर ब्रांड्स"
+          hi: "फुटर ब्रांड"
         },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       },
       {
         id: "footer-management",
         icon: FaWindowMinimize,
-        path: "/admin/footer-section-manager",
+        path: "/authorized/footer-section-manager",
         label: {
           en: "Footer Management",
           hi: "फुटर प्रबंधन"
         },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        allowedRoles: ["ADMIN"],
+        allowedEmployeeTypes: ["DIRECTORATE"]
       }
     ]
   },
 
   {
     id: "contact-page-management",
-    icon: FaPager,
+    icon: FaAddressBook,
     label: {
-      en: "Manage Contact Page ",
-      hi: "संपर्क पेज प्रबंधन"
+      en: "Contact Management",
+      hi: "संपर्क प्रबंधन"
     },
     submenu: [
       {
         id: "contact-info",
-        icon: FaPhoneAlt,
-        path: "/admin/contact-management",
+        icon: FaAddressBook,
+        path: "/authorized/contact-management",
         label: {
           en: "Contact Information",
           hi: "संपर्क जानकारी"
@@ -377,7 +240,7 @@ const adminMenu = [
       {
         id: "contact-card",
         icon: FaIdCard,
-        path: "/admin/contact-card-management",
+        path: "/authorized/contact-card-management",
         label: {
           en: "Contact Cards",
           hi: "संपर्क कार्ड"
@@ -387,30 +250,37 @@ const adminMenu = [
       }
     ]
   },
+
   {
     id: "support",
     icon: FaHeadset,
     label: {
-      en: "Support & Assistance",
-      hi: "सहायता एवं समर्थन"
+      en: "Support Centre",
+      hi: "सहायता केंद्र"
     },
     submenu: [
       {
         id: "help-guidance",
         icon: FaHandsHelping,
-        path: "/admin/help-guidance",
+        path: "/authorized/help-guidance",
         label: {
           en: "Help & Guidance",
           hi: "सहायता एवं मार्गदर्शन"
-        },
-        allowedRoles: ["ADMIN", "NIC"],
-        allowedEmployeeTypes: ["DIRECTORATE", "NIC"]
+        }
       },
-
+      {
+        id: "tutorials",
+        icon: FaBookOpen,
+        path: "/authorized/tutorials",
+        label: {
+          en: "Tutorials",
+          hi: "ट्यूटोरियल"
+        }
+      },
       {
         id: "feedbacks",
         icon: FaCommentDots,
-        path: "/admin/feedbacks",
+        path: "/authorized/feedbacks",
         label: {
           en: "User Feedback",
           hi: "उपयोगकर्ता प्रतिक्रिया"
@@ -424,7 +294,7 @@ const adminMenu = [
   {
     id: "users-management",
     icon: FaUsers,
-    path: "/admin/users-management",
+    path: "/authorized/users-management",
     label: {
       en: "Users Management",
       hi: "उपयोगकर्ता प्रबंधन"
@@ -432,42 +302,54 @@ const adminMenu = [
     allowedRoles: ["ADMIN", "NIC"],
     allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "NIC"]
   },
-  // NIC
-  {
-    id: "system-logs",
-    icon: FaHistory,
-    path: "/admin/activity-logs",
-    label: {
-      en: "Activity Logs",
-      hi: "गतिविधि लॉग"
-    },
-    allowedRoles: ["NIC"],
-    allowedEmployeeTypes: ["NIC"]
-  },
-  {
-    id: "session-management",
-    icon: FaUserShield,
-    path: "/admin/session-manager",
-    label: {
-      en: "User Sessions",
-      hi: "उपयोगकर्ता सत्र"
-    },
-    allowedRoles: ["NIC"],
-    allowedEmployeeTypes: ["NIC"]
-  },
-  {
-    id: "database-backup",
-    icon: FaDatabase,
-    path: "/admin/database-backup-managments",
-    label: {
-      en: "Database Backup",
-      hi: "डेटाबेस बैकअप"
-    },
-    allowedRoles: ["NIC"],
-    allowedEmployeeTypes: ["NIC"]
-  },
 
+  {
+    id: "system-security",
+    icon: FaUserShield,
+    label: {
+      en: "System & Security",
+      hi: "सिस्टम एवं सुरक्षा"
+    },
+    submenu: [
+      {
+        id: "system-logs",
+        icon: FaHistory,
+        path: "/authorized/activity-logs",
+        label: {
+          en: "Activity Logs",
+          hi: "गतिविधि लॉग"
+        },
+        allowedRoles: ["NIC"],
+        allowedEmployeeTypes: ["NIC"]
+      },
+      {
+        id: "session-management",
+        icon: FaUserShield,
+        path: "/authorized/session-manager",
+        label: {
+          en: "User Sessions",
+          hi: "उपयोगकर्ता सत्र"
+        },
+        allowedRoles: ["NIC"],
+        allowedEmployeeTypes: ["NIC"]
+      },
+      {
+        id: "database-backup",
+        icon: FaDatabase,
+        path: "/authorized/database-backup-managments",
+        label: {
+          en: "Database Backup",
+          hi: "डेटाबेस बैकअप"
+        },
+        allowedRoles: ["NIC"],
+        allowedEmployeeTypes: ["NIC"]
+      }
+    ]
+  }
 ];
+
+// ─────────────────────────────────────────────────────────
+// Role / employee-type guard
 // ─────────────────────────────────────────────────────────
 const isAllowed = (item, userRole, userEmployeeType) => {
   const roleOk =
@@ -503,14 +385,19 @@ const filterMenu = (menu, userRole, userEmployeeType) =>
     return acc;
   }, []);
 
+const avatarFallback = (name) =>
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name || "Admin"
+  )}&background=0d9488&color=fff&bold=true`;
+
 // ─────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────
 const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const { isHindi } = useLanguage();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
-  const [openMenu, setOpenMenu] = useState(null);
   const [decoded] = useState(() => {
     const token = sessionStorage.getItem("authToken");
     if (!token) return null;
@@ -533,6 +420,23 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
+
+  // ── Menu expand state ───────────────────────────────────
+  // The group that owns the active route opens automatically
+  // (derived, no effect) and a manual toggle overrides it for
+  // as long as the user stays on that same route.
+  const [menuOverride, setMenuOverride] = useState({ path: null, id: undefined });
+
+  const activeGroupId =
+    adminMenu.find((item) =>
+      item.submenu?.some((sub) => sub.path === pathname)
+    )?.id ?? null;
+
+  const openMenu =
+    menuOverride.path === pathname ? menuOverride.id : activeGroupId;
+
+  const toggleMenu = (id) =>
+    setMenuOverride({ path: pathname, id: openMenu === id ? null : id });
 
   // ── Session countdown ───────────────────────────────────
   useEffect(() => {
@@ -593,7 +497,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
       showConfirmButton: false
     });
 
-    navigate("/admin/login", { replace: true });
+    navigate("/auth/login", { replace: true });
   };
 
   const handleNavClick = () => {
@@ -612,7 +516,11 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   })();
 
   const userRole = (storedUser?.role || decoded?.role || "").toUpperCase();
-  const userEmployeeType = (storedUser?.employeeType || decoded?.employeeType || "").toUpperCase();
+  const userEmployeeType = (
+    storedUser?.employeeType ||
+    decoded?.employeeType ||
+    ""
+  ).toUpperCase();
 
   const userProfile = {
     name: storedUser?.name || decoded?.name || "Administrator",
@@ -625,11 +533,19 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
       decoded?.userDeginations ||
       "",
     profileImage: storedUser?.profileImage || decoded?.profileImage || "",
-    email: storedUser?.email || decoded?.email || "",
+    email: storedUser?.email || decoded?.email || ""
   };
 
-  // ── Floating Tooltip State for Pro Hover Info ──────────
-  const [hoveredTooltip, setHoveredTooltip] = useState({ visible: false, text: "", top: 0, left: 0 });
+  const userTooltip = `${userProfile.name}${userProfile.role ? ` (${userProfile.role})` : ""
+    }${userProfile.userDesignations ? ` - ${userProfile.userDesignations}` : ""}`;
+
+  // ── Floating tooltip state (collapsed / hover info) ─────
+  const [hoveredTooltip, setHoveredTooltip] = useState({
+    visible: false,
+    text: "",
+    top: 0,
+    left: 0
+  });
 
   const handleMouseEnter = (e, text) => {
     if (!text) return;
@@ -652,72 +568,42 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     "adm-sidebar",
     collapsed ? "is-collapsed" : "",
     mobileOpen ? "is-open" : ""
-  ].join(" ").trim();
+  ]
+    .join(" ")
+    .trim();
 
   return (
     <aside className={sidebarClasses}>
       <div className="adm-side-profile">
         <div
           className="adm-side-brand"
-          onMouseEnter={(e) => handleMouseEnter(e, isHindi ? "उच्च शिक्षा विभाग, छत्तीसगढ़ शासन" : "Department of Higher Education, Government of Chhattisgarh")}
+          onMouseEnter={(e) => handleMouseEnter(e, "BeyondSend ")}
           onMouseLeave={handleMouseLeave}
+          title="BeyondSend "
         >
           <img
-            src={`${import.meta.env.BASE_URL || "/"}Chhattisgarh.svg`}
-            alt="Chhattisgarh Government"
+            src={`${import.meta.env.BASE_URL || "/"}beyondsend-logo.svg`}
+            alt="BeyondSend"
             className="adm-side-brand-logo"
-            onError={(e) => (e.target.src = "/Chhattisgarh.svg")}
+            onError={(e) => {
+              e.target.src = "/beyondsend-logo.svg";
+            }}
           />
-          <div className="adm-side-brand-text lh-sm">
-            <div className="fw-bold text-white" style={{ fontSize: "0.55rem" }}>
-              Department of Higher Education,
-            </div>
-            <div className="text-white-50" style={{ fontSize: "0.65rem", marginTop: "2px" }}>
-              Government of Chhattisgarh.
-            </div>
+          <div className="adm-side-brand-text">
+            <span className="adm-side-brand-title">BeyondSend Desk</span>
+            <span className="adm-side-brand-sub">
+              {isHindi ? "" : "Omnichannel Solutions"}
+            </span>
           </div>
         </div>
 
         <div className="adm-side-avatar-wrap">
-          <img
-            src={
-              userProfile?.profileImage
-                ? `${API_URL}${userProfile.profileImage}`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "Admin")}&background=0d9488&color=fff&bold=true`
-            }
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.name || "Admin")}&background=0d9488&color=fff&bold=true`;
-            }}
-            alt="Profile"
-            className="adm-side-avatar"
-            onMouseEnter={(e) =>
-              handleMouseEnter(
-                e,
-                `${userProfile?.name || "Admin"}${userProfile?.role ? " (" + userProfile.role + ")" : ""}${userProfile?.userDesignations ? " - " + userProfile.userDesignations : ""}`
-              )
-            }
-            onMouseLeave={handleMouseLeave}
-          />
-          {!collapsed && (
-            <>
-              <div className="adm-side-name" title={userProfile?.name}>
-                <span>{userProfile?.name || "Admin"}</span>
-                {userProfile?.role && (
-                  <span className="adm-side-role-badge">{userProfile.role}</span>
-                )}
-              </div>
-              {userProfile?.userDesignations && (
-                <div className="adm-side-designation" title={userProfile.userDesignations}>
-                  {userProfile.userDesignations}
-                </div>
-              )}
-            </>
-          )}
           {expiresIn && (
             <div
               className="adm-side-session"
-              onMouseEnter={(e) => handleMouseEnter(e, `Session Left : ${expiresIn}`)}
+              onMouseEnter={(e) =>
+                handleMouseEnter(e, `Session Left : ${expiresIn}`)
+              }
               onMouseLeave={handleMouseLeave}
               title={`Session Left : ${expiresIn}`}
             >
@@ -732,8 +618,8 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
         </div>
       </div>
 
-      {/* MENU SECTION */}
-      <div className="adm-side-nav">
+      {/* ── Navigation menu ─────────────────────────────── */}
+      <nav className="adm-side-nav" aria-label="Admin navigation">
         {visibleMenu.map((item) => {
           const Icon = item.icon;
           const label = isHindi ? item.label.hi : item.label.en;
@@ -759,15 +645,20 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
 
           // ── Collapsible parent ──────────────────────────
           const isOpen = openMenu === item.id;
+          const hasActiveChild = item.submenu.some(
+            (sub) => sub.path === pathname
+          );
 
           return (
             <div key={item.id}>
               <button
                 type="button"
-                className={`adm-side-item ${isOpen ? "is-active" : ""}`}
-                onClick={() => setOpenMenu(isOpen ? null : item.id)}
+                className={`adm-side-item ${isOpen || hasActiveChild ? "is-active" : ""
+                  }`}
+                onClick={() => toggleMenu(item.id)}
                 onMouseEnter={(e) => handleMouseEnter(e, label)}
                 onMouseLeave={handleMouseLeave}
+                aria-expanded={isOpen}
               >
                 <Icon />
                 <span className="adm-side-item-label">{label}</span>
@@ -803,30 +694,28 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             </div>
           );
         })}
-      </div>
+      </nav>
 
-      {/* PRO SOFTWARE FOOTER WITH INLINE USER CARD & LOGOUT */}
+      {/* ── Footer: signed-in user card + build info ────── */}
       <div className="adm-side-footer">
-        <div className="adm-side-user-card" title={collapsed ? userProfile.name : ""}>
+        <div
+          className="adm-side-user-card"
+          title={collapsed ? userProfile.name : ""}
+        >
           <div
             className="adm-side-user-avatar-wrap"
-            onMouseEnter={(e) =>
-              handleMouseEnter(
-                e,
-                `${userProfile?.name || "Admin"}${userProfile?.role ? " (" + userProfile.role + ")" : ""}${userProfile?.userDesignations ? " - " + userProfile.userDesignations : ""}`
-              )
-            }
+            onMouseEnter={(e) => handleMouseEnter(e, userTooltip)}
             onMouseLeave={handleMouseLeave}
           >
             <img
               src={
                 userProfile.profileImage
                   ? `${API_URL}${userProfile.profileImage}`
-                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name || "Admin")}&background=0d9488&color=fff&bold=true`
+                  : avatarFallback(userProfile.name)
               }
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name || "Admin")}&background=0d9488&color=fff&bold=true`;
+                e.target.src = avatarFallback(userProfile.name);
               }}
               alt={userProfile.name}
               className="adm-side-user-avatar"
@@ -864,30 +753,29 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
           <div className="adm-side-version-bar">
             <span className="adm-side-version-chip">
               <FaShieldAlt className="adm-version-icon" />
-              <span>HEWebCMS</span>
-              <span className="adm-version-num">v{HEWebCMSVersion || "0.1"}</span>
+              <span>BeyondSend</span>
+              <span className="adm-version-num">v{PORTAL_VERSION || "1.0"}</span>
             </span>
           </div>
         )}
       </div>
 
-      {/* PRO FLOATING HOVER TOOLTIP */}
+      {/* ── Floating hover tooltip (only dynamic coords inline) ── */}
       {hoveredTooltip.visible && (
         <div
           className="adm-floating-tooltip"
           style={{
-            position: "fixed",
             top: `${hoveredTooltip.top}px`,
-            left: `${hoveredTooltip.left}px`,
-            transform: "translateY(-50%)"
+            left: `${hoveredTooltip.left}px`
           }}
         >
           {hoveredTooltip.text}
         </div>
       )}
-
     </aside>
   );
 };
 
 export default AdminSidebar;
+
+

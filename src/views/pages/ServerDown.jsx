@@ -1,39 +1,35 @@
 import { useState, useEffect } from 'react';
-import {
-  Container, Row, Col,
-  Card, CardHeader, CardBody,
-  Badge, Button, Spinner,
-} from 'reactstrap';
-import { FaPhone, FaEnvelope, FaGlobe, FaSyncAlt, FaLanguage } from 'react-icons/fa';
+import { Container, Row, Col } from 'reactstrap';
+import { FaPhone, FaEnvelope, FaGlobe, FaSyncAlt, FaLanguage, FaServer } from 'react-icons/fa';
 
 const CONTENT = {
   en: {
-    badge:     'SERVER UNAVAILABLE',
-    title:     "We'll be back shortly",
-    desc:      'Our servers are currently unavailable or undergoing scheduled maintenance. We apologise for the inconvenience. Services will be restored as soon as possible.',
-    helpline:  'Helpline Number',
-    email:     'Support Email',
-    website:   'Official Website',
-    retry:     'Retry Connection',
-    checking:  'Checking...',
-    managed:   'Managed By National Informatics Centre (NIC)',
-    copyright: 'Department of Higher Education, Government of Chhattisgarh. All Rights Reserved.',
-    deptName:  'Department of Higher Education',
-    govtName:  'Government of Chhattisgarh · उच्च शिक्षा विभाग',
+    badge:       'SERVICE TEMPORARILY UNAVAILABLE',
+    title:       "We'll be back shortly",
+    desc:        'Our servers are currently unavailable or undergoing scheduled maintenance. We apologise for the inconvenience. Services will be restored as soon as possible.',
+    supportDesk: 'Support Hours',
+    email:       'Support Email',
+    website:     'Official Website',
+    retry:       'Retry Connection',
+    checking:    'Checking...',
+    managed:     'Operated By BeyondSend',
+    copyright:   'BeyondSend. All Rights Reserved.',
+    deptName:    'BeyondSend',
+    govtName:    'Customer Communication & Marketing Automation Platform',
   },
   hi: {
-    badge:     'सर्वर अनुपलब्ध',
-    title:     'हम जल्द ही वापस आएंगे',
-    desc:      'हमारे सर्वर वर्तमान में अनुपलब्ध हैं या निर्धारित रखरखाव से गुजर रहे हैं। असुविधा के लिए हम क्षमा चाहते हैं। सेवाएँ जल्द से जल्द बहाल कर दी जाएंगी।',
-    helpline:  'हेल्पलाइन नंबर',
-    email:     'सहायता ईमेल',
-    website:   'आधिकारिक वेबसाइट',
-    retry:     'पुनः प्रयास करें',
-    checking:  'जाँच हो रही है...',
-    managed:   'राष्ट्रीय सूचना विज्ञान केंद्र (NIC) द्वारा प्रबंधित',
-    copyright: 'उच्च शिक्षा विभाग, छत्तीसगढ़ सरकार। सभी अधिकार सुरक्षित।',
-    deptName:  'उच्च शिक्षा विभाग',
-    govtName:  'छत्तीसगढ़ सरकार · Department of Higher Education',
+    badge:       'सेवा अस्थायी रूप से अनुपलब्ध',
+    title:       'हम जल्द ही वापस आएंगे',
+    desc:        'हमारे सर्वर वर्तमान में अनुपलब्ध हैं या निर्धारित रखरखाव से गुजर रहे हैं। असुविधा के लिए हम क्षमा चाहते हैं। सेवाएँ जल्द से जल्द बहाल कर दी जाएंगी।',
+    supportDesk: 'सहायता समय',
+    email:       'सहायता ईमेल',
+    website:     'आधिकारिक वेबसाइट',
+    retry:       'पुनः प्रयास करें',
+    checking:    'जाँच हो रही है...',
+    managed:     'बियॉन्डसेंड द्वारा संचालित',
+    copyright:   'बियॉन्डसेंड। सभी अधिकार सुरक्षित।',
+    deptName:    'बियॉन्डसेंड',
+    govtName:    'कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म',
   },
 };
 
@@ -48,141 +44,160 @@ const ServerDown = ({ onRetry, retrying }) => {
 
   const t = CONTENT[language];
 
+  const infoItems = [
+    {
+      icon: <FaPhone />,
+      label: t.supportDesk,
+      value: 'Mon – Sat · 10:00 AM – 6:00 PM IST',
+      href: null,
+    },
+    {
+      icon: <FaEnvelope />,
+      label: t.email,
+      value: 'contact@beyondsend.in',
+      href: 'mailto:contact@beyondsend.in',
+    },
+    {
+      icon: <FaGlobe />,
+      label: t.website,
+      value: 'https://beyondsend.in',
+      href: 'https://beyondsend.in/',
+    },
+  ];
+
   return (
     <div className="server-down-bg" role="main">
       <Container fluid>
-        <Row className="justify-content-center">
-          <Col xs={12} lg={10} xl={8}>
-            <Card className="border-0 shadow-lg rounded-4 overflow-hidden">
+        <Row className="justify-content-center w-100">
+          <Col xs={12} lg={9} xl={7}>
+            <div className="server-down-card">
 
               {/* Header */}
-              <CardHeader className="text-white border-0 p-3 p-md-4" style={{ background: 'linear-gradient(135deg,#1e3a8a 0%,#3b5bdb 100%)' }}>
-                <Row className="align-items-center g-2">
-                  <Col xs={12} sm={8} md={9}>
-                    <div className="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
-                      <img src="/Chhattisgarh.svg" alt="Chhattisgarh" style={{ height: 'clamp(36px,5vw,48px)', width: 'auto' }} className="flex-shrink-0" />
-                      <div className="min-w-0">
-                        <h1 className="mb-0 fw-semibold text-white fs-6 lh-1 text-truncate">{t.deptName}</h1>
-                        <p className="mb-0 text-white-50 small text-truncate">{t.govtName}</p>
-                      </div>
-                    </div>
-                  </Col>
-                  <Col xs={12} sm={4} md={3}>
-                    <div className="d-flex align-items-center justify-content-start justify-content-sm-end gap-2 flex-wrap">
-                      <img src="/Digital_India_logo.svg" alt="Digital India" className="bg-white p-1 rounded" style={{ height: 'clamp(26px,3.5vw,36px)', width: 'auto' }} />
-                      <img src="/Emblem_of_India.svg"    alt="India Emblem" className="bg-white p-1 rounded" style={{ height: 'clamp(36px,5vw,52px)',  width: 'auto' }} />
-                    </div>
-                  </Col>
-                </Row>
-              </CardHeader>
+              <div className="server-down-header">
+                <div className="pub-dot-grid" aria-hidden="true" />
+                <div className="d-flex align-items-center gap-3 flex-wrap" style={{ position: 'relative', zIndex: 1 }}>
+                  <img
+                    src="/beyondsend-logo.svg"
+                    alt="BeyondSend"
+                    style={{ height: 'clamp(36px,5vw,48px)', width: 'auto', background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '6px 12px', border: '1px solid rgba(255,255,255,0.15)' }}
+                  />
+                  <div className="min-w-0">
+                    <h1 className="mb-0 fw-bold text-white fs-6 lh-1 text-truncate" style={{ fontFamily: 'var(--pub-font)', letterSpacing: '-0.2px' }}>
+                      {t.deptName}
+                    </h1>
+                    <p className="mb-0 small text-truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{t.govtName}</p>
+                  </div>
+                </div>
+              </div>
 
               {/* Body */}
-              <CardBody className="text-center bg-white p-3 p-md-4 p-lg-5">
-                {/* Server SVG */}
-                <div className="mx-auto mb-3 mb-md-4" style={{ maxWidth: 140 }} aria-hidden="true">
+              <div className="server-down-body">
+                {/* Animated Server SVG */}
+                <div className="mx-auto mb-4" style={{ maxWidth: 150 }} aria-hidden="true">
                   <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-100" style={{ height: 'auto' }}>
-                    <rect x="20" y="20" width="80" height="80" rx="8" fill="#1e3a8a" opacity="0.12" />
-                    <rect x="28" y="28" width="64" height="64" rx="4" fill="#1e3a8a" opacity="0.06" />
-                    <rect x="32" y="34" width="56" height="14" rx="2" fill="#1e3a8a" opacity="0.15" />
-                    <circle cx="40" cy="41" r="3" fill="#10b981"><animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" /></circle>
-                    <rect x="48" y="38" width="32" height="6" rx="1" fill="#1e3a8a" opacity="0.08" />
-                    <rect x="32" y="52" width="56" height="14" rx="2" fill="#1e3a8a" opacity="0.15" />
-                    <circle cx="40" cy="59" r="3" fill="#10b981"><animate attributeName="opacity" values="1;0.2;1" dur="1.0s" repeatCount="indefinite" /></circle>
-                    <rect x="48" y="56" width="32" height="6" rx="1" fill="#1e3a8a" opacity="0.08" />
-                    <rect x="32" y="70" width="56" height="14" rx="2" fill="#1e3a8a" opacity="0.15" />
-                    <circle cx="40" cy="77" r="3" fill="#ef4444"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" /></circle>
-                    <rect x="48" y="74" width="32" height="6" rx="1" fill="#1e3a8a" opacity="0.08" />
+                    <rect x="20" y="20" width="80" height="80" rx="8" fill="#0f172a" opacity="0.08" />
+                    <rect x="28" y="28" width="64" height="64" rx="4" fill="#0f172a" opacity="0.04" />
+                    <rect x="32" y="34" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <circle cx="40" cy="41" r="3" fill="#10b981">
+                      <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" />
+                    </circle>
+                    <rect x="48" y="38" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
+                    <rect x="32" y="52" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <circle cx="40" cy="59" r="3" fill="#10b981">
+                      <animate attributeName="opacity" values="1;0.2;1" dur="1.0s" repeatCount="indefinite" />
+                    </circle>
+                    <rect x="48" y="56" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
+                    <rect x="32" y="70" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <circle cx="40" cy="77" r="3" fill="#ef4444">
+                      <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
+                    </circle>
+                    <rect x="48" y="74" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
                     <g transform="translate(60,60)">
-                      <circle cx="0" cy="0" r="48" stroke="#1e3a8a" strokeWidth="2" opacity="0.1" />
-                      <circle cx="0" cy="0" r="48" stroke="#3b5bdb" strokeWidth="3" opacity="0.25" strokeDasharray="80 240" strokeLinecap="round">
+                      <circle cx="0" cy="0" r="48" stroke="#3b82f6" strokeWidth="2" opacity="0.1" />
+                      <circle cx="0" cy="0" r="48" stroke="#3b82f6" strokeWidth="3" opacity="0.25" strokeDasharray="80 240" strokeLinecap="round">
                         <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="3s" repeatCount="indefinite" />
                       </circle>
                     </g>
-                    <circle cx="60" cy="60" r="12" fill="#3b5bdb" opacity="0.08">
+                    <circle cx="60" cy="60" r="10" fill="#3b82f6" opacity="0.07">
                       <animate attributeName="r" values="8;20;8" dur="2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.15;0.02;0.15" dur="2s" repeatCount="indefinite" />
                     </circle>
-                    <text x="60" y="66" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#dc3545">!</text>
+                    <text x="60" y="66" textAnchor="middle" fontSize="18" fontWeight="bold" fill="#dc2626">!</text>
                   </svg>
                 </div>
 
-                <Badge color="danger" pill className="px-3 py-2 mb-3" style={{ fontSize: 'clamp(0.6rem,1vw,0.75rem)', letterSpacing: '0.8px' }}>
-                  {t.badge}
-                </Badge>
+                {/* Status badge */}
+                <div className="d-flex justify-content-center mb-3">
+                  <div className="server-down-badge">{t.badge}</div>
+                </div>
 
-                <h2 className="fw-semibold mb-3 fs-4">
+                {/* Title */}
+                <h2 className="server-down-title">
                   {t.title}
                   <span className="d-inline-block" style={{ minWidth: '1.2em', textAlign: 'left' }} aria-hidden="true">{dots}</span>
                 </h2>
 
-                <p className="text-muted mx-auto mb-4 small" style={{ maxWidth: 520 }}>{t.desc}</p>
+                <p className="server-down-desc">{t.desc}</p>
 
-                <hr className="my-4" />
+                <hr style={{ borderColor: '#f1f5f9', margin: '28px 0' }} />
 
-                {/* Contact grid */}
-                <Row className="g-2 g-md-3 text-start mb-4">
-                  <Col xs={12} md={6}>
-                    <div className="bg-light border rounded-3 p-3 h-100">
-                      <div className="d-flex align-items-start gap-2">
-                        <FaPhone className="flex-shrink-0 mt-1 text-primary" style={{ fontSize: 'clamp(16px,2vw,20px)' }} aria-hidden="true" />
-                        <div className="min-w-0">
-                          <div className="small text-muted">{t.helpline}</div>
-                          <strong className="small d-block text-truncate">+91-771-2221234</strong>
-                        </div>
-                      </div>
-                    </div>
-                  </Col>
-                  <Col xs={12} md={6}>
-                    <div className="bg-light border rounded-3 p-3 h-100">
-                      <div className="d-flex align-items-start gap-2">
-                        <FaEnvelope className="flex-shrink-0 mt-1 text-primary" style={{ fontSize: 'clamp(16px,2vw,20px)' }} aria-hidden="true" />
+                {/* Info boxes */}
+                <Row className="g-3 text-start mb-4">
+                  {infoItems.map((item, i) => (
+                    <Col xs={12} md={i === 2 ? 12 : 6} key={i}>
+                      <div className="server-info-box">
+                        <div className="server-info-icon">{item.icon}</div>
                         <div className="min-w-0 w-100">
-                          <div className="small text-muted">{t.email}</div>
-                          <strong className="small d-block text-truncate">wim.higheredu-cg@gov.in</strong>
+                          <div className="small text-muted" style={{ fontFamily: 'var(--pub-font)' }}>{item.label}</div>
+                          {item.href ? (
+                            <a
+                              href={item.href}
+                              target={item.href.startsWith('http') ? '_blank' : undefined}
+                              rel="noopener noreferrer"
+                              className="fw-semibold text-decoration-none d-block text-truncate small"
+                              style={{ color: 'var(--pub-navy-900)', fontFamily: 'var(--pub-font)' }}
+                            >
+                              {item.value}
+                            </a>
+                          ) : (
+                            <strong className="small d-block text-truncate" style={{ color: 'var(--pub-navy-800)', fontFamily: 'var(--pub-font)' }}>{item.value}</strong>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  </Col>
-                  <Col xs={12}>
-                    <div className="bg-light border rounded-3 p-3">
-                      <div className="d-flex align-items-start gap-2">
-                        <FaGlobe className="flex-shrink-0 mt-1 text-primary" style={{ fontSize: 'clamp(16px,2vw,20px)' }} aria-hidden="true" />
-                        <div className="min-w-0 w-100">
-                          <div className="small text-muted">{t.website}</div>
-                          <a href="https://highereducation.cg.gov.in" target="_blank" rel="noopener noreferrer"
-                            className="fw-semibold text-decoration-none small d-block text-truncate" style={{ color: '#0056b3' }}>
-                            https://highereducation.cg.gov.in
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </Col>
+                    </Col>
+                  ))}
                 </Row>
 
-                {/* Retry */}
-                <div className="d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3">
-                  <Button color="primary" size="md" className="rounded-3 fw-semibold px-4 w-100 w-sm-auto"
-                    style={{ minWidth: 'clamp(180px,25vw,240px)' }}
-                    onClick={onRetry} disabled={retrying}>
-                    {retrying
-                      ? <><Spinner size="sm" className="me-2" />{t.checking}</>
-                      : <><FaSyncAlt className="me-2" />{t.retry}</>}
-                  </Button>
+                {/* Retry button */}
+                <div className="d-flex justify-content-center">
+                  <button
+                    className="server-retry-btn"
+                    onClick={onRetry}
+                    disabled={retrying}
+                  >
+                    {retrying ? (
+                      <><FaSyncAlt className="me-2" style={{ animation: 'pubSpin 1s linear infinite' }} />{t.checking}</>
+                    ) : (
+                      <><FaSyncAlt className="me-2" />{t.retry}</>
+                    )}
+                  </button>
                 </div>
 
-                <hr className="my-4" />
+                <hr style={{ borderColor: '#f1f5f9', margin: '28px 0' }} />
 
-                <img src="/nic-logo.jpg" alt="National Informatics Centre"
-                  style={{ height: 'clamp(28px,3.5vw,40px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' }} />
-
-                <hr className="my-3" />
-
-                <p className="fw-semibold small text-center mb-0">{t.managed}</p>
-              </CardBody>
-            </Card>
+                <div className="d-flex flex-column align-items-center gap-2">
+                  <img
+                    src="/beyondsend-logo.svg"
+                    alt="BeyondSend"
+                    style={{ height: 'clamp(28px,3.5vw,40px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+                  />
+                  <p className="fw-semibold small mb-0" style={{ color: '#64748b', fontFamily: 'var(--pub-font)' }}>{t.managed}</p>
+                </div>
+              </div>
+            </div>
 
             {/* Footer */}
-            <div className="text-center mt-4 small text-muted px-2">
+            <div className="text-center mt-4 small px-2" style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--pub-font)' }}>
               © {new Date().getFullYear()} {t.copyright}
             </div>
           </Col>
@@ -190,22 +205,14 @@ const ServerDown = ({ onRetry, retrying }) => {
       </Container>
 
       {/* Language toggle */}
-      <Button
-        color="light"
-        className="rounded-pill shadow-lg d-flex align-items-center gap-2 border-0 fw-semibold"
-        style={{
-          position: 'fixed', bottom: 24, right: 24,
-          padding: '10px 18px', fontSize: 'clamp(0.75rem,1.2vw,0.9rem)',
-          background: '#5162ff', color: '#fff',
-          boxShadow: '0 8px 24px rgba(81,98,255,0.35)',
-          zIndex: 1050,
-        }}
+      <button
+        className="server-lang-toggle"
         onClick={() => setLanguage((p) => (p === 'en' ? 'hi' : 'en'))}
         aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
       >
         <FaLanguage size={16} aria-hidden="true" />
         {language === 'en' ? 'हिंदी' : 'English'}
-      </Button>
+      </button>
     </div>
   );
 };

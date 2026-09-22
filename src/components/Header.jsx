@@ -14,7 +14,6 @@ import Swal from "sweetalert2";
 const API_URL = import.meta.env.VITE_API_URL;
 const BASE_URL = import.meta.env.BASE_URL;
 
-
 /* ── Desktop Dropdown ── */
 const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 }) => {
   const [open, setOpen] = useState(false);
@@ -100,12 +99,9 @@ const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) 
 /* ══ Main Header ══ */
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [menuItems, setMenuItems]   = useState([]);
+  const [loading,   setLoading]     = useState(true);
   const [headerData, setHeaderData] = useState(null);
-
-  // NEW: top-3 department leader profiles for the header center gap
-  const [leaderProfiles, setLeaderProfiles] = useState([]);
 
   const navigate = useNavigate();
   const { t, toggleLanguage, isHindi } = useLanguage();
@@ -118,7 +114,6 @@ const Header = () => {
       icon: "info", showCancelButton: true,
       confirmButtonText: isHindi ? "जारी रखें" : "Continue",
       cancelButtonText: isHindi ? "रद्द करें" : "Cancel",
-      confirmButtonColor: "#0d6efd",
     }).then(result => {
       if (result.isConfirmed)
         newTab ? window.open(url, "_blank", "noopener,noreferrer") : (window.location.href = url);
@@ -132,88 +127,56 @@ const Header = () => {
     ]).finally(() => setLoading(false));
   }, []);
 
-  // NEW: same endpoint AboutSection.jsx uses — top 3 active leader profiles, sorted by order
-  useEffect(() => {
-    const fetchLeaderProfiles = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/get-about-sections`);
-        const filteredAndSorted = (res.data?.departmentLeaderProfiles || [])
-          .filter(item => item.isActive === true && item.isShowOnHeader !== false)
-          .sort((a, b) => (a.order || 0) - (b.order || 0))
-          .slice(0, 3);
-        setLeaderProfiles(filteredAndSorted);
-      } catch (err) {
-        console.error("Failed to fetch header leader profiles", err);
-      }
-    };
-    fetchLeaderProfiles();
-  }, []);
-
-  const [isSticky, setIsSticky] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsSticky(window.scrollY > 80);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Desktop Navigation: Keep 10 visible items so "Other Links" fits on 1 SINGLE ROW on desktop
   const visibleMenus = menuItems.slice(0, 10);
-  const extraMenus = menuItems.slice(10);
+  const extraMenus   = menuItems.slice(10);
 
   if (loading) return null;
 
   return (
     <>
-      <span className="nav-pattern-strip" />
-      {/* ── TOP BAR ── */}
-      <div className="top-bar fw-bold py-0 text-white border-2 border-warning " role="banner">
-        <Container fluid className="px-2 px-sm-3 px-lg-4 px-xxl-5">
-          <div
-            className="container-inner d-flex align-items-center justify-content-between flex-nowrap"
-            style={{ minHeight: 34, gap: 6 }}
-          >
-            <div className="top-item-left d-flex align-items-center flex-nowrap gap-2 gap-md-3">
+      {/* ── TOP BAR: slim contact + tools strip ── */}
+      <div className="corp-top-bar" role="banner">
+        <Container fluid className="px-3 px-lg-4">
+          <div className="corp-top-inner">
+            {/* Left: contact */}
+            <div className="corp-top-left">
               {headerData?.phone && (
-                <a href={`tel:${headerData.phone}`} className="top-link text-nowrap" aria-label={`Call ${headerData.phone}`}>
+                <a href={`tel:${headerData.phone}`} className="corp-top-link" aria-label={`Call ${headerData.phone}`}>
                   <FaPhone size={10} aria-hidden="true" />
                   <span>{headerData.phone}</span>
                 </a>
               )}
               {headerData?.phone && headerData?.email && (
-                <span className="top-bar-divider text-white-50" aria-hidden="true">|</span>
+                <span className="corp-top-sep" aria-hidden="true">|</span>
               )}
               {headerData?.email && (
-                <a href={`mailto:${headerData.email}`} className="top-link text-nowrap" aria-label={`Email ${headerData.email}`}>
+                <a href={`mailto:${headerData.email}`} className="corp-top-link" aria-label={`Email ${headerData.email}`}>
                   <FaEnvelope size={10} aria-hidden="true" />
                   <span>{headerData.email}</span>
                 </a>
               )}
             </div>
 
-            <div className="top-item-right d-flex align-items-center justify-content-end gap-1 flex-nowrap">
-              <div className="d-none d-md-flex gap-1">
-                <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={decreaseFontSize} title="Decrease font size">A-</Badge>
-                <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={resetFontSize} title="Reset font size">A</Badge>
-                <Badge color="light" className="ctrl-badge text-dark" role="button" onClick={increaseFontSize} title="Increase font size">A+</Badge>
+            {/* Right: tools */}
+            <div className="corp-top-right">
+              <div className="d-none d-md-flex align-items-center gap-1">
+                <button className="corp-font-btn" onClick={decreaseFontSize} title="Decrease font size" aria-label="Decrease font size">A-</button>
+                <button className="corp-font-btn" onClick={resetFontSize}    title="Reset font size"    aria-label="Reset font size">A</button>
+                <button className="corp-font-btn" onClick={increaseFontSize} title="Increase font size" aria-label="Increase font size">A+</button>
               </div>
-              <Badge
-                color="light"
-                className="ctrl-badge text-dark d-flex align-items-center gap-1 text-nowrap"
-                role="button"
+              <button
+                className="corp-lang-btn"
                 onClick={toggleLanguage}
                 title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
               >
                 <FaLanguage aria-hidden="true" />
                 {isHindi ? "English" : "हिंदी"}
-              </Badge>
-              <Link to="/accessibility-statement" className="top-link d-none d-lg-inline-flex text-nowrap">
+              </button>
+              <Link to="/accessibility-statement" className="corp-top-link d-none d-lg-inline-flex">
                 <FaUniversalAccess aria-hidden="true" />
                 {t("Accessibility", "अभिगम्यता")}
               </Link>
-              <Link to="/sitemap" className="top-link d-none d-lg-inline-flex text-nowrap">
+              <Link to="/sitemap" className="corp-top-link d-none d-lg-inline-flex">
                 <FaSitemap aria-hidden="true" />
                 {t("Sitemap", "साइट मानचित्र")}
               </Link>
@@ -222,119 +185,65 @@ const Header = () => {
         </Container>
       </div>
 
-      {/* ── LOGO BAR ── */}
-      <div className="logo-bar py-2 py-lg-3">
-        <Container fluid className="px-3 px-lg-4 px-xxl-5">
-          <div className="d-flex justify-content-between align-items-center flex-nowrap gap-2 gap-xl-3">
-            <div
-              className="d-none d-lg-flex align-items-center gap-3 header-brand-left flex-shrink-0"
-              style={{ cursor: "pointer" }}
-              onClick={() => navigate("/")}
-            >
-              <img
-                src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
-                alt="Chhattisgarh Logo"
-                className="main-logo flex-shrink-0"
-                height={76}
-                style={{ objectFit: "contain" }}
-                onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)}
-              />
-              <div className="flex-shrink-0">
-                <h4 className="mb-0 text-nowrap" style={{ fontSize: "1.25rem", fontWeight: 700 }}>
-                  {isHindi
-                    ? (headerData?.titleHin || "उच्च शिक्षा विभाग")
-                    : (headerData?.titleEng || "Department of Higher Education")}
-                </h4>
-                <p className="mb-0 text-nowrap" style={{ fontSize: "0.85rem" }}>
-                  {isHindi
-                    ? (headerData?.subtitleHin || "छत्तीसगढ़ सरकार")
-                    : (headerData?.subtitleEng || "Government of Chhattisgarh")}
-                </p>
+      {/* ── LOGO BAR: clean corporate brand strip ── */}
+      <div className="corp-logo-bar">
+        <Container fluid className="px-3 px-lg-4">
+          <div
+            className="corp-brand"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/")}
+            role="link"
+            aria-label="Go to home"
+          >
+            <img
+              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}beyondsend-logo.svg`}
+              alt="BeyondSend Logo"
+              className="corp-brand-logo"
+              onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
+            />
+            <div className="corp-brand-text">
+              <div className="corp-brand-name">
+                {isHindi
+                  ? (headerData?.titleHin || "बियॉन्डसेंड")
+                  : (headerData?.titleEng || "BeyondSend")}
               </div>
-            </div>
-
-            {leaderProfiles.length > 0 && (
-              <div className="d-flex align-items-center justify-content-center header-profiles-center flex-grow-1 mx-2 mx-xl-4">
-                <div className="d-flex align-items-center justify-content-center leader-profiles-wrap py-1">
-                  {leaderProfiles.map(profile => {
-                    const designation = isHindi ? profile.designationHin : profile.designationEng;
-                    const hasComma = designation && designation.includes(",");
-                    const mainDes = hasComma ? designation.split(",")[0].trim() : designation;
-                    const subDes = hasComma ? designation.split(",").slice(1).join(", ").trim() : null;
-
-                    return (
-                      <div key={profile._id} className="leader-profile-item">
-                        <img
-                          src={
-                            profile.profileUrl
-                              ? `${API_URL}${profile.profileUrl}`
-                              : "/default-avatar.svg"
-                          }
-                          alt={isHindi ? profile.imgNameHin : profile.imgNameEng}
-                          className="leader-profile-img"
-                          style={{ objectFit: "cover", objectPosition: "center top" }}
-                          onError={e => (e.target.src = "/default-avatar.svg")}
-                        />
-                        <div className="leader-profile-text-wrap">
-                          <div className="leader-profile-name">
-                            {isHindi ? profile.imgNameHin : profile.imgNameEng}
-                          </div>
-                          <div className="leader-profile-designation">
-                            {mainDes}
-                          </div>
-                          {subDes && (
-                            <div className="leader-profile-sub-designation">
-                              {subDes}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="corp-brand-tagline">
+                {isHindi
+                  ? (headerData?.subtitleHin || "कस्टमर कम्युनिकेशन प्लेटफॉर्म")
+                  : (headerData?.subtitleEng || "Customer Communication Platform")}
               </div>
-            )}
-
-            <div
-              className="d-none d-lg-flex align-items-center justify-content-end header-emblem-right flex-shrink-0"
-            >
-              <img
-                src={headerData?.emblem ? `${API_URL}${headerData.emblem}` : `${BASE_URL}Emblem_of_India.svg`}
-                className="right-logo flex-shrink-0"
-                height={76}
-                alt="Emblem of India"
-                style={{ objectFit: "contain", cursor: "pointer" }}
-                onClick={() => navigate("/")}
-                onError={e => (e.target.src = `${BASE_URL}Emblem_of_India.svg`)}
-              />
             </div>
           </div>
         </Container>
       </div>
 
       {/* ── MAIN NAV ── */}
-      <nav className="site-navbar shadow-sm " aria-label="Main navigation">
-        <Container fluid className="d-flex align-items-center justify-content-between px-2 px-lg-3" style={{ flexWrap: "nowrap" }}>
-          {/* Mobile Nav Brand (Emblem + Department Title) — Always visible on mobile view */}
-          <div className="mobile-nav-brand d-flex align-items-center gap-2 d-lg-none py-1" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+      <nav className="site-navbar shadow-sm" aria-label="Main navigation">
+        <Container fluid className="d-flex align-items-center justify-content-between px-3 px-lg-4" style={{ flexWrap: "nowrap" }}>
+          {/* Mobile brand */}
+          <div
+            className="corp-mob-brand d-flex align-items-center gap-2 d-lg-none py-1"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/")}
+          >
             <img
-              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}Chhattisgarh.svg`}
-              alt="Chhattisgarh Logo"
-              height={40}
+              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}beyondsend-logo.svg`}
+              alt="BeyondSend Logo"
+              height={36}
               style={{ objectFit: "contain" }}
-              onError={e => (e.target.src = `${BASE_URL}Chhattisgarh.svg`)}
+              onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
             />
             <div className="lh-1">
-              <div className="fw-bold text-white" style={{ fontSize: "0.82rem", lineHeight: "1.1" }}>
-                {isHindi ? (headerData?.titleHin || "उच्च शिक्षा विभाग") : (headerData?.titleEng || "Department of Higher Education")}
+              <div className="fw-bold text-white" style={{ fontSize: "0.82rem" }}>
+                {isHindi ? (headerData?.titleHin || "बियॉन्डसेंड") : (headerData?.titleEng || "BeyondSend")}
               </div>
-              <small style={{ fontSize: "0.68rem", color: "#ffd54f" }}>
-                {isHindi ? (headerData?.subtitleHin || "छत्तीसगढ़ सरकार") : (headerData?.subtitleEng || "Government of Chhattisgarh")}
+              <small style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.65)" }}>
+                {isHindi ? (headerData?.subtitleHin || "कस्टमर कम्युनिकेशन प्लेटफॉर्म") : (headerData?.subtitleEng || "Customer Communication Platform")}
               </small>
             </div>
           </div>
 
-          {/* Desktop Nav Links — Hidden on mobile */}
+          {/* Desktop nav links */}
           <div className="desk-nav d-none d-lg-flex align-items-center">
             <Link to="/" className="nav-link-plain">
               <FaHouse className="me-1" aria-hidden="true" />{t("Home", "मुख्य पृष्ठ")}
@@ -362,9 +271,9 @@ const Header = () => {
             )}
           </div>
 
-          {/* Hamburger Menu Button — Positioned on RIGHT SIDE for mobile */}
+          {/* Hamburger */}
           <button
-            className="ham-btn btn btn-outline-primary btn-sm ms-auto py-1 px-2 flex-shrink-0 d-lg-none"
+            className="ham-btn btn btn-sm ms-auto py-1 px-2 flex-shrink-0 d-lg-none"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation menu"
             aria-expanded={mobileOpen}
@@ -383,10 +292,9 @@ const Header = () => {
       <div className={`mob-drawer${mobileOpen ? " open" : ""}`} role="dialog" aria-label="Mobile navigation">
         <div className="mob-drawer-hdr">
           <img
-            src="/cg-hiedu-full-logo.jpg"
-            alt="Higher Education Department Chhattisgarh"
-            className="img-fluid  rounded me-2"
-            style={{ height: "clamp(16px,   15px)", width: "150px", objectFit: "contain" }}
+            src="/beyondsend-logo.svg"
+            alt="BeyondSend"
+            style={{ height: 32, width: "auto", objectFit: "contain" }}
           />
           <button className="mob-close-btn" onClick={() => setMobileOpen(false)} aria-label="Close menu">
             <FaTimes />
@@ -405,7 +313,6 @@ const Header = () => {
           />
         ))}
       </div>
-
     </>
   );
 };

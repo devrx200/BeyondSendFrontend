@@ -6,11 +6,10 @@ import { Spinner, Container } from "reactstrap";
 import PageLoader from "../components/PageLoader";
 import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 import RichContentPages from "../views/pages/RichContentPages";
-import MultiSectionPages from "../views/pages/MultiSectionPages";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const API = import.meta.env.VITE_API_URL;
-const SITE_TITLE_SUFFIX = "Department of Higher Education, Government of Chhattisgarh India.";
+const SITE_TITLE_SUFFIX = "BeyondSend";
 
 const SlugResolver = ({ preview = false, fullSlugOverride }) => {
   const location = useLocation();
@@ -111,17 +110,6 @@ const SlugResolver = ({ preview = false, fullSlugOverride }) => {
     return <RichContentPages prefetchedData={pageData} preview={isPreview} />;
   }
 
-  if (status === "multi-list" || status === "multi-detail") {
-    return (
-      <MultiSectionPages
-        prefetchedData={pageData}
-        mode={status}
-        fullSlug={slugForApi}
-        onPageChange={(page) => fetchData(page, 10)}
-        preview={isPreview}
-      />
-    );
-  }
 
   return (
     <>
@@ -139,7 +127,7 @@ const SlugResolver = ({ preview = false, fullSlugOverride }) => {
             />
           </div>
 
-          <h2 className="fw-bold mb-2" style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.85rem)", color: "#1e293b" }}>
+          <h2 className="fw-bold mb-2" style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.85rem)", color: "var(--adm-text)" }}>
             {isHindi ? "पृष्ठ नहीं मिला" : "Page Not Found"}
           </h2>
           <p className="text-muted mx-auto mb-4" style={{ maxWidth: 480, fontSize: "clamp(0.88rem, 1.3vw, 0.98rem)" }}>
@@ -155,7 +143,7 @@ const SlugResolver = ({ preview = false, fullSlugOverride }) => {
           </div>
         </Container>
       </div>
-    </>
+        </>
   );
 };
 

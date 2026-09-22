@@ -180,7 +180,7 @@ const AdminHeader = ({ toggleSidebar }) => {
           </button>
 
           <div className="adm-header-title d-none d-md-block">
-            Department of Higher Education
+            BeyondSend 
           </div>
 
         </div>
@@ -259,7 +259,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                 />
                 <div className="adm-profile-pill-info">
                   <div className="adm-profile-pill-name">
-                    {profile?.name || "NicAdmin"}
+                    {profile?.name || "Administrator"}
                   </div>
                   <div className="adm-profile-pill-subtitle">
                     {profile?.userDeginations || profile?.role || "Administrator"}

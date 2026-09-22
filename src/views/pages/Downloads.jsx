@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  Row, Col, Card, CardBody,
+  Row, Col,
   Nav, NavItem, NavLink,
   TabContent, TabPane,
-  Table, Badge, Button, Spinner,
+  Badge, Spinner,
 } from 'reactstrap';
 import {
   FaDownload, FaFilePdf, FaFileWord,
-  FaFileExcel, FaCalendar,
+  FaFileExcel, FaCalendarAlt, FaFolderOpen,
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import PageLayout from '../../components/PageLayout';
@@ -21,23 +21,29 @@ const getFileIcon = (type = '') => {
   switch (type.toUpperCase()) {
     case 'PDF':  return <FaFilePdf  className="text-danger"  aria-hidden="true" />;
     case 'DOC':
-    case 'DOCX': return <FaFileWord className="text-primary" aria-hidden="true" />;
+    case 'DOCX': return <FaFileWord style={{ color: '#2563eb' }} aria-hidden="true" />;
     case 'XLS':
     case 'XLSX': return <FaFileExcel className="text-success" aria-hidden="true" />;
-    default:     return <FaDownload aria-hidden="true" />;
+    default:     return <FaDownload  aria-hidden="true" />;
   }
+};
+
+const FILE_TYPE_COLORS = {
+  PDF:  { bg: 'rgba(239,68,68,0.1)',   color: '#dc2626',  label: 'PDF' },
+  DOC:  { bg: 'rgba(37,99,235,0.1)',   color: '#2563eb',  label: 'DOC' },
+  DOCX: { bg: 'rgba(37,99,235,0.1)',   color: '#2563eb',  label: 'DOCX' },
+  XLS:  { bg: 'rgba(16,185,129,0.1)',  color: '#059669',  label: 'XLS' },
+  XLSX: { bg: 'rgba(16,185,129,0.1)',  color: '#059669',  label: 'XLSX' },
 };
 
 const Downloads = () => {
   const { isHindi } = useLanguage();
-
   const [categories, setCategories] = useState([]);
   const [activeTab,  setActiveTab]  = useState('');
   const [downloads,  setDownloads]  = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [catLoading, setCatLoading] = useState(true);
 
-  /* ── Fetch categories ── */
   useEffect(() => {
     (async () => {
       try {
@@ -54,7 +60,6 @@ const Downloads = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Fetch downloads by category ── */
   const fetchDownloadsByCategory = async (categoryId) => {
     try {
       setLoading(true);
@@ -77,8 +82,8 @@ const Downloads = () => {
     <PageLayout
       title="Downloads"
       titleHi="डाउनलोड"
-      description="Download official forms, notifications, circulars, and policy documents from the Department of Higher Education, Chhattisgarh."
-      descriptionHi="उच्च शिक्षा विभाग, छत्तीसगढ़ शासन के आधिकारिक प्रपत्र, अधिसूचनाएं, परिपत्र एवं नीतियां डाउनलोड करें।"
+      description="Download product guides, templates, campaign resources and policy documents from BeyondSend."
+      descriptionHi="बियॉन्डसेंड से उत्पाद मार्गदर्शिकाएं, टेम्पलेट, कैंपेन संसाधन एवं नीति दस्तावेज डाउनलोड करें।"
       showBreadcrumb
     >
       {catLoading ? (
@@ -86,28 +91,29 @@ const Downloads = () => {
       ) : (
         <Row>
           <Col lg={12}>
-            <Card className="border-0 shadow-sm rounded-4">
-              <CardBody className="p-3 p-md-4 bg-light rounded-4">
-
-                {/* Header */}
-                <div className="d-flex align-items-center gap-3 mb-4">
-                  <div className="downloads-header-icon" aria-hidden="true">
+            <div className="pub-card">
+              {/* Card Header */}
+              <div className="pub-card-header">
+                <div className="pub-dot-grid" aria-hidden="true" />
+                <div className="pub-card-header-title" style={{ position: 'relative', zIndex: 1 }}>
+                  <span className="downloads-header-icon" style={{ animation: 'pubFloat 4s ease-in-out infinite' }}>
                     <FaDownload />
-                  </div>
+                  </span>
                   <div>
-                    <h2 className="h5 fw-semibold mb-1">
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.2px' }}>
                       {isHindi ? 'डाउनलोड केंद्र' : 'Download Center'}
-                    </h2>
-                    <small className="text-muted">
-                      {isHindi
-                        ? 'प्रपत्र, अधिसूचना, रिपोर्ट एवं दिशानिर्देश'
-                        : 'Forms, Notifications, Reports & Guidelines'}
-                    </small>
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.8rem', fontWeight: 400, marginTop: 2 }}>
+                      {isHindi ? 'प्रपत्र, अधिसूचना, रिपोर्ट एवं दिशानिर्देश' : 'Forms, Notifications, Reports & Guidelines'}
+                    </div>
                   </div>
                 </div>
+              </div>
 
+              {/* Body */}
+              <div className="p-3 p-md-4" style={{ background: 'linear-gradient(145deg, #f8faff, #f0f4ff)' }}>
                 {/* Category Tabs */}
-                <Nav pills className="mb-4 gap-2 flex-wrap" role="tablist" aria-label={isHindi ? 'श्रेणियाँ' : 'Categories'}>
+                <Nav className="downloads-nav-pills mb-4 gap-2 flex-wrap" role="tablist" aria-label={isHindi ? 'श्रेणियाँ' : 'Categories'}>
                   {categories.map((cat) => (
                     <NavItem key={cat._id}>
                       <NavLink
@@ -127,8 +133,8 @@ const Downloads = () => {
                 <TabContent activeTab={activeTab}>
                   <TabPane tabId={activeTab}>
                     <div className="downloads-table-wrap">
-                      <Table responsive striped hover className="align-middle mb-0">
-                        <thead className="table-primary">
+                      <table className="table table-hover align-middle mb-0">
+                        <thead>
                           <tr>
                             <th scope="col" style={{ width: 44 }}>#</th>
                             <th scope="col">{isHindi ? 'शीर्षक' : 'Title'}</th>
@@ -147,62 +153,79 @@ const Downloads = () => {
                             </tr>
                           ) : downloads.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="text-center text-muted py-4">
-                                {isHindi
-                                  ? 'इस श्रेणी में कोई फ़ाइल उपलब्ध नहीं है'
-                                  : 'No downloads available in this category'}
+                              <td colSpan={6} className="text-center py-5">
+                                <div className="d-flex flex-column align-items-center gap-2">
+                                  <FaFolderOpen size={36} style={{ color: '#3b82f6', opacity: 0.4 }} aria-hidden="true" />
+                                  <span className="small fw-semibold text-muted">
+                                    {isHindi ? 'इस श्रेणी में कोई फ़ाइल उपलब्ध नहीं है' : 'No downloads available in this category'}
+                                  </span>
+                                </div>
                               </td>
                             </tr>
                           ) : (
-                            downloads.map((item, index) => (
-                              <tr key={item._id}>
-                                <td>{index + 1}</td>
-                                <td>
-                                  <div className="d-flex align-items-center gap-2">
-                                    <Badge pill color="light" className="border flex-shrink-0">
-                                      {getFileIcon(item.fileType)}
-                                    </Badge>
-                                    <span className="fw-semibold" style={{ wordBreak: 'break-word' }}>
-                                      {isHindi ? item.titleHi : item.titleEn}
+                            downloads.map((item, index) => {
+                              const ft = (item.fileType || '').toUpperCase();
+                              const ftColor = FILE_TYPE_COLORS[ft] || { bg: '#f1f5f9', color: '#475569', label: ft };
+                              return (
+                                <tr key={item._id}>
+                                  <td>
+                                    <span className="fw-semibold" style={{ color: '#64748b', fontSize: '0.8rem' }}>{index + 1}</span>
+                                  </td>
+                                  <td>
+                                    <div className="d-flex align-items-center gap-2">
+                                      <span
+                                        style={{ width: 32, height: 32, borderRadius: 8, background: ftColor.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}
+                                        aria-hidden="true"
+                                      >
+                                        {getFileIcon(item.fileType)}
+                                      </span>
+                                      <span className="fw-semibold" style={{ wordBreak: 'break-word', color: 'var(--pub-navy-800)', fontSize: '0.88rem' }}>
+                                        {isHindi ? item.titleHi : item.titleEn}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span
+                                      className="fw-bold"
+                                      style={{ fontSize: '0.72rem', letterSpacing: '0.4px', padding: '3px 10px', borderRadius: 999, background: ftColor.bg, color: ftColor.color }}
+                                    >
+                                      {item.fileType}
                                     </span>
-                                  </div>
-                                </td>
-                                <td>
-                                  <Badge color="secondary">{item.fileType}</Badge>
-                                </td>
-                                <td className="text-nowrap">
-                                  <FaCalendar className="me-1 text-muted" aria-hidden="true" />
-                                  {new Date(item.createdAt).toLocaleDateString(
-                                    isHindi ? 'hi-IN' : 'en-IN'
-                                  )}
-                                </td>
-                                <td>
-                                  <Badge color="secondary">{item.fileSize}</Badge>
-                                </td>
-                                <td className="text-center">
-                                  <Button
-                                    color="primary" size="sm"
-                                    tag="a"
-                                    href={`${API_URL}${item.filePath}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={`${isHindi ? 'डाउनलोड' : 'Download'} ${isHindi ? item.titleHi : item.titleEn}`}
-                                  >
-                                    <FaDownload className="me-1" aria-hidden="true" />
-                                    {isHindi ? 'डाउनलोड' : 'Download'}
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))
+                                  </td>
+                                  <td className="text-nowrap">
+                                    <span className="d-flex align-items-center gap-1 small" style={{ color: '#64748b' }}>
+                                      <FaCalendarAlt size={11} aria-hidden="true" />
+                                      {new Date(item.createdAt).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <span style={{ fontSize: '0.78rem', color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>
+                                      {item.fileSize}
+                                    </span>
+                                  </td>
+                                  <td className="text-center">
+                                    <a
+                                      className="downloads-btn"
+                                      href={`${API_URL}${item.filePath}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      aria-label={`${isHindi ? 'डाउनलोड' : 'Download'} ${isHindi ? item.titleHi : item.titleEn}`}
+                                    >
+                                      <FaDownload aria-hidden="true" />
+                                      {isHindi ? 'डाउनलोड' : 'Download'}
+                                    </a>
+                                  </td>
+                                </tr>
+                              );
+                            })
                           )}
                         </tbody>
-                      </Table>
+                      </table>
                     </div>
                   </TabPane>
                 </TabContent>
-
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           </Col>
         </Row>
       )}

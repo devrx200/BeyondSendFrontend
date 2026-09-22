@@ -1,11 +1,11 @@
 {
-  "name": "Department-of-Higher-Education",
+  "name": "beyondsend-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "/",
+  "homepage": "https://beyondsend.in/",
   "main": "index.html",
-  "proxy": "https://highereducation.cg.gov.in",
+  "proxy": "https://beyondsend.in",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
@@ -50,6 +50,10 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "vite": "^8.2.2"
+    "sass": "^1.99.0",
+    "vite": "^6.4.3"
+  },
+  "overrides": {
+    "sass-embedded": "0.0.0"
   }
 }

@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import PageLoader from "../components/PageLoader";
+
 const API_URL = import.meta.env.VITE_API_URL;
+
 let authInFlightPromise = null;
 let lastAuthValidationTime = 0;
 
 const AuthMiddleware = ({ allowedRoles = [],
-  allowedEmployeeTypes = []
-}) => {
+  allowedEmployeeTypes = [] }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,7 +73,7 @@ const AuthMiddleware = ({ allowedRoles = [],
 
       window.userRole = role;
       window.employeeType = employeeType;
-      
+
       if (
         allowedRoles.length > 0 &&
         !allowedRoles.includes(role)

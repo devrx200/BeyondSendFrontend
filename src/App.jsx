@@ -6,7 +6,8 @@ import LanguageToggleFloating from "./utilities/LanguageToggleFloating";
 import FeedbackToggleFloating from "./utilities/FeedbackToggleFloating";
 import AppRoutes from "./routes/routes";
 import GlobalLinkHandler from "./utilities/GlobalLinkHandler";
-import "./App.css";
+import "./css/BeyondSendTheme.scss";
+import "./App.scss";
 function App() {
   return (
     <Router basename="/">

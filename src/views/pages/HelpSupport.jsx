@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Row, Col, Card, CardHeader, CardBody,
-  Button, Badge, Modal, ModalHeader, ModalBody,
-  Spinner,
+  Row, Col, Badge, Modal, ModalHeader, ModalBody, Spinner,
 } from "reactstrap";
 import {
   FaFilePdf, FaPlayCircle, FaDownload,
@@ -18,9 +16,6 @@ import { useLanguage } from "../../contexts/LanguageContext";
 const API = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 6;
 
-
-
-/* ── helpers ── */
 const formatDate = (d) => {
   if (!d) return "—";
   try {
@@ -71,7 +66,6 @@ const Pager = ({ page, setPage, total }) => {
   );
 };
 
-/* ── PDF Item ── */
 const getPdfUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -79,14 +73,15 @@ const getPdfUrl = (url) => {
   return `${API}${clean}`;
 };
 
+/* ── PDF Item ── */
 const PdfItem = ({ item, onPreview, isHindi }) => {
   const fullPdfUrl = getPdfUrl(item.pdfUrl);
   return (
-    <div className="hs-item d-flex flex-wrap">
+    <div className="hs-item">
       <div className="hs-item-left">
         <div className="d-flex align-items-start gap-2 mb-1">
           <FaFilePdf size={18} className="text-danger flex-shrink-0 mt-1" aria-hidden="true" />
-          <p className="fw-semibold mb-0 text-dark" style={{ fontSize: ".88rem", lineHeight: 1.4 }}>
+          <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-navy-900)' }}>
             {item.title}
           </p>
         </div>
@@ -96,22 +91,28 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
           </p>
         )}
         <div className="d-flex flex-wrap gap-2 ps-1">
-          <Badge color="light" className="border text-secondary" style={{ fontSize: ".7rem" }}>
+          <span style={{ fontSize: ".7rem", background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: 999, fontWeight: 600 }}>
             {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
-          </Badge>
+          </span>
         </div>
       </div>
       <div className="hs-item-right">
-        <Button size="sm" color="primary" className="w-100" onClick={() => onPreview(fullPdfUrl, item.title)}
-          style={{ borderRadius: 6, fontSize: ".78rem" }}>
-          <FaEye className="me-1" aria-hidden="true" />
+        <button
+          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+          style={{ background: 'linear-gradient(135deg,#2563eb,#3b82f6)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          onClick={() => onPreview(fullPdfUrl, item.title)}
+        >
+          <FaEye size={12} aria-hidden="true" />
           {isHindi ? "देखें" : "Preview"}
-        </Button>
+        </button>
         <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="w-100">
-          <Button size="sm" color="danger" className="w-100" style={{ borderRadius: 6, fontSize: ".78rem" }}>
-            <FaDownload className="me-1" aria-hidden="true" />
+          <button
+            className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+            style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          >
+            <FaDownload size={12} aria-hidden="true" />
             {isHindi ? "डाउनलोड" : "Download"}
-          </Button>
+          </button>
         </a>
       </div>
     </div>
@@ -123,13 +124,11 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
   const embedUrl = getEmbedUrl(item.videoUrl);
   const thumbUrl = getThumbUrl(item.videoUrl);
   return (
-    <div className="hs-item d-flex flex-wrap">
+    <div className="hs-item">
       <div className="hs-item-left">
         <div className="d-flex align-items-start gap-2 mb-1">
-          {/* YouTube thumbnail */}
           {thumbUrl ? (
-            <img src={thumbUrl} alt={item.title}
-              className="hs-yt-thumb" loading="lazy"
+            <img src={thumbUrl} alt={item.title} className="hs-yt-thumb" loading="lazy"
               onError={e => { e.target.style.display = "none"; }} />
           ) : (
             <div className="hs-yt-placeholder" aria-hidden="true">
@@ -137,7 +136,7 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
             </div>
           )}
           <div className="min-w-0">
-            <p className="fw-semibold mb-0 text-dark" style={{ fontSize: ".88rem", lineHeight: 1.4 }}>
+            <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-navy-900)' }}>
               {item.title}
             </p>
             {item.description && (
@@ -148,23 +147,28 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
           </div>
         </div>
         <div className="d-flex flex-wrap gap-2 mt-1">
-          <Badge color="light" className="border text-secondary" style={{ fontSize: ".7rem" }}>
+          <span style={{ fontSize: ".7rem", background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: 999, fontWeight: 600 }}>
             {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
-          </Badge>
+          </span>
         </div>
       </div>
       <div className="hs-item-right">
-        <Button size="sm" color="danger" className="w-100"
+        <button
+          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+          style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
           onClick={() => embedUrl ? onPreview(embedUrl, item.title) : window.open(item.videoUrl, "_blank")}
-          style={{ borderRadius: 6, fontSize: ".78rem", background: "#ff0000", border: "none" }}>
-          <FaPlayCircle className="me-1" aria-hidden="true" />
+        >
+          <FaPlayCircle size={12} aria-hidden="true" />
           {isHindi ? "देखें" : "Play"}
-        </Button>
+        </button>
         <a href={item.videoUrl} target="_blank" rel="noreferrer" className="w-100">
-          <Button size="sm" outline color="danger" className="w-100" style={{ borderRadius: 6, fontSize: ".78rem" }}>
-            <FaExternalLinkAlt className="me-1" aria-hidden="true" />
+          <button
+            className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
+            style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', border: '1.5px solid rgba(220,38,38,0.25)', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          >
+            <FaExternalLinkAlt size={11} aria-hidden="true" />
             YouTube
-          </Button>
+          </button>
         </a>
       </div>
     </div>
@@ -175,38 +179,39 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
 const Section = ({ type, arr, page, setPage, onPreview, isHindi }) => {
   const isPdf = type === "pdf";
   const items = arr.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-  const accent = isPdf ? "#1e3a8a" : "#ff0000";
 
   return (
     <div className="hs-card">
       {/* Header */}
-      <CardHeader className="adm-card-header border-0 shadow-sm" style={{ background: 'linear-gradient(90deg, #1042c2 0%, #123974 100%)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="d-flex align-items-center gap-2 flex-grow-1">
+      <div className={isPdf ? "hs-section-header-pdf" : "hs-section-header-video"}>
+        <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ position: 'relative', zIndex: 1 }}>
           <div
-            className={`rounded-3 d-flex align-items-center justify-content-center ${isPdf ? "bg-danger" : "bg-primary"}`}
-            style={{ width: 32, height: 32 }}>
+            style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
             {isPdf
-              ? <FaFilePdf size={14} color="#fff" />
-              : <FaPlayCircle size={14} color="#fff" />}
+              ? <FaFilePdf size={15} color="#fff" />
+              : <FaPlayCircle size={15} color="#fff" />}
           </div>
-          <span className="fw-bold text-white" style={{ fontSize: "1rem" }}>
+          <span className="fw-bold text-white" style={{ fontSize: "1rem", letterSpacing: '-0.2px' }}>
             {isPdf
               ? (isHindi ? "PDF दस्तावेज़" : "PDF Documents")
               : (isHindi ? "वीडियो ट्यूटोरियल" : "Video Tutorials")}
           </span>
         </div>
-        <Badge color={isPdf ? "danger" : "primary"} pill className="px-3 py-2 ms-2">
+        <span
+          style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: 999, padding: '4px 14px', fontSize: '0.78rem', fontWeight: 700, position: 'relative', zIndex: 1, flexShrink: 0 }}
+        >
           {arr.length}
-        </Badge>
-      </CardHeader>
+        </span>
+      </div>
 
       {/* Body */}
       <div className="hs-body">
         {items.length === 0 ? (
           <div className="text-center text-muted py-5 d-flex flex-column align-items-center gap-3">
             {isPdf
-              ? <FaFolderOpen size={38} className="text-primary opacity-50" aria-hidden="true" />
-              : <FaVideoSlash size={38} className="text-danger opacity-50" aria-hidden="true" />}
+              ? <FaFolderOpen size={38} style={{ color: '#3b82f6', opacity: 0.4 }} aria-hidden="true" />
+              : <FaVideoSlash size={38} style={{ color: '#dc2626', opacity: 0.4 }} aria-hidden="true" />}
             <span className="small fw-semibold">
               {isHindi ? "कोई सामग्री उपलब्ध नहीं है" : "No items available"}
             </span>
@@ -216,7 +221,9 @@ const Section = ({ type, arr, page, setPage, onPreview, isHindi }) => {
             ? <PdfItem key={item._id} item={item} onPreview={onPreview} isHindi={isHindi} />
             : <VideoItem key={item._id} item={item} onPreview={onPreview} isHindi={isHindi} />
         )}
-        <Pager page={page} setPage={setPage} total={arr.length} />
+        <div className="px-3 pb-2">
+          <Pager page={page} setPage={setPage} total={arr.length} />
+        </div>
       </div>
     </div>
   );
@@ -240,7 +247,7 @@ const HelpSupport = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const pdfData = data.filter(i => i.contentType?.toLowerCase() === "pdf");
+  const pdfData   = data.filter(i => i.contentType?.toLowerCase() === "pdf");
   const videoData = data.filter(i => i.contentType?.toLowerCase() === "video");
 
   const openPreview = (url, title = "") => {
@@ -259,12 +266,11 @@ const HelpSupport = () => {
 
   return (
     <>
-
       <PageLayout
         title="Help & Support"
         titleHi="सहायता एवं मार्गदर्शन"
-        description="Help, tutorials, user manuals, and video guidance for the Department of Higher Education portal, Chhattisgarh."
-        descriptionHi="उच्च शिक्षा विभाग पोर्टल हेतु सहायता, मार्गदर्शिका, उपयोगकर्ता नियमावली एवं वीडियो ट्यूटोरियल।"
+        description="Help, tutorials, user manuals, and video guidance for the BeyondSend platform."
+        descriptionHi="बियॉन्डसेंड प्लेटफॉर्म हेतु सहायता, मार्गदर्शिका, उपयोगकर्ता नियमावली एवं वीडियो ट्यूटोरियल।"
         showBreadcrumb
       >
         <Row className="g-4">
@@ -286,8 +292,11 @@ const HelpSupport = () => {
 
         {/* Preview Modal */}
         <Modal isOpen={modal} toggle={() => setModal(false)} size="xl" centered>
-          <ModalHeader toggle={() => setModal(false)} className="border-0 pb-0">
-            <span className="fw-semibold text-dark" style={{ fontSize: ".95rem" }}>{previewTitle}</span>
+          <ModalHeader
+            toggle={() => setModal(false)}
+            style={{ background: 'linear-gradient(135deg, #0f172a, #1a3a6b)', border: 'none' }}
+          >
+            <span className="fw-semibold text-white" style={{ fontSize: ".95rem" }}>{previewTitle}</span>
           </ModalHeader>
           <ModalBody className="p-0" style={{ height: "72vh" }}>
             <iframe

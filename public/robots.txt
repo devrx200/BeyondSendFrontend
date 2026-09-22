@@ -1,8 +1,10 @@
-# User-Agent rules for Department of Higher Education Portal Chhattisgarh
+﻿# User-Agent rules for BeyondSend
 User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /admin/*
+Disallow: /authorized/
+Disallow: /authorized/*
 Disallow: /api/
 # Sitemap Location
-Sitemap: https://highereducation.cg.gov.in/sitemap.xml
+Sitemap: https://beyondsend.in/sitemap.xml

@@ -4,10 +4,10 @@ import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
 import BreadcrumbBar from "./AdminBreadcrumbBar";
+import NoticeTiker from "./NoticeTicker";
 import PageLoader from "./PageLoader";
 import { useToast, ToastContainer } from "../utilities/WPToast";
-import "../css/AdminTheme.css";
-import "../css/WPStyleTheme.css";
+import "../css/WPStyleTheme.scss";
 
 const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -59,9 +59,8 @@ const AdminLayout = () => {
 
       <div className="adm-main">
         <AdminHeader toggleSidebar={handleToggle} />
-
+        <NoticeTiker />
         <BreadcrumbBar />
-
         <div className="adm-content-scroll">
           <Suspense fallback={<PageLoader />}>
             <Outlet />

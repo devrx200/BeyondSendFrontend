@@ -1,5 +1,5 @@
 import { FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
-const HEWebCMSVersion  = import.meta.env.VITE_PORTAL_VERSION;
+const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
 const AdminFooter = () => {
 
   const now = new Date();
@@ -15,11 +15,13 @@ const AdminFooter = () => {
   return (
     <footer className="adm-footer">
       <div className="adm-footer-left">
-        © {year} Department of Higher Education, Government of Chhattisgarh.
+        © {year} BeyondSend. All Rights Reserved.
       </div>
       <div className="adm-footer-center">
-        <span className="adm-side-version-chip text-white" style={{ background: "#000000", border: "1px solid rgba(255,255,255,0.2)" }}>
-          <FaShieldAlt style={{ color: "#10b981" }} /> HEWebCMS <span className="adm-version-num">v{HEWebCMSVersion || "0.1"}</span>
+        <span className="adm-side-version-chip">
+          <FaShieldAlt className="adm-version-icon" />
+          <span>BeyondSend </span>
+          <span className="adm-version-num">v{PORTAL_VERSION || "1.0"}</span>
         </span>
       </div>
       <div className="adm-footer-right">
