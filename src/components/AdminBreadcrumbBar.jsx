@@ -4,7 +4,7 @@ import { FaHome, FaCalendarAlt, FaClock, FaSun, FaCloud } from "react-icons/fa";
 
 import { useLanguage } from "../contexts/LanguageContext";
 
-const DAYS = [
+const DAYS_EN = [
   "Sunday",
   "Monday",
   "Tuesday",
@@ -14,10 +14,44 @@ const DAYS = [
   "Saturday"
 ];
 
+const DAYS_HI = [
+  "रविवार",
+  "सोमवार",
+  "मंगलवार",
+  "बुधवार",
+  "गुरुवार",
+  "शुक्रवार",
+  "शनिवार"
+];
+
+const HINDI_SEGMENTS = {
+  authorized: "प्रशासित",
+  dashboard: "डैशबोर्ड",
+  tutorials: "ट्यूटोरियल",
+  "help-guidance": "सहायता और मार्गदर्शन",
+  "feedback-list": "उपयोगकर्ता प्रतिक्रिया",
+  "contact-management": "संपर्क प्रबंधन",
+  "new-updates-management": "नवीन सूचनाएं",
+  "important-page-management": "महत्वपूर्ण पृष्ठ",
+  "media-library": "मीडिया लाइब्रेरी",
+  "manage-brands": "ब्रांड प्रबंधन",
+  "manage-categories": "श्रेणी प्रबंधन",
+  "admin-user-management": "व्यवस्थापक प्रबंधन",
+  "activity-log-management": "गतिविधि लॉग",
+  "db-backup-management": "डेटाबेस बैकअप",
+  "session-manager": "सत्र प्रबंधन",
+  "footer-section-manager": "पाद अनुभाग",
+  "header-management": "शीर्षलेख प्रबंधन"
+};
+
 const pad = (n) => String(n).padStart(2, "0");
 
-const formatLabel = (segment) =>
-  segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const formatLabel = (segment, isHindi) => {
+  if (isHindi && HINDI_SEGMENTS[segment.toLowerCase()]) {
+    return HINDI_SEGMENTS[segment.toLowerCase()];
+  }
+  return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
 /**
  * Context strip shown under the admin header.
@@ -70,7 +104,7 @@ const BreadcrumbBar = () => {
   const dd = pad(now.getDate());
   const mm = pad(now.getMonth() + 1);
   const yyyy = now.getFullYear();
-  const day = DAYS[now.getDay()];
+  const day = isHindi ? DAYS_HI[now.getDay()] : DAYS_EN[now.getDay()];
 
   let hours = now.getHours();
   const ampm = hours >= 12 ? "PM" : "AM";
@@ -84,12 +118,19 @@ const BreadcrumbBar = () => {
     <div className="adm-breadcrumb-bar">
       <nav aria-label="breadcrumb" className="flex-grow-1">
         <ol className="breadcrumb adm-breadcrumb mb-0">
-  <li className="breadcrumb-item">        
-<FaHome size={21} />
-</li>
+          <li className="breadcrumb-item">
+            <Link
+              to="/authorized/dashboard"
+              title={isHindi ? "डैशबोर्ड पर जाएं" : "Go to Dashboard"}
+              aria-label="Dashboard Home"
+            >
+              <FaHome size={18} />
+            </Link>
+          </li>
           {trail.map((segment, index) => {
             const isLast = index === trail.length - 1;
             const routeTo = `/authorized/${trail.slice(0, index + 1).join("/")}`;
+            const label = formatLabel(segment, isHindi);
             return (
               <li
                 key={routeTo}
@@ -99,10 +140,10 @@ const BreadcrumbBar = () => {
                 {isLast ? (
                   <span>
                     <span className="adm-breadcrumb-dot" />
-                    {formatLabel(segment)}
+                    {label}
                   </span>
                 ) : (
-                  <Link to={routeTo}>{formatLabel(segment)}</Link>
+                  <Link to={routeTo} title={label}>{label}</Link>
                 )}
               </li>
             );
@@ -111,23 +152,35 @@ const BreadcrumbBar = () => {
       </nav>
 
       <div className="adm-breadcrumb-meta">
-        <span className="adm-breadcrumb-chip">
+        <span
+          className="adm-breadcrumb-chip"
+          title={isHindi ? "वर्तमान तिथि" : "Current Date"}
+        >
           <FaCalendarAlt />
           <span>{`${dd}/${mm}/${yyyy}`}</span>
         </span>
 
-        <span className="adm-breadcrumb-chip">
+        <span
+          className="adm-breadcrumb-chip"
+          title={isHindi ? "आज का दिन" : "Day of the Week"}
+        >
           <FaCalendarAlt />
           <span>{day}</span>
         </span>
 
-        <span className="adm-breadcrumb-chip">
+        <span
+          className="adm-breadcrumb-chip"
+          title={isHindi ? "वर्तमान समय" : "Current Time"}
+        >
           <FaClock />
           <span>{time}</span>
         </span>
 
         {weather && (
-          <span className="adm-weather-widget" title="Local temperature">
+          <span
+            className="adm-weather-widget"
+            title={isHindi ? "स्थानीय तापमान" : "Local Temperature"}
+          >
             {weather.weather_code <= 1 ? <FaSun /> : <FaCloud />}
             <span>{Math.round(weather.temperature_2m)}&deg;C</span>
           </span>

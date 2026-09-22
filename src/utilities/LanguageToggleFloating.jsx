@@ -1,9 +1,19 @@
 import { Button } from "reactstrap";
 import { FaLanguage } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const LanguageToggleFloating = () => {
   const { isHindi, toggleLanguage } = useLanguage();
+  const location = useLocation();
+
+  if (
+    location.pathname.toLowerCase().includes("/admin") ||
+    location.pathname.toLowerCase().includes("/dashboard") ||
+    location.pathname.toLowerCase().includes("/authorized")
+  ) {
+    return null;
+  }
 
   return (
     <div
@@ -19,7 +29,7 @@ const LanguageToggleFloating = () => {
         onClick={toggleLanguage}
         className="floating-action-btn d-flex align-items-center gap-2"
         style={{
-          background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+          background: "linear-gradient(135deg, #1e293b 0%, #4f6ef7 100%)",
           border: "1.5px solid rgba(255, 255, 255, 0.4)",
           color: "#ffffff",
         }}

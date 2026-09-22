@@ -91,42 +91,22 @@ const NoticeTicker = () => {
   const displayItems = data.length > 0 ? [...data, ...data] : [];
 
   return (
-    <div
-      className="border-bottom"
-      style={{
-        background: "#ffffff",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
-        padding: "4px 0",
-      }}
+    <aside
+      className="adm-ticker-bar"
+      aria-label={isHindi ? "सूचना बुलेटिन" : "Notice Ticker"}
     >
-      <div className="d-flex align-items-center gap-2 overflow-hidden px-2 px-md-3">
+      <div className="adm-ticker-inner">
         {/* LEFT BADGE */}
-        <div
-          className="text-white d-flex align-items-center gap-2 flex-shrink-0 shadow-xs"
-          style={{
-            height: "34px",
-            padding: "0 14px",
-            fontSize: "13px",
-            fontWeight: 700,
-            background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-            letterSpacing: "0.2px",
-            whiteSpace: "nowrap",
-            borderRadius: "8px",
-            boxSizing: "border-box",
-          }}
-        >
-          <span
-            className="rounded-circle bg-white"
-            style={{ width: "6px", height: "6px", animation: "pulse 1.5s infinite" }}
-          />
-          <FaNewspaper size={13} />
+        <div className="adm-ticker-badge">
+          <span className="adm-ticker-pulse-dot" />
+          <FaNewspaper size={11} />
           <span>{isHindi ? "नवीन सूचना" : "New Updates"}</span>
-          <FaBullhorn size={11} className="d-none d-sm-inline ms-0.5 opacity-75" />
+          <FaBullhorn size={10} className="d-none d-sm-inline opacity-75" />
         </div>
 
         {/* MARQUEE CONTAINER */}
         <div
-          className="flex-grow-1 overflow-hidden"
+          className="adm-ticker-marquee"
           onMouseEnter={() => {
             if (tickerRef.current) tickerRef.current.style.animationPlayState = "paused";
           }}
@@ -140,9 +120,9 @@ const NoticeTicker = () => {
             if (tickerRef.current) tickerRef.current.style.animationPlayState = "running";
           }}
         >
-          <div ref={tickerRef} className="ticker-track py-0.5">
+          <div ref={tickerRef} className="adm-ticker-track">
             {displayItems.length === 0 ? (
-              <span className="text-muted small px-3">
+              <span className="adm-ticker-empty">
                 {isHindi ? "कोई सूचना उपलब्ध नहीं है" : "No updates available"}
               </span>
             ) : (
@@ -150,19 +130,11 @@ const NoticeTicker = () => {
                 const title = isHindi && item.titleHin ? item.titleHin : item.titleEng || item.titleHin;
 
                 const content = (
-                  <div className="ticker-item-chip">
-                    <span className="fw-medium">{title}</span>
+                  <div className="adm-ticker-chip">
+                    <span className="adm-ticker-title">{title}</span>
                     {item.createdAt && (
-                      <span
-                        className="d-inline-flex align-items-center gap-1 px-2 py-0.5 rounded"
-                        style={{
-                          background: "rgba(255, 213, 79, 0.16)",
-                          color: "#ffd54f",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                        }}
-                      >
-                        <FaClock size={9.5} />
+                      <span className="adm-ticker-date">
+                        <FaClock size={8.5} />
                         {formatDate(item.createdAt)}
                       </span>
                     )}
@@ -174,7 +146,8 @@ const NoticeTicker = () => {
                     key={index}
                     href={item.link}
                     onClick={(e) => handleExternalClick(e, item)}
-                    className="text-decoration-none"
+                    className="adm-ticker-link"
+                    title={title}
                   >
                     {content}
                   </a>
@@ -182,7 +155,8 @@ const NoticeTicker = () => {
                   <Link
                     key={index}
                     to={item.link || "#"}
-                    className="text-decoration-none"
+                    className="adm-ticker-link"
+                    title={title}
                   >
                     {content}
                   </Link>
@@ -192,7 +166,7 @@ const NoticeTicker = () => {
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 

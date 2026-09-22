@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Collapse } from "reactstrap";
 import axios from "axios";
@@ -550,16 +551,22 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   const handleMouseEnter = (e, text) => {
     if (!text) return;
     const rect = e.currentTarget.getBoundingClientRect();
+    const tooltipY = Math.max(16, Math.min(window.innerHeight - 24, rect.top + rect.height / 2));
     setHoveredTooltip({
       visible: true,
       text,
-      top: rect.top + rect.height / 2,
+      top: tooltipY,
       left: rect.right + 10
     });
   };
 
   const handleMouseLeave = () => {
     setHoveredTooltip((prev) => ({ ...prev, visible: false }));
+  };
+
+  const handleItemClick = () => {
+    handleMouseLeave();
+    handleNavClick();
   };
 
   const visibleMenu = filterMenu(adminMenu, userRole, userEmployeeType);
@@ -573,18 +580,17 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     .trim();
 
   return (
-    <aside className={sidebarClasses}>
+    <aside className={sidebarClasses} onMouseLeave={handleMouseLeave}>
       <div className="adm-side-profile">
         <div
           className="adm-side-brand"
-          onMouseEnter={(e) => handleMouseEnter(e, "BeyondSend ")}
+          onMouseEnter={(e) => handleMouseEnter(e, isHindi ? "बियॉन्डसेंड डेस्क" : "BeyondSend Desk")}
           onMouseLeave={handleMouseLeave}
-          title="BeyondSend "
         >
           <img
             src={`${import.meta.env.BASE_URL || "/"}beyondsend-logo.svg`}
             alt="BeyondSend"
-            className="adm-side-brand-logo"
+            className="adm-side-brand-logo bg-white rounded shadow "
             onError={(e) => {
               e.target.src = "/beyondsend-logo.svg";
             }}
@@ -597,29 +603,30 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
           </div>
         </div>
 
-        <div className="adm-side-avatar-wrap">
-          {expiresIn && (
-            <div
-              className="adm-side-session"
-              onMouseEnter={(e) =>
-                handleMouseEnter(e, `Session Left : ${expiresIn}`)
-              }
-              onMouseLeave={handleMouseLeave}
-              title={`Session Left : ${expiresIn}`}
-            >
-              <FaClock />
-              {!collapsed ? (
-                <span>Session Left : {expiresIn}</span>
-              ) : (
-                <span className="adm-side-session-time-compact">{expiresIn}</span>
-              )}
-            </div>
-          )}
-        </div>
+        {expiresIn && (
+          <div
+            className="adm-side-session"
+            onMouseEnter={(e) =>
+              handleMouseEnter(e, `${isHindi ? "सत्र शेष" : "Session Left"} : ${expiresIn}`)
+            }
+            onMouseLeave={handleMouseLeave}
+          >
+            <FaClock />
+            {!collapsed ? (
+              <span>Session Left : {expiresIn}</span>
+            ) : (
+              <span className="adm-side-session-time-compact">{expiresIn}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Navigation menu ─────────────────────────────── */}
-      <nav className="adm-side-nav" aria-label="Admin navigation">
+      <nav
+        className="adm-side-nav"
+        aria-label="Admin navigation"
+        onScroll={handleMouseLeave}
+      >
         {visibleMenu.map((item) => {
           const Icon = item.icon;
           const label = isHindi ? item.label.hi : item.label.en;
@@ -630,12 +637,13 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
               <NavLink
                 key={item.id}
                 to={item.path}
-                onClick={handleNavClick}
+                onClick={handleItemClick}
                 onMouseEnter={(e) => handleMouseEnter(e, label)}
                 onMouseLeave={handleMouseLeave}
                 className={({ isActive }) =>
                   `adm-side-item ${isActive ? "is-active" : ""}`
                 }
+                aria-label={label}
               >
                 <Icon />
                 <span className="adm-side-item-label">{label}</span>
@@ -655,10 +663,14 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
                 type="button"
                 className={`adm-side-item ${isOpen || hasActiveChild ? "is-active" : ""
                   }`}
-                onClick={() => toggleMenu(item.id)}
+                onClick={() => {
+                  toggleMenu(item.id);
+                  handleMouseLeave();
+                }}
                 onMouseEnter={(e) => handleMouseEnter(e, label)}
                 onMouseLeave={handleMouseLeave}
                 aria-expanded={isOpen}
+                aria-label={label}
               >
                 <Icon />
                 <span className="adm-side-item-label">{label}</span>
@@ -677,12 +689,13 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
                       <NavLink
                         key={sub.id}
                         to={sub.path}
-                        onClick={handleNavClick}
+                        onClick={handleItemClick}
                         onMouseEnter={(e) => handleMouseEnter(e, subLabel)}
                         onMouseLeave={handleMouseLeave}
                         className={({ isActive }) =>
                           `adm-side-item ${isActive ? "is-active" : ""}`
                         }
+                        aria-label={subLabel}
                       >
                         <SubIcon />
                         <span className="adm-side-item-label">{subLabel}</span>
@@ -698,10 +711,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
 
       {/* ── Footer: signed-in user card + build info ────── */}
       <div className="adm-side-footer">
-        <div
-          className="adm-side-user-card"
-          title={collapsed ? userProfile.name : ""}
-        >
+        <div className="adm-side-user-card">
           <div
             className="adm-side-user-avatar-wrap"
             onMouseEnter={(e) => handleMouseEnter(e, userTooltip)}
@@ -720,12 +730,12 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
               alt={userProfile.name}
               className="adm-side-user-avatar"
             />
-            <span className="adm-user-status-dot" title="Active" />
+            <span className="adm-user-status-dot" />
           </div>
 
           {!collapsed && (
             <div className="adm-side-user-meta">
-              <div className="adm-side-user-name" title={userProfile.name}>
+              <div className="adm-side-user-name">
                 {userProfile.name}
               </div>
               <div className="adm-side-user-sub">
@@ -740,9 +750,8 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             type="button"
             className="adm-side-inline-logout"
             onClick={logout}
-            onMouseEnter={(e) => handleMouseEnter(e, "Sign Out")}
+            onMouseEnter={(e) => handleMouseEnter(e, isHindi ? "लॉगआउट करें" : "Sign Out")}
             onMouseLeave={handleMouseLeave}
-            title="Sign Out"
             aria-label="Sign Out"
           >
             <FaSignOutAlt />
@@ -750,7 +759,13 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
         </div>
 
         {!collapsed && (
-          <div className="adm-side-version-bar">
+          <div
+            className="adm-side-version-bar"
+            onMouseEnter={(e) =>
+              handleMouseEnter(e, `BeyondSend Platform v${PORTAL_VERSION || "1.0"}`)
+            }
+            onMouseLeave={handleMouseLeave}
+          >
             <span className="adm-side-version-chip">
               <FaShieldAlt className="adm-version-icon" />
               <span>BeyondSend</span>
@@ -760,18 +775,20 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
         )}
       </div>
 
-      {/* ── Floating hover tooltip (only dynamic coords inline) ── */}
-      {hoveredTooltip.visible && (
-        <div
-          className="adm-floating-tooltip"
-          style={{
-            top: `${hoveredTooltip.top}px`,
-            left: `${hoveredTooltip.left}px`
-          }}
-        >
-          {hoveredTooltip.text}
-        </div>
-      )}
+      {/* ── Floating hover tooltip mounted via portal to body ── */}
+      {hoveredTooltip.visible &&
+        createPortal(
+          <div
+            className="adm-floating-tooltip"
+            style={{
+              top: `${hoveredTooltip.top}px`,
+              left: `${hoveredTooltip.left}px`
+            }}
+          >
+            {hoveredTooltip.text}
+          </div>,
+          document.body
+        )}
     </aside>
   );
 };

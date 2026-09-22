@@ -18,7 +18,8 @@ const FeedbackToggleFloating = () => {
   // Hide on admin routes
   if (
     location.pathname.toLowerCase().includes("/admin") ||
-    location.pathname.toLowerCase().includes("/dashboard")
+    location.pathname.toLowerCase().includes("/dashboard") ||
+    location.pathname.toLowerCase().includes("/authorized")
   ) {
     return null;
   }

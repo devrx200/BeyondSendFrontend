@@ -1,10 +1,13 @@
 import { FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
-const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
-const AdminFooter = () => {
+import { useLanguage } from "../contexts/LanguageContext";
 
+const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
+
+const AdminFooter = () => {
+  const { isHindi } = useLanguage();
   const now = new Date();
   const year = now.getFullYear();
-  const dateLabel = now.toLocaleDateString("en-IN", {
+  const dateLabel = now.toLocaleDateString(isHindi ? "hi-IN" : "en-IN", {
     weekday: "long",
     day: "2-digit",
     month: "short",
@@ -15,7 +18,7 @@ const AdminFooter = () => {
   return (
     <footer className="adm-footer">
       <div className="adm-footer-left">
-        © {year} BeyondSend. All Rights Reserved.
+        © {year} BeyondSend. {isHindi ? "सर्वाधिकार सुरक्षित।" : "All Rights Reserved."}
       </div>
       <div className="adm-footer-center">
         <span className="adm-side-version-chip">

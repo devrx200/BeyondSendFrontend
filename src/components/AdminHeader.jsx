@@ -173,14 +173,14 @@ const AdminHeader = ({ toggleSidebar }) => {
             type="button"
             className="adm-toggle-btn"
             onClick={toggleSidebar}
-            title="Toggle Sidebar Navigation"
+            title={isHindi ? "साइडबार टॉगल करें" : "Toggle Sidebar Navigation"}
             aria-label="Toggle Sidebar Navigation"
           >
             <FaBars />
           </button>
 
           <div className="adm-header-title d-none d-md-block">
-            BeyondSend 
+            BeyondSend
           </div>
 
         </div>
@@ -191,7 +191,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
           {/* CLOCK */}
 
-          <div className="adm-header-clock d-none d-lg-flex" title="Current Time (IST)">
+          <div className="adm-header-clock d-none d-lg-flex" title={isHindi ? "वर्तमान समय (IST)" : "Current Time (IST)"}>
 
             <FaClock className="me-2" />
 
@@ -205,7 +205,7 @@ const AdminHeader = ({ toggleSidebar }) => {
 
           <button
             type="button"
-            className="adm-header-chip is-warning"
+            className="adm-header-chip is-primary"
             onClick={toggleLanguage}
             title={isHindi ? "Switch to English" : "हिंदी भाषा में बदलें"}
             aria-label="Change Language"
@@ -222,11 +222,11 @@ const AdminHeader = ({ toggleSidebar }) => {
             type="button"
             className="adm-header-chip"
             onClick={() => navigate("/admin/tutorials")}
-            title="Help Documentation & Tutorials"
+            title={isHindi ? "सहायता और ट्यूटोरियल" : "Help Documentation & Tutorials"}
             aria-label="Help Documentation & Tutorials"
           >
             <FaBookOpen />
-            <span className="ms-2">Help</span>
+            <span className="ms-2">{isHindi ? "सहायता" : "Help"}</span>
           </button>
 
           {/* PROFILE DROPDOWN */}
@@ -240,7 +240,7 @@ const AdminHeader = ({ toggleSidebar }) => {
               tag="button"
               type="button"
               className="adm-profile-toggle-btn border-0 bg-transparent p-0 shadow-none outline-none"
-              title="User Profile & Settings"
+              title={isHindi ? "उपयोगकर्ता सेटिंग्स" : "User Profile & Settings"}
               aria-label="User Profile & Settings"
             >
               <div className="adm-profile-pill">
