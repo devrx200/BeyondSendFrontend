@@ -8,6 +8,21 @@ import { jwtDecode } from "jwt-decode";
 
 import {
   FaTachometerAlt,
+  FaChartPie,
+  FaFileAlt,
+  FaPaperPlane,
+  FaExchangeAlt,
+  FaChartLine,
+  FaEnvelope,
+  FaCommentAlt,
+  FaComments,
+  FaWhatsapp,
+  FaPhoneAlt,
+  FaList,
+  FaUserSlash,
+  FaKey,
+  FaListUl,
+  FaNetworkWired,
   FaNewspaper,
   FaBolt,
   FaListAlt,
@@ -48,7 +63,7 @@ const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
 const adminMenu = [
   {
     id: "dashboard",
-    icon: FaTachometerAlt,
+    icon: FaChartPie,
     path: "/authorized/dashboard",
     label: {
       en: "Dashboard",
@@ -56,242 +71,181 @@ const adminMenu = [
     }
   },
 
+  /* ── 1. Templates ────────────────────────────────────── */
   {
-    id: "content-management",
-    icon: FaNewspaper,
+    id: "templates",
+    icon: FaFileAlt,
     label: {
-      en: "Content Management",
-      hi: "सामग्री प्रबंधन"
+      en: "Templates",
+      hi: "टेम्पलेट्स"
     },
     submenu: [
       {
-        id: "new-updates",
-        icon: FaBolt,
-        path: "/authorized/new-updates",
-        label: {
-          en: "Latest Updates",
-          hi: "नवीन अपडेट"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
+        id: "tpl-email",
+        icon: FaEnvelope,
+        path: "/authorized/templates/email",
+        label: { en: "Email", hi: "ईमेल" }
       },
       {
-        id: "categories",
-        icon: FaListAlt,
-        path: "/authorized/categories",
-        label: {
-          en: "Categories",
-          hi: "श्रेणियाँ"
-        }
+        id: "tpl-sms",
+        icon: FaCommentAlt,
+        path: "/authorized/templates/sms",
+        label: { en: "SMS", hi: "एसएमएस" }
       },
       {
-        id: "rich-content-pages",
-        icon: FaPager,
-        path: "/authorized/rich-content-pages",
-        label: {
-          en: "Rich Content Pages",
-          hi: "समृद्ध सामग्री पृष्ठ"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
+        id: "tpl-rcs",
+        icon: FaComments,
+        path: "/authorized/templates/rcs",
+        label: { en: "RCS", hi: "आरसीएस" }
       },
       {
-        id: "important-page-management",
+        id: "tpl-whatsapp",
+        icon: FaWhatsapp,
+        path: "/authorized/templates/whatsapp",
+        label: { en: "Whatsapp", hi: "व्हाट्सएप" }
+      },
+      {
+        id: "tpl-voice",
+        icon: FaPhoneAlt,
+        path: "/authorized/templates/voice",
+        label: { en: "Voice", hi: "वॉइस" }
+      }
+    ]
+  },
+
+  /* ── 2. Bulk campaigns ───────────────────────────────── */
+  {
+    id: "bulk-campaigns",
+    icon: FaPaperPlane,
+    label: {
+      en: "Bulk campaigns",
+      hi: "बल्क अभियान"
+    },
+    submenu: [
+      {
+        id: "cmp-lists",
+        icon: FaList,
+        path: "/authorized/campaigns/lists",
+        label: { en: "Lists", hi: "सूचियां" }
+      },
+      {
+        id: "cmp-segments",
+        icon: FaLayerGroup,
+        path: "/authorized/campaigns/segments",
+        label: { en: "Segments", hi: "सेगमेंट" }
+      },
+      {
+        id: "cmp-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all",
+        label: { en: "Campaigns", hi: "अभियान" }
+      },
+      {
+        id: "cmp-unsubscribers",
+        icon: FaUserSlash,
+        path: "/authorized/campaigns/unsubscribers",
+        label: { en: "Unsubscribers", hi: "अनसब्सक्राइबर्स" }
+      },
+      {
+        id: "cmp-bounces",
         icon: FaExclamationCircle,
-        path: "/authorized/important-page-management",
-        label: {
-          en: "Important Pages",
-          hi: "महत्वपूर्ण पृष्ठ"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        path: "/authorized/campaigns/bounces-spam",
+        label: { en: "Bounces & SPAM", hi: "बाउंस एवं स्पैम" }
       }
     ]
   },
 
+  /* ── 3. Config ───────────────────────────────────────── */
   {
-    id: "media-management",
-    icon: FaFolderOpen,
+    id: "config",
+    icon: FaUsers,
     label: {
-      en: "Media & Downloads",
-      hi: "मीडिया एवं डाउनलोड"
+      en: "Config",
+      hi: "कॉन्फ़िग"
     },
     submenu: [
       {
-        id: "media-library",
-        icon: FaFolderOpen,
-        path: "/authorized/media-library-mangments",
-        label: {
-          en: "Media Library",
-          hi: "मीडिया लाइब्रेरी"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
-      },
-      {
-        id: "download-management",
-        icon: FaDownload,
-        path: "/authorized/download-management",
-        label: {
-          en: "Downloads",
-          hi: "डाउनलोड"
-        },
-        allowedRoles: ["ADMIN", "OFFICER"],
-        allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT"]
-      }
-    ]
-  },
-
-  {
-    id: "website-setup",
-    icon: FaLayerGroup,
-    label: {
-      en: "Website Setup",
-      hi: "वेबसाइट सेटअप"
-    },
-    submenu: [
-      {
-        id: "header-management",
-        icon: FaWindowMaximize,
-        path: "/authorized/header-management",
-        label: {
-          en: "Header Management",
-          hi: "हेडर प्रबंधन"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "menu-management",
-        icon: FaBars,
-        path: "/authorized/menu",
-        label: {
-          en: "Menu Management",
-          hi: "मेनू प्रबंधन"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "about-content",
-        icon: FaImage,
-        path: "/authorized/about-section",
-        label: {
-          en: "About Section",
-          hi: "परिचय अनुभाग"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "quick-access",
-        icon: FaThLarge,
-        path: "/authorized/quick-access",
-        label: {
-          en: "Quick Access",
-          hi: "त्वरित पहुंच"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "brands",
-        icon: FaTags,
-        path: "/authorized/brands",
-        label: {
-          en: "Footer Brands",
-          hi: "फुटर ब्रांड"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "footer-management",
-        icon: FaWindowMinimize,
-        path: "/authorized/footer-section-manager",
-        label: {
-          en: "Footer Management",
-          hi: "फुटर प्रबंधन"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      }
-    ]
-  },
-
-  {
-    id: "contact-page-management",
-    icon: FaAddressBook,
-    label: {
-      en: "Contact Management",
-      hi: "संपर्क प्रबंधन"
-    },
-    submenu: [
-      {
-        id: "contact-info",
-        icon: FaAddressBook,
-        path: "/authorized/contact-management",
-        label: {
-          en: "Contact Information",
-          hi: "संपर्क जानकारी"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
-      },
-      {
-        id: "contact-card",
+        id: "cfg-from-ids",
         icon: FaIdCard,
-        path: "/authorized/contact-card-management",
-        label: {
-          en: "Contact Cards",
-          hi: "संपर्क कार्ड"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        path: "/authorized/config/from-ids",
+        label: { en: "From Ids", hi: "सेंडर आईडी" }
       }
     ]
   },
 
+  /* ── 4. Transactional API ────────────────────────────── */
   {
-    id: "support",
-    icon: FaHeadset,
+    id: "transactional-api",
+    icon: FaExchangeAlt,
     label: {
-      en: "Support Centre",
-      hi: "सहायता केंद्र"
+      en: "Transactional API",
+      hi: "ट्रांजैक्शनल एपीआई"
     },
     submenu: [
       {
-        id: "help-guidance",
-        icon: FaHandsHelping,
-        path: "/authorized/help-guidance",
-        label: {
-          en: "Help & Guidance",
-          hi: "सहायता एवं मार्गदर्शन"
-        }
+        id: "trx-dashboard",
+        icon: FaChartPie,
+        path: "/authorized/transactional/dashboard",
+        label: { en: "Dashboard", hi: "डैशबोर्ड" }
       },
       {
-        id: "tutorials",
+        id: "trx-api-key",
+        icon: FaKey,
+        path: "/authorized/transactional/api-key",
+        label: { en: "Api Key", hi: "एपीआई कुंजी" }
+      },
+      {
+        id: "trx-message-log",
+        icon: FaListUl,
+        path: "/authorized/transactional/message-log",
+        label: { en: "Message Log", hi: "संदेश लॉग" }
+      },
+      {
+        id: "trx-webhook-setup",
+        icon: FaNetworkWired,
+        path: "/authorized/transactional/webhook-setup",
+        label: { en: "Webhook Setup", hi: "वेबहुक सेटअप" }
+      },
+      {
+        id: "trx-webhook-logs",
+        icon: FaHistory,
+        path: "/authorized/transactional/webhook-logs",
+        label: { en: "Webhook Logs", hi: "वेबहुक लॉग" }
+      },
+      {
+        id: "trx-api-doc",
         icon: FaBookOpen,
-        path: "/authorized/tutorials",
-        label: {
-          en: "Tutorials",
-          hi: "ट्यूटोरियल"
-        }
-      },
-      {
-        id: "feedbacks",
-        icon: FaCommentDots,
-        path: "/authorized/feedbacks",
-        label: {
-          en: "User Feedback",
-          hi: "उपयोगकर्ता प्रतिक्रिया"
-        },
-        allowedRoles: ["ADMIN"],
-        allowedEmployeeTypes: ["DIRECTORATE"]
+        path: "/authorized/transactional/api-doc",
+        label: { en: "Api Doc", hi: "एपीआई दस्तावेज़" }
       }
     ]
   },
 
+  /* ── 5. User Responses ───────────────────────────────── */
+  {
+    id: "user-responses",
+    icon: FaChartLine,
+    label: {
+      en: "User Responses",
+      hi: "उपयोगकर्ता प्रतिक्रियाएं"
+    },
+    submenu: [
+      {
+        id: "resp-whatsapp",
+        icon: FaWhatsapp,
+        path: "/authorized/responses/whatsapp",
+        label: { en: "Whatsapp", hi: "व्हाट्सएप" }
+      },
+      {
+        id: "resp-rcs",
+        icon: FaComments,
+        path: "/authorized/responses/rcs",
+        label: { en: "RCS", hi: "आरसीएस" }
+      }
+    ]
+  },
+
+  /* ── 6. Users Management ─────────────────────────────── */
   {
     id: "users-management",
     icon: FaUsers,
@@ -300,10 +254,10 @@ const adminMenu = [
       en: "Users Management",
       hi: "उपयोगकर्ता प्रबंधन"
     },
-    allowedRoles: ["ADMIN", "NIC"],
-    allowedEmployeeTypes: ["DIRECTORATE", "DEPARTMENT", "NIC"]
+    allowedRoles: ["DEVOPS", "ADMIN", "RESELLER", "CLIENT"]
   },
 
+  /* ── 7. System & Security ────────────────────────────── */
   {
     id: "system-security",
     icon: FaUserShield,
@@ -320,8 +274,7 @@ const adminMenu = [
           en: "Activity Logs",
           hi: "गतिविधि लॉग"
         },
-        allowedRoles: ["NIC"],
-        allowedEmployeeTypes: ["NIC"]
+        allowedRoles: ["DEVOPS", "ADMIN"]
       },
       {
         id: "session-management",
@@ -331,8 +284,7 @@ const adminMenu = [
           en: "User Sessions",
           hi: "उपयोगकर्ता सत्र"
         },
-        allowedRoles: ["NIC"],
-        allowedEmployeeTypes: ["NIC"]
+        allowedRoles: ["DEVOPS", "ADMIN"]
       },
       {
         id: "database-backup",
@@ -342,26 +294,100 @@ const adminMenu = [
           en: "Database Backup",
           hi: "डेटाबेस बैकअप"
         },
-        allowedRoles: ["NIC"],
-        allowedEmployeeTypes: ["NIC"]
+        allowedRoles: ["DEVOPS", "ADMIN"]
+      }
+    ]
+  },
+
+  /* ── 8. Website & Portal Setup (Admin & DevOps) ──────── */
+  {
+    id: "content-management",
+    icon: FaNewspaper,
+    label: {
+      en: "Website Setup",
+      hi: "वेबसाइट सेटअप"
+    },
+    allowedRoles: ["DEVOPS", "ADMIN"],
+    submenu: [
+      {
+        id: "new-updates",
+        icon: FaBolt,
+        path: "/authorized/new-updates",
+        label: { en: "Latest Updates", hi: "नवीन अपडेट" }
+      },
+      {
+        id: "quick-access",
+        icon: FaBolt,
+        path: "/authorized/quick-access",
+        label: { en: "Quick Access", hi: "त्वरित पहुंच" },
+        color: "#4f6ef7"
+      },
+      {
+        id: "categories",
+        icon: FaListAlt,
+        path: "/authorized/categories",
+        label: { en: "Categories", hi: "श्रेणियाँ" }
+      },
+      {
+        id: "rich-content-pages",
+        icon: FaPager,
+        path: "/authorized/rich-content-pages",
+        label: { en: "Rich Content Pages", hi: "सामग्री पृष्ठ" }
+      },
+      {
+        id: "important-page-management",
+        icon: FaExclamationCircle,
+        path: "/authorized/important-page-management",
+        label: { en: "Important Pages", hi: "महत्वपूर्ण पृष्ठ" }
+      },
+      {
+        id: "media-library",
+        icon: FaFolderOpen,
+        path: "/authorized/media-library-mangments",
+        label: { en: "Media Library", hi: "मीडिया लाइब्रेरी" }
+      },
+      {
+        id: "download-management",
+        icon: FaDownload,
+        path: "/authorized/download-management",
+        label: { en: "Downloads", hi: "डाउनलोड" }
+      },
+      {
+        id: "menu-management",
+        icon: FaBars,
+        path: "/authorized/menu",
+        label: { en: "Menu Management", hi: "मेनू प्रबंधन" }
+      },
+      {
+        id: "header-management",
+        icon: FaWindowMaximize,
+        path: "/authorized/header-management",
+        label: { en: "Header Management", hi: "हेडर प्रबंधन" }
+      },
+      {
+        id: "footer-management",
+        icon: FaWindowMinimize,
+        path: "/authorized/footer-section-manager",
+        label: { en: "Footer Management", hi: "फुटर प्रबंधन" }
+      },
+      {
+        id: "feedbacks",
+        icon: FaCommentDots,
+        path: "/authorized/feedbacks",
+        label: { en: "Feedback Inbox", hi: "प्रतिक्रिया इनबॉक्स" }
       }
     ]
   }
 ];
 
 // ─────────────────────────────────────────────────────────
-// Role / employee-type guard
+// Role guard
 // ─────────────────────────────────────────────────────────
-const isAllowed = (item, userRole, userEmployeeType) => {
-  const roleOk =
-    !item.allowedRoles?.length ||
-    item.allowedRoles.includes(userRole);
+const isAllowed = (item, userRole) => {
+  const isDevOps = userRole === "DEVOPS";
+  if (isDevOps) return true;
 
-  const typeOk =
-    !item.allowedEmployeeTypes?.length ||
-    item.allowedEmployeeTypes.includes(userEmployeeType);
-
-  return roleOk && typeOk;
+  return !item.allowedRoles?.length || item.allowedRoles.includes(userRole);
 };
 
 // ─────────────────────────────────────────────────────────
@@ -369,13 +395,13 @@ const isAllowed = (item, userRole, userEmployeeType) => {
 // A parent with a submenu is kept only when at least one
 // child survives filtering.
 // ─────────────────────────────────────────────────────────
-const filterMenu = (menu, userRole, userEmployeeType) =>
+const filterMenu = (menu, userRole) =>
   menu.reduce((acc, item) => {
-    if (!isAllowed(item, userRole, userEmployeeType)) return acc;
+    if (!isAllowed(item, userRole)) return acc;
 
     if (item.submenu) {
       const visibleSubs = item.submenu.filter((sub) =>
-        isAllowed(sub, userRole, userEmployeeType)
+        isAllowed(sub, userRole)
       );
       if (!visibleSubs.length) return acc; // hide parent if no children visible
       acc.push({ ...item, submenu: visibleSubs });
@@ -505,7 +531,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     if (onCloseMobile && window.innerWidth <= 991) onCloseMobile();
   };
 
-  // ── Derive user role & type ─────────────────────────────
+  // ── Derive user role ───────────────────────────────────
   // Prefer sessionStorage userData (set by AuthMiddleware),
   // fall back to decoded JWT fields.
   const storedUser = (() => {
@@ -517,16 +543,10 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
   })();
 
   const userRole = (storedUser?.role || decoded?.role || "").toUpperCase();
-  const userEmployeeType = (
-    storedUser?.employeeType ||
-    decoded?.employeeType ||
-    ""
-  ).toUpperCase();
 
   const userProfile = {
     name: storedUser?.name || decoded?.name || "Administrator",
     role: userRole || "ADMIN",
-    employeeType: userEmployeeType || "DEPARTMENT",
     userDesignations:
       storedUser?.userDesignations ||
       storedUser?.userDeginations ||
@@ -569,7 +589,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
     handleNavClick();
   };
 
-  const visibleMenu = filterMenu(adminMenu, userRole, userEmployeeType);
+  const visibleMenu = filterMenu(adminMenu, userRole);
 
   const sidebarClasses = [
     "adm-sidebar",

@@ -19,21 +19,21 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const getFileIcon = (type = '') => {
   switch (type.toUpperCase()) {
-    case 'PDF':  return <FaFilePdf  className="text-danger"  aria-hidden="true" />;
+    case 'PDF':  return <FaFilePdf  style={{ color: '#fe5d70' }}  aria-hidden="true" />;
     case 'DOC':
-    case 'DOCX': return <FaFileWord style={{ color: '#2563eb' }} aria-hidden="true" />;
+    case 'DOCX': return <FaFileWord style={{ color: '#4f6ef7' }} aria-hidden="true" />;
     case 'XLS':
-    case 'XLSX': return <FaFileExcel className="text-success" aria-hidden="true" />;
+    case 'XLSX': return <FaFileExcel style={{ color: '#20c997' }} aria-hidden="true" />;
     default:     return <FaDownload  aria-hidden="true" />;
   }
 };
 
 const FILE_TYPE_COLORS = {
-  PDF:  { bg: 'rgba(239,68,68,0.1)',   color: '#dc2626',  label: 'PDF' },
-  DOC:  { bg: 'rgba(37,99,235,0.1)',   color: '#2563eb',  label: 'DOC' },
-  DOCX: { bg: 'rgba(37,99,235,0.1)',   color: '#2563eb',  label: 'DOCX' },
-  XLS:  { bg: 'rgba(16,185,129,0.1)',  color: '#059669',  label: 'XLS' },
-  XLSX: { bg: 'rgba(16,185,129,0.1)',  color: '#059669',  label: 'XLSX' },
+  PDF:  { bg: 'rgba(254,93,112,0.1)',   color: '#fe5d70',  label: 'PDF' },
+  DOC:  { bg: 'rgba(79,110,247,0.1)',   color: '#4f6ef7',  label: 'DOC' },
+  DOCX: { bg: 'rgba(79,110,247,0.1)',   color: '#4f6ef7',  label: 'DOCX' },
+  XLS:  { bg: 'rgba(32,201,151,0.1)',   color: '#20c997',  label: 'XLS' },
+  XLSX: { bg: 'rgba(32,201,151,0.1)',   color: '#20c997',  label: 'XLSX' },
 };
 
 const Downloads = () => {
@@ -111,7 +111,7 @@ const Downloads = () => {
               </div>
 
               {/* Body */}
-              <div className="p-3 p-md-4" style={{ background: 'linear-gradient(145deg, #f8faff, #f0f4ff)' }}>
+              <div className="p-3 p-md-4" style={{ background: 'var(--pub-bg)' }}>
                 {/* Category Tabs */}
                 <Nav className="downloads-nav-pills mb-4 gap-2 flex-wrap" role="tablist" aria-label={isHindi ? 'श्रेणियाँ' : 'Categories'}>
                   {categories.map((cat) => (
@@ -155,7 +155,7 @@ const Downloads = () => {
                             <tr>
                               <td colSpan={6} className="text-center py-5">
                                 <div className="d-flex flex-column align-items-center gap-2">
-                                  <FaFolderOpen size={36} style={{ color: '#3b82f6', opacity: 0.4 }} aria-hidden="true" />
+                                  <FaFolderOpen size={36} style={{ color: 'var(--pub-primary)', opacity: 0.4 }} aria-hidden="true" />
                                   <span className="small fw-semibold text-muted">
                                     {isHindi ? 'इस श्रेणी में कोई फ़ाइल उपलब्ध नहीं है' : 'No downloads available in this category'}
                                   </span>

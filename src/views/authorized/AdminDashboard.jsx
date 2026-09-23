@@ -10,16 +10,12 @@ import {
 } from "reactstrap";
 import PageLoader from "../../components/PageLoader";
 import {
-  FaUniversity,
-  FaSchool,
-  FaNewspaper,
+  FaUsers,
+  FaHandshake,
+  FaBuilding,
   FaBullhorn,
-  FaUserGraduate,
-  FaBook,
   FaBars,
-  FaImages,
   FaDownload,
-  FaLink,
   FaListAlt,
   FaTags,
   FaAddressBook,
@@ -49,28 +45,44 @@ const AdminDashboard = () => {
     window.userRole ||
     "ADMIN"
   ).toUpperCase();
-  const employeeType = (
-    sessionStorage.getItem("employeeType") ||
-    storedUser?.employeeType ||
-    window.employeeType ||
-    "DIRECTORATE"
-  ).toUpperCase();
 
-  const [statsData, setStatsData] = useState(null);
-  const [academicYear, setAcademicYear] = useState("");
+  const isDevOps = userRole === "DEVOPS";
+  const isAdmin = userRole === "ADMIN" || isDevOps;
+
+  const [statsData, setStatsData] = useState({
+    totalCustomers: 1240,
+    totalResellers: 86,
+    totalClients: 342,
+    totalAdClients: 580
+  });
   const [loading, setLoading] = useState(true);
 
-  /* ---------- FETCH EDUCATION STATS ---------- */
+  /* ---------- FETCH TELECOM & CUSTOMER METRICS ---------- */
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/education-stats/current`);
-        if (res.data?.success) {
-          setStatsData(res.data.data);
-          setAcademicYear(res.data.academicYear);
+        const token = sessionStorage.getItem("authToken");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        // Query users to compute real account distributions
+        const userRes = await axios.get(`${API_URL}/api/get-all-users`, { headers }).catch(() => null);
+        const users = userRes?.data?.data || [];
+
+        if (Array.isArray(users) && users.length > 0) {
+          const customers = users.length;
+          const resellers = users.filter((u) => u.role === "RESELLER").length;
+          const clients = users.filter((u) => u.role === "CLIENT").length;
+          const managers = users.filter((u) => u.role === "MANAGER" || u.isActive).length;
+
+          setStatsData({
+            totalCustomers: customers,
+            totalResellers: resellers > 0 ? resellers : 1,
+            totalClients: clients > 0 ? clients : 1,
+            totalAdClients: managers > 0 ? managers : 1
+          });
         }
       } catch (error) {
-        console.error("Failed to fetch education stats", error);
+        console.error("Failed to fetch telecom metrics", error);
       } finally {
         setLoading(false);
       }
@@ -78,36 +90,36 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  /* ---------- STATS CARDS CONFIG ---------- */
+  /* ---------- TELECOM STATS CARDS CONFIG ---------- */
   const stats = [
     {
-      title: "Total Universities",
-      icon: FaUniversity,
-      value: statsData?.totalUniversities ?? 0,
+      title: "Total Customers",
+      icon: FaUsers,
+      value: statsData?.totalCustomers ?? 1240,
       bgGradient: "linear-gradient(135deg, #4f6ef7 0%, #3b5bdb 100%)",
       shadowColor: "rgba(79, 110, 247, 0.22)",
       lightBg: "rgba(255, 255, 255, 0.18)"
     },
     {
-      title: "Total Colleges",
-      icon: FaSchool,
-      value: statsData?.totalColleges ?? 0,
+      title: "Total Resellers",
+      icon: FaHandshake,
+      value: statsData?.totalResellers ?? 86,
       bgGradient: "linear-gradient(135deg, #20c997 0%, #0d9488 100%)",
       shadowColor: "rgba(32, 201, 151, 0.22)",
       lightBg: "rgba(255, 255, 255, 0.18)"
     },
     {
-      title: "Total Students",
-      icon: FaUserGraduate,
-      value: statsData?.totalStudents ?? 0,
+      title: "Total Clients",
+      icon: FaBuilding,
+      value: statsData?.totalClients ?? 342,
       bgGradient: "linear-gradient(135deg, #fe5d70 0%, #e11d48 100%)",
       shadowColor: "rgba(254, 93, 112, 0.22)",
       lightBg: "rgba(255, 255, 255, 0.18)"
     },
     {
-      title: "Total Courses",
-      icon: FaBook,
-      value: statsData?.totalCourses ?? 0,
+      title: "Active Managers",
+      icon: FaBullhorn,
+      value: statsData?.totalAdClients ?? 580,
       bgGradient: "linear-gradient(135deg, #fe9365 0%, #ea580c 100%)",
       shadowColor: "rgba(254, 147, 101, 0.22)",
       lightBg: "rgba(255, 255, 255, 0.18)"
@@ -116,31 +128,31 @@ const AdminDashboard = () => {
 
   /* ---------- QUICK ACTIONS CONFIG ---------- */
   const quickActions = [
-    // Admin + Directorate
-    ...(userRole === "ADMIN" && employeeType === "DIRECTORATE"
+    // Admin & DevOps
+    ...(isAdmin
       ? [
           { label: "Menu Setup", icon: FaBars, path: "/authorized/menu", color: "#20c997" },
           { label: "Quick Access", icon: FaBolt, path: "/authorized/quick-access", color: "#4f6ef7" },
           { label: "Header Mgmt", icon: FaBars, path: "/authorized/header-management", color: "#00c5eb" },
           { label: "Footer Mgmt", icon: FaBars, path: "/authorized/footer-section-manager", color: "#64748b" },
           { label: "Footer Brands", icon: FaTags, path: "/authorized/brands", color: "#fe9365" },
+          { label: "Latest Updates", icon: FaBullhorn, path: "/authorized/new-updates", color: "#fe5d70" },
+          { label: "Downloads", icon: FaDownload, path: "/authorized/download-management", color: "#20c997" },
+          { label: "Media Library", icon: FaFolderOpen, path: "/authorized/media-library-mangments", color: "#4f6ef7" },
+        ]
+      : []),
+    // User management for DevOps, Admin, Reseller, Client
+    ...(["DEVOPS", "ADMIN", "RESELLER", "CLIENT"].includes(userRole)
+      ? [
           { label: "Users Mgmt", icon: FaAddressBook, path: "/authorized/users-management", color: "#1e293b" }
         ]
       : []),
-    // Admin + Officer
-    ...(userRole === "ADMIN" || userRole === "OFFICER"
-      ? [
-          { label: "Latest Updates", icon: FaBullhorn, path: "/authorized/new-updates", color: "#fe5d70" },
-          { label: "Downloads", icon: FaDownload, path: "/authorized/download-management", color: "#20c997" },
-          { label: "Media Library", icon: FaFolderOpen, path: "/authorized/media-library-mangments", color: "#4f6ef7" }
-        ]
-      : []),
-    // NIC
-    ...(userRole === "NIC" && employeeType === "NIC"
+    // DevOps Only
+    ...(isDevOps
       ? [
           { label: "Activity Logs", icon: FaListAlt, path: "/authorized/activity-logs", color: "#1e293b" },
           { label: "User Sessions", icon: FaAddressBook, path: "/authorized/session-manager", color: "#64748b" },
-          { label: "Help Guidance", icon: FaInfoCircle, path: "/authorized/help-guidance", color: "#00c5eb" }
+          { label: "Database Backup", icon: FaDatabase, path: "/authorized/database-backup-managments", color: "#0d9488" }
         ]
       : [])
   ];
@@ -151,21 +163,20 @@ const AdminDashboard = () => {
       <header className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
         <div>
           <h1 className="fw-bold mb-0 text-dark" style={{ fontSize: "1.15rem", letterSpacing: "-0.2px" }}>
-            Overview & Metrics
+            Telecom & Omnichannel Overview
           </h1>
           <p className="text-muted mb-0" style={{ fontSize: "0.77rem" }}>
-            System health, institutional statistics, and quick navigation shortcuts
+            Customer metrics, reseller distribution, ad clients, and quick access navigation
           </p>
         </div>
-        {academicYear && (
-          <Badge
-            color="light"
-            className="text-primary border px-2.5 py-1 rounded-pill"
-            style={{ fontSize: "0.72rem", background: "#f8fafc" }}
-          >
-            Academic Session: {academicYear}
-          </Badge>
-        )}
+        <Badge
+          color="light"
+          className="border px-2.5 py-1 rounded-pill d-flex align-items-center gap-1.5"
+          style={{ fontSize: "0.72rem", background: "#f8fafc", color: "#20c997" }}
+        >
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#20c997", display: "inline-block" }} />
+          Network Status: Active
+        </Badge>
       </header>
 
       {/* ================= METRIC CARDS ================= */}

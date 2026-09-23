@@ -1,5 +1,5 @@
-﻿import { useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import PageLoader from "../components/PageLoader";
@@ -9,18 +9,25 @@ const API_URL = import.meta.env.VITE_API_URL;
 let authInFlightPromise = null;
 let lastAuthValidationTime = 0;
 
-const AuthMiddleware = ({ allowedRoles = [],
-  allowedEmployeeTypes = [] }) => {
+const AuthMiddleware = ({ allowedRoles = [] }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const userRole = sessionStorage.getItem("userRole");
-  const employeeType = sessionStorage.getItem("employeeType");
   const token = sessionStorage.getItem("authToken");
 
-  const hasRolePermission = !allowedRoles.length || (userRole && allowedRoles.includes(userRole));
-  const hasEmpPermission = !allowedEmployeeTypes.length || (employeeType && allowedEmployeeTypes.includes(employeeType));
-  const isPreAuthorized = Boolean(token && userRole && hasRolePermission && hasEmpPermission);
+  // If there is NO auth token, immediately redirect to "/" without loader or alert
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  const userRole = (sessionStorage.getItem("userRole") || "").toUpperCase();
+
+  const isDevOps = userRole === "DEVOPS";
+  const normalizedAllowedRoles = allowedRoles.map((r) => r.toUpperCase());
+
+  const hasRolePermission =
+    isDevOps || !normalizedAllowedRoles.length || (userRole && normalizedAllowedRoles.includes(userRole));
+  const isPreAuthorized = Boolean(token && hasRolePermission);
 
   const [loading, setLoading] = useState(!isPreAuthorized);
   const [isAuthorized, setIsAuthorized] = useState(isPreAuthorized);
@@ -33,9 +40,10 @@ const AuthMiddleware = ({ allowedRoles = [],
 
   const validateAuth = async () => {
     try {
-      const token = sessionStorage.getItem("authToken");
-      if (!token) {
-        redirectToLogin("Session Expired. Please Login Again.");
+      const curToken = sessionStorage.getItem("authToken");
+      if (!curToken) {
+        sessionStorage.clear();
+        navigate("/", { replace: true });
         return;
       }
 
@@ -47,7 +55,8 @@ const AuthMiddleware = ({ allowedRoles = [],
       }
 
       if (!authInFlightPromise) {
-        authInFlightPromise = axios.post(`${API_URL}/api/check-auth-token`, { token })
+        authInFlightPromise = axios
+          .post(`${API_URL}/api/check-auth-token`, { token: curToken })
           .finally(() => {
             setTimeout(() => {
               authInFlightPromise = null;
@@ -56,90 +65,47 @@ const AuthMiddleware = ({ allowedRoles = [],
       }
 
       const res = await authInFlightPromise;
-      if (
-        res.status !== 200 ||
-        !res.data?.success
-      ) {
-        redirectToLogin("Authentication Failed.");
+      if (res.status !== 200 || !res.data?.success) {
+        sessionStorage.clear();
+        navigate("/", { replace: true });
         return;
       }
+
       lastAuthValidationTime = Date.now();
       const user = res.data?.user || {};
-      const role = user?.role?.toUpperCase();
-      const employeeType = user?.employeeType?.toUpperCase();
+      const role = (user?.role || "").toUpperCase();
       sessionStorage.setItem("userData", JSON.stringify(user));
-      sessionStorage.setItem("userRole", role || "");
-      sessionStorage.setItem("employeeType", employeeType || "");
+      sessionStorage.setItem("userRole", role);
 
       window.userRole = role;
-      window.employeeType = employeeType;
+
+      const isSuperUser = role === "DEVOPS";
 
       if (
-        allowedRoles.length > 0 &&
-        !allowedRoles.includes(role)
+        !isSuperUser &&
+        normalizedAllowedRoles.length > 0 &&
+        !normalizedAllowedRoles.includes(role)
       ) {
-        unauthorizedAccess(
-          "You Don't Have Permission To Access This Page."
-        );
+        unauthorizedAccess("You Don't Have Permission To Access This Page.");
         return;
       }
 
-      if (
-        allowedEmployeeTypes.length > 0 &&
-        !allowedEmployeeTypes.includes(
-          employeeType
-        )
-      ) {
-        unauthorizedAccess(
-          "Employee Access Denied."
-        );
-        return;
-      }
       setIsAuthorized(true);
     } catch (error) {
       console.error(
         "Auth Middleware Error:",
-        error?.response?.data ||
-        error.message
+        error?.response?.data || error.message
       );
-
-      redirectToLogin(
-        error?.response?.data?.message ||
-        "Session Expired. Please Login Again."
-      );
+      sessionStorage.clear();
+      navigate("/", { replace: true });
     } finally {
       setLoading(false);
     }
   };
 
-  const redirectToLogin = async (
-    message
-  ) => {
+  const unauthorizedAccess = async (message) => {
     if (alertShownRef.current) return;
-
     alertShownRef.current = true;
-
-    setIsAuthorized(false);
-
-    await Swal.fire({
-      icon: "error",
-      title: "Authentication Failed",
-      text: message,
-      confirmButtonText: "Login Again",
-      allowOutsideClick: false,
-      allowEscapeKey: false
-    });
-    sessionStorage.clear();
-    navigate("/", { replace: true });
-  };
-
-  const unauthorizedAccess = async (
-    message
-  ) => {
-    if (alertShownRef.current) return;
-
-    alertShownRef.current = true;
-
     setIsAuthorized(false);
 
     await Swal.fire({
@@ -149,10 +115,11 @@ const AuthMiddleware = ({ allowedRoles = [],
       confirmButtonText: "Go To Dashboard",
       allowOutsideClick: false,
       allowEscapeKey: false
-    }); navigate("/admin/dashboard", { replace: true });
+    });
+    navigate("/authorized/dashboard", { replace: true });
   };
 
-  if (!isAuthorized) {
+  if (!isAuthorized || loading) {
     return <PageLoader />;
   }
 

@@ -7,10 +7,7 @@ export const AuthProvider = ({
   return (
     <AuthContext.Provider
       value={{
-        userRole:
-          window.userRole,
-        employeeType:
-          window.employeeType
+        userRole: window.userRole
       }}
     >
       {children}

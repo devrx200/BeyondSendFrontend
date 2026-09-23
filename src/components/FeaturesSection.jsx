@@ -8,28 +8,32 @@ const FeaturesSection = () => {
       title: "SMS Marketing",
       desc: "Send bulk SMS campaigns with unparalleled delivery rates. Engage customers directly on their mobile devices.",
       icon: <FaMobileScreenButton size={32} />,
-      color: "var(--pub-primary)"
+      color: "#4f6ef7",
+      bg: "#edf2ff",
     },
     {
       id: 2,
       title: "Email Automation",
       desc: "Create beautiful, responsive emails and automate campaigns based on customer behavior to drive conversions.",
       icon: <FaEnvelopesBulk size={32} />,
-      color: "var(--pub-cyan-500)"
+      color: "#00c5eb",
+      bg: "#ecfeff",
     },
     {
       id: 3,
       title: "WhatsApp Business",
       desc: "Connect with customers on their favorite messaging app. Send notifications, alerts, and provide support.",
       icon: <FaWhatsapp size={32} />,
-      color: "var(--pub-emerald-500)"
+      color: "#20c997",
+      bg: "#ecfdf5",
     },
     {
       id: 4,
       title: "BPO Calling & Support",
       desc: "Scale your customer service operations with our integrated outbound and inbound calling solutions.",
       icon: <FaHeadset size={32} />,
-      color: "var(--pub-amber-600)"
+      color: "#fe9365",
+      bg: "#fff7ed",
     }
   ];
 
@@ -51,16 +55,16 @@ const FeaturesSection = () => {
         <Row className="g-4">
           {features.map((feature) => (
             <Col md={6} lg={3} key={feature.id}>
-              <Card className="h-100 border-0 shadow-sm pub-card transition-all" style={{ transition: 'transform 0.3s' }} 
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+              <Card className="h-100 border-0 shadow-sm pub-card transition-all" style={{ transition: 'all 0.3s ease', borderRadius: '18px', border: '1px solid #e2e8f0' }} 
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(79, 110, 247, 0.12)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = ''; }}>
                 <CardBody className="p-4 text-center">
-                  <div className="icon-wrapper mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" 
-                       style={{ width: '80px', height: '80px', background: `${feature.color}15`, color: feature.color }}>
+                  <div className="icon-wrapper mx-auto mb-4 rounded-4 d-flex align-items-center justify-content-center" 
+                       style={{ width: '74px', height: '74px', background: feature.bg, color: feature.color, transition: 'all 0.25s ease' }}>
                     {feature.icon}
                   </div>
-                  <h5 className="fw-bold mb-3">{feature.title}</h5>
-                  <p className="text-muted mb-0" style={{ fontSize: '0.95rem' }}>
+                  <h5 className="fw-bold mb-3" style={{ color: 'var(--pub-default)', fontSize: '1.1rem' }}>{feature.title}</h5>
+                  <p className="text-muted mb-0" style={{ fontSize: '0.92rem', lineHeight: 1.6 }}>
                     {feature.desc}
                   </p>
                 </CardBody>

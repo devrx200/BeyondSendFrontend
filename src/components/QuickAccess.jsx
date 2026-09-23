@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { Container, Row, Col, Card, CardBody } from "reactstrap";
 import axios from "axios";
 import {
-  FaUserGraduate,
-  FaMoneyBillWave,
-  FaBook,
-  FaClipboardList,
-  FaBookReader,
-  FaExclamationCircle,
+  FaCommentDots,
+  FaWhatsapp,
+  FaEnvelope,
+  FaHeadset,
+  FaCode,
+  FaQuestionCircle,
   FaThLarge,
   FaLink,
   FaExternalLinkAlt
@@ -17,23 +17,21 @@ import { ICONS } from "../utilities/icons";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const COLOR_PALETTE = [
-  { color: "#6366f1", bg: "#e0e7ff" }, // Indigo
-  { color: "#10b981", bg: "#d1fae5" }, // Emerald
-  { color: "#f59e0b", bg: "#fef3c7" }, // Amber
-  { color: "#ef4444", bg: "#fee2e2" }, // Red
-  { color: "#3b82f6", bg: "#dbeafe" }, // Blue
-  { color: "#ec4899", bg: "#fce7f3" }, // Pink
-  { color: "#8b5cf6", bg: "#ede9fe" }, // Purple
-  { color: "#0d9488", bg: "#ccfbf1" }, // Teal
+  { color: "#4f6ef7", bg: "#edf2ff" }, // Primary Electric Blue
+  { color: "#20c997", bg: "#ecfdf5" }, // Mint Teal
+  { color: "#00c5eb", bg: "#ecfeff" }, // Accent Cyan
+  { color: "#fe9365", bg: "#fff7ed" }, // Coral Warning
+  { color: "#fe5d70", bg: "#fff1f2" }, // Rose Danger
+  { color: "#1e293b", bg: "#f1f5f9" }, // Slate
 ];
 
 const DEFAULT_QUICK_LINKS = [
-  { id: 1, titleEn: "Admissions", titleHi: "प्रवेश", link: "/admissions", icon: "FaUserGraduate", Icon: FaUserGraduate, color: "#6366f1", bg: "#e0e7ff" },
-  { id: 2, titleEn: "Scholarships", titleHi: "छात्रवृत्ति", link: "/schemes", icon: "FaMoneyBillWave", Icon: FaMoneyBillWave, color: "#10b981", bg: "#d1fae5" },
-  { id: 3, titleEn: "Syllabus", titleHi: "पाठ्यक्रम", link: "/downloads", icon: "FaBook", Icon: FaBook, color: "#f59e0b", bg: "#fef3c7" },
-  { id: 4, titleEn: "Examinations", titleHi: "परीक्षाएं", link: "/announcements", icon: "FaClipboardList", Icon: FaClipboardList, color: "#ef4444", bg: "#fee2e2" },
-  { id: 5, titleEn: "E-Library", titleHi: "ई-पुस्तकालय", link: "/resources/e-library", icon: "FaBookReader", Icon: FaBookReader, color: "#3b82f6", bg: "#dbeafe" },
-  { id: 6, titleEn: "Grievances", titleHi: "शिकायतें", link: "/feedback", icon: "FaExclamationCircle", Icon: FaExclamationCircle, color: "#ec4899", bg: "#fce7f3" },
+  { id: 1, titleEn: "SMS Campaigns", titleHi: "एसएमएस अभियान", link: "/features", icon: "FaCommentDots", Icon: FaCommentDots, color: "#4f6ef7", bg: "#edf2ff" },
+  { id: 2, titleEn: "WhatsApp API", titleHi: "व्हाट्सएप एपीआई", link: "/features", icon: "FaWhatsapp", Icon: FaWhatsapp, color: "#20c997", bg: "#ecfdf5" },
+  { id: 3, titleEn: "Email Marketing", titleHi: "ईमेल ऑटोमेशन", link: "/features", icon: "FaEnvelope", Icon: FaEnvelope, color: "#00c5eb", bg: "#ecfeff" },
+  { id: 4, titleEn: "Voice & BPO", titleHi: "वॉयस सपोर्ट", link: "/contact", icon: "FaHeadset", Icon: FaHeadset, color: "#fe9365", bg: "#fff7ed" },
+  { id: 5, titleEn: "Developer Docs", titleHi: "एपीआई दस्तावेज़", link: "/downloads", icon: "FaCode", Icon: FaCode, color: "#1e293b", bg: "#f1f5f9" },
+  { id: 6, titleEn: "Help & Support", titleHi: "सहायता केंद्र", link: "/help", icon: "FaQuestionCircle", Icon: FaQuestionCircle, color: "#fe5d70", bg: "#fff1f2" },
 ];
 
 const QuickAccess = ({ isHindi: propIsHindi }) => {
@@ -46,11 +44,16 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
   useEffect(() => {
     let isMounted = true;
 
+    const isLegacy = (item) => {
+      const text = `${item.titleEn || ""} ${item.titleHi || ""} ${item.titleEng || ""} ${item.name || ""} ${item.link || ""}`.toLowerCase();
+      return /admission|scholarship|syllabus|examination|library|grievance|प्रवेश|छात्रवृत्ति|पाठ्यक्रम/i.test(text);
+    };
+
     const fetchQuickAccess = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/quick-access`);
         if (isMounted && res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          const activeItems = res.data.data.filter((item) => item.isActive !== false);
+          const activeItems = res.data.data.filter((item) => item.isActive !== false && !isLegacy(item));
           if (activeItems.length > 0) {
             setLinks(activeItems);
           }
@@ -71,7 +74,7 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
     <Container className="my-3">
       {/* Unified Card Container Matching Portal Theme */}
       <Card className="border-0 shadow-sm rounded-4 overflow-hidden" style={{ border: "1px solid #e2e8f0" }}>
-        {/* Unified Government Theme Header */}
+        {/* Unified Command-Center Header */}
         <div className="gov-card-header d-flex align-items-center gap-3">
           <div className="gov-card-header-icon">
             <FaThLarge size={18} color="#fff" />
@@ -82,8 +85,8 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
             </h4>
             <p className="text-white-50 mb-0" style={{ fontSize: "12px", marginTop: "2px" }}>
               {isHindi
-                ? "मुख्य शैक्षणिक एवं छात्र सेवाओं के लिए त्वरित लिंक"
-                : "Fast access to key student, academic & administrative services"}
+                ? "प्लेटफ़ॉर्म सेवाओं, मैसेजिंग एपीआई और टेलीकॉम चैनलों तक त्वरित पहुंच"
+                : "Instant access to messaging channels, telecom APIs, and customer support"}
             </p>
           </div>
         </div>

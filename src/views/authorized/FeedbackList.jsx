@@ -32,12 +32,23 @@ const AdminFeedbackList = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/feedbacks`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      let res;
+      try {
+        res = await axios.get(`${API_URL}/api/get-all-feedbacks`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        // Fallback endpoint if needed
+        res = await axios.get(`${API_URL}/api/admin/feedbacks`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
       setFeedbacks(res.data.data || []);
     } catch (err) {
       console.error("Failed to fetch feedbacks", err);
@@ -56,12 +67,22 @@ const AdminFeedbackList = () => {
     const token = getToken();
     setDetailLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/feedbacks/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      let res;
+      try {
+        res = await axios.get(`${API_URL}/api/get-feedback/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (err) {
+        res = await axios.get(`${API_URL}/api/admin/feedbacks/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
       setSelectedFeedback(res.data.data);
       setModalOpen(true);
     } catch (err) {

@@ -496,19 +496,6 @@ const AdminHeader = ({ toggleSidebar }) => {
                             <span>{profile?.mobile || "N/A"}</span>
                           </div>
                         </div>
-
-                        {/* EMPLOYEE TYPE / DEPT */}
-                        {profile?.employeeType && (
-                          <div className="p-3 rounded-3 bg-light border" style={{ borderColor: "#e2e8f0" }}>
-                            <small className="text-muted d-block fw-bold text-uppercase" style={{ fontSize: "0.72rem", letterSpacing: "0.5px" }}>
-                              {isHindi ? "संस्थान / विभाग प्रकार" : "Office / Employee Type"}
-                            </small>
-                            <div className="fw-semibold text-dark mt-1 d-flex align-items-center gap-2" style={{ fontSize: "0.92rem" }}>
-                              <span>🏛️</span>
-                              <span>{profile?.employeeType}</span>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

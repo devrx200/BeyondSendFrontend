@@ -20,7 +20,12 @@ import {
   ContactCardCMS, QuickAccessManagement, ImportantPageManagement,
   RichContentPageManagements, MediaLibraryMangments, DownloadManagement,
   HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
-  DbBackupManagement
+  DbBackupManagement,
+  /* Telecom modules */
+  EmailTemplates, SmsTemplates, RcsTemplates, WhatsappTemplates, VoiceTemplates,
+  CampaignLists, CampaignSegments, CampaignsManagement, UnsubscribersManagement, BouncesSpamManagement,
+  FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
+  ApiDocViewer, WhatsappResponses, RcsResponses
 } from "./LazyLoadingRouter";
 
 /* Legacy "/admin/*" links are forwarded to the current "/authorized/*" tree */
@@ -57,29 +62,58 @@ const AppRoutes = () => {
       </Route>
 
       {/* ── Admin: Protected console ──────────────────────────────────────── */}
-      <Route element={<AdminLayout />}>
-        <Route
-          path="authorized"
-          element={
-            <AuthMiddleware
-              allowedRoles={["ADMIN", "OFFICER", "NIC"]}
-              allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]}
-            />
-          }
-        >
+      <Route
+        path="authorized"
+        element={
+          <AuthMiddleware
+            allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER", ]}
+          />
+        }
+      >
+        <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+
+          {/* ── BeyondSend Core Telecom & Marketing Modules ────────────────── */}
+          {/* Templates */}
+          <Route path="templates/email" element={<EmailTemplates />} />
+          <Route path="templates/sms" element={<SmsTemplates />} />
+          <Route path="templates/rcs" element={<RcsTemplates />} />
+          <Route path="templates/whatsapp" element={<WhatsappTemplates />} />
+          <Route path="templates/voice" element={<VoiceTemplates />} />
+
+          {/* Bulk campaigns */}
+          <Route path="campaigns/lists" element={<CampaignLists />} />
+          <Route path="campaigns/segments" element={<CampaignSegments />} />
+          <Route path="campaigns/all" element={<CampaignsManagement />} />
+          <Route path="campaigns/unsubscribers" element={<UnsubscribersManagement />} />
+          <Route path="campaigns/bounces-spam" element={<BouncesSpamManagement />} />
+
+          {/* Config */}
+          <Route path="config/from-ids" element={<FromIdsConfig />} />
+
+          {/* Transactional API */}
+          <Route path="transactional/dashboard" element={<TransactionalDashboard />} />
+          <Route path="transactional/api-key" element={<ApiKeyManagement />} />
+          <Route path="transactional/message-log" element={<MessageLogManagement />} />
+          <Route path="transactional/webhook-setup" element={<WebhookSetup />} />
+          <Route path="transactional/webhook-logs" element={<WebhookLogs />} />
+          <Route path="transactional/api-doc" element={<ApiDocViewer />} />
+
+          {/* User Responses */}
+          <Route path="responses/whatsapp" element={<WhatsappResponses />} />
+          <Route path="responses/rcs" element={<RcsResponses />} />
+
           <Route path="new-updates" element={<NewUpdatesManagement />} />
           <Route path="categories" element={<ManageCategories />} />
           <Route path="help-guidance" element={<HelpGuidance />} />
           <Route path="tutorials" element={<HelpTutorials />} />
 
-          {/* Admin / Directorate only */}
+          {/* Admin / Content Management (DEVOPS, ADMIN) */}
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["ADMIN"]}
-                allowedEmployeeTypes={["DIRECTORATE"]}
+                allowedRoles={["DEVOPS", "ADMIN"]}
               />
             }
           >
@@ -93,40 +127,27 @@ const AppRoutes = () => {
             <Route path="footer-section-manager" element={<FooterSection />} />
             <Route path="important-page-management" element={<ImportantPageManagement />} />
             <Route path="header-management" element={<HeaderManagement />} />
-          </Route>
-
-          {/* Admin + Officer */}
-          <Route
-            element={
-              <AuthMiddleware
-                allowedRoles={["ADMIN", "OFFICER"]}
-                allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT"]}
-              />
-            }
-          >
             <Route path="rich-content-pages" element={<RichContentPageManagements />} />
             <Route path="media-library-mangments" element={<MediaLibraryMangments />} />
             <Route path="download-management" element={<DownloadManagement />} />
           </Route>
 
-          {/* Admin + System administrator */}
+          {/* User Management (DEVOPS, ADMIN, RESELLER, CLIENT) */}
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["ADMIN", "NIC"]}
-                allowedEmployeeTypes={["DIRECTORATE", "DEPARTMENT", "NIC"]}
+                allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT"]}
               />
             }
           >
             <Route path="users-management" element={<AdminUserManagement />} />
           </Route>
 
-          {/* System administrator only */}
+          {/* DevOps & System Administration (DEVOPS, ADMIN) */}
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["NIC"]}
-                allowedEmployeeTypes={["NIC"]}
+                allowedRoles={["DEVOPS", "ADMIN"]}
               />
             }
           >

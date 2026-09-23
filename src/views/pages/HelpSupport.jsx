@@ -81,7 +81,7 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
       <div className="hs-item-left">
         <div className="d-flex align-items-start gap-2 mb-1">
           <FaFilePdf size={18} className="text-danger flex-shrink-0 mt-1" aria-hidden="true" />
-          <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-navy-900)' }}>
+          <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-default)' }}>
             {item.title}
           </p>
         </div>
@@ -99,7 +99,7 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
       <div className="hs-item-right">
         <button
           className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-          style={{ background: 'linear-gradient(135deg,#2563eb,#3b82f6)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          style={{ background: 'linear-gradient(135deg, var(--pub-primary), var(--pub-primary-hover))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
           onClick={() => onPreview(fullPdfUrl, item.title)}
         >
           <FaEye size={12} aria-hidden="true" />
@@ -108,7 +108,7 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
         <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="w-100">
           <button
             className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-            style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+            style={{ background: 'linear-gradient(135deg, var(--pub-danger-dark), var(--pub-danger))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
           >
             <FaDownload size={12} aria-hidden="true" />
             {isHindi ? "डाउनलोड" : "Download"}
@@ -136,7 +136,7 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
             </div>
           )}
           <div className="min-w-0">
-            <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-navy-900)' }}>
+            <p className="fw-semibold mb-0" style={{ fontSize: ".88rem", lineHeight: 1.4, color: 'var(--pub-default)' }}>
               {item.title}
             </p>
             {item.description && (
@@ -155,7 +155,7 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
       <div className="hs-item-right">
         <button
           className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-          style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          style={{ background: 'linear-gradient(135deg, var(--pub-danger-dark), var(--pub-danger))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
           onClick={() => embedUrl ? onPreview(embedUrl, item.title) : window.open(item.videoUrl, "_blank")}
         >
           <FaPlayCircle size={12} aria-hidden="true" />
@@ -164,7 +164,7 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
         <a href={item.videoUrl} target="_blank" rel="noreferrer" className="w-100">
           <button
             className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-            style={{ background: 'rgba(220,38,38,0.08)', color: '#dc2626', border: '1.5px solid rgba(220,38,38,0.25)', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+            style={{ background: 'rgba(254,93,112,0.08)', color: 'var(--pub-danger)', border: '1.5px solid rgba(254,93,112,0.25)', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
           >
             <FaExternalLinkAlt size={11} aria-hidden="true" />
             YouTube

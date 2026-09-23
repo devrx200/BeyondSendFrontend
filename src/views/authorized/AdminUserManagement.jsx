@@ -8,8 +8,7 @@ import {
 import {
   FaUsers, FaPlus, FaEdit, FaTrash,
   FaEye, FaEyeSlash, FaUserShield, FaCheck, FaTimes,
-  FaSearch, FaFilter, FaBuilding, FaUserTie, FaShieldAlt,
-  FaSyncAlt
+  FaSearch, FaSyncAlt
 } from "react-icons/fa";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -18,14 +17,35 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import PageLoader from "../../components/PageLoader";
 import { jwtDecode } from "jwt-decode";
 
+/* ================= ROLE HIERARCHY & WEIGHTS ================= */
+export const ROLE_WEIGHTS = {
+  DEVOPS: 5,
+  ADMIN: 4,
+  RESELLER: 3,
+  CLIENT: 2,
+  MANAGER: 1,
+};
+
+export const ROLE_BADGES = {
+  DEVOPS: { bg: "#748ffc", color: "#ffffff", label: "DevOps" },
+  ADMIN: { bg: "#4f6ef7", color: "#ffffff", label: "Admin" },
+  RESELLER: { bg: "#20c997", color: "#ffffff", label: "Reseller" },
+  CLIENT: { bg: "#00c5eb", color: "#ffffff", label: "Client" },
+  MANAGER: { bg: "#fe9365", color: "#ffffff", label: "Manager" },
+};
+
+const getRoleBadge = (role) => {
+  const normalized = (role || "").toUpperCase();
+  return ROLE_BADGES[normalized] || { bg: "#64748b", color: "#ffffff", label: role || "User" };
+};
+
 /* ================= INITIAL FORM ================= */
 const initialForm = {
   name: "",
   email: "",
   mobile: "",
   password: "",
-  role: "OFFICER",
-  employeeType: "DIRECTORATE",
+  role: "CLIENT",
   userDesignations: "",
   permissions: [],
   controls: [],
@@ -45,7 +65,7 @@ const PASSWORD_REGEX =
 /* ================= FIELD VALIDATOR ================= */
 const validateField = (name, value, isEditing = false) => {
   if (name === "password" && isEditing && !value) return "";
-  if (["profileImage", "isActive", "role", "status", "employeeType"].includes(name)) return "";
+  if (["profileImage", "isActive", "role", "status"].includes(name)) return "";
 
   const trimmed = Array.isArray(value)
     ? value.join(",").trim()
@@ -73,7 +93,7 @@ const validateField = (name, value, isEditing = false) => {
       break;
     case "email":
       if (!EMAIL_REGEX.test(trimmed))
-        return "Enter a valid email address (e.g. officer@gov.in).";
+        return "Enter a valid email address (e.g. user@beyondsend.com).";
       break;
     case "password":
       if (!PASSWORD_REGEX.test(trimmed))
@@ -92,33 +112,7 @@ const validateField = (name, value, isEditing = false) => {
 
 /* ================= HELPERS & THEMES ================= */
 const headerGradient = {
-  background: "linear-gradient(135deg, #0d9488 0%, #065f46 100%)",
-};
-
-const getEmployeeTypeBadge = (type) => {
-  switch (type?.toUpperCase()) {
-    case "SUPERADMIN":
-      return { bg: "#7c3aed", color: "#ffffff", label: "SuperAdmin" };
-    case "DIRECTORATE":
-      return { bg: "#0f766e", color: "#ffffff", label: "Directorate" };
-    case "DEPARTMENT":
-      return { bg: "#0d9488", color: "#ffffff", label: "Department" };
-    default:
-      return { bg: "#64748b", color: "#ffffff", label: type || "N/A" };
-  }
-};
-
-const getRoleBadge = (role) => {
-  switch (role?.toUpperCase()) {
-    case "NIC":
-      return { bg: "#6d28d9", color: "#ffffff", label: "NIC" };
-    case "ADMIN":
-      return { bg: "#0f766e", color: "#ffffff", label: "Admin" };
-    case "OFFICER":
-      return { bg: "#059669", color: "#ffffff", label: "Officer" };
-    default:
-      return { bg: "#475569", color: "#ffffff", label: role || "Officer" };
-  }
+  background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
 };
 
 /* ================================================= */
@@ -140,7 +134,6 @@ const AdminUserManagement = () => {
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterEmployeeType, setFilterEmployeeType] = useState("ALL");
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL");
 
@@ -167,11 +160,22 @@ const AdminUserManagement = () => {
   const loggedInEmail = (currentUser?.email || storedUser?.email || "").toLowerCase().trim();
 
   const loggedRole = (currentUser?.role || storedUser?.role || window.userRole || "").toUpperCase();
-  const loggedEmployeeType = (currentUser?.employeeType || storedUser?.employeeType || window.employeeType || "").toUpperCase();
+  const isDevOps = loggedRole === "DEVOPS";
+  const isAdmin = loggedRole === "ADMIN";
+  const isReseller = loggedRole === "RESELLER";
+  const isClient = loggedRole === "CLIENT";
+  const loggedWeight = ROLE_WEIGHTS[loggedRole] || 0;
 
-  const isSuperAdmin = loggedRole === "SUPERADMIN" || loggedEmployeeType === "SUPERADMIN";
-  const isDirectorateAdmin = loggedRole === "ADMIN" && loggedEmployeeType === "DIRECTORATE";
-  const isDepartmentAdmin = loggedRole === "ADMIN" && loggedEmployeeType === "DEPARTMENT";
+  // Determine assignable roles based on hierarchy
+  const assignableRoles = useMemo(() => {
+    if (isDevOps) return ["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER"];
+    if (isAdmin) return ["ADMIN", "RESELLER", "CLIENT", "MANAGER"];
+    if (isReseller) return ["CLIENT", "MANAGER"];
+    if (isClient) return ["MANAGER"];
+    return [];
+  }, [isDevOps, isAdmin, isReseller, isClient]);
+
+  const canCreateUser = assignableRoles.length > 0;
 
   /* ================= LOAD USERS ================= */
   const loadUsers = async () => {
@@ -183,20 +187,30 @@ const AdminUserManagement = () => {
       const allUsers = res.data?.data || [];
 
       // Hierarchy filtering:
-      // 1. SuperAdmin: Sees ALL users without restriction
-      // 2. Directorate Admin: Sees ALL Directorate and Department users (he is the boss of the portal)
-      // 3. Department Admin: Sees only DEPARTMENT users
+      // DEVOPS: Sees ALL users without restriction
+      // ADMIN: Sees users with role weight <= 4 (non-DEVOPS)
+      // RESELLER: Sees CLIENT and MANAGER accounts
+      // CLIENT: Sees MANAGER accounts
       let visibleUsers = allUsers;
-      if (isSuperAdmin) {
+      if (isDevOps) {
         visibleUsers = allUsers;
-      } else if (isDirectorateAdmin) {
-        // Directorate Admin sees all Directorate and Department users (filters out superadmin if any)
-        visibleUsers = allUsers.filter((u) => u.employeeType !== "SUPERADMIN" && u.role !== "SUPERADMIN");
-      } else if (isDepartmentAdmin) {
-        visibleUsers = allUsers.filter((u) => u.employeeType === "DEPARTMENT");
+      } else if (isAdmin) {
+        visibleUsers = allUsers.filter((u) => {
+          const r = (u.role || "").toUpperCase();
+          return r !== "DEVOPS" && (ROLE_WEIGHTS[r] || 0) <= 4;
+        });
+      } else if (isReseller) {
+        visibleUsers = allUsers.filter((u) => {
+          const r = (u.role || "").toUpperCase();
+          return ["CLIENT", "MANAGER"].includes(r);
+        });
+      } else if (isClient) {
+        visibleUsers = allUsers.filter((u) => (u.role || "").toUpperCase() === "MANAGER");
+      } else {
+        visibleUsers = [];
       }
 
-      // Filter out self account so the logged-in user does not see themselves in the management list
+      // Filter out self account from management list
       visibleUsers = visibleUsers.filter((u) => {
         const uId = u._id || u.id;
         const uEmail = (u.email || "").toLowerCase().trim();
@@ -229,11 +243,8 @@ const AdminUserManagement = () => {
         u.mobile?.includes(searchQuery) ||
         u.userDesignations?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchEmpType =
-        filterEmployeeType === "ALL" || u.employeeType === filterEmployeeType;
-
       const matchRole =
-        filterRole === "ALL" || u.role === filterRole;
+        filterRole === "ALL" || (u.role || "").toUpperCase() === filterRole;
 
       const matchStatus =
         filterStatus === "ALL" ||
@@ -241,29 +252,15 @@ const AdminUserManagement = () => {
         (filterStatus === "INACTIVE" && !u.isActive) ||
         u.status === filterStatus;
 
-      return matchSearch && matchEmpType && matchRole && matchStatus;
+      return matchSearch && matchRole && matchStatus;
     });
-  }, [users, searchQuery, filterEmployeeType, filterRole, filterStatus]);
+  }, [users, searchQuery, filterRole, filterStatus]);
 
   /* ================= MODAL TOGGLE & INITIALIZATION ================= */
   const openModal = () => {
-    let defaultEmpType = "DIRECTORATE";
-    let defaultRole = "OFFICER";
-
-    if (isDepartmentAdmin) {
-      defaultEmpType = "DEPARTMENT";
-      defaultRole = "OFFICER";
-    } else if (isDirectorateAdmin) {
-      defaultEmpType = "DIRECTORATE";
-      defaultRole = "OFFICER";
-    } else if (isSuperAdmin) {
-      defaultEmpType = "DIRECTORATE";
-      defaultRole = "OFFICER";
-    }
-
+    const defaultRole = assignableRoles[0] || "CLIENT";
     setFormData({
       ...initialForm,
-      employeeType: defaultEmpType,
       role: defaultRole,
       status: "APPROVED",
       isActive: true,
@@ -303,23 +300,7 @@ const AdminUserManagement = () => {
       newValue = value;
     }
 
-    setFormData((prev) => {
-      const updated = { ...prev, [name]: newValue };
-
-      // Role adjustment on employeeType change if not editing
-      if (name === "employeeType") {
-        if (newValue === "DEPARTMENT") {
-          // If Directorate Admin creates for Department, can default to ADMIN or OFFICER
-          updated.role = isDirectorateAdmin ? "ADMIN" : "OFFICER";
-        } else if (newValue === "DIRECTORATE") {
-          updated.role = "OFFICER";
-        } else if (newValue === "NIC") {
-          updated.role = "NIC";
-        }
-      }
-
-      return updated;
-    });
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
 
     const rawForValidation = Array.isArray(newValue) ? newValue.join(",") : newValue;
     const error = validateField(name, rawForValidation, !!editing);
@@ -362,7 +343,7 @@ const AdminUserManagement = () => {
       const payload = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value === null || value === undefined) return;
-        if (key === "password" && editing && !value) return; // don't send empty password on edit
+        if (key === "password" && editing && !value) return;
         if (Array.isArray(value)) {
           payload.append(key, JSON.stringify(value));
         } else {
@@ -416,9 +397,12 @@ const AdminUserManagement = () => {
 
   /* ================= EDIT USER ================= */
   const handleEdit = (user) => {
-    // Check permission:
-    if (user.role === "SUPERADMIN" && !isSuperAdmin) {
-      return Swal.fire("Permission Denied", "Only SuperAdmins can edit SuperAdmin accounts.", "warning");
+    const targetRole = (user.role || "").toUpperCase();
+    const targetWeight = ROLE_WEIGHTS[targetRole] || 0;
+
+    // Check authority: cannot edit superiors, or peers unless DevOps
+    if (!isDevOps && targetWeight >= loggedWeight) {
+      return Swal.fire("Permission Denied", "You do not have permission to edit accounts of equal or higher authority.", "warning");
     }
 
     setEditing(user);
@@ -427,8 +411,7 @@ const AdminUserManagement = () => {
       email: user.email || "",
       mobile: user.mobile || "",
       password: "",
-      role: user.role || "OFFICER",
-      employeeType: user.employeeType || "DIRECTORATE",
+      role: user.role || assignableRoles[0] || "CLIENT",
       userDesignations: user.userDesignations || "",
       permissions: user.permissions || [],
       controls: user.controls || [],
@@ -443,8 +426,12 @@ const AdminUserManagement = () => {
 
   /* ================= DELETE USER ================= */
   const handleDelete = async (user) => {
-    if (user.role === "SUPERADMIN" && !isSuperAdmin) {
-      return Swal.fire("Permission Denied", "Only SuperAdmins can delete SuperAdmin accounts.", "warning");
+    const targetRole = (user.role || "").toUpperCase();
+    const targetWeight = ROLE_WEIGHTS[targetRole] || 0;
+
+    // Check authority: cannot delete superiors or peers unless DevOps
+    if (!isDevOps && targetWeight >= loggedWeight) {
+      return Swal.fire("Permission Denied", "You do not have permission to delete accounts of equal or higher authority.", "warning");
     }
 
     const result = await Swal.fire({
@@ -523,9 +510,6 @@ const AdminUserManagement = () => {
     }
   };
 
-  /* ================= PERMISSION CHECKS FOR ACTIONS ================= */
-  const canCreateUser = isNIC || isDirectorateAdmin || isDepartmentAdmin;
-
   return (
     <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
       {/* ── GRADIENT HEADER ── */}
@@ -541,22 +525,24 @@ const AdminUserManagement = () => {
               </div>
               <div>
                 <h5 className="fw-bold mb-0 text-white" style={{ letterSpacing: "-0.2px" }}>
-                  {isHindi ? "उपयोगकर्ता एवं अधिकारी प्रबंधन" : "User & Officer Management"}
+                  {isHindi ? "उपयोगकर्ता एवं भूमिका प्रबंधन" : "User & Role Management"}
                 </h5>
                 <small className="text-white-50" style={{ fontSize: "11.5px" }}>
-                  {isSuperAdmin
-                    ? "Central SuperAdmin Control"
-                    : isDirectorateAdmin
-                      ? "Directorate Apex Administrative Management"
-                      : "Department Administrative Management"}
+                  {isDevOps
+                    ? "DevOps Platform Administration"
+                    : isAdmin
+                      ? "Administrative Control"
+                      : isReseller
+                        ? "Reseller Account & Client Management"
+                        : "Client Team Management"}
                 </small>
               </div>
             </div>
           </Col>
 
           <Col xs={12} sm={6} className="d-flex gap-2 justify-content-sm-end align-items-center flex-wrap">
-            {/* Session Manager (NIC or Directorate) */}
-            {(isNIC || isDirectorateAdmin) && (
+            {/* Session Manager (DevOps or Admin) */}
+            {(isDevOps || isAdmin) && (
               <Button
                 color="light"
                 size="sm"
@@ -589,7 +575,7 @@ const AdminUserManagement = () => {
                 color="light"
                 size="sm"
                 className="fw-bold d-flex align-items-center gap-1.5 shadow-sm px-3"
-                style={{ color: "#065f46" }}
+                style={{ color: "#1e293b" }}
                 onClick={openModal}
               >
                 <FaPlus size={12} />
@@ -605,7 +591,7 @@ const AdminUserManagement = () => {
         <div className="p-3 bg-light border-bottom">
           <Row className="g-2 align-items-center">
             {/* Search Box */}
-            <Col xs={12} md={4} lg={3}>
+            <Col xs={12} md={4} lg={4}>
               <InputGroup size="sm" className="shadow-xs">
                 <InputGroupText className="bg-white border-end-0 text-muted">
                   <FaSearch size={12} />
@@ -620,24 +606,8 @@ const AdminUserManagement = () => {
               </InputGroup>
             </Col>
 
-            {/* Filter: Employee Type */}
-            <Col xs={6} md={2}>
-              <Input
-                type="select"
-                size="sm"
-                value={filterEmployeeType}
-                onChange={(e) => setFilterEmployeeType(e.target.value)}
-                className="shadow-xs bg-white fw-semibold cursor-pointer"
-              >
-                <option value="ALL">All Units</option>
-                <option value="DIRECTORATE">Directorate</option>
-                <option value="DEPARTMENT">Department</option>
-                {isNIC && <option value="NIC">NIC</option>}
-              </Input>
-            </Col>
-
             {/* Filter: Role */}
-            <Col xs={6} md={2}>
+            <Col xs={6} md={3} lg={2}>
               <Input
                 type="select"
                 size="sm"
@@ -646,14 +616,16 @@ const AdminUserManagement = () => {
                 className="shadow-xs bg-white fw-semibold cursor-pointer"
               >
                 <option value="ALL">All Roles</option>
-                <option value="ADMIN">Admin</option>
-                <option value="OFFICER">Officer</option>
-                {isNIC && <option value="NIC">NIC</option>}
+                {isDevOps && <option value="DEVOPS">DevOps</option>}
+                {(isDevOps || isAdmin) && <option value="ADMIN">Admin</option>}
+                {(isDevOps || isAdmin || isReseller) && <option value="RESELLER">Reseller</option>}
+                <option value="CLIENT">Client</option>
+                <option value="MANAGER">Manager</option>
               </Input>
             </Col>
 
             {/* Filter: Status */}
-            <Col xs={6} md={2}>
+            <Col xs={6} md={3} lg={2}>
               <Input
                 type="select"
                 size="sm"
@@ -671,7 +643,7 @@ const AdminUserManagement = () => {
             </Col>
 
             {/* Stats Summary Badges */}
-            <Col xs={12} md={12} lg={3} className="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+            <Col xs={12} md={12} lg={4} className="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
               <Badge color="primary" className="py-1.5 px-2.5 rounded-pill shadow-xs fw-semibold">
                 Total: {users.length}
               </Badge>
@@ -693,7 +665,6 @@ const AdminUserManagement = () => {
                 <th className="text-center" style={{ width: "45px" }}>#</th>
                 <th style={{ width: "55px" }}>Photo</th>
                 <th>User Details</th>
-                <th>Unit / Dept</th>
                 <th>Role</th>
                 <th>Contact</th>
                 <th>Designation</th>
@@ -706,13 +677,13 @@ const AdminUserManagement = () => {
             <tbody style={{ fontSize: "13px" }}>
               {loading ? (
                 <tr>
-                  <td colSpan="10" className="text-center py-4">
+                  <td colSpan="9" className="text-center py-4">
                     <PageLoader inline={true} />
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="text-center py-5 text-muted">
+                  <td colSpan="9" className="text-center py-5 text-muted">
                     <div style={{ fontSize: "2.5rem" }}>👥</div>
                     <p className="fw-semibold mb-1">No users found matching your criteria.</p>
                     {canCreateUser && (
@@ -724,7 +695,6 @@ const AdminUserManagement = () => {
                 </tr>
               ) : (
                 filteredUsers.map((u, i) => {
-                  const empBadge = getEmployeeTypeBadge(u.employeeType);
                   const roleBadge = getRoleBadge(u.role);
 
                   return (
@@ -756,7 +726,7 @@ const AdminUserManagement = () => {
                               width: "38px",
                               height: "38px",
                               fontSize: "13px",
-                              background: "linear-gradient(135deg, #1e40af 0%, #0d9488 100%)"
+                              background: "linear-gradient(135deg, #4f6ef7 0%, #00c5eb 100%)"
                             }}
                           >
                             {u.name?.charAt(0)?.toUpperCase() || "U"}
@@ -768,20 +738,6 @@ const AdminUserManagement = () => {
                       <td>
                         <div className="fw-bold text-dark">{u.name}</div>
                         <small className="text-muted">{u.email}</small>
-                      </td>
-
-                      {/* Unit / Employee Type */}
-                      <td>
-                        <span
-                          className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block"
-                          style={{
-                            fontSize: "10.5px",
-                            letterSpacing: "0.2px",
-                            backgroundColor: empBadge.bg
-                          }}
-                        >
-                          {empBadge.label}
-                        </span>
                       </td>
 
                       {/* Role */}
@@ -948,7 +904,7 @@ const AdminUserManagement = () => {
             Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> user(s)
           </small>
           <small className="text-muted">
-           Wel Come To BeyondSend !..
+            BeyondSend Cloud Telecom & Marketing
           </small>
         </div>
       </CardBody>
@@ -969,7 +925,7 @@ const AdminUserManagement = () => {
         >
           {editing
             ? (isHindi ? "✏️ उपयोगकर्ता विवरण संपादित करें" : "✏️ Edit User Details")
-            : (isHindi ? "➕ नया उपयोगकर्ता / अधिकारी जोड़ें" : "➕ Add New User / Officer")}
+            : (isHindi ? "➕ नया उपयोगकर्ता जोड़ें" : "➕ Add New User")}
         </ModalHeader>
 
         <Form onSubmit={handleSubmit} noValidate>
@@ -978,7 +934,7 @@ const AdminUserManagement = () => {
             <div className="d-flex flex-column align-items-center mb-4 pb-3 border-bottom">
               <div className="position-relative mb-2">
                 <img
-                  src={imagePreview || "https://ui-avatars.com/api/?name=Officer&background=e2e8f0&color=1e40af&size=120"}
+                  src={imagePreview || "https://ui-avatars.com/api/?name=User&background=e2e8f0&color=1e40af&size=120"}
                   alt="Avatar Preview"
                   className="rounded-circle shadow-sm bg-white"
                   style={{
@@ -1030,7 +986,7 @@ const AdminUserManagement = () => {
                     </Label>
                     <Input
                       name="name"
-                      placeholder="e.g. Rajesh Kumar"
+                      placeholder="e.g. Alex Morgan"
                       value={formData.name}
                       onChange={handleChange}
                       invalid={!!errors.name}
@@ -1050,7 +1006,7 @@ const AdminUserManagement = () => {
                     <Input
                       type="email"
                       name="email"
-                      placeholder="e.g. officer@gov.in"
+                      placeholder="e.g. alex@beyondsend.com"
                       value={formData.email}
                       onChange={handleChange}
                       disabled={!!editing}
@@ -1091,7 +1047,7 @@ const AdminUserManagement = () => {
                     </Label>
                     <Input
                       name="userDesignations"
-                      placeholder="e.g. District Officer / Section Officer"
+                      placeholder="e.g. Telecom Account Lead / Operations Manager"
                       value={formData.userDesignations}
                       onChange={handleChange}
                       invalid={!!errors.userDesignations}
@@ -1099,44 +1055,6 @@ const AdminUserManagement = () => {
                       required
                     />
                     {errors.userDesignations && <div className="invalid-feedback">{errors.userDesignations}</div>}
-                  </FormGroup>
-                </Col>
-
-                {/* EMPLOYEE TYPE (UNIT) */}
-                <Col md={6}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold text-dark small mb-1">
-                      Employee Unit Type <span className="text-danger">*</span>
-                    </Label>
-                    <Input
-                      type="select"
-                      name="employeeType"
-                      value={formData.employeeType}
-                      onChange={handleChange}
-                      className="shadow-xs fw-semibold cursor-pointer"
-                    >
-                      {/* NIC can select all */}
-                      {isNIC && (
-                        <>
-                          <option value="DIRECTORATE">Directorate</option>
-                          <option value="DEPARTMENT">Department</option>
-                          <option value="NIC">NIC</option>
-                        </>
-                      )}
-
-                      {/* Directorate Admin can create Directorate or Department */}
-                      {isDirectorateAdmin && (
-                        <>
-                          <option value="DIRECTORATE">Directorate</option>
-                          <option value="DEPARTMENT">Department</option>
-                        </>
-                      )}
-
-                      {/* Department Admin only creates Department */}
-                      {isDepartmentAdmin && (
-                        <option value="DEPARTMENT">Department</option>
-                      )}
-                    </Input>
                   </FormGroup>
                 </Col>
 
@@ -1153,27 +1071,11 @@ const AdminUserManagement = () => {
                       onChange={handleChange}
                       className="shadow-xs fw-semibold cursor-pointer"
                     >
-                      {/* NIC can assign any role */}
-                      {isNIC && (
-                        <>
-                          <option value="OFFICER">Officer</option>
-                          <option value="ADMIN">Admin</option>
-                          <option value="NIC">NIC SuperAdmin</option>
-                        </>
-                      )}
-
-                      {/* Directorate Admin can assign ADMIN or OFFICER */}
-                      {isDirectorateAdmin && (
-                        <>
-                          <option value="OFFICER">Officer</option>
-                          <option value="ADMIN">Admin</option>
-                        </>
-                      )}
-
-                      {/* Department Admin creates Officer */}
-                      {isDepartmentAdmin && (
-                        <option value="OFFICER">Officer</option>
-                      )}
+                      {assignableRoles.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_BADGES[r]?.label || r}
+                        </option>
+                      ))}
                     </Input>
                   </FormGroup>
                 </Col>
@@ -1245,14 +1147,14 @@ const AdminUserManagement = () => {
                 </Col>
 
                 {/* PERMISSIONS */}
-                <Col md={6}>
+                <Col md={12}>
                   <FormGroup className="mb-0">
                     <Label className="fw-bold text-dark small mb-1">
-                      Permissions <small className="text-muted">(Comma separated)</small>
+                      Permissions <small className="text-muted">(Comma separated, e.g. send_sms, send_whatsapp, view_analytics)</small>
                     </Label>
                     <Input
                       name="permissions"
-                      placeholder="e.g. view_reports, manage_notices, edit_pages"
+                      placeholder="e.g. send_sms, send_whatsapp, view_analytics, manage_contacts"
                       value={formData.permissions.join(", ")}
                       onChange={handleChange}
                       invalid={!!errors.permissions}
@@ -1282,7 +1184,7 @@ const AdminUserManagement = () => {
               type="submit"
               disabled={submitting}
               className="px-4 shadow-sm text-white"
-              style={{ background: "linear-gradient(135deg, #0d9488 0%, #065f46 100%)", border: "none" }}
+              style={{ background: "linear-gradient(135deg, #4f6ef7 0%, #00c5eb 100%)", border: "none" }}
             >
               {submitting ? (
                 <>

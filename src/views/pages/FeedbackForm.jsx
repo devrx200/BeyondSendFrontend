@@ -97,7 +97,7 @@ const FeedbackForm = () => {
         text: isHindi
           ? 'आपकी प्रतिक्रिया सफलतापूर्वक जमा की गई।'
           : 'Your feedback has been submitted successfully.',
-        confirmButtonColor: '#2563eb',
+        confirmButtonColor: '#4f6ef7',
       });
       setValues(initialState);
       generateCaptcha();
@@ -115,12 +115,12 @@ const FeedbackForm = () => {
   const fieldStyle = (hasError) => ({
     fontFamily: 'var(--pub-font)',
     fontSize: '0.875rem',
-    border: `1.5px solid ${hasError ? '#ef4444' : '#e2e8f0'}`,
+    border: `1.5px solid ${hasError ? '#fe5d70' : '#e2e8f0'}`,
     borderRadius: '10px',
     padding: '10px 14px',
-    background: '#f8faff',
+    background: 'var(--pub-surface)',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    color: 'var(--pub-navy-900)',
+    color: 'var(--pub-default)',
     width: '100%',
     outline: 'none',
   });

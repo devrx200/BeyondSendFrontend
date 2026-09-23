@@ -135,7 +135,7 @@ const AdminLogin = () => {
           <Col xs={12} lg={11} xl={10}>
             <Card className="admin-login-card border-0">
               {/* Animated accent strip */}
-              <div className="decorative-tribal-strip" />
+              <div className="admin-login-accent-strip" />
 
               <Row className="g-0 align-items-stretch">
                 {/* ── LEFT: Brand + Features Panel ── */}
@@ -181,7 +181,7 @@ const AdminLogin = () => {
                         onError={(e) => { e.target.src = "/beyondsend-logo.svg"; }}
                       />
                     </div>
-                    <h2 className="fw-bold mb-1" style={{ fontFamily: "var(--pub-font)", fontSize: "1.35rem", color: "var(--pub-navy-900)", letterSpacing: "-0.3px" }}>
+                    <h2 className="fw-bold mb-1" style={{ fontFamily: "var(--pub-font)", fontSize: "1.35rem", color: "var(--pub-default)", letterSpacing: "-0.3px" }}>
                       {isHindi ? "लॉगिन करें" : "Welcome Back"}
                     </h2>
                     <p className="text-muted small mb-0">

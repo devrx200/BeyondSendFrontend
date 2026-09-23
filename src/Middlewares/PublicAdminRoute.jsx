@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const PublicAdminRoute = ({ redirectTo = "/admin/dashboard" }) => {
+const PublicAdminRoute = ({ redirectTo = "/authorized/dashboard" }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const alertShownRef = useRef(false);

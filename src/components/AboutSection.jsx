@@ -39,7 +39,15 @@ const AboutSection = () => {
     fetchData();
   }, []);
 
-  // Clean description text by removing unintended artifact characters
+  const isLegacyData = (text = "") => {
+    return /higher education|chhattisgarh|universities|colleges|उच्च शिक्षा|विभाग/i.test(text);
+  };
+
+  const dbTitle = isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng;
+  const sectionTitle = (!dbTitle || isLegacyData(dbTitle))
+    ? (isHindi ? "बियॉन्डसेंड के बारे में" : "About BeyondSend")
+    : dbTitle;
+
   const rawDescription = isHindi
     ? (aboutDepartment.descriptionHin || "")
     : (aboutDepartment.descriptionEng || "");
@@ -48,10 +56,19 @@ const AboutSection = () => {
     .replace(/\._/g, ". ")
     .replace(/_/g, " ");
 
-  const descriptionParagraphs = cleanDescription
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line !== "");
+  const defaultDescriptionParagraphs = isHindi
+    ? [
+        "बियॉन्डसेंड एक आधुनिक एंटरप्राइज टेलीकॉम, ग्राहक संचार एवं ओमनीचैनल मार्केटिंग ऑटोमेशन प्लेटफॉर्म है। यह व्यवसायों को एसएमएस, ईमेल, आधिकारिक व्हाट्सएप बिजनेस और वॉयस बीपीओ के माध्यम से लाखों ग्राहकों से त्वरित व सुरक्षित रूप से जुड़ने की सुविधा देता है।",
+        "उद्योग-अग्रणी 99.9% डिलीवरी दर, रियल-टाइम एनालिटिक्स और शक्तिशाली एपीआई के साथ, बियॉन्डसेंड आपके व्यावसायिक संचार को एकीकृत और परिणाम-उन्मुख बनाता है।"
+      ]
+    : [
+        "BeyondSend is an advanced enterprise customer communication and omnichannel marketing automation platform. Built for telecommunications-grade scalability, BeyondSend empowers businesses to deliver personalized SMS campaigns, automated email marketing, WhatsApp Business messaging, and AI-enabled voice support from a single unified console.",
+        "With industry-leading 99.9% delivery reliability, live analytics, and developer-friendly APIs, organizations scale their customer outreach and transactional notifications seamlessly."
+      ];
+
+  const descriptionParagraphs = (isLegacyData(cleanDescription) || !cleanDescription.trim())
+    ? defaultDescriptionParagraphs
+    : cleanDescription.split("\n").map(line => line.trim()).filter(Boolean);
 
   return (
     <Container fluid className="px-0 py-2 py-md-3">
@@ -64,61 +81,52 @@ const AboutSection = () => {
                 {/* ================= LEFT CONTENT ================= */}
                 <Col lg="7" xl="7" md="12">
                   <div className="pe-lg-2">
-                    {/* Top Gov Badge with proper padding */}
+                    {/* Top Platform Badge */}
                     <div className="d-flex align-items-center gap-2 mb-2">
                       <span
                         className="d-inline-flex align-items-center gap-1.5 rounded-pill fw-bold"
                         style={{
-                          background: "#eff6ff",
-                          color: "#1e40af",
-                          border: "1px solid #bfdbfe",
+                          background: "var(--pub-primary-50)",
+                          color: "var(--pub-primary)",
+                          border: "1px solid var(--pub-primary-100)",
                           fontSize: "12px",
                           letterSpacing: "0.3px",
                           padding: "5px 14px"
                         }}
                       >
-                        <FaLandmark className="me-1 text-primary" size={13} />
-                        {isHindi ? "बियॉन्डसेंड कस्टमर प्लेटफॉर्म" : "BeyondSend Customer Platform"}
+                        <FaPaperPlane className="me-1 text-primary" size={12} />
+                        {isHindi ? "बियॉन्डसेंड ओमनीचैनल प्लेटफॉर्म" : "BeyondSend Omnichannel Platform"}
                       </span>
                     </div>
 
                     {/* Section Title */}
                     <h2 className="about-heading-accent mb-3 fs-4">
-                      {(isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng) ||
-                        (isHindi ? "बियॉन्डसेंड के बारे में" : "About BeyondSend")}
+                      {sectionTitle}
                     </h2>
 
                     {/* Paragraph Text */}
                     <div className="about-text-content my-2">
-                      {descriptionParagraphs.length > 0 ? (
-                        descriptionParagraphs.map((text, i) => (
-                          <p
-                            key={i}
-                            className="mb-2"
-                            style={{
-                              textAlign: "justify",
-                              fontSize: "14.5px",
-                              lineHeight: 1.7,
-                              color: "#334155"
-                            }}
-                          >
-                            {text}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="mb-2" style={{ fontSize: "14.5px", lineHeight: 1.7, color: "#334155" }}>
-                          {isHindi
-                            ? "बियॉन्डसेंड एक आधुनिक कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म है, जो व्यवसायों को ग्राहकों से जुड़े रहने, अभियान संचालित करने और परिणाम मापने की सुविधा एक ही कंसोल से देता है।"
-                            : "BeyondSend is a modern customer communication and marketing automation platform that helps businesses engage customers, run multi-channel campaigns and measure results from a single console."}
+                      {descriptionParagraphs.map((text, i) => (
+                        <p
+                          key={i}
+                          className="mb-2"
+                          style={{
+                            textAlign: "justify",
+                            fontSize: "14.5px",
+                            lineHeight: 1.7,
+                            color: "#334155"
+                          }}
+                        >
+                          {text}
                         </p>
-                      )}
+                      ))}
                     </div>
 
                     {/* Quick Stats Highlights */}
                     <div className="row g-2 my-2">
                       <div className="col-6 col-sm-3">
                         <div className="stat-chip">
-                          <div style={{ color: "#1e40af" }}>
+                          <div style={{ color: "var(--pub-primary)" }}>
                             <FaPaperPlane size={16} />
                           </div>
                           <div>
@@ -132,7 +140,7 @@ const AboutSection = () => {
 
                       <div className="col-6 col-sm-3">
                         <div className="stat-chip">
-                          <div style={{ color: "#f59e0b" }}>
+                          <div style={{ color: "var(--pub-warning)" }}>
                             <FaBullhorn size={16} />
                           </div>
                           <div>
@@ -145,7 +153,7 @@ const AboutSection = () => {
                       </div>
 
                       <div className="col-6 col-sm-3">
-                        <div style={{ color: "#2563eb" }} className="stat-chip">
+                        <div style={{ color: "var(--pub-accent)" }} className="stat-chip">
                           <FaChartLine size={16} />
                           <div>
                             <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>Live</div>
@@ -157,7 +165,7 @@ const AboutSection = () => {
                       </div>
 
                       <div className="col-6 col-sm-3">
-                        <div style={{ color: "#d97706" }} className="stat-chip">
+                        <div style={{ color: "var(--pub-success)" }} className="stat-chip">
                           <FaHeadset size={16} />
                           <div>
                             <div className="fw-bold text-dark lh-1" style={{ fontSize: 14 }}>24×7</div>
@@ -173,16 +181,17 @@ const AboutSection = () => {
                     <div className="mt-3">
                       <Button
                         tag={Link}
-                        to="/about"
-                        className="rounded-pill px-3.5 py-1.5 fw-semibold shadow-sm d-inline-flex align-items-center gap-2 border-0"
+                        to="/about-us"
+                        className="rounded-pill px-4 py-2 fw-semibold shadow-sm d-inline-flex align-items-center gap-2 border-0"
                         style={{
-                          background: "linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)",
+                          background: "linear-gradient(135deg, var(--pub-primary) 0%, var(--pub-primary-hover) 100%)",
                           color: "#ffffff",
                           fontSize: "13.5px",
+                          boxShadow: "0 4px 14px rgba(79, 110, 247, 0.28)",
                           transition: "all 0.25s ease"
                         }}
                       >
-                        {isHindi ? "और पढ़ें" : "Read More"}
+                        {isHindi ? "और जानें" : "Explore Platform"}
                         <FaArrowRight size={11} />
                       </Button>
                     </div>

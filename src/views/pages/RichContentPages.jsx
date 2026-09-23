@@ -9,7 +9,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { FaHome, FaFileAlt } from 'react-icons/fa';
 
 const API = import.meta.env.VITE_API_URL;
-const SITE_TITLE_SUFFIX = 'Department of Higher Education, Government of Chhattisgarh India.';
+const SITE_TITLE_SUFFIX = 'BeyondSend — Customer Communication Platform';
 
 const formatDateTime = (date) => {
   if (!date) return '—';
@@ -63,14 +63,12 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
     dateModified: prefetchedData.updatedAt,
     author: {
       '@type': 'Organization',
-      name: isHindi
-        ? 'उच्च शिक्षा विभाग, छत्तीसगढ़ सरकार'
-        : 'Higher Education Department, Government of Chhattisgarh',
+      name: isHindi ? 'बियॉन्डसेंड' : 'BeyondSend',
     },
     publisher: {
       '@type': 'Organization',
-      name: isHindi ? 'उच्च शिक्षा विभाग, छत्तीसगढ़' : 'Higher Education Department, Chhattisgarh',
-      logo: { '@type': 'ImageObject', url: `${baseUrl}/Chhattisgarh.svg` },
+      name: isHindi ? 'बियॉन्डसेंड' : 'BeyondSend',
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/beyondsend-logo.svg` },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
   };
@@ -206,10 +204,15 @@ const RichContentPages = ({ prefetchedData, preview = false }) => {
             )}
           </CardBody>
 
-          <CardFooter className="bg-light text-center fw-semibold text-muted py-3">
-            {isHindi
-              ? 'उच्च शिक्षा विभाग, छत्तीसगढ़ सरकार, भारत'
-              : 'Higher Education Department, Government of Chhattisgarh, India'}
+          <CardFooter className="rich-card-footer justify-content-center text-center">
+            <div className="rich-card-footer-note">
+              <span className="rich-footer-badge">BeyondSend</span>
+              <span className="rich-footer-text">
+                {isHindi
+                  ? 'ग्राहक संचार एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म'
+                  : 'Customer Communication & Marketing Automation Platform'}
+              </span>
+            </div>
           </CardFooter>
         </Card>
       </Container>

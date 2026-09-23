@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
   Form,
@@ -67,9 +67,12 @@ const QuickAccessManagement = () => {
     isActive: true
   });
 
-  const getAuthConfig = () => ({
-    headers: { Authorization: 'Bearer ' + token }
-  });
+  const getAuthConfig = () => {
+    const curToken = sessionStorage.getItem('authToken');
+    return {
+      headers: { Authorization: curToken ? `Bearer ${curToken}` : '' }
+    };
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -133,19 +136,20 @@ const QuickAccessManagement = () => {
   };
 
   const openEditForm = (item) => {
+    const itemId = item._id || item.id || null;
     setForm({
-      id: item.id || null,
-      titleEn: item.titleEn || '',
-      titleHi: item.titleHi || '',
-      link: item.link || '',
+      id: itemId,
+      titleEn: item.titleEng || item.titleEn || '',
+      titleHi: item.titleHin || item.titleHi || '',
+      link: item.url || item.link || '',
       icon: item.icon || 'FaUserGraduate',
       color: item.color || '#6366f1',
-      bg: item.bg || '#e0e7ff',
+      bg: item.bgColor || item.bg || '#e0e7ff',
       isExternal: !!item.isExternal,
-      order: item.order || 0,
-      isActive: !!item.isActive
+      order: item.displayOrder ?? item.order ?? 0,
+      isActive: item.isActive !== undefined ? item.isActive : true
     });
-    setEditId(item.id);
+    setEditId(itemId);
     setModal(true);
   };
 
@@ -154,15 +158,21 @@ const QuickAccessManagement = () => {
     setSaving(true);
     try {
       const payload = {
+        titleEng: form.titleEn.trim(),
+        titleHin: form.titleHi.trim(),
+        url: form.link.trim(),
         titleEn: form.titleEn.trim(),
         titleHi: form.titleHi.trim(),
         link: form.link.trim(),
         icon: form.icon,
         color: form.color,
+        bgColor: form.bg,
         bg: form.bg,
-        isExternal: form.isExternal,
-        order: form.order,
-        isActive: form.isActive
+        displayOrder: Number(form.order) || 0,
+        order: Number(form.order) || 0,
+        isExternal: !!form.isExternal,
+        openInNewTab: !!form.isExternal,
+        isActive: form.isActive !== undefined ? form.isActive : true
       };
 
       let result;
@@ -198,7 +208,7 @@ const QuickAccessManagement = () => {
 
   const handleDelete = (item, e) => {
     e.stopPropagation();
-    const title = item.titleEn || item.titleHi || 'यह कार्ड';
+    const title = item.titleEng || item.titleEn || item.titleHin || item.titleHi || 'यह कार्ड';
     Swal.fire({
       icon: 'warning',
       title: isHindi ? 'क्या आप सुनिश्चित हैं?' : 'Are you sure?',
@@ -243,7 +253,11 @@ const QuickAccessManagement = () => {
     const id = item.id || item._id;
     const newActive = !(item.isActive || false);
     try {
-      await axios.put(API + '/api/quick-access/' + id, { isActive: newActive }, getAuthConfig());
+      try {
+        await axios.patch(API + '/api/quick-access/' + id + '/toggle-status', {}, getAuthConfig());
+      } catch {
+        await axios.put(API + '/api/quick-access/' + id, { isActive: newActive }, getAuthConfig());
+      }
       loadItemsAgain();
     } catch {
       Swal.fire({ icon: 'error', title: 'Error', text: 'स्थिति बदलने में त्रुटि हुई.' });
@@ -319,52 +333,28 @@ const QuickAccessManagement = () => {
             </div>
             <Button className="adm-quick-add-btn" onClick={openAddForm}>
               <FaPlus />
-              {isHindi ? 'पहला कार्ड जोड़ें' : 'Add First Card'}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="adm-quick-table-card">
-          <div className="adm-quick-table-head">
-            <table className="mb-0 w-100">
-              <thead>
-                <tr>
-                  <th className="adm-quick-col-order">
-                    {isHindi ? 'क्रम' : 'Order'}
-                  </th>
-                  <th>
-                    {isHindi ? 'विवरण' : 'Details'}
-                  </th>
-                  <th className="adm-quick-col-type">
-                    {isHindi ? 'प्रकार' : 'Type'}
-                  </th>
-                  <th className="adm-quick-col-status">
-                    {isHindi ? 'स्थिति' : 'Status'}
-                  </th>
-                  <th className="adm-quick-col-actions">
-                    {isHindi ? 'कार्य' : 'Actions'}
-                  </th>
-                </tr>
-              </thead>
-            </table>
-          </div>
-          <div className="adm-quick-table-body">
-            {items
+              {isHindi ? 'पहला कार्ड जोड़े�            {items
               .slice()
-              .sort((a, b) => (a.order || 0) - (b.order || 0))
+              .sort((a, b) => ((a.displayOrder ?? a.order ?? 0) - (b.displayOrder ?? b.order ?? 0)))
               .map((item, idx) => {
+                const itemTitleEn = item.titleEng || item.titleEn || '—';
+                const itemTitleHi = item.titleHin || item.titleHi || '—';
+                const itemLink = item.url || item.link || '—';
+                const itemOrder = item.displayOrder ?? item.order ?? (idx + 1);
+                const itemColor = item.color || '#6366f1';
+                const itemBg = item.bgColor || item.bg || '#e0e7ff';
                 return (
                   <div
                     key={item.id || item._id || idx}
                     className="adm-quick-table-row"
                     style={{
-                      '--tile-color': item.color || '#6366f1',
-                      '--tile-bg': item.bg || '#e0e7ff'
+                      '--tile-color': itemColor,
+                      '--tile-bg': itemBg
                     }}
                   >
                     {/* Order */}
                     <div className="adm-quick-table-col-order">
-                      {item.order ?? idx + 1}
+                      {itemOrder}
                     </div>
 
                     {/* Icon + Titles */}
@@ -372,18 +362,18 @@ const QuickAccessManagement = () => {
                       <div
                         className="adm-quick-table-icon"
                         style={{
-                          '--tile-color': item.color || '#6366f1',
-                          '--tile-bg': item.bg || '#e0e7ff'
+                          '--tile-color': itemColor,
+                          '--tile-bg': itemBg
                         }}
                       >
                         {ICONS[item.icon] ? <ICONS[item.icon] /> : <FaUserGraduate />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div className="adm-quick-table-col-title-en">
-                          {item.titleEn || '—'}
+                          {itemTitleEn}
                         </div>
                         <div className="adm-quick-table-col-title-hi">
-                          {item.titleHi || '—'}
+                          {itemTitleHi}
                         </div>
                       </div>
                     </div>
@@ -391,7 +381,7 @@ const QuickAccessManagement = () => {
                     {/* URL */}
                     <div className="adm-quick-table-col-url">
                       <code className="text-truncate d-inline-block">
-                        {item.link || '—'}
+                        {itemLink}
                       </code>
                     </div>
 
@@ -404,6 +394,31 @@ const QuickAccessManagement = () => {
                         </span>
                       ) : (
                         <span className="adm-quick-badge-internal">
+                          <FaGlobe />
+                          {isHindi ? 'आंतरिक' : 'Internal'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Status */}
+                    <div className="adm-quick-table-col-status">
+                      <button
+                        className="adm-quick-toggle-btn"
+                        onClick={() => handleToggle(item)}
+                        type="button"
+                        aria-label={isHindi
+                          ? (item.isActive ? 'निष्क्रिय करें' : 'सक्रिय करें')
+                          : (item.isActive ? 'Deactivate' : 'Activate')}
+                      >
+                        <span
+                          className={`adm-quick-status-badge ${item.isActive ? 'active' : 'inactive'}`}
+                        >
+                          {item.isActive ? (
+                            <>
+                              <FaToggleOn style={{ fontSize: '10px' }} />
+                              {isHindi ? 'सक्रिय' : 'Active'}
+                            </>
+                          ) : (-internal">
                           <FaGlobe />
                           {isHindi ? 'आंतरिक' : 'Internal'}
                         </span>

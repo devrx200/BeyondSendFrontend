@@ -87,7 +87,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
           <div class="title">${isHindi ? detail?.titleHi : detail?.titleEn}</div>
           <div class="content">${printContent}</div>
           <div class="official-note">
-            ${isHindi ? 'यह दस्तावेज़ विभाग की आधिकारिक वेबसाइट से मुद्रित किया गया है।' : 'This document is printed from the official website of the department.'}
+            ${isHindi ? 'यह दस्तावेज़ BeyondSend के आधिकारिक पोर्टल से मुद्रित किया गया है।' : 'This document is printed from the official BeyondSend platform.'}
             <br/><b>URL: ${currentUrl}</b>
           </div>
           <div class="footer">
@@ -134,8 +134,8 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
                   <div className="pub-dot-grid" aria-hidden="true" />
                 </div>
                 <div className="p-5">
-                  <p className="fw-bold mb-3" style={{ fontSize: '80px', background: 'linear-gradient(135deg,#2563eb,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>404</p>
-                  <h1 className="h4 fw-semibold mb-2" style={{ fontFamily: 'var(--pub-font)', color: 'var(--pub-navy-900)' }}>
+                  <p className="fw-bold mb-3" style={{ fontSize: '80px', background: 'linear-gradient(135deg, #4f6ef7, #00c5eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>404</p>
+                  <h1 className="h4 fw-semibold mb-2" style={{ fontFamily: 'var(--pub-font)', color: 'var(--pub-default)' }}>
                     {isHindi ? 'उफ़! पृष्ठ नहीं मिला' : 'Oops! Page Not Found'}
                   </h1>
                   <p className="text-muted mb-4">
@@ -233,15 +233,17 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
           </div>
 
           {/* Content */}
-          <div className="p-4">
+          <div className="p-4 p-md-5">
             <div
               id="printable-content"
               className="lh-lg cms-content"
               dangerouslySetInnerHTML={{ __html: rawDesc }}
             />
-            <hr style={{ borderColor: '#e2e8f0', margin: '24px 0' }} />
 
-            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <hr style={{ borderColor: '#e2e8f0', margin: '28px 0 20px' }} />
+
+            {/* Action Buttons */}
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
               {detail.file && (
                 <a
                   href={`${API}${detail.file}`}
@@ -249,7 +251,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
                   className="rich-action-btn rich-action-btn-danger"
                 >
                   <FaDownload size={13} aria-hidden="true" />
-                  {isHindi ? 'डाउनलोड' : 'Download'}
+                  <span>{isHindi ? 'डाउनलोड' : 'Download'}</span>
                 </a>
               )}
               <button
@@ -257,14 +259,17 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
                 className="rich-action-btn rich-action-btn-primary ms-auto"
               >
                 <FaPrint size={13} aria-hidden="true" />
-                {isHindi ? 'प्रिंट करें' : 'Print'}
+                <span>{isHindi ? 'प्रिंट करें' : 'Print'}</span>
               </button>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="rich-card-footer">
-            {isHindi ? 'धन्यवाद !' : 'Thanks For Reading !'}
+          {/* Centered Footer */}
+          <div className="rich-card-footer justify-content-center text-center">
+            <div className="rich-card-footer-note justify-content-center mx-auto">
+              <span className="rich-footer-badge">BeyondSend</span>
+              <span className="rich-footer-text">{isHindi ? 'पढ़ने के लिए धन्यवाद !' : 'Thanks For Reading !'}</span>
+            </div>
           </div>
         </div>
       </Container>

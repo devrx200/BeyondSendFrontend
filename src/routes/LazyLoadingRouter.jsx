@@ -32,3 +32,28 @@ export const SessionManager = lazy(() => import("../views/authorized/SessionMana
 export const ActivityLogManagement = lazy(() => import("../views/authorized/ActivityLogManagement"));
 export const DbBackupManagement = lazy(() => import("../views/authorized/DbBackupManagement"));
 export const AboutSectionMangement = lazy(() => import("../views/authorized/AboutSectionMangement"));
+
+/* ─── Telecom & Marketing Core Modules ────────────────────────────────────── */
+export const EmailTemplates = lazy(() => import("../views/authorized/telecom/EmailTemplates"));
+export const SmsTemplates = lazy(() => import("../views/authorized/telecom/SmsTemplates"));
+export const RcsTemplates = lazy(() => import("../views/authorized/telecom/RcsTemplates"));
+export const WhatsappTemplates = lazy(() => import("../views/authorized/telecom/WhatsappTemplates"));
+export const VoiceTemplates = lazy(() => import("../views/authorized/telecom/VoiceTemplates"));
+
+export const CampaignLists = lazy(() => import("../views/authorized/telecom/CampaignLists"));
+export const CampaignSegments = lazy(() => import("../views/authorized/telecom/CampaignSegments"));
+export const CampaignsManagement = lazy(() => import("../views/authorized/telecom/CampaignsManagement"));
+export const UnsubscribersManagement = lazy(() => import("../views/authorized/telecom/UnsubscribersManagement"));
+export const BouncesSpamManagement = lazy(() => import("../views/authorized/telecom/BouncesSpamManagement"));
+
+export const FromIdsConfig = lazy(() => import("../views/authorized/telecom/FromIdsConfig"));
+
+export const TransactionalDashboard = lazy(() => import("../views/authorized/telecom/TransactionalDashboard"));
+export const ApiKeyManagement = lazy(() => import("../views/authorized/telecom/ApiKeyManagement"));
+export const MessageLogManagement = lazy(() => import("../views/authorized/telecom/MessageLogManagement"));
+export const WebhookSetup = lazy(() => import("../views/authorized/telecom/WebhookSetup"));
+export const WebhookLogs = lazy(() => import("../views/authorized/telecom/WebhookLogs"));
+export const ApiDocViewer = lazy(() => import("../views/authorized/telecom/ApiDocViewer"));
+
+export const WhatsappResponses = lazy(() => import("../views/authorized/telecom/WhatsappResponses"));
+export const RcsResponses = lazy(() => import("../views/authorized/telecom/RcsResponses"));

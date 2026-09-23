@@ -15,11 +15,11 @@ const API = import.meta.env.VITE_API_URL;
 /* ── Reusable contact info row ── */
 const ContactRow = ({ icon, label, value, href, color = 'blue' }) => {
   const colorMap = {
-    blue:   { bg: 'rgba(59,130,246,0.1)',  text: '#2563eb' },
-    teal:   { bg: 'rgba(20,184,166,0.1)',  text: '#0d9488' },
-    gold:   { bg: 'rgba(245,158,11,0.1)',  text: '#d97706' },
-    violet: { bg: 'rgba(139,92,246,0.1)',  text: '#7c3aed' },
-    green:  { bg: 'rgba(16,185,129,0.1)',  text: '#059669' },
+    blue:   { bg: 'rgba(79,110,247,0.1)',  text: '#4f6ef7' },
+    teal:   { bg: 'rgba(0,197,235,0.1)',   text: '#00c5eb' },
+    gold:   { bg: 'rgba(254,147,101,0.1)', text: '#ea580c' },
+    violet: { bg: 'rgba(79,110,247,0.1)',  text: '#4f6ef7' },
+    green:  { bg: 'rgba(32,201,151,0.1)',  text: '#20c997' },
   };
   const c = colorMap[color] || colorMap.blue;
   return (
@@ -62,7 +62,7 @@ const ContactCard = ({ item, isHindi }) => {
           <div>
             <span
               className="d-block mb-1 fw-bold"
-              style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isPrimary ? '#2563eb' : '#059669' }}
+              style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isPrimary ? '#4f6ef7' : '#20c997' }}
             >
               {item.badge}
             </span>
@@ -85,9 +85,9 @@ const ContactCard = ({ item, isHindi }) => {
 
       {/* Decorative dots */}
       <div className="px-4 pb-3 d-flex gap-1 align-items-center" aria-hidden="true">
-        <div style={{ width: 28, height: 4, borderRadius: 999, background: isPrimary ? '#2563eb' : '#059669' }} />
-        <div style={{ width: 14, height: 4, borderRadius: 999, background: isPrimary ? '#60a5fa' : '#34d399' }} />
-        <div style={{ width: 7,  height: 4, borderRadius: 999, background: isPrimary ? '#bfdbfe' : '#a7f3d0' }} />
+        <div style={{ width: 28, height: 4, borderRadius: 999, background: isPrimary ? '#4f6ef7' : '#20c997' }} />
+        <div style={{ width: 14, height: 4, borderRadius: 999, background: isPrimary ? '#748ffc' : '#34d399' }} />
+        <div style={{ width: 7,  height: 4, borderRadius: 999, background: isPrimary ? '#edf2ff' : '#ecfdf5' }} />
       </div>
     </div>
   );
@@ -107,7 +107,7 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
           {isDirectorate ? <FaUniversity /> : <FaBuilding />}
         </div>
         <div>
-          <span style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isDirectorate ? '#059669' : '#2563eb', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+          <span style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isDirectorate ? '#20c997' : '#4f6ef7', fontWeight: 700, display: 'block', marginBottom: 4 }}>
             {isDirectorate ? 'CONTACT · HEAD OFFICE' : 'CONTACT · BRANCH OFFICE'}
           </span>
           <h3 className="h5 fw-semibold mb-0 lh-sm" style={{ color: 'var(--pub-navy-900)' }}>
@@ -126,7 +126,7 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
         <FaBuilding style={{ color: '#fff' }} />
       </div>
       <h6 className="fw-semibold mb-1" style={{ color: 'var(--pub-navy-800)' }}>
-        {isDirectorate ? (isHindi ? 'कोई निदेशालय रिकॉर्ड नहीं' : 'No Directorate Records') : (isHindi ? 'कोई विभागीय रिकॉर्ड नहीं' : 'No Department Records')}
+        {isDirectorate ? (isHindi ? 'कोई प्रधान कार्यालय रिकॉर्ड नहीं' : 'No Head Office Records') : (isHindi ? 'कोई शाखा कार्यालय रिकॉर्ड नहीं' : 'No Branch Office Records')}
       </h6>
       <small className="text-muted">{isHindi ? 'अभी कोई डेटा उपलब्ध नहीं है' : 'No data available for this section right now'}</small>
     </div>
@@ -215,9 +215,9 @@ const Contact = () => {
   ];
 
   const colorIconMap = {
-    blue:  { bg: 'rgba(59,130,246,0.1)', color: '#2563eb' },
-    teal:  { bg: 'rgba(20,184,166,0.1)', color: '#0d9488' },
-    gold:  { bg: 'rgba(245,158,11,0.1)', color: '#d97706' },
+    blue:  { bg: 'rgba(79,110,247,0.1)', color: '#4f6ef7' },
+    teal:  { bg: 'rgba(0,197,235,0.1)',  color: '#00c5eb' },
+    gold:  { bg: 'rgba(254,147,101,0.1)', color: '#ea580c' },
   };
 
   return (
@@ -260,12 +260,12 @@ const Contact = () => {
             <span className="pub-icon-box pub-icon-box-violet" style={{ width: 34, height: 34, borderRadius: 9, fontSize: 15 }} aria-hidden="true">
               <FaUserTie />
             </span>
-            {isHindi ? 'मुख्य अधिकारी' : 'Key Officials'}
+            {isHindi ? 'प्रमुख नेतृत्व एवं अधिकारी' : 'Leadership & Key Officials'}
           </h2>
         </div>
         <div className="px-3 px-md-4 py-2">
           <p className="text-muted small mb-3 mt-2">
-            {isHindi ? 'विभाग के प्रमुख अधिकारी' : 'List of department key officials'}
+            {isHindi ? 'बियॉन्डसेंड प्लेटफ़ॉर्म नेतृत्व एवं प्रमुख अधिकारी' : 'BeyondSend platform leadership and key officials'}
           </p>
 
           {/* Headers — desktop only */}
