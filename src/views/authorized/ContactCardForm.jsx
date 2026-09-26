@@ -12,7 +12,7 @@ import {
   Table,
   CardHeader
 } from "reactstrap";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 import Swal from "sweetalert2";
 import { FaBuilding, FaUniversity } from "react-icons/fa";
 

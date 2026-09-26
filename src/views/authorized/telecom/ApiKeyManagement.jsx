@@ -108,29 +108,25 @@ const ApiKeyManagement = () => {
   return (
     <div className="telecom-module-wrapper">
       {/* ── HEADER ── */}
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <CardHeader
-          className="border-0 py-3.5 px-4 text-white d-flex flex-wrap justify-content-between align-items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
-        >
+      <Card className="adm-card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3 p-3 p-md-4">
           <div className="d-flex align-items-center gap-3">
             <div
-              className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
-              style={{ width: "44px", height: "44px" }}
+              className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-sm"
+              style={{ width: "46px", height: "46px", background: "rgba(255, 255, 255, 0.15)", fontSize: "1.25rem", flexShrink: 0 }}
             >
               <FaKey size={20} className="text-white" />
             </div>
             <div>
-              <h5 className="fw-bold mb-0 text-white">API Keys & Authentication</h5>
-              <small className="text-white-50" style={{ fontSize: "12px" }}>
+              <h4 className="adm-page-title mb-1 text-white fw-bold">API Keys & Authentication</h4>
+              <p className="adm-page-subtitle mb-0 text-white-50 small">
                 Generate Bearer authorization credentials, configure IP firewalls and rate controls
-              </small>
+              </p>
             </div>
           </div>
           <Button
             color="primary"
             className="fw-bold shadow-sm px-3.5 d-flex align-items-center gap-1.5"
-            style={{ background: "var(--pub-grad-primary)", border: "none" }}
             onClick={() => setModal(true)}
           >
             <FaPlus size={12} /> Generate New Key

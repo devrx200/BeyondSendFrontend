@@ -5,7 +5,7 @@ import React, {
 import PropTypes from "prop-types";
 import JoditEditor from "jodit-react";
 import { encodeBase64, decodeBase64 } from "./rXBase64";
-import apiClient, { BASE_HOST } from "../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import { Progress } from "reactstrap";
 import Swal from "sweetalert2";
 import {
@@ -330,7 +330,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
   const [linkText, setLinkText] = useState("");
   const [viewMode, setViewMode] = useState("grid");
 
-  // SEO-friendly upload name state (optional field, mirrors MediaLibraryMangments.jsx)
+  // SEO-friendly upload name state (optional field, mirrors MediaLibraryManagement.jsx)
   const [uploadNameInput, setUploadNameInput] = useState("");
   const [uploadExt, setUploadExt] = useState("");
   const [uploadNameIsSeoFriendly, setUploadNameIsSeoFriendly] = useState(true);
@@ -680,7 +680,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                 <span style={{ fontSize: 12, color: WP.textLight, flexShrink: 0 }}>.{uploadExt}</span>
               </div>
 
-              {/* Always-visible live preview + auto-fix, mirrors MediaLibraryMangments.jsx */}
+              {/* Always-visible live preview + auto-fix, mirrors MediaLibraryManagement.jsx */}
               {(() => {
                 const activeBase = uploadNameInput.trim() || splitNameExt(uploadFile.name).base;
                 const previewBase = toSeoFriendlyBase(activeBase);

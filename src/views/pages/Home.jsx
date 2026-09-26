@@ -1,49 +1,65 @@
-import { Helmet } from 'react-helmet-async';
-import AboutSection from "../../components/AboutSection";
-import QuickAccess from "../../components/QuickAccess";
-import HeroSection from "../../components/HeroSection";
-import FeaturesSection from "../../components/FeaturesSection";
+import {
+  AboutSection,
+  QuickAccess,
+  HeroSection,
+  FeaturesSection,
+  SEOHead,
+} from "@/components";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const Home = () => {
   const { isHindi } = useLanguage();
-  const pageTitle = isHindi
-    ? "बियॉन्डसेंड - कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म"
-    : "BeyondSend - Customer Communication & Marketing Automation Platform";
 
-  const metaDescription = isHindi
-    ? "बियॉन्डसेंड एक आधुनिक कस्टमर कम्युनिकेशन, कैंपेन ऑटोमेशन एवं डेटा-ड्रिवन मार्केटिंग प्लेटफॉर्म है जो व्यवसायों को ग्राहकों से जुड़े रहने, अभियान चलाने और परिणाम मापने में मदद करता है।"
-    : "BeyondSend is a modern customer communication and marketing automation platform that helps businesses engage customers, run multi-channel campaigns, and measure results from a single console.";
+  const titleEn = "BeyondSend - Customer Communication & Marketing Automation Platform";
+  const titleHi = "बियॉन्डसेंड - कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म";
 
-  const canonicalUrl = "https://beyondsend.in";
-  const ogImage = "/beyondsend-logo.svg";
+  const descEn = "BeyondSend is an enterprise customer communication and marketing automation platform that empowers businesses to engage customers across SMS, WhatsApp, RCS, and Email from a unified console.";
+  const descHi = "बियॉन्डसेंड एक एंटरप्राइज कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म है जो व्यवसायों को एसएमएस, व्हाट्सएप, आरसीएस और ईमेल पर ग्राहकों से जुड़ने में सक्षम बनाता है।";
+
+  const homeKeywords = [
+    "BeyondSend",
+    "Customer Communication",
+    "Marketing Automation Platform",
+    "Bulk SMS Gateway",
+    "WhatsApp Business Solution",
+    "RCS Messaging Service",
+    "Transactional Email API",
+    "Voice Broadcasting Platform",
+    "Telecom API Solutions"
+  ];
+
+  const softwareSchema = {
+    "@type": "SoftwareApplication",
+    "@id": "https://beyondsend.in/#software",
+    "name": "BeyondSend",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web Browser, Cloud-based",
+    "description": descEn,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "INR"
+    }
+  };
 
   return (
     <>
-      <Helmet>
-        <html lang={isHindi ? "hi" : "en"} />
-        <title>{pageTitle}</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={ogImage} />
-        <meta property="og:site_name" content="BeyondSend" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={ogImage} />
-        <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
-      </Helmet>
+      <SEOHead
+        title={titleEn}
+        titleHi={titleHi}
+        description={descEn}
+        descriptionHi={descHi}
+        keywords={homeKeywords}
+        canonical="https://beyondsend.in/"
+        schema={softwareSchema}
+      />
 
-      <div>
+      <main role="main" id="main-content">
         <HeroSection />
         <FeaturesSection />
         <AboutSection />
         <QuickAccess isHindi={isHindi} />
-      </div>
+      </main>
     </>
   );
 };

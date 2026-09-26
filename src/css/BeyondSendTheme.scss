@@ -1125,56 +1125,81 @@
   color: #6d28d9;
 }
 
-/* Cards inside admin */
+/* Cards inside admin - Auto-style any HTML/Bootstrap Card */
+.adm-shell .card,
 .adm-card {
-  border: 1px solid var(--adm-border);
-  border-radius: var(--adm-radius-lg);
-  background: var(--adm-surface);
-  box-shadow: var(--adm-shadow-xs);
+  border: 1px solid var(--adm-border, #e2e8f0);
+  border-radius: var(--adm-radius-lg, 12px);
+  background: var(--adm-surface, #ffffff);
+  box-shadow: var(--adm-shadow-xs, 0 1px 3px rgba(0, 0, 0, 0.05));
   overflow: hidden;
+  margin-bottom: 1.25rem;
 }
 
-.adm-card-header {
-  padding: 14px 18px;
-  border-bottom: 4px solid var(--adm-accent);
-  background: var(--adm-header-bg);
-  color: #ffffff;
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.bg-transparent),
+.adm-card-header,
+.bg-adm-dark,
+.bg-adm-header,
+.adm-shell .card-header.bg-adm-dark {
+  padding: 14px 18px !important;
+  border-bottom: 3.5px solid var(--adm-accent, #4f6ef7) !important;
+  background-color: var(--adm-sidebar-bg, #1c2438) !important;
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px),
+    linear-gradient(135deg, var(--adm-sidebar-bg, #1c2438) 0%, #253352 100%) !important;
+  background-size: 16px 16px, 100% 100% !important;
+  background-position: 0 0, 0 0 !important;
+  color: #ffffff !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  position: relative;
 }
 
-.adm-card-title {
+/* Subtle Dotted Matrix Grid Utility */
+.adm-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.adm-shell .card-header.bg-white,
+.adm-shell .card-header.bg-light {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--adm-border, #e2e8f0);
+  color: var(--adm-text, #0f172a);
+}
+
+.adm-card-title,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h1,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h2,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h3,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h4,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h5,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) h6 {
   font-size: 0.95rem;
   font-weight: 700;
   color: #ffffff;
   margin: 0;
 }
 
-/* Ensure any header text inside admin card headers is white and has no duplicate inline classes */
-.adm-shell .card-header h1,
-.adm-shell .card-header h2,
-.adm-shell .card-header h3,
-.adm-shell .card-header h4,
-.adm-shell .card-header h5,
-.adm-shell .card-header h6 {
-  color: #ffffff;
-  margin: 0;
-}
-
-/* Page titles inside admin shell should appear white by default */
+/* Ensure any page titles inside admin shell header appear white by default */
 .adm-shell .adm-page-title {
   color: #ffffff;
 }
 
 /* Ensure icons used in small header badges are white when inside card headers */
-.adm-shell .card-header .rounded-3 svg,
-.adm-shell .card-header .rounded-3>* {
+.adm-shell .card-header:not(.bg-white):not(.bg-light) .rounded-3 svg,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) .rounded-3>* {
   color: #ffffff;
 }
 
-.adm-card-body {
+.adm-card-body,
+.adm-shell .card-body {
   padding: 18px;
 }
 
@@ -2135,16 +2160,65 @@
 
 
 
-/* ===================== Admin Pages All Ui Code =========================== */
+/* ===================== Admin & Authorized Pages Card Header Theme Standard =========================== */
 
-.adm-shell .card-header {
-  background: transparent !important;
-  border-bottom: 1px solid var(--adm-border) !important;
-  color: var(--adm-text) !important;
+.adm-shell .adm-card-header,
+.adm-shell .bg-adm-dark,
+.adm-shell .card-header.bg-adm-dark,
+.adm-shell .telecom-module-wrapper > .card > .card-header,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header):not(.wp-card-header) {
+  background-color: var(--adm-sidebar-bg, #1c2438) !important;
+  background-image: 
+    radial-gradient(rgba(255, 255, 255, 0.085) 1px, transparent 1px),
+    linear-gradient(135deg, var(--adm-sidebar-bg, #1c2438) 0%, #253352 100%) !important;
+  background-size: 16px 16px, 100% 100% !important;
+  background-position: 0 0, 0 0 !important;
+  color: #ffffff !important;
+  border-bottom: 3.5px solid var(--adm-accent, #4f6ef7) !important;
+  padding: 14px 18px !important;
+  position: relative;
 }
 
-.adm-shell .card-header * {
-  color: var(--adm-text) !important;
+.adm-shell .adm-card-header h1,
+.adm-shell .adm-card-header h2,
+.adm-shell .adm-card-header h3,
+.adm-shell .adm-card-header h4,
+.adm-shell .adm-card-header h5,
+.adm-shell .adm-card-header h6,
+.adm-shell .adm-card-header .adm-page-title,
+.adm-shell .bg-adm-dark h1,
+.adm-shell .bg-adm-dark h2,
+.adm-shell .bg-adm-dark h3,
+.adm-shell .bg-adm-dark h4,
+.adm-shell .bg-adm-dark h5,
+.adm-shell .bg-adm-dark h6,
+.adm-shell .bg-adm-dark .adm-page-title,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h1,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h2,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h3,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h4,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h5,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) h6,
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header):not(.adm-subcard-header) .adm-page-title {
+  color: #ffffff !important;
+}
+
+.adm-shell .adm-card-header .text-muted,
+.adm-shell .adm-card-header .text-white-50,
+.adm-shell .adm-card-header small,
+.adm-shell .bg-adm-dark .text-muted,
+.adm-shell .bg-adm-dark .text-white-50,
+.adm-shell .bg-adm-dark small,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) .text-muted,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) .text-white-50,
+.adm-shell .card-header:not(.bg-white):not(.bg-light) small {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.adm-shell .adm-card-header svg:not(.btn svg),
+.adm-shell .bg-adm-dark svg:not(.btn svg),
+.adm-shell .card-header:not(.bg-white):not(.bg-light):not(.table-header) svg:not(.btn svg) {
+  color: #ffffff !important;
 }
 
 /* ==========================================================================

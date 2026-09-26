@@ -4,10 +4,10 @@ import {
   Input, Table, Spinner, Row, Col, Badge,
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
-import apiClient, { BASE_HOST } from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 
 
 

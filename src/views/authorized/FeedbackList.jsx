@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal, ModalHeader, ModalBody, Card, CardBody, CardHeader, Spinner } from "reactstrap";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 import Swal from "sweetalert2";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 
 const getToken = () => {
   const token = sessionStorage.getItem("authToken");
@@ -15,7 +15,7 @@ const getToken = () => {
   }
 };
 
-const AdminFeedbackList = () => {
+const FeedbackList = () => {
   
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,14 +32,8 @@ const AdminFeedbackList = () => {
     setLoading(true);
     setError(null);
     try {
-      let res;
-      try {
-        res = await apiClient.get('/feedback/list').catch(() => apiClient.get('/admin/feedbacks'));
-      } catch (err) {
-        // Fallback endpoint if needed
-        res = await apiClient.get('/admin/feedbacks');
-      }
-      setFeedbacks(res.data.data || []);
+      const res = await apiClient.get('/feedback/list');
+      setFeedbacks(res.data?.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch feedbacks", err);
       setError("Failed to load feedbacks. Please try again.");
@@ -57,13 +51,8 @@ const AdminFeedbackList = () => {
     const token = getToken();
     setDetailLoading(true);
     try {
-      let res;
-      try {
-        res = await apiClient.get(`/feedback/detail/${id}`).catch(() => apiClient.get(`/feedback/delete/${id}`));
-      } catch (err) {
-        res = await apiClient.get(`/feedback/delete/${id}`);
-      }
-      setSelectedFeedback(res.data.data);
+      const res = await apiClient.get(`/feedback/detail/${id}`);
+      setSelectedFeedback(res.data?.data || res.data);
       setModalOpen(true);
     } catch (err) {
       console.error("Failed to fetch feedback detail", err);
@@ -269,4 +258,4 @@ const AdminFeedbackList = () => {
   );
 };
 
-export default AdminFeedbackList;
+export default FeedbackList;

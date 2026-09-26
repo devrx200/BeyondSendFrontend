@@ -15,7 +15,7 @@ const CONTENT = {
     managed:     'Operated By BeyondSend',
     copyright:   'BeyondSend. All Rights Reserved.',
     deptName:    'BeyondSend',
-    govtName:    'Customer Communication & Marketing Automation Platform',
+    platformSubtitle: 'Customer Communication & Marketing Automation Platform',
   },
   hi: {
     badge:       'सेवा अस्थायी रूप से अनुपलब्ध',
@@ -29,7 +29,7 @@ const CONTENT = {
     managed:     'बियॉन्डसेंड द्वारा संचालित',
     copyright:   'बियॉन्डसेंड। सभी अधिकार सुरक्षित।',
     deptName:    'बियॉन्डसेंड',
-    govtName:    'कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म',
+    platformSubtitle: 'कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म',
   },
 };
 
@@ -85,7 +85,7 @@ const ServerDown = ({ onRetry, retrying }) => {
                     <h1 className="mb-0 fw-bold text-white fs-6 lh-1 text-truncate" style={{ fontFamily: 'var(--pub-font)', letterSpacing: '-0.2px' }}>
                       {t.deptName}
                     </h1>
-                    <p className="mb-0 small text-truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{t.govtName}</p>
+                    <p className="mb-0 small text-truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{t.platformSubtitle}</p>
                   </div>
                 </div>
               </div>

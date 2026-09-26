@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import apiClient, { BASE_HOST } from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button, UncontrolledTooltip } from "reactstrap";
 import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
@@ -9,7 +9,7 @@ import {
 import DynamicContentEditor from "../../utilities/DynamicContentEditor";
 import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
@@ -357,7 +357,7 @@ const FormBody = React.memo(({
               name="tags"
               value={form.tags}
               onChange={handleChange}
-              placeholder="education,government,college"
+              placeholder="telecom,campaigns,marketing"
               className="wp-input"
               autoComplete="off"
               spellCheck={false}
@@ -478,7 +478,7 @@ const ImportantPageManagement = () => {
   useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
-    try { const res = await apiClient.get('/category/list').catch(() => apiClient.get('/category/list')); setCategories(res.data.data || []); } catch { }
+    try { const res = await apiClient.get('/category/list'); setCategories(res.data?.data || res.data || []); } catch { }
   };
 
   const getAllPages = async () => {

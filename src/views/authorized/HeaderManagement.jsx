@@ -12,7 +12,7 @@ import {
   CardHeader
 } from "reactstrap";
 import { FaSave } from "react-icons/fa";
-import apiClient, { BASE_HOST } from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import Swal from "sweetalert2";
 
 

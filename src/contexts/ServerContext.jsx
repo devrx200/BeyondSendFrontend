@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import apiClient from "../services/api.service";
+import apiClient from "@apiService";
 import ServerDown from "../views/pages/ServerDown";
 
 const ServerContext = createContext();

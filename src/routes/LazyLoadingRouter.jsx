@@ -1,21 +1,22 @@
 import { lazy } from 'react';
-
 /* ─── Public Pages ────────────────────────────────────────────────────────── */
-export const AdminLogin = lazy(() => import("../views/pages/AdminLogin"));
+export const MainLogin = lazy(() => import("../views/pages/MainLogin"));
+export const AdminLogin = MainLogin;
 export const Contact = lazy(() => import("../views/pages/Contact"));
 export const Downloads = lazy(() => import("../views/pages/Downloads"));
 export const FeedbackForm = lazy(() => import("../views/pages/FeedbackForm"));
 export const HelpSupport = lazy(() => import("../views/pages/HelpSupport"));
 export const SlugResolver = lazy(() => import("../utilities/SlugResolver"));
-
-/* ─── Admin Pages ─────────────────────────────────────────────────────────── */
-export const AdminDashboard = lazy(() => import("../views/authorized/AdminDashboard"));
-export const AdminUserManagement = lazy(() => import("../views/authorized/AdminUserManagement"));
-export const AdminFeedbackList = lazy(() => import("../views/authorized/FeedbackList"));
+/* ─── Authorized Admin & Client Pages ─────────────────────────────────────── */
+export const Dashboard = lazy(() => import("../views/authorized/Dashboard"));
+export const AdminDashboard = Dashboard;
+export const UserManagement = lazy(() => import("../views/authorized/UserManagement"));
+export const AdminUserManagement = UserManagement;
+export const FeedbackList = lazy(() => import("../views/authorized/FeedbackList"));
+export const AdminFeedbackList = FeedbackList;
 export const MenuManagement = lazy(() => import("../views/authorized/MenuManagement"));
 export const HeaderManagement = lazy(() => import("../views/authorized/HeaderManagement"));
 export const FooterSection = lazy(() => import("../views/authorized/FooterSectionManager"));
-
 export const NewUpdatesManagement = lazy(() => import("../views/authorized/NewUpdatesManagement"));
 export const ManageCategories = lazy(() => import("../views/authorized/ManageCategories"));
 export const ManageBrands = lazy(() => import("../views/authorized/ManageBrands"));
@@ -23,15 +24,15 @@ export const ContactManagement = lazy(() => import("../views/authorized/ContactM
 export const ContactCardCMS = lazy(() => import("../views/authorized/ContactCardForm"));
 export const QuickAccessManagement = lazy(() => import("../views/authorized/QuickAccessManagement"));
 export const ImportantPageManagement = lazy(() => import("../views/authorized/ImportantPageManagement"));
-export const RichContentPageManagements = lazy(() => import("../views/authorized/RichContentPageManagements"));
-export const MediaLibraryMangments = lazy(() => import("../views/authorized/MediaLibraryMangments"));
+export const RichContentPageManagement = lazy(() => import("../views/authorized/RichContentPageManagement"));
+export const MediaLibraryManagement = lazy(() => import("../views/authorized/MediaLibraryManagement"));
 export const DownloadManagement = lazy(() => import("../views/authorized/DownloadManagement"));
 export const HelpGuidance = lazy(() => import("../views/authorized/HelpGuidance"));
 export const HelpTutorials = lazy(() => import("../views/authorized/HelpTutorials"));
 export const SessionManager = lazy(() => import("../views/authorized/SessionManager"));
 export const ActivityLogManagement = lazy(() => import("../views/authorized/ActivityLogManagement"));
 export const DbBackupManagement = lazy(() => import("../views/authorized/DbBackupManagement"));
-export const AboutSectionMangement = lazy(() => import("../views/authorized/AboutSectionMangement"));
+export const AboutSectionManagement = lazy(() => import("../views/authorized/AboutSectionManagement"));
 
 /* ─── Telecom & Marketing Core Modules ────────────────────────────────────── */
 export const EmailTemplates = lazy(() => import("../views/authorized/telecom/EmailTemplates"));
@@ -39,21 +40,17 @@ export const SmsTemplates = lazy(() => import("../views/authorized/telecom/SmsTe
 export const RcsTemplates = lazy(() => import("../views/authorized/telecom/RcsTemplates"));
 export const WhatsappTemplates = lazy(() => import("../views/authorized/telecom/WhatsappTemplates"));
 export const VoiceTemplates = lazy(() => import("../views/authorized/telecom/VoiceTemplates"));
-
 export const CampaignLists = lazy(() => import("../views/authorized/telecom/CampaignLists"));
 export const CampaignSegments = lazy(() => import("../views/authorized/telecom/CampaignSegments"));
 export const CampaignsManagement = lazy(() => import("../views/authorized/telecom/CampaignsManagement"));
 export const UnsubscribersManagement = lazy(() => import("../views/authorized/telecom/UnsubscribersManagement"));
 export const BouncesSpamManagement = lazy(() => import("../views/authorized/telecom/BouncesSpamManagement"));
-
 export const FromIdsConfig = lazy(() => import("../views/authorized/telecom/FromIdsConfig"));
-
 export const TransactionalDashboard = lazy(() => import("../views/authorized/telecom/TransactionalDashboard"));
 export const ApiKeyManagement = lazy(() => import("../views/authorized/telecom/ApiKeyManagement"));
 export const MessageLogManagement = lazy(() => import("../views/authorized/telecom/MessageLogManagement"));
 export const WebhookSetup = lazy(() => import("../views/authorized/telecom/WebhookSetup"));
 export const WebhookLogs = lazy(() => import("../views/authorized/telecom/WebhookLogs"));
 export const ApiDocViewer = lazy(() => import("../views/authorized/telecom/ApiDocViewer"));
-
 export const WhatsappResponses = lazy(() => import("../views/authorized/telecom/WhatsappResponses"));
 export const RcsResponses = lazy(() => import("../views/authorized/telecom/RcsResponses"));

@@ -5,7 +5,7 @@ import {
   CardHeader
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
-import apiClient from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import Swal from "sweetalert2";
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -115,7 +115,7 @@ const DownloadManagement = () => {
         );
       } else {
         res = await apiClient.post(
-          `/create-downloads`,
+          '/downloads/create',
           payload,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
@@ -197,60 +197,90 @@ const DownloadManagement = () => {
   /* ================= UI ================= */
   return (
     <>
-      <Card className="shadow-lg border-0">
-        <CardHeader>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4 className="fw-bold text-white">
-              <FaFileAlt className="me-2" />
-              Download Management
-            </h4>
-            <Button color="light" className="text-success" onClick={toggleModal}>
-              <FaPlus className="me-2" /> Add Download
-            </Button>
+      <Card className="adm-card border-0 shadow-sm overflow-hidden mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-3 px-md-4">
+          <div className="d-flex align-items-center gap-2.5">
+            <div
+              className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-xs flex-shrink-0"
+              style={{ width: "38px", height: "38px", background: "rgba(255, 255, 255, 0.15)", fontSize: "1.1rem" }}
+            >
+              <FaFileAlt />
+            </div>
+            <div>
+              <h4 className="adm-page-title mb-0 text-white fw-bold d-flex align-items-center gap-2" style={{ fontSize: "1.1rem" }}>
+                <span>{isHindi ? "डाउनलोड प्रबंधन" : "Download Management"}</span>
+              </h4>
+              <p className="adm-page-subtitle mb-0 text-white-50 small">
+                <span>{isHindi ? "पोर्टल फ़ाइलें, प्रपत्र और दस्तावेज़ प्रबंधित करें" : "Manage portal files, forms, and documents"}</span>
+              </p>
+            </div>
           </div>
+          <Button
+            color="light"
+            size="sm"
+            className="text-primary fw-bold shadow-sm d-flex align-items-center gap-1.5 px-3 py-1.5 border-0"
+            onClick={toggleModal}
+          >
+            <FaPlus size={11} />
+            <span>{isHindi ? "डाउनलोड जोड़ें" : "Add Download"}</span>
+          </Button>
         </CardHeader>
-        <CardBody>
-          <Table hover responsive className="align-middle">
-            <thead className="table-light">
-              <tr>
-                <th>#</th>
-                <th>Title (EN)</th>
-                <th>Category</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Created Date</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {downloads.map((d, i) => (
-                <tr key={d._id}>
-                  <td>{i + 1}</td>
-                  <td className="fw-semibold">{d.titleEn}</td>
-                  <td>
-                    <Badge color="info" pill>{getCategoryName(d.category)}</Badge>
-                  </td>
-                  <td>{d.fileType}</td>
-                  <td>{d.fileSize}</td>
-                  <td>{new Date(d.createdAt).toLocaleDateString()}</td>
-                  <td>
-                    <Badge color={d.isActive ? "success" : "secondary"}>
-                      {d.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </td>
-                  <td className="text-nowrap">
-                    <Button size="sm" color="info" onClick={() => handleEdit(d)}>
-                      <FaEdit />
-                    </Button>{" "}
-                    <Button size="sm" color="danger" onClick={() => handleDelete(d._id)}>
-                      <FaTrash />
-                    </Button>
-                  </td>
+        <CardBody className="p-0">
+          <div className="table-responsive">
+            <Table hover className="align-middle mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold" style={{ width: "50px" }}>#</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold">{isHindi ? "शीर्षक" : "Title (EN)"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold">{isHindi ? "श्रेणी" : "Category"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold">{isHindi ? "प्रकार" : "Type"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold">{isHindi ? "आकार" : "Size"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold">{isHindi ? "दिनांक" : "Created Date"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold text-center">{isHindi ? "स्थिति" : "Status"}</th>
+                  <th className="py-2.5 px-3 text-secondary small fw-semibold text-center" style={{ width: "120px" }}>{isHindi ? "कार्रवाई" : "Action"}</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {downloads.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="text-center text-muted py-4 small">
+                      {isHindi ? "कोई डाउनलोड उपलब्ध नहीं है" : "No downloads found"}
+                    </td>
+                  </tr>
+                ) : (
+                  downloads.map((d, i) => (
+                    <tr key={d._id}>
+                      <td className="px-3 text-muted small">{i + 1}</td>
+                      <td className="px-3 fw-semibold text-dark">{d.titleEn}</td>
+                      <td className="px-3">
+                        <Badge color="info" pill className="bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1">
+                          {getCategoryName(d.category)}
+                        </Badge>
+                      </td>
+                      <td className="px-3 small text-muted">{d.fileType || "—"}</td>
+                      <td className="px-3 small text-muted">{d.fileSize || "—"}</td>
+                      <td className="px-3 small text-muted">{new Date(d.createdAt).toLocaleDateString()}</td>
+                      <td className="px-3 text-center">
+                        <Badge color={d.isActive ? "success" : "secondary"} pill className="px-2 py-1">
+                          {d.isActive ? (isHindi ? "सक्रिय" : "Active") : (isHindi ? "निष्क्रिय" : "Inactive")}
+                        </Badge>
+                      </td>
+                      <td className="px-3 text-center text-nowrap">
+                        <div className="d-flex gap-1 justify-content-center">
+                          <Button size="sm" color="light" className="border text-primary px-2 py-1" onClick={() => handleEdit(d)} title={isHindi ? "संपादित करें" : "Edit"}>
+                            <FaEdit size={12} />
+                          </Button>
+                          <Button size="sm" color="light" className="border text-danger px-2 py-1" onClick={() => handleDelete(d._id)} title={isHindi ? "हटाएं" : "Delete"}>
+                            <FaTrash size={11} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </div>
         </CardBody>
       </Card>
 
@@ -315,10 +345,10 @@ const DownloadManagement = () => {
                 </FormGroup>
               </Col>
               <Col xs={6}>
-                <Label className="fw-semibold small">Status</Label>
+                <Label className="fw-semibold small">{isHindi ? "स्थिति" : "Status"}</Label>
                 <Input type="select" name="isActive" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value })}>
-                  <option value="true">✅ Active</option>
-                  <option value="false">⛔ Inactive</option>
+                  <option value="true">{isHindi ? "सक्रिय (Active)" : "Active"}</option>
+                  <option value="false">{isHindi ? "निष्क्रिय (Inactive)" : "Inactive"}</option>
                 </Input>
               </Col>
             </Row>

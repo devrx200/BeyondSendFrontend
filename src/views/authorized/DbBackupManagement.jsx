@@ -7,9 +7,9 @@ import {
   FaPlayCircle, FaDownload, FaChevronLeft,
   FaChevronRight, FaFolderOpen, FaDatabase, FaHdd
 } from "react-icons/fa";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 import Swal from "sweetalert2";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 

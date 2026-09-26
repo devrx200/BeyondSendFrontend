@@ -2,11 +2,11 @@ import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback } from "react";
 import { Spinner, Container } from "reactstrap";
-import PageLoader from "../components/PageLoader";
+import { PageLoader } from "@/components";
 import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 import RichContentPages from "../views/pages/RichContentPages";
 import { useLanguage } from "../contexts/LanguageContext";
-import apiClient from "../services/api.service";
+import apiClient from "@apiService";
 
 const SITE_TITLE_SUFFIX = "BeyondSend";
 
@@ -99,6 +99,8 @@ const SlugResolver = ({ preview = false, fullSlugOverride }) => {
       <Helmet>
         <html lang={isHindi ? "hi" : "en"} />
         <title>{isHindi ? "पेज नहीं मिला" : "Page Not Found"} - {SITE_TITLE_SUFFIX}</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="description" content="Sorry, the requested page could not be found on BeyondSend." />
       </Helmet>
       <div className="my-5">
         <Container className="py-5 text-center shadow rounded-5">

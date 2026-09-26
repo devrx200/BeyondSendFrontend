@@ -10,10 +10,9 @@ import {
   FaFileExcel, FaCalendarAlt, FaFolderOpen,
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
-import PageLayout from '../../components/PageLayout';
-import PageLoader from '../../components/PageLoader';
+import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
-import apiClient, { BASE_HOST } from '../../services/api.service';
+import apiClient, { BASE_HOST } from "@apiService";
 
 const getFileIcon = (type = '') => {
   switch (type.toUpperCase()) {

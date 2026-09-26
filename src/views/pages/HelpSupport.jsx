@@ -8,10 +8,9 @@ import {
   FaChevronRight, FaFolderOpen, FaVideoSlash,
   FaYoutube,
 } from "react-icons/fa";
-import PageLayout from "../../components/PageLayout";
-import PageLoader from "../../components/PageLoader";
+import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from "../../contexts/LanguageContext";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 
 const ITEMS_PER_PAGE = 6;
 

@@ -11,9 +11,9 @@ import {
   FaTh, FaList, FaChevronDown, FaChevronUp,
   FaExternalLinkAlt, FaDownload
 } from "react-icons/fa";
-import apiClient, { BASE_HOST } from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import Swal from "sweetalert2";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const HelpGuidance = () => {

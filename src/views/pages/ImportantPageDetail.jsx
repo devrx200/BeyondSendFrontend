@@ -7,8 +7,8 @@ import {
   FaDownload, FaHome, FaList, FaPrint, FaArrowLeft,
 } from 'react-icons/fa';
 import { FaTicketSimple } from 'react-icons/fa6';
-import apiClient from '../../services/api.service';
-import PageLoader from '../../components/PageLoader';
+import apiClient from "@apiService";
+import { PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const SITE_TITLE_SUFFIX = 'BeyondSend';

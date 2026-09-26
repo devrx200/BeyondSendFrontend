@@ -1,24 +1,23 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
-import MainLayout from "../components/MainLayout";
-import AdminLayout from "../components/AdminLayout";
+import { MainLayout, AdminLayout } from "@/components";
 
 /* ─── Eager Public Pages ─────────────────────────────────────────────────── */
 import Home from "../views/pages/Home";
 
 /* ─── Middleware ──────────────────────────────────────────────────────────── */
-import AuthMiddleware from "../Middlewares/AuthMiddleware";
-import PublicAdminRoute from "../Middlewares/PublicAdminRoute";
+import AuthMiddleware from "../middlewares/AuthMiddleware";
+import PublicAdminRoute from "../middlewares/PublicAdminRoute";
 
 /* ─── Lazy Pages ──────────────────────────────────────────────────────────── */
 import {
   Contact, Downloads, FeedbackForm, HelpSupport,
-  SlugResolver, AdminLogin, AdminDashboard, AdminUserManagement, AdminFeedbackList,
-  MenuManagement, HeaderManagement, FooterSection, AboutSectionMangement,
+  SlugResolver, MainLogin, Dashboard, UserManagement, FeedbackList,
+  MenuManagement, HeaderManagement, FooterSection, AboutSectionManagement,
   NewUpdatesManagement, ManageCategories, ManageBrands, ContactManagement,
   ContactCardCMS, QuickAccessManagement, ImportantPageManagement,
-  RichContentPageManagements, MediaLibraryMangments, DownloadManagement,
+  RichContentPageManagement, MediaLibraryManagement, DownloadManagement,
   HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
   DbBackupManagement,
   /* Telecom modules */
@@ -58,7 +57,9 @@ const AppRoutes = () => {
 
       {/* ── Admin: Login (public) ─────────────────────────────────────────── */}
       <Route element={<PublicAdminRoute />}>
-        <Route path="/auth/login" element={<MainLayout><AdminLogin /></MainLayout>} />
+        <Route path="/auth/login" element={<MainLayout><MainLogin /></MainLayout>} />
+        <Route path="/admin-login" element={<MainLayout><MainLogin /></MainLayout>} />
+        <Route path="/login" element={<MainLayout><MainLogin /></MainLayout>} />
       </Route>
 
       {/* ── Admin: Protected console ──────────────────────────────────────── */}
@@ -66,13 +67,13 @@ const AppRoutes = () => {
         path="authorized"
         element={
           <AuthMiddleware
-            allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER", ]}
+            allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER"]}
           />
         }
       >
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
 
           {/* ── BeyondSend Core Telecom & Marketing Modules ────────────────── */}
           {/* Templates */}
@@ -109,38 +110,39 @@ const AppRoutes = () => {
           <Route path="help-guidance" element={<HelpGuidance />} />
           <Route path="tutorials" element={<HelpTutorials />} />
 
-          {/* Admin / Content Management (DEVOPS, ADMIN) */}
+          {/* Admin / Content Management (DEVOPS, ADMIN, MANAGER) */}
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["DEVOPS", "ADMIN"]}
+                allowedRoles={["DEVOPS", "ADMIN", "MANAGER"]}
               />
             }
           >
-            <Route path="about-section" element={<AboutSectionMangement />} />
+            <Route path="about-section" element={<AboutSectionManagement />} />
             <Route path="brands" element={<ManageBrands />} />
             <Route path="contact-management" element={<ContactManagement />} />
             <Route path="contact-card-management" element={<ContactCardCMS />} />
             <Route path="quick-access" element={<QuickAccessManagement />} />
-            <Route path="feedbacks" element={<AdminFeedbackList />} />
+            <Route path="feedbacks" element={<FeedbackList />} />
             <Route path="menu" element={<MenuManagement />} />
             <Route path="footer-section-manager" element={<FooterSection />} />
             <Route path="important-page-management" element={<ImportantPageManagement />} />
             <Route path="header-management" element={<HeaderManagement />} />
-            <Route path="rich-content-pages" element={<RichContentPageManagements />} />
-            <Route path="media-library-mangments" element={<MediaLibraryMangments />} />
+            <Route path="rich-content-pages" element={<RichContentPageManagement />} />
+            <Route path="media-library" element={<MediaLibraryManagement />} />
             <Route path="download-management" element={<DownloadManagement />} />
           </Route>
 
-          {/* User Management (DEVOPS, ADMIN, RESELLER, CLIENT) */}
+          {/* User Management (DEVOPS, ADMIN, RESELLER, CLIENT, MANAGER) */}
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT"]}
+                allowedRoles={["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER"]}
               />
             }
           >
-            <Route path="users-management" element={<AdminUserManagement />} />
+            <Route path="users-management" element={<UserManagement />} />
+            <Route path="users" element={<UserManagement />} />
           </Route>
 
           {/* DevOps & System Administration (DEVOPS, ADMIN) */}
@@ -152,8 +154,9 @@ const AppRoutes = () => {
             }
           >
             <Route path="session-manager" element={<SessionManager />} />
+            <Route path="sessions" element={<SessionManager />} />
             <Route path="activity-logs" element={<ActivityLogManagement />} />
-            <Route path="database-backup-managments" element={<DbBackupManagement />} />
+            <Route path="database-backup" element={<DbBackupManagement />} />
           </Route>
 
           {/* Unknown console path → dashboard */}

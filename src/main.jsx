@@ -8,6 +8,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { Fade, PopperContent } from 'reactstrap';
 import PropTypes from 'prop-types';
 import { encodeBase64, decodeBase64 } from "./utilities/rXBase64.js";
+import apiClient from "@apiService";
 
 // Patch reactstrap ESM missing defaultProps on Fade/PopperContent causing React 18 PropTypes warning
 if (Fade) {
@@ -43,9 +44,11 @@ if (PopperContent) {
 
 globalThis.encodeBase64 = encodeBase64;
 globalThis.decodeBase64 = decodeBase64;
+globalThis.apiClient = apiClient;
 if (typeof window !== "undefined") {
   window.encodeBase64 = encodeBase64;
   window.decodeBase64 = decodeBase64;
+  window.apiClient = apiClient;
 }
 
 createRoot(document.getElementById("root")).render(

@@ -3,14 +3,12 @@ import {
   Card, CardBody, CardHeader, Button, Table, Form, FormGroup,
   Label, Input, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Container
 } from "reactstrap";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 import Swal from "sweetalert2";
 import { FaSave } from "react-icons/fa";
-import {
-  ENGLISH_TEXT_ONLY,
-  URL_REGEX
-} from "../../data/validation.jsx";
 /* ================= VALIDATION REGEX ================= */
+const ENGLISH_TEXT_ONLY = /^[A-Za-z\s.,!?'"()\-\n\r]+$/;
+const URL_REGEX = /^(https?:\/\/)(www\.)?[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/;
 const PHONE_REGEX = /^(\+91[- ]?)?[0-9]{10}$/;
 const PINCODE_REGEX = /^[0-9]{6}$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -157,7 +155,7 @@ const token = sessionStorage.getItem("authToken");
 
     try {
       setLoading(true);
-      const res = await apiClient.put(`/contact`, {
+      const res = await apiClient.put('/contact/update', {
         address,
         officeHours
       }, {
@@ -346,7 +344,7 @@ const handleDelete = (o) => {
                   <Col md={6}>
                     <Label className="form-label">Address Line *</Label>
                     <Input
-                      placeholder="Mantralaya, Mahanadi Bhawan, Naya Raipur"
+                      placeholder="Innovation Center, Corporate Tower, Suite 400"
                       value={data.address?.addressLine || ""}
                       maxLength={255}
                       onChange={e => {
@@ -373,7 +371,7 @@ const handleDelete = (o) => {
                   <Col md={3}>
                     <Label className="form-label">City *</Label>
                     <Input
-                      placeholder="Raipur"
+                      placeholder="Tech City"
                       value={data.address?.city || ""}
                       // onChange={e =>
                       //   setData({
@@ -628,7 +626,7 @@ const handleDelete = (o) => {
                 <Label>Email</Label>
                 <Input
                   type="email"
-                  placeholder="official@gov.in"
+                  placeholder="official@beyondsend.in"
                   value={official.email || ""}
                   invalid={!!errors.official?.email}
                   onChange={e => handleOfficialChange("email", e.target.value)}

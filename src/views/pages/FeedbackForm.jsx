@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Row, Col } from 'reactstrap';
 import Swal from 'sweetalert2';
-import PageLayout from '../../components/PageLayout';
+import { PageLayout } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
-import apiClient from '../../services/api.service';
+import apiClient from "@apiService";
 import {
   FaUser, FaEnvelope, FaPhone, FaCommentDots,
   FaShieldAlt, FaCheckCircle, FaBullhorn, FaSms,
@@ -144,13 +144,13 @@ const FeedbackForm = () => {
 
               {/* Centre content */}
               <div style={{ position: 'relative', zIndex: 1 }}>
-                {/* Logo */}
+                {/* Corporate Feedback Image */}
                 <div className="d-flex justify-content-center mb-4">
                   <img
-                    src="/beyondsend-logo.svg"
-                    alt="BeyondSend"
-                    style={{ height: 56, width: 'auto', background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '8px 16px' }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    src="/feedback.png"
+                    alt="Customer Feedback & Satisfaction"
+                    className="img-fluid rounded-4 shadow-sm"
+                    style={{ maxHeight: 220, width: "auto", objectFit: "contain", border: "2px solid rgba(255, 255, 255, 0.25)" }}
                   />
                 </div>
 

@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { Row, Col } from 'reactstrap';
 import {
   FaMapMarkerAlt, FaPhone, FaClock, FaUserTie,
-  FaEnvelope, FaBuilding, FaUniversity, FaFax,
+  FaEnvelope, FaBuilding, FaFax,
 } from 'react-icons/fa';
-import PageLayout from '../../components/PageLayout';
-import PageLoader from '../../components/PageLoader';
+import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
-import apiClient from '../../services/api.service';
+import apiClient from "@apiService";
 import officeImage from '/image.png';
 
 /* ── Reusable contact info row ── */
@@ -102,7 +101,7 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
           style={{ width: 54, height: 54, borderRadius: 14, fontSize: 22 }}
           aria-hidden="true"
         >
-          {isDirectorate ? <FaUniversity /> : <FaBuilding />}
+          <FaBuilding />
         </div>
         <div>
           <span style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isDirectorate ? '#20c997' : '#4f6ef7', fontWeight: 700, display: 'block', marginBottom: 4 }}>

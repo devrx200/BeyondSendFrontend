@@ -11,9 +11,9 @@ import {
   FaFolderOpen, FaVideoSlash,
   FaChevronDown, FaChevronUp
 } from "react-icons/fa";
-import apiClient, { BASE_HOST } from "../../services/api.service";
+import apiClient, { BASE_HOST } from "@apiService";
 import { useLanguage } from "../../contexts/LanguageContext";
-import PageLoader from "../../components/PageLoader";
+import { PageLoader } from "@/components";
 import { jwtDecode } from "jwt-decode";
 
 

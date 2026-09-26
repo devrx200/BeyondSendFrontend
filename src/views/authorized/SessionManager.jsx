@@ -1,7 +1,5 @@
-// components/SessionManager.jsx
-
 import { useEffect, useState, useCallback } from "react";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 import {
   Row,
   Col,
@@ -18,7 +16,6 @@ import {
   Pagination,
   PaginationItem,
   PaginationLink,
-  UncontrolledTooltip,
   Modal,
   ModalHeader,
   ModalBody,
@@ -27,11 +24,37 @@ import {
   ButtonGroup,
   Progress,
 } from "reactstrap";
-import PageLoader from "../../components/PageLoader";
+import {
+  FaShieldAlt,
+  FaUsers,
+  FaCheckCircle,
+  FaClock,
+  FaSignOutAlt,
+  FaSearch,
+  FaFilter,
+  FaSyncAlt,
+  FaBan,
+  FaCalendarAlt,
+  FaTimes,
+  FaDesktop,
+  FaMobileAlt,
+  FaGlobe,
+  FaKey,
+  FaUser,
+  FaCopy,
+  FaInfoCircle,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
+  FaEye,
+  FaTrashAlt,
+} from "react-icons/fa";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { PageLoader } from "@/components";
 
-
-const token = sessionStorage.getItem("authToken");
 const SessionManager = () => {
+  const { isHindi } = useLanguage();
+
   // ─── State ──────────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -76,7 +99,7 @@ const SessionManager = () => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setCurrentPage(1);
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -95,20 +118,18 @@ const SessionManager = () => {
   };
 
   const getRelativeTime = (date) => {
-    if (!date) return "";
+    if (!date) return "—";
     const now = new Date();
-    const diff = now - new Date(date);
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
+    const diff = Math.floor((now - new Date(date)) / 1000);
+    if (diff < 60) return isHindi ? "अभी" : "Just now";
+    const mins = Math.floor(diff / 60);
+    if (mins < 60) return `${mins} ${isHindi ? "मिनट पहले" : "min ago"}`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} ${isHindi ? "घंटे पहले" : "hr ago"}`;
     const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} ${isHindi ? "दिन पहले" : "d ago"}`;
     const months = Math.floor(days / 30);
-
-    if (seconds < 60) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 30) return `${days}d ago`;
-    return `${months}mo ago`;
+    return `${months} ${isHindi ? "माह पहले" : "mo ago"}`;
   };
 
   const getExpiryProgress = (createdAt, expiresAt) => {
@@ -116,9 +137,9 @@ const SessionManager = () => {
     const start = new Date(createdAt);
     const end = new Date(expiresAt);
     const total = end - start;
+    if (total <= 0) return 100;
     const elapsed = now - start;
-    const progress = Math.min(100, Math.max(0, (elapsed / total) * 100));
-    return progress;
+    return Math.min(100, Math.max(0, (elapsed / total) * 100));
   };
 
   const truncate = (str, len = 20) => {
@@ -136,10 +157,12 @@ const SessionManager = () => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      try { document.execCommand("copy"); } catch (err) {}
+      try {
+        document.execCommand("copy");
+      } catch (err) {}
       document.body.removeChild(textArea);
     }
-    setSuccessMsg("Copied to clipboard!");
+    setSuccessMsg(isHindi ? "क्लिपबोर्ड पर कॉपी किया गया!" : "Copied to clipboard!");
     setTimeout(() => setSuccessMsg(""), 2000);
   };
 
@@ -153,36 +176,45 @@ const SessionManager = () => {
 
   const getStatusBadge = (session) => {
     const status = getSessionStatus(session);
-    const config = {
-      ACTIVE: { color: "success", icon: "🟢", label: "Active" },
-      EXPIRED: { color: "warning", icon: "🟡", label: "Expired" },
-      LOGGED_OUT: { color: "danger", icon: "🔴", label: "Logged Out" },
-      INACTIVE: { color: "secondary", icon: "⚪", label: "Inactive" },
-    };
-    const c = config[status] || config.INACTIVE;
-    return (
-      <Badge
-        color={c.color}
-        pill
-        className="px-3 py-2"
-        style={{ fontSize: "12px", letterSpacing: "0.3px" }}
-      >
-        {c.icon} {c.label}
-      </Badge>
-    );
+    switch (status) {
+      case "ACTIVE":
+        return (
+          <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+            <FaCheckCircle size={10} /> {isHindi ? "सक्रिय" : "Active"}
+          </span>
+        );
+      case "EXPIRED":
+        return (
+          <span className="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+            <FaClock size={10} /> {isHindi ? "समाप्त" : "Expired"}
+          </span>
+        );
+      case "LOGGED_OUT":
+        return (
+          <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1">
+            <FaSignOutAlt size={10} /> {isHindi ? "लॉग आउट" : "Logged Out"}
+          </span>
+        );
+      default:
+        return (
+          <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 fw-semibold">
+            {isHindi ? "निष्क्रिय" : "Inactive"}
+          </span>
+        );
+    }
   };
 
   const getLogoutReasonBadge = (reason) => {
     if (!reason) return <span className="text-muted">—</span>;
     const config = {
-      USER_LOGOUT: { color: "info", label: "User Logout", icon: "🚪" },
-      SESSION_EXPIRED: { color: "warning", label: "Session Expired", icon: "⏰" },
-      NEW_LOGIN: { color: "primary", label: "New Login", icon: "🔄" },
+      USER_LOGOUT: { color: "info", label: isHindi ? "उपयोगकर्ता लॉगआउट" : "User Logout" },
+      SESSION_EXPIRED: { color: "warning", label: isHindi ? "सत्र समाप्ति" : "Session Expired" },
+      NEW_LOGIN: { color: "primary", label: isHindi ? "नया लॉगिन" : "New Login" },
     };
-    const c = config[reason] || { color: "secondary", label: reason, icon: "❓" };
+    const c = config[reason] || { color: "secondary", label: reason };
     return (
-      <Badge color={c.color} pill className="px-2 py-1" style={{ fontSize: "11px" }}>
-        {c.icon} {c.label}
+      <Badge color={c.color} pill className="px-2 py-0.5">
+        {c.label}
       </Badge>
     );
   };
@@ -190,30 +222,29 @@ const SessionManager = () => {
   // ─── Parse UserAgent ───────────────────────────────────
   const parseBrowser = (ua) => {
     if (!ua) return "Unknown";
-    if (ua.includes("Edg")) return "🔵 Edge";
-    if (ua.includes("OPR") || ua.includes("Opera")) return "🔴 Opera";
-    if (ua.includes("Chrome")) return "🌐 Chrome";
-    if (ua.includes("Firefox")) return "🦊 Firefox";
-    if (ua.includes("Safari")) return "🧭 Safari";
-    return "🌍 Other";
+    if (ua.includes("Edg")) return "Edge";
+    if (ua.includes("OPR") || ua.includes("Opera")) return "Opera";
+    if (ua.includes("Chrome")) return "Chrome";
+    if (ua.includes("Firefox")) return "Firefox";
+    if (ua.includes("Safari")) return "Safari";
+    return "Browser";
   };
 
   const parseOS = (ua) => {
     if (!ua) return "Unknown";
-    if (ua.includes("Windows")) return "🪟 Windows";
-    if (ua.includes("Mac")) return "🍎 macOS";
-    if (ua.includes("Android")) return "🤖 Android";
-    if (ua.includes("iPhone") || ua.includes("iPad")) return "📱 iOS";
-    if (ua.includes("Linux")) return "🐧 Linux";
-    return "💻 Other";
+    if (ua.includes("Windows")) return "Windows";
+    if (ua.includes("Mac")) return "macOS";
+    if (ua.includes("Android")) return "Android";
+    if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
+    if (ua.includes("Linux")) return "Linux";
+    return "OS";
   };
 
-  // ─── API Error Handler ─────────────────────────────────
   const getErrorMessage = (err) => {
     if (err.response?.data?.message) return err.response.data.message;
     if (err.response?.data?.error) return err.response.data.error;
     if (err.message) return err.message;
-    return "Something went wrong. Please try again.";
+    return isHindi ? "कुछ गड़बड़ हुई। कृपया पुनः प्रयास करें।" : "Something went wrong. Please try again.";
   };
 
   // ─── Fetch Sessions ────────────────────────────────────
@@ -235,15 +266,17 @@ const SessionManager = () => {
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
 
-     const res = await apiClient.get('/sessions/list');
+      const res = await apiClient.get("/sessions/list", { params });
+      const isSuccess = res?.success ?? res?.data?.success ?? true;
+      const payload = res?.data || res;
 
-      if (res.data?.success) {
-        setSessions(res.data.data.sessions || []);
-        setTotalPages(res.data.data.totalPages || 1);
-        setTotalSessions(res.data.data.total || 0);
+      if (isSuccess && payload) {
+        setSessions(payload.sessions || []);
+        setTotalPages(payload.totalPages || 1);
+        setTotalSessions(payload.total || 0);
         setStats(
-          res.data.data.stats || {
-            total: 0,
+          payload.stats || {
+            total: payload.total || 0,
             active: 0,
             expired: 0,
             loggedOut: 0,
@@ -287,10 +320,12 @@ const SessionManager = () => {
           message: revokeMessage || undefined,
         }
       );
-         
 
-      if (res.data?.success) {
-        setSuccessMsg(res.data.message || "Session revoked successfully!");
+      const isSuccess = res?.success ?? res?.data?.success ?? true;
+      if (isSuccess) {
+        setSuccessMsg(
+          res?.message || res?.data?.message || (isHindi ? "सत्र सफलतापूर्वक रद्द किया गया!" : "Session revoked successfully!")
+        );
         setRevokeModalOpen(false);
         setDetailModalOpen(false);
         setSelectedSession(null);
@@ -312,11 +347,13 @@ const SessionManager = () => {
       setRevoking(true);
       setError("");
 
-      const res = await apiClient.patch('/sessions/revoke-all', {});
-  
+      const res = await apiClient.patch("/sessions/revoke-all", {});
+      const isSuccess = res?.success ?? res?.data?.success ?? true;
 
-      if (res.data?.success) {
-        setSuccessMsg(res.data.message || "All sessions revoked successfully!");
+      if (isSuccess) {
+        setSuccessMsg(
+          res?.message || res?.data?.message || (isHindi ? "सभी सक्रिय सत्र रद्द कर दिए गए हैं!" : "All sessions revoked successfully!")
+        );
         setRevokeAllModalOpen(false);
         setRevokeReason("USER_LOGOUT");
         setRevokeMessage("");
@@ -342,8 +379,12 @@ const SessionManager = () => {
   };
 
   const getSortIcon = (field) => {
-    if (sortBy !== field) return "↕️";
-    return sortOrder === "asc" ? "⬆️" : "⬇️";
+    if (sortBy !== field) return <FaSort className="ms-1 text-muted opacity-50" size={11} />;
+    return sortOrder === "asc" ? (
+      <FaSortUp className="ms-1 text-primary" size={11} />
+    ) : (
+      <FaSortDown className="ms-1 text-primary" size={11} />
+    );
   };
 
   // ─── Reset Filters ────────────────────────────────────
@@ -383,787 +424,520 @@ const SessionManager = () => {
     dateFrom ||
     dateTo;
 
-  // ─── Shared gradient style ─────────────────────────────
-  const headerGradient = {
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  };
-
-  // ─── Render ────────────────────────────────────────────
   return (
-    <div className="p-2 p-md-3">
-
-      {/* ══════════ Header ══════════ */}
-      <Card
-        className="mb-4 border-0 shadow-lg overflow-hidden"
-        style={headerGradient}
-      >
-        <CardBody className="py-4">
-          <Row className="align-items-center">
-            <Col md={6}>
-              <h3 className="mb-1 fw-bold">🔐 Session Management</h3>
-              <p className="text-white-50 mb-0 small">
-                Monitor and manage all user sessions in real-time
-              </p>
-            </Col>
-            <Col md={6} className="text-md-end mt-3 mt-md-0">
-              <Button
-                color="light"
-                outline
-                className="me-2 text-white border-white border-opacity-50"
-                onClick={fetchSessions}
-                disabled={loading}
-                style={{ minWidth: "110px" }}
-              >
-                {loading ? <Spinner size="sm" className="me-1" /> : "🔄 "}
-                Refresh
-              </Button>
-              <Button
-                color="danger"
-                className="shadow-sm fw-semibold"
-                onClick={() => setRevokeAllModalOpen(true)}
-              >
-                ⛔ Revoke All Active
-              </Button>
-            </Col>
-          </Row>
-        </CardBody>
-      </Card>
-
+    <>
       {/* ══════════ Alerts ══════════ */}
       {successMsg && (
         <Alert
           color="success"
-          className="shadow-sm border-0 d-flex align-items-center rounded-3"
+          className="shadow-sm border-0 d-flex align-items-center rounded-3 mb-3"
           toggle={() => setSuccessMsg("")}
-          fade
         >
-          <span className="me-2 fs-5">✅</span>
-          <div>
-            <strong>Success!</strong> {successMsg}
-          </div>
+          <FaCheckCircle className="me-2 text-success" size={16} />
+          <div>{successMsg}</div>
         </Alert>
       )}
+
       {error && (
         <Alert
           color="danger"
-          className="shadow-sm border-0 d-flex align-items-center rounded-3"
+          className="shadow-sm border-0 d-flex align-items-center rounded-3 mb-3"
           toggle={() => setError("")}
-          fade
         >
-          <span className="me-2 fs-5">❌</span>
-          <div>
-            <strong>Error!</strong> {error}
-          </div>
+          <FaInfoCircle className="me-2 text-danger" size={16} />
+          <div>{error}</div>
         </Alert>
       )}
 
-      {/* ══════════ Stats Cards ══════════ */}
-      <Row className="mb-4 g-3">
+      {/* ══════════ KPI Metric Cards ══════════ */}
+      <Row className="g-3 mb-4">
         {[
           {
-            icon: "📊",
-            label: "TOTAL SESSIONS",
+            icon: FaUsers,
+            label: isHindi ? "कुल सत्र" : "TOTAL SESSIONS",
             value: stats.total,
-            color: "#6366f1",
-            bg: "linear-gradient(135deg, #eef2ff, #e0e7ff)",
-            border: "#6366f1",
+            color: "text-primary",
+            bgClass: "bg-primary-subtle",
+            borderClass: "border-primary",
           },
           {
-            icon: "🟢",
-            label: "ACTIVE",
+            icon: FaCheckCircle,
+            label: isHindi ? "सक्रिय सत्र" : "ACTIVE",
             value: stats.active,
-            color: "#22c55e",
-            bg: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-            border: "#22c55e",
+            color: "text-success",
+            bgClass: "bg-success-subtle",
+            borderClass: "border-success",
           },
           {
-            icon: "🟡",
-            label: "EXPIRED",
+            icon: FaClock,
+            label: isHindi ? "समाप्त सत्र" : "EXPIRED",
             value: stats.expired,
-            color: "#f59e0b",
-            bg: "linear-gradient(135deg, #fffbeb, #fef3c7)",
-            border: "#f59e0b",
+            color: "text-warning",
+            bgClass: "bg-warning-subtle",
+            borderClass: "border-warning",
           },
           {
-            icon: "🔴",
-            label: "LOGGED OUT",
+            icon: FaSignOutAlt,
+            label: isHindi ? "लॉग आउट सत्र" : "LOGGED OUT",
             value: stats.loggedOut,
-            color: "#ef4444",
-            bg: "linear-gradient(135deg, #fef2f2, #fee2e2)",
-            border: "#ef4444",
+            color: "text-danger",
+            bgClass: "bg-danger-subtle",
+            borderClass: "border-danger",
           },
-        ].map((stat, i) => (
-          <Col xs={6} md={3} key={i}>
-            <Card
-              className="border-0 shadow-sm h-100"
-              style={{
-                borderLeft: `4px solid ${stat.border} !important`,
-                borderLeftColor: stat.border,
-                borderLeftWidth: "4px",
-                borderLeftStyle: "solid",
-                background: stat.bg,
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                cursor: "default",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-3px)";
-                e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "";
-              }}
-            >
-              <CardBody className="text-center py-3">
-                <div style={{ fontSize: "2rem", lineHeight: 1.2 }} className="mb-1">
-                  {stat.icon}
-                </div>
-                <h2
-                  className="fw-bold mb-0"
-                  style={{ color: stat.color, fontSize: "2rem", lineHeight: 1.1 }}
-                >
-                  {loading ? (
-                    <Spinner size="sm" style={{ color: stat.color }} />
-                  ) : (
-                    stat.value.toLocaleString()
-                  )}
-                </h2>
-                <small
-                  className="fw-semibold text-uppercase d-block mt-1"
-                  style={{ color: stat.color, letterSpacing: "1px", fontSize: "10px" }}
-                >
-                  {stat.label}
-                </small>
-              </CardBody>
-            </Card>
-          </Col>
-        ))}
+        ].map((item, idx) => {
+          const IconComp = item.icon;
+          return (
+            <Col xs={12} sm={6} lg={3} key={idx}>
+              <Card className={`border-0 shadow-sm h-100 border-start border-4 ${item.borderClass}`}>
+                <CardBody className="p-3 d-flex align-items-center justify-content-between">
+                  <div>
+                    <div className="text-secondary small fw-bold text-uppercase" style={{ letterSpacing: "0.5px" }}>
+                      {item.label}
+                    </div>
+                    <div className={`fs-3 fw-bold mt-1 ${item.color}`}>
+                      {loading ? <Spinner size="sm" /> : item.value.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className={`rounded-circle p-3 d-flex align-items-center justify-content-center ${item.bgClass}`}>
+                    <IconComp size={20} className={item.color} />
+                  </div>
+                </CardBody>
+              </Card>
+            </Col>
+          );
+        })}
       </Row>
 
-      {/* ══════════ Filters Card ══════════ */}
-      <Card className="mb-4 border-0 shadow-sm rounded-3">
-        <CardHeader className="bg-white border-bottom py-3 rounded-top-3">
-          <Row className="align-items-center">
-            <Col>
-              <h5 className="mb-0 fw-bold">
-                🔍 Search &amp; Filters
-                {hasActiveFilters && (
-                  <Badge color="primary" pill className="ms-2 align-middle" style={{ fontSize: "11px" }}>
-                    Active
-                  </Badge>
-                )}
-              </h5>
-            </Col>
-            <Col xs="auto">
-              {hasActiveFilters && (
-                <Button
-                  color="danger"
-                  outline
-                  size="sm"
-                  onClick={resetFilters}
-                  className="fw-semibold"
-                >
-                  ✖ Clear All
-                </Button>
-              )}
-            </Col>
-          </Row>
-        </CardHeader>
-        <CardBody className="py-3">
-          <Row className="g-3">
-            {/* Search */}
-            <Col md={4}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                🔎 Search
-              </label>
-              <InputGroup>
-                <InputGroupText
-                  style={{
-                    ...headerGradient,
-                    color: "#fff",
-                    border: "1px solid #667eea",
-                  }}
-                >
-                  🔍
-                </InputGroupText>
-                <Input
-                  type="text"
-                  placeholder="IP, token, user agent, message..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ borderColor: "#667eea" }}
-                />
-                {search && (
-                  <Button
-                    color="outline-secondary"
-                    size="sm"
-                    onClick={() => setSearch("")}
-                    style={{ borderColor: "#ced4da" }}
-                  >
-                    ✕
-                  </Button>
-                )}
-              </InputGroup>
-            </Col>
-
-            {/* Status Filter */}
-            <Col md={2}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                📌 Status
-              </label>
-              <Input
-                type="select"
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{ borderColor: "#22c55e" }}
-              >
-                <option value="ALL">All Status</option>
-                <option value="ACTIVE">🟢 Active</option>
-                <option value="EXPIRED">🟡 Expired</option>
-                <option value="LOGGED_OUT">🔴 Logged Out</option>
-                <option value="INACTIVE">⚪ Inactive</option>
-              </Input>
-            </Col>
-
-            {/* Logout Reason */}
-            <Col md={2}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                📝 Logout Reason
-              </label>
-              <Input
-                type="select"
-                value={logoutReasonFilter}
-                onChange={(e) => {
-                  setLogoutReasonFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{ borderColor: "#0dcaf0" }}
-              >
-                <option value="ALL">All Reasons</option>
-                <option value="USER_LOGOUT">🚪 User Logout</option>
-                <option value="SESSION_EXPIRED">⏰ Session Expired</option>
-                <option value="NEW_LOGIN">🔄 New Login</option>
-              </Input>
-            </Col>
-
-            {/* Date From */}
-            <Col md={2}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                📅 From
-              </label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{ borderColor: "#f59e0b" }}
-              />
-            </Col>
-
-            {/* Date To */}
-            <Col md={2}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                📅 To
-              </label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{ borderColor: "#f59e0b" }}
-              />
-            </Col>
-          </Row>
-
-          {/* Quick Filters Row */}
-          <Row className="mt-3 g-3 align-items-end">
-            <Col md={2}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                📄 Per Page
-              </label>
-              <Input
-                type="select"
-                value={perPage}
-                onChange={(e) => {
-                  setPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-              >
-                {[5, 10, 25, 50, 100].map((n) => (
-                  <option key={n} value={n}>
-                    {n} rows
-                  </option>
-                ))}
-              </Input>
-            </Col>
-            <Col md={6}>
-              <label className="form-label fw-semibold text-muted small text-uppercase mb-1">
-                ⚡ Quick Filters
-              </label>
-              <div>
-                <ButtonGroup size="sm">
-                  {[
-                    { val: "ALL", label: "All", color: "primary" },
-                    { val: "ACTIVE", label: "🟢 Active", color: "success" },
-                    { val: "EXPIRED", label: "🟡 Expired", color: "warning" },
-                    { val: "LOGGED_OUT", label: "🔴 Logged Out", color: "danger" },
-                    { val: "INACTIVE", label: "⚪ Inactive", color: "secondary" },
-                  ].map((btn) => (
-                    <Button
-                      key={btn.val}
-                      color={
-                        statusFilter === btn.val
-                          ? btn.color
-                          : `outline-${btn.color}`
-                      }
-                      onClick={() => {
-                        setStatusFilter(btn.val);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      {btn.label}
-                    </Button>
-                  ))}
-                </ButtonGroup>
-              </div>
-            </Col>
-            <Col md={4} className="text-end">
-              <small className="text-muted">
-                {loading ? (
-                  <>
-                    <Spinner size="sm" className="me-1" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Found{" "}
-                    <strong className="text-dark">{totalSessions.toLocaleString()}</strong>{" "}
-                    session(s)
-                  </>
-                )}
-              </small>
-            </Col>
-          </Row>
-        </CardBody>
-      </Card>
-
-      {loading && (
-        <Card className="border-0 shadow-sm text-center py-5 mb-4">
-          <CardBody className="py-5">
-            <PageLoader inline={true} />
-          </CardBody>
-        </Card>
-      )}
-
-      {/* ══════════ Empty State ══════════ */}
-      {!loading && sessions.length === 0 && (
-        <Card className="border-0 shadow-sm text-center py-5 rounded-3">
-          <CardBody className="py-5">
-            <div style={{ fontSize: "4rem", lineHeight: 1 }}>📭</div>
-            <h4 className="text-muted mt-3 fw-semibold">No Sessions Found</h4>
-            <p className="text-muted mb-4">
-              {hasActiveFilters
-                ? "Try adjusting your search or filter criteria"
-                : "No sessions have been created yet"}
-            </p>
-            {hasActiveFilters && (
-              <Button color="primary" onClick={resetFilters} className="px-4">
-                🔄 Reset All Filters
-              </Button>
-            )}
-          </CardBody>
-        </Card>
-      )}
-
-      {/* ══════════ Sessions Table ══════════ */}
-      {!loading && sessions.length > 0 && (
-        <Card className="border-0 shadow-sm overflow-hidden rounded-3">
-          <CardHeader className="bg-white py-3 border-bottom">
-            <Row className="align-items-center">
-              <Col>
-                <h5 className="mb-0 fw-bold">
-                  📋 Sessions{" "}
-                  <Badge color="primary" pill className="ms-1 align-middle" style={{ fontSize: "12px" }}>
-                    {totalSessions.toLocaleString()}
-                  </Badge>
-                </h5>
-              </Col>
-              <Col xs="auto">
-                <small className="text-muted">
-                  Showing{" "}
-                  <strong>{(currentPage - 1) * perPage + 1}</strong>–
-                  <strong>{Math.min(currentPage * perPage, totalSessions)}</strong>{" "}
-                  of <strong>{totalSessions}</strong>
-                </small>
-              </Col>
-            </Row>
-          </CardHeader>
-
-          <div className="table-responsive">
-            <Table bordered hover striped className="mb-0 align-middle">
-              <thead style={headerGradient}>
-                <tr>
-                  <th className="text-dark text-center fw-semibold" style={{ width: "55px", fontSize: "13px" }}>
-                    #
-                  </th>
-                  <th
-                    className="text-dark fw-semibold"
-                    style={{ cursor: "pointer", fontSize: "13px", userSelect: "none" }}
-                    onClick={() => handleSort("user")}
-                  >
-                    👤 User {getSortIcon("user")}
-                  </th>
-                  <th className="text-dark fw-semibold" style={{ fontSize: "13px" }}>
-                    🔑 Token
-                  </th>
-                  <th
-                    className="text-dark text-center fw-semibold"
-                    style={{ cursor: "pointer", fontSize: "13px", userSelect: "none" }}
-                    onClick={() => handleSort("isActive")}
-                  >
-                    📌 Status {getSortIcon("isActive")}
-                  </th>
-                  <th className="text-dark fw-semibold" style={{ fontSize: "13px" }}>
-                    🌐 IP
-                  </th>
-                  <th className="text-dark fw-semibold" style={{ fontSize: "13px" }}>
-                    🖥️ Device
-                  </th>
-                  <th
-                    className="text-dark fw-semibold"
-                    style={{ cursor: "pointer", fontSize: "13px", userSelect: "none" }}
-                    onClick={() => handleSort("createdAt")}
-                  >
-                    📅 Created {getSortIcon("createdAt")}
-                  </th>
-                  <th
-                    className="text-dark fw-semibold"
-                    style={{ cursor: "pointer", fontSize: "13px", userSelect: "none" }}
-                    onClick={() => handleSort("expiresAt")}
-                  >
-                    ⏰ Expires {getSortIcon("expiresAt")}
-                  </th>
-                  <th className="text-dark fw-semibold" style={{ fontSize: "13px" }}>
-                    🚪 Logout
-                  </th>
-                  <th
-                    className="text-dark text-center fw-semibold"
-                    style={{ width: "130px", fontSize: "13px" }}
-                  >
-                    ⚙️ Actions
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {sessions.map((session, index) => {
-                  const status = getSessionStatus(session);
-                  const rowBgMap = {
-                    ACTIVE: "rgba(34,197,94,0.04)",
-                    EXPIRED: "rgba(245,158,11,0.04)",
-                    LOGGED_OUT: "rgba(239,68,68,0.04)",
-                    INACTIVE: "rgba(20, 95, 245, 0.04)",
-                  };
-
-                  return (
-                    <tr
-                      key={session._id}
-                      style={{ backgroundColor: rowBgMap[status] || "transparent" }}
-                    >
-                      {/* # */}
-                      <td className="text-center fw-bold text-muted" style={{ fontSize: "13px" }}>
-                        {(currentPage - 1) * perPage + index + 1}
-                      </td>
-
-                      {/* User */}
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <div
-                            className="rounded-circle d-flex align-items-center justify-content-center me-2 flex-shrink-0 fw-bold text-dark"
-                            style={{
-                              width: "36px",
-                              height: "36px",
-                              ...headerGradient,
-                              fontSize: "14px",
-                            }}
-                          >
-                            {(
-                              session.user?.name ||
-                              session.user?.email ||
-                              "U"
-                            )
-                              .charAt(0)
-                              .toUpperCase()}
-                          </div>
-                          <div style={{ minWidth: 0 }}>
-                            <div
-                              className="fw-bold text-dark text-truncate"
-                              style={{ maxWidth: "130px", fontSize: "13px" }}
-                            >
-                              {session.user?.name || "Unknown User"}
-                            </div>
-                            <small
-                              className="text-muted text-truncate d-block"
-                              style={{ maxWidth: "130px", fontSize: "11px" }}
-                            >
-                              {session.user?.email ||
-                                truncate(
-                                  session.user?._id || String(session.user),
-                                  15
-                                )}
-                            </small>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Token */}
-                      <td>
-                        <div className="d-flex align-items-center gap-1">
-                          <code
-                            className="bg-light p-1 rounded text-dark"
-                            style={{
-                              fontSize: "10px",
-                              maxWidth: "100px",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              display: "inline-block",
-                              border: "1px solid #e9ecef",
-                            }}
-                            id={`tok-${session._id}`}
-                          >
-                            {session.token}
-                          </code>
-                          <UncontrolledTooltip
-                            target={`tok-${session._id}`}
-                            placement="top"
-                          >
-                            {session.token}
-                          </UncontrolledTooltip>
-                          <Button
-                            color="outline-primary"
-                            size="sm"
-                            className="py-0 px-1 border-0"
-                            style={{ fontSize: "12px", lineHeight: 1.5 }}
-                            onClick={() => copyToClipboard(session.token)}
-                            title="Copy token"
-                          >
-                            📋
-                          </Button>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="text-center">{getStatusBadge(session)}</td>
-
-                      {/* IP */}
-                      <td>
-                        <Badge
-                          color="dark"
-                          pill
-                          className="px-2 py-1"
-                          style={{ fontSize: "11px" }}
-                        >
-                          {session.ipAddress || "N/A"}
-                        </Badge>
-                      </td>
-
-                      {/* Device */}
-                      <td>
-                        <small className="d-block fw-semibold" style={{ fontSize: "12px" }}>
-                          {parseBrowser(session.userAgent)}
-                        </small>
-                        <small className="text-muted" style={{ fontSize: "11px" }}>
-                          {parseOS(session.userAgent)}
-                        </small>
-                      </td>
-
-                      {/* Created */}
-                      <td>
-                        <small className="d-block fw-semibold" style={{ fontSize: "12px" }}>
-                          {formatDateTime(session.createdAt)}
-                        </small>
-                        <Badge
-                          color="light"
-                          className="text-muted mt-1"
-                          style={{ fontSize: "10px", border: "1px solid #e9ecef" }}
-                        >
-                          {getRelativeTime(session.createdAt)}
-                        </Badge>
-                      </td>
-
-                      {/* Expires */}
-                      <td>
-                        <small className="d-block fw-semibold" style={{ fontSize: "12px" }}>
-                          {formatDateTime(session.expiresAt)}
-                        </small>
-                        <Progress
-                          value={getExpiryProgress(
-                            session.createdAt,
-                            session.expiresAt
-                          )}
-                          color={
-                            getExpiryProgress(session.createdAt, session.expiresAt) >= 100
-                              ? "danger"
-                              : getExpiryProgress(session.createdAt, session.expiresAt) >= 75
-                              ? "warning"
-                              : "success"
-                          }
-                          className="mt-1"
-                          style={{ height: "4px", borderRadius: "2px" }}
-                        />
-                      </td>
-
-                      {/* Logout */}
-                      <td>
-                        {session.logoutAt ? (
-                          <div>
-                            {getLogoutReasonBadge(session.logoutReason)}
-                            <small
-                              className="d-block text-muted mt-1"
-                              style={{ fontSize: "10px" }}
-                            >
-                              {formatDateTime(session.logoutAt)}
-                            </small>
-                            {session.logoutMessage && (
-                              <small
-                                className="d-block text-muted fst-italic"
-                                style={{ fontSize: "10px" }}
-                              >
-                                &ldquo;{truncate(session.logoutMessage, 25)}&rdquo;
-                              </small>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="text-center">
-                        <Button
-                          color="info"
-                          size="sm"
-                          className="me-1 px-2 py-1 text-white fw-semibold"
-                          style={{ fontSize: "11px" }}
-                          onClick={() => {
-                            setSelectedSession(session);
-                            setDetailModalOpen(true);
-                          }}
-                        >
-                          👁️ View
-                        </Button>
-                        {status === "ACTIVE" && (
-                          <Button
-                            color="danger"
-                            size="sm"
-                            className="px-2 py-1 fw-semibold"
-                            style={{ fontSize: "11px" }}
-                            onClick={() => {
-                              setSelectedSession(session);
-                              setRevokeModalOpen(true);
-                            }}
-                            title="Revoke session"
-                          >
-                            ⛔
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+      {/* ══════════ Master Table & Controls Card ══════════ */}
+      <Card className="adm-card shadow-sm border-0 mb-4">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div className="d-flex align-items-center gap-3">
+            <div
+              className="p-2 rounded-3 d-flex align-items-center justify-content-center"
+              style={{ backgroundColor: "rgba(255, 255, 255, 0.12)" }}
+            >
+              <FaShieldAlt className="text-white" size={20} />
+            </div>
+            <div>
+              <h4 className="adm-page-title mb-0 text-white fw-bold d-flex align-items-center gap-2">
+                <span>{isHindi ? "सत्र प्रबंधन" : "Session Manager"}</span>
+                <Badge color="light" className="text-dark fs-xs px-2 py-1">
+                  {totalSessions}
+                </Badge>
+              </h4>
+              <p className="adm-page-subtitle mb-0 text-white-50 small">
+                <span>
+                  {isHindi
+                    ? "सभी सक्रिय और ऐतिहासिक उपयोगकर्ता सत्रों की वास्तविक समय में निगरानी करें"
+                    : "Monitor and manage all real-time and historical user authentication sessions"}
+                </span>
+              </p>
+            </div>
           </div>
 
-          {/* ══════════ Pagination ══════════ */}
-          <CardBody className="border-top py-3" style={{ backgroundColor: "#f8f9fa" }}>
-            <Row className="align-items-center">
-              <Col md={5}>
-                <small className="text-muted">
-                  Page <strong className="text-dark">{currentPage}</strong> of{" "}
-                  <strong className="text-dark">{totalPages}</strong>{" "}
-                  &bull; Total:{" "}
-                  <strong className="text-dark">{totalSessions.toLocaleString()}</strong> sessions
-                </small>
+          <div className="d-flex align-items-center gap-2">
+            <Button
+              color="light"
+              size="sm"
+              className="text-primary fw-bold shadow-sm d-flex align-items-center gap-1.5 px-3 py-1.5 border-0"
+              onClick={fetchSessions}
+              disabled={loading}
+            >
+              <FaSyncAlt size={12} className={loading ? "fa-spin" : ""} />
+              <span>{isHindi ? "ताज़ा करें" : "Refresh"}</span>
+            </Button>
+            <Button
+              color="danger"
+              size="sm"
+              className="fw-bold shadow-sm d-flex align-items-center gap-1.5 px-3 py-1.5 border-0"
+              onClick={() => setRevokeAllModalOpen(true)}
+              disabled={loading || stats.active === 0}
+            >
+              <FaBan size={12} />
+              <span>{isHindi ? "सभी सत्र रद्द करें" : "Revoke All Active"}</span>
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardBody className="p-3 p-md-4">
+          {/* ── Search & Filter Controls Bar ────────────────────────────── */}
+          <div className="border rounded-3 p-3 bg-light bg-opacity-50 mb-4">
+            <Row className="g-3 align-items-end">
+              <Col md={12} lg={4}>
+                <label className="fw-semibold text-secondary small mb-1">
+                  {isHindi ? "सत्र खोजें" : "Search Sessions"}
+                </label>
+                <InputGroup>
+                  <InputGroupText className="bg-white border-end-0">
+                    <FaSearch className="text-muted" size={13} />
+                  </InputGroupText>
+                  <Input
+                    type="text"
+                    placeholder={isHindi ? "IP, टोकन, ब्राउज़र, संदेश..." : "IP, token, user agent, email..."}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="shadow-none border-start-0"
+                  />
+                  {search && (
+                    <Button
+                      color="light"
+                      className="border border-start-0"
+                      onClick={() => setSearch("")}
+                    >
+                      <FaTimes size={12} />
+                    </Button>
+                  )}
+                </InputGroup>
               </Col>
-              <Col md={7}>
-                <Pagination
-                  className="mb-0 justify-content-end"
-                  listClassName="mb-0"
-                  size="sm"
+
+              <Col sm={6} md={3} lg={2}>
+                <label className="fw-semibold text-secondary small mb-1">
+                  {isHindi ? "स्थिति" : "Status"}
+                </label>
+                <Input
+                  type="select"
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="shadow-none bg-white"
                 >
-                  <PaginationItem disabled={currentPage === 1}>
-                    <PaginationLink first onClick={() => setCurrentPage(1)} />
+                  <option value="ALL">{isHindi ? "सभी स्थितियां" : "All Status"}</option>
+                  <option value="ACTIVE">{isHindi ? "सक्रिय" : "Active"}</option>
+                  <option value="EXPIRED">{isHindi ? "समाप्त" : "Expired"}</option>
+                  <option value="LOGGED_OUT">{isHindi ? "लॉग आउट" : "Logged Out"}</option>
+                  <option value="INACTIVE">{isHindi ? "निष्क्रिय" : "Inactive"}</option>
+                </Input>
+              </Col>
+
+              <Col sm={6} md={3} lg={2}>
+                <label className="fw-semibold text-secondary small mb-1">
+                  {isHindi ? "लॉगआउट कारण" : "Logout Reason"}
+                </label>
+                <Input
+                  type="select"
+                  value={logoutReasonFilter}
+                  onChange={(e) => {
+                    setLogoutReasonFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="shadow-none bg-white"
+                >
+                  <option value="ALL">{isHindi ? "सभी कारण" : "All Reasons"}</option>
+                  <option value="USER_LOGOUT">{isHindi ? "उपयोगकर्ता लॉगआउट" : "User Logout"}</option>
+                  <option value="SESSION_EXPIRED">{isHindi ? "सत्र समाप्ति" : "Session Expired"}</option>
+                  <option value="NEW_LOGIN">{isHindi ? "नया लॉगिन" : "New Login"}</option>
+                </Input>
+              </Col>
+
+              <Col sm={6} md={3} lg={2}>
+                <label className="fw-semibold text-secondary small mb-1">
+                  {isHindi ? "दिनांक से" : "Date From"}
+                </label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="shadow-none bg-white"
+                />
+              </Col>
+
+              <Col sm={6} md={3} lg={2}>
+                <label className="fw-semibold text-secondary small mb-1">
+                  {isHindi ? "दिनांक तक" : "Date To"}
+                </label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="shadow-none bg-white"
+                />
+              </Col>
+            </Row>
+
+            {hasActiveFilters && (
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-2 border-top">
+                <div className="d-flex align-items-center gap-1.5 small text-muted">
+                  <FaFilter size={11} className="text-primary" />
+                  <span>{isHindi ? "फ़िल्टर लागू हैं" : "Active Filters Applied"}</span>
+                </div>
+                <Button
+                  color="link"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="text-danger p-0 text-decoration-none fw-semibold small d-inline-flex align-items-center gap-1"
+                >
+                  <FaTimes size={11} /> {isHindi ? "फ़िल्टर साफ़ करें" : "Clear All Filters"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Table or Loader ────────────────────────────────────────── */}
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner color="primary" />
+              <div className="mt-2 text-muted small">{isHindi ? "सत्र लोड हो रहे हैं..." : "Loading sessions..."}</div>
+            </div>
+          ) : sessions.length === 0 ? (
+            <div className="text-center py-5 border rounded-3 bg-light bg-opacity-25">
+              <FaShieldAlt className="text-muted opacity-25 mb-3" size={48} />
+              <h5 className="fw-bold text-dark">{isHindi ? "कोई सत्र नहीं मिला" : "No Sessions Found"}</h5>
+              <p className="text-muted small mb-0">
+                {hasActiveFilters
+                  ? isHindi
+                    ? "फ़िल्टर समायोजित करने का प्रयास करें"
+                    : "Try adjusting your search query or filter options."
+                  : isHindi
+                  ? "वर्तमान में कोई सत्र रिकॉर्ड उपलब्ध नहीं है।"
+                  : "Currently no session records exist in the database."}
+              </p>
+            </div>
+          ) : (
+            <div className="table-responsive border rounded-3 overflow-hidden">
+              <Table hover className="mb-0 align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th className="fw-semibold text-secondary small py-2.5 px-3 text-center" style={{ width: "50px" }}>
+                      #
+                    </th>
+                    <th className="fw-semibold text-secondary small py-2.5 px-3" style={{ width: "200px" }}>
+                      {isHindi ? "उपयोगकर्ता" : "User"}
+                    </th>
+                    <th
+                      className="fw-semibold text-secondary small py-2.5 px-3 text-center cursor-pointer user-select-none"
+                      onClick={() => handleSort("isActive")}
+                      style={{ width: "120px" }}
+                    >
+                      {isHindi ? "स्थिति" : "Status"} {getSortIcon("isActive")}
+                    </th>
+                    <th className="fw-semibold text-secondary small py-2.5 px-3" style={{ width: "140px" }}>
+                      {isHindi ? "IP पता" : "IP Address"}
+                    </th>
+                    <th className="fw-semibold text-secondary small py-2.5 px-3">
+                      {isHindi ? "डिवाइस / ब्राउज़र" : "Device & OS"}
+                    </th>
+                    <th
+                      className="fw-semibold text-secondary small py-2.5 px-3 cursor-pointer user-select-none"
+                      onClick={() => handleSort("createdAt")}
+                      style={{ width: "150px" }}
+                    >
+                      {isHindi ? "बनाया गया" : "Created"} {getSortIcon("createdAt")}
+                    </th>
+                    <th
+                      className="fw-semibold text-secondary small py-2.5 px-3 cursor-pointer user-select-none"
+                      onClick={() => handleSort("expiresAt")}
+                      style={{ width: "150px" }}
+                    >
+                      {isHindi ? "समाप्ति" : "Expires"} {getSortIcon("expiresAt")}
+                    </th>
+                    <th className="fw-semibold text-secondary small py-2.5 px-3 text-center" style={{ width: "110px" }}>
+                      {isHindi ? "कार्रवाई" : "Action"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session, index) => {
+                    const status = getSessionStatus(session);
+                    const isSessionActive = status === "ACTIVE";
+
+                    return (
+                      <tr key={session._id}>
+                        {/* Index */}
+                        <td className="text-center text-muted small fw-medium">
+                          {(currentPage - 1) * perPage + index + 1}
+                        </td>
+
+                        {/* User */}
+                        <td className="px-3 py-2">
+                          <div className="d-flex align-items-center gap-2">
+                            <div
+                              className="rounded-circle bg-primary bg-opacity-10 text-primary fw-bold d-flex align-items-center justify-content-center flex-shrink-0"
+                              style={{ width: "32px", height: "32px", fontSize: "12px" }}
+                            >
+                              {(session.user?.name || session.user?.email || "U").charAt(0).toUpperCase()}
+                            </div>
+                            <div className="overflow-hidden">
+                              <div className="fw-semibold text-dark text-truncate small">
+                                {session.user?.name || (isHindi ? "अज्ञात उपयोगकर्ता" : "Unknown User")}
+                              </div>
+                              <div className="text-muted text-truncate" style={{ fontSize: "11px" }}>
+                                {session.user?.email || truncate(session.user?._id || String(session.user), 15)}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-3 py-2 text-center">
+                          {getStatusBadge(session)}
+                        </td>
+
+                        {/* IP Address */}
+                        <td className="px-3 py-2">
+                          <code className="text-dark small bg-light px-1.5 py-0.5 rounded border">
+                            {session.ipAddress || session.ip || "—"}
+                          </code>
+                        </td>
+
+                        {/* Device / OS */}
+                        <td className="px-3 py-2">
+                          <div className="d-flex align-items-center gap-1.5 text-secondary small">
+                            {session.userAgent?.toLowerCase().includes("mobile") ? (
+                              <FaMobileAlt size={12} className="text-primary flex-shrink-0" />
+                            ) : (
+                              <FaDesktop size={12} className="text-primary flex-shrink-0" />
+                            )}
+                            <span className="fw-medium text-dark">{parseBrowser(session.userAgent)}</span>
+                            <span className="text-muted">/</span>
+                            <span>{parseOS(session.userAgent)}</span>
+                          </div>
+                        </td>
+
+                        {/* Created */}
+                        <td className="px-3 py-2 small text-secondary">
+                          <div className="fw-medium text-dark">{formatDateTime(session.createdAt)}</div>
+                          <div className="text-muted" style={{ fontSize: "11px" }}>
+                            {getRelativeTime(session.createdAt)}
+                          </div>
+                        </td>
+
+                        {/* Expires */}
+                        <td className="px-3 py-2 small text-secondary">
+                          <div className="fw-medium text-dark">{formatDateTime(session.expiresAt)}</div>
+                          {isSessionActive && (
+                            <Progress
+                              value={getExpiryProgress(session.createdAt, session.expiresAt)}
+                              style={{ height: "4px" }}
+                              className="mt-1 rounded-pill"
+                            />
+                          )}
+                        </td>
+
+                        {/* Action Buttons */}
+                        <td className="px-3 py-2 text-center">
+                          <div className="d-flex gap-1 justify-content-center">
+                            <Button
+                              size="sm"
+                              color="light"
+                              className="border text-primary px-2 py-1"
+                              onClick={() => {
+                                setSelectedSession(session);
+                                setDetailModalOpen(true);
+                              }}
+                              title={isHindi ? "विवरण देखें" : "View Details"}
+                            >
+                              <FaEye size={12} />
+                            </Button>
+
+                            {isSessionActive && (
+                              <Button
+                                size="sm"
+                                color="light"
+                                className="border text-danger px-2 py-1"
+                                onClick={() => {
+                                  setSelectedSession(session);
+                                  setRevokeModalOpen(true);
+                                }}
+                                title={isHindi ? "सत्र रद्द करें" : "Revoke Session"}
+                              >
+                                <FaBan size={11} />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          )}
+
+          {/* ── Pagination & Per Page Row ───────────────────────────────── */}
+          {!loading && sessions.length > 0 && (
+            <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 pt-3 border-top">
+              <div className="d-flex align-items-center gap-2 text-muted small">
+                <span>{isHindi ? "प्रति पृष्ठ पंक्तियाँ:" : "Rows per page:"}</span>
+                <Input
+                  type="select"
+                  bsSize="sm"
+                  style={{ width: "80px" }}
+                  value={perPage}
+                  onChange={(e) => {
+                    setPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="shadow-none bg-white"
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </Input>
+                <span className="ms-2">
+                  {isHindi
+                    ? `कुल ${totalSessions} में से ${(currentPage - 1) * perPage + 1} - ${Math.min(currentPage * perPage, totalSessions)}`
+                    : `Showing ${(currentPage - 1) * perPage + 1} - ${Math.min(currentPage * perPage, totalSessions)} of ${totalSessions}`}
+                </span>
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination size="sm" className="mb-0">
+                  <PaginationItem disabled={currentPage <= 1}>
+                    <PaginationLink
+                      first
+                      onClick={() => setCurrentPage(1)}
+                      className="shadow-none"
+                    />
                   </PaginationItem>
-                  <PaginationItem disabled={currentPage === 1}>
+                  <PaginationItem disabled={currentPage <= 1}>
                     <PaginationLink
                       previous
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className="shadow-none"
                     />
                   </PaginationItem>
 
-                  {getPaginationRange()[0] > 1 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink onClick={() => setCurrentPage(1)}>
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {getPaginationRange()[0] > 2 && (
-                        <PaginationItem disabled>
-                          <PaginationLink>...</PaginationLink>
-                        </PaginationItem>
-                      )}
-                    </>
-                  )}
-
-                  {getPaginationRange().map((pg) => (
-                    <PaginationItem key={pg} active={pg === currentPage}>
-                      <PaginationLink onClick={() => setCurrentPage(pg)}>
-                        {pg}
+                  {getPaginationRange().map((page) => (
+                    <PaginationItem key={page} active={currentPage === page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        className="shadow-none"
+                      >
+                        {page}
                       </PaginationLink>
                     </PaginationItem>
                   ))}
 
-                  {getPaginationRange()[getPaginationRange().length - 1] < totalPages && (
-                    <>
-                      {getPaginationRange()[getPaginationRange().length - 1] <
-                        totalPages - 1 && (
-                        <PaginationItem disabled>
-                          <PaginationLink>...</PaginationLink>
-                        </PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink onClick={() => setCurrentPage(totalPages)}>
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-
-                  <PaginationItem disabled={currentPage === totalPages}>
+                  <PaginationItem disabled={currentPage >= totalPages}>
                     <PaginationLink
                       next
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      className="shadow-none"
                     />
                   </PaginationItem>
-                  <PaginationItem disabled={currentPage === totalPages}>
-                    <PaginationLink last onClick={() => setCurrentPage(totalPages)} />
+                  <PaginationItem disabled={currentPage >= totalPages}>
+                    <PaginationLink
+                      last
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="shadow-none"
+                    />
                   </PaginationItem>
                 </Pagination>
-              </Col>
-            </Row>
-          </CardBody>
-        </Card>
-      )}
+              )}
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
       {/* ══════════ Detail Modal ══════════ */}
       <Modal
@@ -1171,769 +945,218 @@ const SessionManager = () => {
         toggle={() => setDetailModalOpen(false)}
         size="lg"
         centered
-        scrollable
       >
         <ModalHeader
           toggle={() => setDetailModalOpen(false)}
-          style={{ ...headerGradient, color: "#fff" }}
-          close={
-            <button
-              className="btn-close btn-close-white"
-              onClick={() => setDetailModalOpen(false)}
-            />
-          }
+          className="bg-adm-dark text-white border-0"
         >
-          🔐 Session Details
+          <div className="d-flex align-items-center gap-2">
+            <FaShieldAlt className="text-primary" />
+            <span className="fw-bold">{isHindi ? "सत्र विवरण" : "Session Details"}</span>
+          </div>
         </ModalHeader>
         {selectedSession && (
           <ModalBody className="p-4">
             <Row className="g-3">
-              {/* Session ID */}
-              <Col md={12}>
-                <Card className="border-0 rounded-3" style={{ backgroundColor: "#f8f9ff" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      Session ID
-                    </small>
-                    <div className="d-flex align-items-center gap-2 mt-1">
-                      <code className="text-dark" style={{ fontSize: "12px", wordBreak: "break-all" }}>
-                        {selectedSession._id}
-                      </code>
-                      <Button
-                        color="outline-primary"
-                        size="sm"
-                        className="py-0 px-2 flex-shrink-0"
-                        style={{ fontSize: "11px" }}
-                        onClick={() => copyToClipboard(selectedSession._id)}
-                      >
-                        📋 Copy
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* User */}
-              <Col md={6}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#f0f4ff" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      👤 User
-                    </small>
-                    <div className="d-flex align-items-center gap-2 mt-1">
-                      <div
-                        className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold text-white"
-                        style={{ width: "40px", height: "40px", ...headerGradient }}
-                      >
-                        {(
-                          selectedSession.user?.name ||
-                          selectedSession.user?.email ||
-                          "U"
-                        )
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: "14px" }}>
-                          {selectedSession.user?.name || "Unknown"}
-                        </div>
-                        <small className="text-muted" style={{ fontSize: "12px" }}>
-                          {selectedSession.user?.email || "—"}
-                        </small>
-                        {selectedSession.user?.role && (
-                          <Badge
-                            color="primary"
-                            pill
-                            className="ms-1"
-                            style={{ fontSize: "10px" }}
-                          >
-                            {selectedSession.user.role}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* Status */}
-              <Col md={6}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#f0fff4" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      📌 Status
-                    </small>
-                    <div className="mt-2">
-                      {getStatusBadge(selectedSession)}
-                    </div>
-                    <div className="mt-2">
-                      <small className="text-muted" style={{ fontSize: "11px" }}>
-                        Expiry Progress:
+              <Col xs={12}>
+                <div className="p-3 bg-light rounded-3 border">
+                  <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                      <small className="text-secondary fw-semibold text-uppercase d-block" style={{ fontSize: "11px" }}>
+                        {isHindi ? "सत्र ID" : "Session ID"}
                       </small>
-                      <Progress
-                        value={getExpiryProgress(
-                          selectedSession.createdAt,
-                          selectedSession.expiresAt
-                        )}
-                        color={
-                          getExpiryProgress(
-                            selectedSession.createdAt,
-                            selectedSession.expiresAt
-                          ) >= 100
-                            ? "danger"
-                            : "success"
-                        }
-                        className="mt-1"
-                        style={{ height: "6px", borderRadius: "3px" }}
-                      />
+                      <code className="text-dark small">{selectedSession._id}</code>
                     </div>
-                  </CardBody>
-                </Card>
+                    <div>{getStatusBadge(selectedSession)}</div>
+                  </div>
+                </div>
               </Col>
 
-              {/* Token */}
-              <Col md={12}>
-                <Card className="border-0 rounded-3" style={{ backgroundColor: "#fff8f0" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      🔑 Token
-                    </small>
-                    <div
-                      className="bg-white p-2 rounded mt-1 border"
-                      style={{
-                        wordBreak: "break-all",
-                        fontSize: "11px",
-                        fontFamily: "monospace",
-                        maxHeight: "80px",
-                        overflowY: "auto",
-                        borderColor: "#dee2e6",
-                      }}
-                    >
-                      {selectedSession.token}
-                    </div>
-                    <Button
-                      color="outline-primary"
-                      size="sm"
-                      className="mt-1"
-                      style={{ fontSize: "11px" }}
-                      onClick={() => copyToClipboard(selectedSession.token)}
-                    >
-                      📋 Copy Token
-                    </Button>
-                  </CardBody>
-                </Card>
+              <Col sm={6}>
+                <div className="p-3 border rounded-3 h-100">
+                  <small className="text-secondary fw-semibold text-uppercase d-block mb-1" style={{ fontSize: "11px" }}>
+                    {isHindi ? "उपयोगकर्ता" : "User Info"}
+                  </small>
+                  <div className="fw-bold text-dark">{selectedSession.user?.name || "Unknown"}</div>
+                  <div className="text-muted small">{selectedSession.user?.email || "—"}</div>
+                </div>
               </Col>
 
-              {/* IP Address */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#f8f0ff" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      🌐 IP Address
-                    </small>
-                    <div className="mt-1">
-                      <Badge color="dark" pill className="px-3 py-2" style={{ fontSize: "12px" }}>
-                        {selectedSession.ipAddress || "N/A"}
-                      </Badge>
-                    </div>
-                  </CardBody>
-                </Card>
+              <Col sm={6}>
+                <div className="p-3 border rounded-3 h-100">
+                  <small className="text-secondary fw-semibold text-uppercase d-block mb-1" style={{ fontSize: "11px" }}>
+                    {isHindi ? "IP एवं नेटवर्क" : "IP & Network"}
+                  </small>
+                  <div className="fw-bold text-dark">{selectedSession.ipAddress || selectedSession.ip || "—"}</div>
+                  <div className="text-muted small">{parseBrowser(selectedSession.userAgent)} on {parseOS(selectedSession.userAgent)}</div>
+                </div>
               </Col>
 
-              {/* Browser */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#f0f8ff" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      🖥️ Browser
-                    </small>
-                    <div className="fw-bold mt-1" style={{ fontSize: "15px" }}>
-                      {parseBrowser(selectedSession.userAgent)}
-                    </div>
-                  </CardBody>
-                </Card>
+              <Col sm={6}>
+                <div className="p-3 border rounded-3 h-100">
+                  <small className="text-secondary fw-semibold text-uppercase d-block mb-1" style={{ fontSize: "11px" }}>
+                    {isHindi ? "निर्माण समय" : "Created At"}
+                  </small>
+                  <div className="fw-semibold text-dark">{formatDateTime(selectedSession.createdAt)}</div>
+                  <div className="text-muted small">{getRelativeTime(selectedSession.createdAt)}</div>
+                </div>
               </Col>
 
-              {/* OS */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#fff0f0" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      💻 Operating System
-                    </small>
-                    <div className="fw-bold mt-1" style={{ fontSize: "15px" }}>
-                      {parseOS(selectedSession.userAgent)}
-                    </div>
-                  </CardBody>
-                </Card>
+              <Col sm={6}>
+                <div className="p-3 border rounded-3 h-100">
+                  <small className="text-secondary fw-semibold text-uppercase d-block mb-1" style={{ fontSize: "11px" }}>
+                    {isHindi ? "समाप्ति समय" : "Expires At"}
+                  </small>
+                  <div className="fw-semibold text-dark">{formatDateTime(selectedSession.expiresAt)}</div>
+                </div>
               </Col>
 
-              {/* Full User Agent */}
-              <Col md={12}>
-                <Card className="border-0 rounded-3" style={{ backgroundColor: "#f5f5f5" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      📝 Full User Agent
-                    </small>
-                    <div
-                      className="bg-white p-2 rounded mt-1 border text-muted"
-                      style={{
-                        fontSize: "11px",
-                        wordBreak: "break-all",
-                        maxHeight: "60px",
-                        overflowY: "auto",
-                        borderColor: "#dee2e6",
-                      }}
-                    >
-                      {selectedSession.userAgent || "N/A"}
-                    </div>
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* Created At */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#eef6ff" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      📅 Created At
-                    </small>
-                    <div className="fw-semibold mt-1" style={{ fontSize: "13px" }}>
-                      {formatDateTime(selectedSession.createdAt)}
-                    </div>
-                    <Badge
-                      color="light"
-                      className="text-muted mt-1"
-                      style={{ fontSize: "10px", border: "1px solid #dee2e6" }}
-                    >
-                      {getRelativeTime(selectedSession.createdAt)}
-                    </Badge>
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* Expires At */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#fff9ee" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      ⏰ Expires At
-                    </small>
-                    <div className="fw-semibold mt-1" style={{ fontSize: "13px" }}>
-                      {formatDateTime(selectedSession.expiresAt)}
-                    </div>
-                    {new Date(selectedSession.expiresAt) < new Date() ? (
-                      <Badge color="danger" pill className="mt-1" style={{ fontSize: "10px" }}>
-                        ⚠️ Expired
-                      </Badge>
-                    ) : (
-                      <Badge color="success" pill className="mt-1" style={{ fontSize: "10px" }}>
-                        ✅ Still Valid
-                      </Badge>
-                    )}
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* Updated At */}
-              <Col md={4}>
-                <Card className="border-0 h-100 rounded-3" style={{ backgroundColor: "#f0fff8" }}>
-                  <CardBody className="py-2 px-3">
-                    <small className="text-muted fw-bold text-uppercase" style={{ fontSize: "11px" }}>
-                      🔄 Last Updated
-                    </small>
-                    <div className="fw-semibold mt-1" style={{ fontSize: "13px" }}>
-                      {formatDateTime(selectedSession.updatedAt)}
-                    </div>
-                    <Badge
-                      color="light"
-                      className="text-muted mt-1"
-                      style={{ fontSize: "10px", border: "1px solid #dee2e6" }}
-                    >
-                      {getRelativeTime(selectedSession.updatedAt)}
-                    </Badge>
-                  </CardBody>
-                </Card>
-              </Col>
-
-              {/* Logout Details (if exists) */}
               {selectedSession.logoutAt && (
-                <Col md={12}>
-                  <Card
-                    className="border-0 rounded-3"
-                    style={{
-                      backgroundColor: "#fef2f2",
-                      borderLeft: "4px solid #ef4444",
-                      borderLeftColor: "#ef4444",
-                      borderLeftWidth: "4px",
-                      borderLeftStyle: "solid",
-                    }}
-                  >
-                    <CardBody className="py-3 px-3">
-                      <h6 className="fw-bold text-danger mb-3" style={{ fontSize: "14px" }}>
-                        🚪 Logout Details
-                      </h6>
-                      <Row className="g-2">
-                        <Col md={4}>
-                          <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "11px" }}>
-                            Reason
-                          </small>
-                          <div className="mt-1">
-                            {getLogoutReasonBadge(selectedSession.logoutReason)}
-                          </div>
-                        </Col>
-                        <Col md={4}>
-                          <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "11px" }}>
-                            Logged Out At
-                          </small>
-                          <div className="fw-semibold mt-1" style={{ fontSize: "13px" }}>
-                            {formatDateTime(selectedSession.logoutAt)}
-                          </div>
-                          <Badge
-                            color="light"
-                            className="text-muted"
-                            style={{ fontSize: "10px", border: "1px solid #dee2e6" }}
-                          >
-                            {getRelativeTime(selectedSession.logoutAt)}
-                          </Badge>
-                        </Col>
-                        <Col md={4}>
-                          <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "11px" }}>
-                            Message
-                          </small>
-                          <div className="fst-italic mt-1" style={{ fontSize: "13px" }}>
-                            {selectedSession.logoutMessage ? (
-                              <span>&ldquo;{selectedSession.logoutMessage}&rdquo;</span>
-                            ) : (
-                              <span className="text-muted">No message</span>
-                            )}
-                          </div>
-                        </Col>
-                      </Row>
-                    </CardBody>
-                  </Card>
+                <Col xs={12}>
+                  <div className="p-3 border rounded-3 bg-danger bg-opacity-10 border-danger border-opacity-25">
+                    <small className="text-danger fw-semibold text-uppercase d-block mb-1" style={{ fontSize: "11px" }}>
+                      {isHindi ? "लॉगआउट विवरण" : "Logout Details"}
+                    </small>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fw-semibold text-dark">{formatDateTime(selectedSession.logoutAt)}</span>
+                      {getLogoutReasonBadge(selectedSession.logoutReason)}
+                    </div>
+                  </div>
                 </Col>
               )}
 
-              {/* Session Timeline */}
-              <Col md={12}>
-                <Card className="border-0 rounded-3" style={{ backgroundColor: "#fafafa" }}>
-                  <CardBody className="py-3 px-3">
-                    <h6 className="fw-bold mb-3" style={{ fontSize: "14px" }}>
-                      📊 Session Timeline
-                    </h6>
-                    <div className="position-relative ps-4">
-                      {/* Created */}
-                      <div className="mb-3 position-relative">
-                        <div
-                          className="position-absolute rounded-circle"
-                          style={{
-                            left: "-24px",
-                            top: "3px",
-                            width: "12px",
-                            height: "12px",
-                            backgroundColor: "#22c55e",
-                            border: "2px solid #fff",
-                            boxShadow: "0 0 0 2px #22c55e",
-                          }}
-                        />
-                        <div
-                          className="position-absolute"
-                          style={{
-                            left: "-19px",
-                            top: "17px",
-                            width: "2px",
-                            height: "calc(100% + 8px)",
-                            backgroundColor: "#e5e7eb",
-                          }}
-                        />
-                        <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "10px" }}>
-                          Session Created
-                        </small>
-                        <div className="fw-semibold" style={{ fontSize: "13px" }}>
-                          {formatDateTime(selectedSession.createdAt)}
-                        </div>
-                      </div>
-
-                      {/* Last Updated */}
-                      {selectedSession.updatedAt !== selectedSession.createdAt && (
-                        <div className="mb-3 position-relative">
-                          <div
-                            className="position-absolute rounded-circle"
-                            style={{
-                              left: "-24px",
-                              top: "3px",
-                              width: "12px",
-                              height: "12px",
-                              backgroundColor: "#6366f1",
-                              border: "2px solid #fff",
-                              boxShadow: "0 0 0 2px #6366f1",
-                            }}
-                          />
-                          <div
-                            className="position-absolute"
-                            style={{
-                              left: "-19px",
-                              top: "17px",
-                              width: "2px",
-                              height: "calc(100% + 8px)",
-                              backgroundColor: "#e5e7eb",
-                            }}
-                          />
-                          <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "10px" }}>
-                            Last Updated
-                          </small>
-                          <div className="fw-semibold" style={{ fontSize: "13px" }}>
-                            {formatDateTime(selectedSession.updatedAt)}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Logged Out */}
-                      {selectedSession.logoutAt && (
-                        <div className="mb-3 position-relative">
-                          <div
-                            className="position-absolute rounded-circle"
-                            style={{
-                              left: "-24px",
-                              top: "3px",
-                              width: "12px",
-                              height: "12px",
-                              backgroundColor: "#ef4444",
-                              border: "2px solid #fff",
-                              boxShadow: "0 0 0 2px #ef4444",
-                            }}
-                          />
-                          <div
-                            className="position-absolute"
-                            style={{
-                              left: "-19px",
-                              top: "17px",
-                              width: "2px",
-                              height: "calc(100% + 8px)",
-                              backgroundColor: "#e5e7eb",
-                            }}
-                          />
-                          <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "10px" }}>
-                            Logged Out
-                          </small>
-                          <div className="fw-semibold" style={{ fontSize: "13px" }}>
-                            {formatDateTime(selectedSession.logoutAt)}
-                          </div>
-                          <div className="mt-1">
-                            {getLogoutReasonBadge(selectedSession.logoutReason)}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Expires */}
-                      <div className="position-relative">
-                        <div
-                          className="position-absolute rounded-circle"
-                          style={{
-                            left: "-24px",
-                            top: "3px",
-                            width: "12px",
-                            height: "12px",
-                            backgroundColor:
-                              new Date(selectedSession.expiresAt) < new Date()
-                                ? "#f59e0b"
-                                : "#9ca3af",
-                            border: "2px solid #fff",
-                            boxShadow: `0 0 0 2px ${
-                              new Date(selectedSession.expiresAt) < new Date()
-                                ? "#f59e0b"
-                                : "#9ca3af"
-                            }`,
-                          }}
-                        />
-                        <small className="text-muted fw-bold text-uppercase d-block" style={{ fontSize: "10px" }}>
-                          {new Date(selectedSession.expiresAt) < new Date()
-                            ? "Expired At"
-                            : "Will Expire At"}
-                        </small>
-                        <div className="fw-semibold" style={{ fontSize: "13px" }}>
-                          {formatDateTime(selectedSession.expiresAt)}
-                        </div>
-                      </div>
+              {selectedSession.token && (
+                <Col xs={12}>
+                  <div className="p-3 border rounded-3">
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <small className="text-secondary fw-semibold text-uppercase" style={{ fontSize: "11px" }}>
+                        JWT Token
+                      </small>
+                      <Button
+                        color="link"
+                        size="sm"
+                        className="p-0 text-primary text-decoration-none small d-inline-flex align-items-center gap-1"
+                        onClick={() => copyToClipboard(selectedSession.token)}
+                      >
+                        <FaCopy size={11} /> {isHindi ? "कॉपी" : "Copy"}
+                      </Button>
                     </div>
-                  </CardBody>
-                </Card>
-              </Col>
+                    <code className="text-break small text-muted d-block" style={{ maxHeight: "80px", overflowY: "auto" }}>
+                      {selectedSession.token}
+                    </code>
+                  </div>
+                </Col>
+              )}
             </Row>
           </ModalBody>
         )}
         <ModalFooter className="bg-light border-top">
-          <Button
-            color="secondary"
-            outline
-            onClick={() => setDetailModalOpen(false)}
-          >
-            Close
+          <Button color="secondary" size="sm" onClick={() => setDetailModalOpen(false)}>
+            {isHindi ? "बंद करें" : "Close"}
           </Button>
-          {selectedSession &&
-            getSessionStatus(selectedSession) === "ACTIVE" && (
-              <Button
-                color="danger"
-                className="fw-semibold"
-                onClick={() => {
-                  setDetailModalOpen(false);
-                  setRevokeModalOpen(true);
-                }}
-              >
-                ⛔ Revoke This Session
-              </Button>
-            )}
         </ModalFooter>
       </Modal>
 
-      {/* ══════════ Revoke Single Session Modal ══════════ */}
+      {/* ══════════ Revoke Single Modal ══════════ */}
       <Modal
         isOpen={revokeModalOpen}
-        toggle={() => {
-          setRevokeModalOpen(false);
-          setRevokeReason("USER_LOGOUT");
-          setRevokeMessage("");
-        }}
+        toggle={() => setRevokeModalOpen(false)}
         centered
       >
         <ModalHeader
           toggle={() => setRevokeModalOpen(false)}
-          className="bg-danger text-white"
-          close={
-            <button
-              className="btn-close btn-close-white"
-              onClick={() => setRevokeModalOpen(false)}
-            />
-          }
+          className="bg-danger text-white border-0"
         >
-          ⛔ Revoke Session
+          <div className="d-flex align-items-center gap-2">
+            <FaBan />
+            <span className="fw-bold">{isHindi ? "सत्र रद्द करें" : "Revoke Session"}</span>
+          </div>
         </ModalHeader>
         <ModalBody className="p-4">
-          {selectedSession && (
-            <>
-              <Alert color="warning" className="border-0 rounded-3">
-                <strong>⚠️ Warning!</strong> You are about to revoke this
-                session. The user will be logged out immediately.
-              </Alert>
-
-              {/* Session Info Summary */}
-              <Card className="border-0 rounded-3 mb-3" style={{ backgroundColor: "#f8f9fa" }}>
-                <CardBody className="py-2 px-3">
-                  <Row>
-                    <Col xs={6}>
-                      <small className="text-muted fw-bold d-block" style={{ fontSize: "11px" }}>
-                        User
-                      </small>
-                      <div className="fw-bold" style={{ fontSize: "14px" }}>
-                        {selectedSession.user?.name || "Unknown"}
-                      </div>
-                    </Col>
-                    <Col xs={6}>
-                      <small className="text-muted fw-bold d-block" style={{ fontSize: "11px" }}>
-                        IP Address
-                      </small>
-                      <div className="fw-bold" style={{ fontSize: "14px" }}>
-                        {selectedSession.ipAddress || "N/A"}
-                      </div>
-                    </Col>
-                    <Col xs={6} className="mt-2">
-                      <small className="text-muted fw-bold d-block" style={{ fontSize: "11px" }}>
-                        Browser
-                      </small>
-                      <div style={{ fontSize: "13px" }}>
-                        {parseBrowser(selectedSession.userAgent)}
-                      </div>
-                    </Col>
-                    <Col xs={6} className="mt-2">
-                      <small className="text-muted fw-bold d-block" style={{ fontSize: "11px" }}>
-                        Created
-                      </small>
-                      <div style={{ fontSize: "12px" }}>
-                        {formatDateTime(selectedSession.createdAt)}
-                      </div>
-                    </Col>
-                  </Row>
-                </CardBody>
-              </Card>
-
-              {/* Revoke Reason */}
-              <div className="mb-3">
-                <label className="form-label fw-semibold" style={{ fontSize: "14px" }}>
-                  📝 Logout Reason <span className="text-danger">*</span>
-                </label>
-                <Input
-                  type="select"
-                  value={revokeReason}
-                  onChange={(e) => setRevokeReason(e.target.value)}
-                  style={{ borderColor: "#dc3545" }}
-                >
-                  <option value="USER_LOGOUT">🚪 User Logout</option>
-                  <option value="SESSION_EXPIRED">⏰ Session Expired</option>
-                  <option value="NEW_LOGIN">🔄 New Login</option>
-                </Input>
-              </div>
-
-              {/* Revoke Message */}
-              <div className="mb-1">
-                <label className="form-label fw-semibold" style={{ fontSize: "14px" }}>
-                  💬 Message{" "}
-                  <span className="text-muted fw-normal">(Optional)</span>
-                </label>
-                <Input
-                  type="textarea"
-                  rows={3}
-                  placeholder="Enter a reason message for this revocation..."
-                  value={revokeMessage}
-                  onChange={(e) => setRevokeMessage(e.target.value)}
-                  style={{ resize: "none" }}
-                />
-              </div>
-            </>
-          )}
-        </ModalBody>
-        <ModalFooter className="border-top bg-light">
-          <Button
-            color="secondary"
-            outline
-            onClick={() => {
-              setRevokeModalOpen(false);
-              setRevokeReason("USER_LOGOUT");
-              setRevokeMessage("");
-            }}
-            disabled={revoking}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="danger"
-            className="fw-semibold"
-            onClick={handleRevokeSession}
-            disabled={revoking}
-            style={{ minWidth: "140px" }}
-          >
-            {revoking ? (
-              <>
-                <Spinner size="sm" className="me-1" /> Revoking...
-              </>
-            ) : (
-              "⛔ Confirm Revoke"
-            )}
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* ══════════ Revoke All Sessions Modal ══════════ */}
-      <Modal
-        isOpen={revokeAllModalOpen}
-        toggle={() => {
-          setRevokeAllModalOpen(false);
-          setRevokeReason("USER_LOGOUT");
-          setRevokeMessage("");
-        }}
-        centered
-      >
-        <ModalHeader
-          toggle={() => setRevokeAllModalOpen(false)}
-          className="bg-danger text-white"
-          close={
-            <button
-              className="btn-close btn-close-white"
-              onClick={() => setRevokeAllModalOpen(false)}
-            />
-          }
-        >
-          ⛔ Revoke ALL Active Sessions
-        </ModalHeader>
-        <ModalBody className="p-4">
-          <Alert color="danger" className="border-0 rounded-3">
-            <h5 className="alert-heading fw-bold" style={{ fontSize: "16px" }}>
-              🚨 Critical Action!
-            </h5>
-            <p className="mb-0" style={{ fontSize: "14px" }}>
-              This will revoke <strong>ALL active sessions</strong> across all
-              users. Every logged-in user will be forced to log out immediately.
-            </p>
-          </Alert>
-
-          <Card className="border-0 rounded-3 mb-3 text-center" style={{ backgroundColor: "#f8f9fa" }}>
-            <CardBody className="py-3">
-              <div style={{ fontSize: "2.5rem", lineHeight: 1 }} className="mb-2">
-                ⚠️
-              </div>
-              <h4 className="text-danger fw-bold mb-1" style={{ fontSize: "2rem" }}>
-                {stats.active.toLocaleString()}
-              </h4>
-              <small className="text-muted fw-bold text-uppercase" style={{ letterSpacing: "1px", fontSize: "11px" }}>
-                Active Sessions Will Be Revoked
-              </small>
-            </CardBody>
-          </Card>
-
-          {/* Revoke Reason */}
+          <p className="text-secondary mb-3">
+            {isHindi
+              ? "क्या आप निश्चित रूप से इस उपयोगकर्ता सत्र को अमान्य करना चाहते हैं? उपयोगकर्ता तुरंत लॉग आउट हो जाएगा।"
+              : "Are you sure you want to revoke this session? The user will be immediately logged out on their device."}
+          </p>
           <div className="mb-3">
-            <label className="form-label fw-semibold" style={{ fontSize: "14px" }}>
-              📝 Logout Reason <span className="text-danger">*</span>
+            <label className="fw-semibold text-secondary small mb-1">
+              {isHindi ? "रद्द करने का कारण" : "Revocation Reason"}
             </label>
             <Input
               type="select"
               value={revokeReason}
               onChange={(e) => setRevokeReason(e.target.value)}
-              style={{ borderColor: "#dc3545" }}
+              className="shadow-none bg-white"
             >
-              <option value="USER_LOGOUT">🚪 User Logout</option>
-              <option value="SESSION_EXPIRED">⏰ Session Expired</option>
-              <option value="NEW_LOGIN">🔄 New Login</option>
+              <option value="USER_LOGOUT">{isHindi ? "उपयोगकर्ता लॉगआउट" : "User Logout"}</option>
+              <option value="SESSION_EXPIRED">{isHindi ? "सत्र समाप्ति" : "Session Expired"}</option>
+              <option value="NEW_LOGIN">{isHindi ? "नया लॉगिन" : "New Login"}</option>
             </Input>
           </div>
-
-          {/* Revoke Message */}
-          <div className="mb-1">
-            <label className="form-label fw-semibold" style={{ fontSize: "14px" }}>
-              💬 Message{" "}
-              <span className="text-muted fw-normal">(Optional)</span>
+          <div>
+            <label className="fw-semibold text-secondary small mb-1">
+              {isHindi ? "अतिरिक्त संदेश (वैकल्पिक)" : "Reason Message (Optional)"}
             </label>
             <Input
               type="textarea"
-              rows={3}
-              placeholder="Enter a reason for revoking all sessions..."
+              rows={2}
               value={revokeMessage}
               onChange={(e) => setRevokeMessage(e.target.value)}
-              style={{ resize: "none" }}
+              placeholder={isHindi ? "उदा. व्यवस्थापक द्वारा सुरक्षा कारणों से रद्द किया गया" : "e.g. Session terminated by Admin"}
+              className="shadow-none"
             />
           </div>
         </ModalBody>
-        <ModalFooter className="border-top bg-light">
-          <Button
-            color="secondary"
-            outline
-            onClick={() => {
-              setRevokeAllModalOpen(false);
-              setRevokeReason("USER_LOGOUT");
-              setRevokeMessage("");
-            }}
-            disabled={revoking}
-          >
-            Cancel
+        <ModalFooter className="bg-light border-top">
+          <Button color="secondary" size="sm" onClick={() => setRevokeModalOpen(false)} disabled={revoking}>
+            {isHindi ? "रद्द करें" : "Cancel"}
           </Button>
-          <Button
-            color="danger"
-            className="fw-semibold"
-            onClick={handleRevokeAll}
-            disabled={revoking}
-            style={{ minWidth: "160px" }}
-          >
-            {revoking ? (
-              <>
-                <Spinner size="sm" className="me-1" /> Revoking All...
-              </>
-            ) : (
-              "⛔ Confirm Revoke All"
-            )}
+          <Button color="danger" size="sm" onClick={handleRevokeSession} disabled={revoking} className="fw-bold">
+            {revoking ? <Spinner size="sm" /> : <FaBan className="me-1" />}
+            {isHindi ? "सत्र रद्द करें" : "Revoke Session"}
           </Button>
         </ModalFooter>
       </Modal>
-    </div>
+
+      {/* ══════════ Revoke All Modal ══════════ */}
+      <Modal
+        isOpen={revokeAllModalOpen}
+        toggle={() => setRevokeAllModalOpen(false)}
+        centered
+      >
+        <ModalHeader
+          toggle={() => setRevokeAllModalOpen(false)}
+          className="bg-danger text-white border-0"
+        >
+          <div className="d-flex align-items-center gap-2">
+            <FaBan />
+            <span className="fw-bold">{isHindi ? "सभी सक्रिय सत्र रद्द करें" : "Revoke All Active Sessions"}</span>
+          </div>
+        </ModalHeader>
+        <ModalBody className="p-4">
+          <Alert color="warning" className="border-0 small mb-3">
+            <FaInfoCircle className="me-1.5" />
+            {isHindi
+              ? "यह कार्रवाई सभी उपयोगकर्ताओं के सभी सक्रिय टोकन को अमान्य कर देगी।"
+              : "This action will invalidate all active sessions across all users in the system."}
+          </Alert>
+          <p className="text-secondary small mb-0">
+            {isHindi
+              ? "क्या आप निश्चित रूप से जारी रखना चाहते हैं?"
+              : "Are you completely sure you want to proceed with terminating all active sessions?"}
+          </p>
+        </ModalBody>
+        <ModalFooter className="bg-light border-top">
+          <Button color="secondary" size="sm" onClick={() => setRevokeAllModalOpen(false)} disabled={revoking}>
+            {isHindi ? "रद्द करें" : "Cancel"}
+          </Button>
+          <Button color="danger" size="sm" onClick={handleRevokeAll} disabled={revoking} className="fw-bold">
+            {revoking ? <Spinner size="sm" /> : <FaBan className="me-1" />}
+            {isHindi ? "सभी सत्र रद्द करें" : "Revoke All Sessions"}
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </>
   );
 };
 

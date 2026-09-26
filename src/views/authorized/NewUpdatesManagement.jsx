@@ -12,7 +12,7 @@ import {
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBullhorn, FaList, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
 import Swal from "sweetalert2";
-import apiClient from "../../services/api.service";
+import apiClient from "@apiService";
 
 const NewUpdates = () => {
   
@@ -64,7 +64,7 @@ const NewUpdates = () => {
   /* ================= LOAD LIST ================= */
   const loadNotices = async () => {
     try {
-      const res = await apiClient.get('/notice-ticker/list-all').catch(() => apiClient.get('/notice-ticker/all'));
+      const res = await apiClient.get('/notice-ticker/list-all');
       setList(res.data?.data || res.data || []);
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Failed to load notices", "error");
@@ -146,7 +146,7 @@ const NewUpdates = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await apiClient.delete(`/notice-ticker/delete/${id}`).catch(() => apiClient.delete(`/notice-ticker/${id}`));
+      const res = await apiClient.delete(`/notice-ticker/delete/${id}`);
       Swal.fire("Success", res.data?.message || "Deleted", "success");
       loadNotices();
     } catch (err) {
@@ -174,9 +174,9 @@ const NewUpdates = () => {
       let res;
 
       if (editingId) {
-        res = await apiClient.put(`/notice-ticker/update/${editingId}`, formData).catch(() => apiClient.put(`/notice-ticker/${editingId}`, formData));
+        res = await apiClient.put(`/notice-ticker/update/${editingId}`, formData);
       } else {
-        res = await apiClient.post('/notice-ticker/create', formData).catch(() => apiClient.post('/notice-ticker', formData));
+        res = await apiClient.post('/notice-ticker/create', formData);
       }
 
       Swal.fire({
