@@ -7,8 +7,6 @@ import {
 } from 'reactstrap';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { FaHome, FaFileAlt } from 'react-icons/fa';
-
-const API = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = 'BeyondSend — Customer Communication Platform';
 
 const formatDateTime = (date) => {

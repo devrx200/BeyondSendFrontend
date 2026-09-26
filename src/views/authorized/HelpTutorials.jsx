@@ -11,12 +11,12 @@ import {
   FaFolderOpen, FaVideoSlash,
   FaChevronDown, FaChevronUp
 } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import { useLanguage } from "../../contexts/LanguageContext";
 import PageLoader from "../../components/PageLoader";
 import { jwtDecode } from "jwt-decode";
 
-const API = import.meta.env.VITE_API_URL;
+
 const ITEMS_PER_PAGE = 6;
 
 const formatDate = (date) => {
@@ -33,7 +33,7 @@ const getYoutubeEmbedUrl = (url) => {
   try {
     const trimmed = url.trim();
     if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-      return `${API}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+      return `${BASE_HOST}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
     }
     const parsed = new URL(trimmed);
     let id = "";
@@ -117,9 +117,7 @@ const HelpTutorials = () => {
     const loadHelp = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API}/api/get-active-guidance-by-role`, {
-          params: { role }
-        });
+        const res = await apiClient.get('/help-guidance/role');
         if (isMounted) setData(res?.data?.data || []);
       } catch (err) {
         console.error(err);

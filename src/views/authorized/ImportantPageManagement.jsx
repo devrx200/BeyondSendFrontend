@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import { Spinner, Card as ReactstrapCard, CardHeader, CardBody, Button, UncontrolledTooltip } from "reactstrap";
 import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
@@ -11,7 +11,7 @@ import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 import PageLoader from "../../components/PageLoader";
 
-const API = import.meta.env.VITE_API_URL;
+
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 const sanitiseSlug = (val) => val.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/-+/g, "-");
 const validateSlug = (val) => {
@@ -23,21 +23,6 @@ const validateSlug = (val) => {
   return "";
 };
 const titleToSlug = (title) => sanitiseSlug(title || "").replace(/^-+|-+$/g, "");
-const getToken = () => {
-  const token = sessionStorage.getItem("authToken");
-  if (!token) return "";
-  try {
-    const parsed = JSON.parse(token);
-    return parsed?.token || parsed?.access || token;
-  } catch {
-    return token;
-  }
-};
-
-const authH = () => {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
 
 const copyToClipboard = async (text) => {
   if (!text) return false;
@@ -493,7 +478,7 @@ const ImportantPageManagement = () => {
   useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
-    try { const res = await axios.get(`${API}/api/get-categories`, { headers: authH() }); setCategories(res.data.data || []); } catch { }
+    try { const res = await apiClient.get('/category/list').catch(() => apiClient.get('/category/list')); setCategories(res.data.data || []); } catch { }
   };
 
   const getAllPages = async () => {
@@ -504,7 +489,7 @@ const ImportantPageManagement = () => {
       if (filterStatus === "draft") params.isPublished = false;
       if (filterStatus === "active") params.isActive = true;
       if (filterStatus === "inactive") params.isActive = false;
-      const res = await axios.get(`${API}/api/get-all-important-pages`, { headers: authH(), params });
+      const res = await apiClient.get('/important-pages/list', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setPages(data);
       const ti = res.data?.pagination?.totalItems ?? res.data?.pagination?.totalDocuments ?? data.length;
@@ -576,14 +561,14 @@ const ImportantPageManagement = () => {
       let savedId = editingId;
       let lastRes = null;
       if (editingId) {
-        lastRes = await axios.put(`${API}/api/update-important-page/${editingId}`, fd, { headers: multipartH });
+        lastRes = await apiClient.put(`/important-pages/update/${editingId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       } else {
-        lastRes = await axios.post(`${API}/api/create-important-page`, fd, { headers: multipartH });
+        lastRes = await apiClient.post('/important-pages/create', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
         savedId = lastRes.data?.data?._id || lastRes.data?._id;
         if (savedId) setEditingId(savedId);
       }
       if (publishAfter && savedId) {
-        lastRes = await axios.post(`${API}/api/important-page/publish/${savedId}`, {}, { headers: authH() });
+        lastRes = await apiClient.post(`/important-pages/publish/${savedId}`, {});
       }
       toast.success(lastRes?.data?.message || (publishAfter ? "Page published successfully." : "Draft saved successfully."));
       getAllPages();
@@ -592,7 +577,7 @@ const ImportantPageManagement = () => {
 
   const handlePublish = async (id) => {
     try {
-      const res = await axios.post(`${API}/api/important-page/publish/${id}`, {}, { headers: authH() });
+      const res = await apiClient.post(`/important-pages/publish/${id}`, {});
       toast.success(res.data?.message || "Page published.");
       getAllPages();
     } catch (err) {
@@ -602,7 +587,7 @@ const ImportantPageManagement = () => {
 
   const handleDraft = async (id) => {
     try {
-      const res = await axios.post(`${API}/api/important-page/draft/${id}`, {}, { headers: authH() });
+      const res = await apiClient.post(`/important-pages/draft/${id}`, {});
       toast.info(res.data?.message || "Moved page to draft.");
       getAllPages();
     } catch (err) {
@@ -614,7 +599,7 @@ const ImportantPageManagement = () => {
     const isConfirmed = await wpSwal.confirm("Delete this page?", `Permanently delete <strong>"${title || "Untitled"}"</strong>?<br>This cannot be undone.`);
     if (!isConfirmed) return;
     try {
-      const res = await axios.delete(`${API}/api/delete-important-page/${id}`, { headers: authH() });
+      const res = await apiClient.delete(`/important-pages/delete/${id}`);
       toast.success(res.data?.message || "Page deleted successfully.");
       getAllPages();
     } catch (err) { toast.error(err?.response?.data?.message || "Delete failed"); }
@@ -741,7 +726,7 @@ const ImportantPageManagement = () => {
       const isConfirmed = await wpSwal.confirm(`Delete ${count} ${label}?`, "This will permanently remove the selected pages.");
       if (!isConfirmed) return;
       try {
-        await Promise.all(selectedIds.map(id => axios.delete(`${API}/api/delete-important-page/${id}`, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.delete(`/important-pages/delete/${id}`)));
         toast.success(`${count} ${label} deleted.`);
         setSelectedIds([]);
         setBulkAction("");
@@ -752,7 +737,7 @@ const ImportantPageManagement = () => {
       }
     } else if (bulkAction === "publish") {
       try {
-        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/important-page/publish/${id}`, {}, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.post(`/important-pages/publish/${id}`, {})));
         toast.success(`${count} ${label} published.`);
         setSelectedIds([]);
         setBulkAction("");
@@ -763,7 +748,7 @@ const ImportantPageManagement = () => {
       }
     } else if (bulkAction === "draft") {
       try {
-        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/important-page/draft/${id}`, {}, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.post(`/important-pages/draft/${id}`, {})));
         toast.info(`${count} ${label} moved to draft.`);
         setSelectedIds([]);
         setBulkAction("");

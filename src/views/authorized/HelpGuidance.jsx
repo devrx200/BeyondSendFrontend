@@ -11,14 +11,14 @@ import {
   FaTh, FaList, FaChevronDown, FaChevronUp,
   FaExternalLinkAlt, FaDownload
 } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const HelpGuidance = () => {
   const { isHindi } = useLanguage();
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const token = sessionStorage.getItem("authToken");
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ const HelpGuidance = () => {
     try {
       const trimmed = url.trim();
       if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-        return `${API_URL}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+        return `${BASE_HOST}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
       }
       const parsed = new URL(trimmed);
       let id = "";
@@ -87,7 +87,7 @@ const HelpGuidance = () => {
   };
 
   const openPreview = (item) => {
-    setPreviewUrl(item.contentType === "pdf" || item.contentType === "PDF" ? `${API_URL}${item.pdfUrl}` : getEmbedUrl(item.videoUrl));
+    setPreviewUrl(item.contentType === "pdf" || item.contentType === "PDF" ? `${BASE_HOST}${item.pdfUrl}` : getEmbedUrl(item.videoUrl));
     setPreviewTitle(item.title);
     setPreviewModal(true);
   };
@@ -97,21 +97,7 @@ const HelpGuidance = () => {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        `${API_URL}/api/get-help-guidance`,
-        {
-          params: {
-            page,
-            limit: 6,
-            search,
-            status: statusFilter,
-            accessBy: accessFilter
-          },
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await apiClient.get('/help-guidance/list');
 
       setList(res.data?.data || []);
       setTotalPages(res.data?.totalPages || 1);
@@ -125,28 +111,14 @@ const HelpGuidance = () => {
     } finally {
       setLoading(false);
     }
-  }, [API_URL, accessFilter, page, search, statusFilter, token]);
+  }, [accessFilter, page, search, statusFilter]);
 
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${API_URL}/api/get-help-guidance`,
-          {
-            params: {
-              page,
-              limit: 6,
-              search,
-              status: statusFilter,
-              accessBy: accessFilter
-            },
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
+        const res = await apiClient.get('/help-guidance/list');
         if (isMounted) {
           setList(res.data?.data || []);
           setTotalPages(res.data?.totalPages || 1);
@@ -164,7 +136,7 @@ const HelpGuidance = () => {
     return () => {
       isMounted = false;
     };
-  }, [API_URL, accessFilter, page, search, statusFilter, token]);
+  }, [accessFilter, page, search, statusFilter]);
 
   const toggleModal = () => { setModal(!modal); if (modal) resetForm(); };
 
@@ -192,20 +164,13 @@ const HelpGuidance = () => {
 
     try {
       const url = editingId
-        ? `${API_URL}/api/update-help-guidance/${editingId}`
-        : `${API_URL}/api/create-help-guidance`;
+        ? `${BASE_HOST}/api/update-help-guidance/${editingId}`
+        : `${BASE_HOST}/api/create-help-guidance`;
       const method = editingId ? "put" : "post";
 
-      // Fix: Move headers to config object, not as second parameter after data
-      const res = await axios({
-        method,
-        url,
-        data: fd,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data" // Required for file upload
-        }
-      });
+      const res = await (editingId
+        ? apiClient.put(`/help-guidance/update/${editingId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : apiClient.post('/help-guidance/create', fd, { headers: { 'Content-Type': 'multipart/form-data' } }));
 
       Swal.fire("Success", res?.data?.message || "Operation successful", "success");
       toggleModal();
@@ -239,7 +204,7 @@ const HelpGuidance = () => {
       confirmButtonText: "Yes, delete"
     });
     if (!result.isConfirmed) return;
-    await axios.delete(`${API_URL}/api/delete-help-guidance/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+    await apiClient.delete(`/help-guidance/delete/${id}`);
     loadData();
   };
 

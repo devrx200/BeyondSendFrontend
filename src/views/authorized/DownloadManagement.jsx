@@ -5,12 +5,12 @@ import {
   CardHeader
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaFileAlt } from "react-icons/fa";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const DownloadManagement = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const token = sessionStorage.getItem("authToken");
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -46,15 +46,13 @@ const DownloadManagement = () => {
 
   /* ================= FETCH ================= */
   const fetchDownloads = async () => {
-    const res = await axios.get(`${API_URL}/api/get-all-downloads`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await apiClient.get('/downloads/list');
     setDownloads(res.data || []);
   };
 
   useEffect(() => {
     fetchDownloads();
-  }, [token, API_URL]);
+  }, []);
 
   /* ================= FILE ================= */
   const handleFileChange = (e) => {
@@ -73,9 +71,7 @@ const DownloadManagement = () => {
     try {
       setLoading(true);
 
-      const res = await axios.get(
-        `${API_URL}/api/get-categories`,   //  category API
-      );
+      const res = await apiClient.get('/category/list');
 
       if (res.status === 200) {
         setCategories(res.data.data || []);
@@ -112,16 +108,16 @@ const DownloadManagement = () => {
     try {
       let res;
       if (editing) {
-        res = await axios.put(
-          `${API_URL}/api/update-downloads/${editing._id}`,
+        res = await apiClient.put(
+          `/downloads/update/${editing._id}`,
           payload,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       } else {
-        res = await axios.post(
-          `${API_URL}/api/create-downloads`,
+        res = await apiClient.post(
+          `/create-downloads`,
           payload,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       }
 
@@ -193,9 +189,7 @@ const DownloadManagement = () => {
 
     if (!confirm.isConfirmed) return;
 
-    await axios.delete(`${API_URL}/api/delete-downloads/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await apiClient.delete(`/downloads/delete/${id}`);
     Swal.fire("Removed", "Download deactivated", "success");
     fetchDownloads();
   };

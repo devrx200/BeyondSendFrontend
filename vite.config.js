@@ -1,12 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const BUILD_TIMESTAMP = new Date().toISOString();
-
 export default defineConfig({
   plugins: [react()],
   define: {
-    __BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
+    __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
     __SERVER_FORWARD_CONSOLE__: false,
   },
   base: "/",
@@ -22,7 +20,6 @@ export default defineConfig({
   esbuild: {
     target: "es2020",
     legalComments: "none",
-    logOverride: { "this-is-undefined-in-esm": "silent" },
   },
   build: {
     target: "es2020",
@@ -34,19 +31,10 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (
-              id.includes("react-icons") ||
-              id.includes("lucide-react") ||
-              id.includes("bootstrap-icons")
-            ) {
+            if (id.includes("react-icons") || id.includes("bootstrap-icons")) {
               return "icons-vendor";
             }
-            if (
-              id.includes("react-quill") ||
-              id.includes("jodit-react") ||
-              id.includes("tinymce") ||
-              id.includes("ckeditor5")
-            ) {
+            if (id.includes("jodit-react")) {
               return "editor-vendor";
             }
             if (
@@ -60,9 +48,12 @@ export default defineConfig({
             if (
               id.includes("react-pdf") ||
               id.includes("pdfjs-dist") ||
-              id.includes("@smazeeapps/file-viewer")
+              id.includes("@smazeeapps/file-viewer") ||
+              id.includes("docx-preview") ||
+              id.includes("pptx-viewer") ||
+              id.includes("xlsx")
             ) {
-              return "pdf-vendor";
+              return "viewer-vendor";
             }
             if (id.includes("axios") || id.includes("jwt-decode")) {
               return "utils-vendor";

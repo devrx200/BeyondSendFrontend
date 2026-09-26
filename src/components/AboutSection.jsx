@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { Container, Row, Col, Button, Card, CardBody, Modal, ModalHeader, ModalBody } from "reactstrap";
 import { useLanguage } from "../contexts/LanguageContext";
+import apiClient, { BASE_HOST } from "../services/api.service";
 import {
   FaArrowRight, FaPaperPlane, FaBullhorn, FaChartLine, FaHeadset,
   FaLandmark, FaUserTie, FaChevronRight
 } from "react-icons/fa";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const AboutSection = () => {
   const [profiles, setProfiles] = useState([]);
@@ -21,14 +19,15 @@ const AboutSection = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API_URL}/api/get-about-sections`);
+        const res = await apiClient.get('/about-sections/list');
+        const data = res?.data || res || {};
 
-        const filteredAndSorted = (res.data?.departmentLeaderProfiles || [])
+        const filteredAndSorted = (data?.departmentLeaderProfiles || [])
           .filter(item => item.isActive === true && item.isHideOnAboutSection !== true)
           .sort((a, b) => (a.order || 0) - (b.order || 0));
 
         setProfiles(filteredAndSorted);
-        setAboutDepartment(res.data?.aboutDepartment || {});
+        setAboutDepartment(data?.aboutDepartment || {});
       } catch (err) {
         console.error("Failed to fetch about section data", err);
       } finally {
@@ -224,7 +223,7 @@ const AboutSection = () => {
                         const name = isHindi ? profile.imgNameHin || profile.imgNameEng : profile.imgNameEng || profile.imgNameHin;
                         const designation = isHindi ? profile.designationHin || profile.designationEng : profile.designationEng || profile.designationHin;
                         const avatarUrl = profile.profileUrl
-                          ? (profile.profileUrl.startsWith("http") ? profile.profileUrl : `${API_URL}${profile.profileUrl.startsWith("/") ? "" : "/"}${profile.profileUrl}`)
+                          ? (profile.profileUrl.startsWith("http") ? profile.profileUrl : `${BASE_HOST}${profile.profileUrl.startsWith("/") ? "" : "/"}${profile.profileUrl}`)
                           : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "Leader")}&background=0c3c78&color=fff&bold=true`;
 
                         return (
@@ -345,7 +344,7 @@ const AboutSection = () => {
                         selectedLeader.profileUrl
                           ? (selectedLeader.profileUrl.startsWith("http")
                             ? selectedLeader.profileUrl
-                            : `${API_URL}${selectedLeader.profileUrl.startsWith("/") ? "" : "/"}${selectedLeader.profileUrl}`)
+                            : `${BASE_HOST}${selectedLeader.profileUrl.startsWith("/") ? "" : "/"}${selectedLeader.profileUrl}`)
                           : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedLeader.imgNameEng || selectedLeader.imgNameHin || "Leader")}&background=0c3c78&color=fff&bold=true`
                       }
                       alt={isHindi ? selectedLeader.imgNameHin || selectedLeader.imgNameEng : selectedLeader.imgNameEng}

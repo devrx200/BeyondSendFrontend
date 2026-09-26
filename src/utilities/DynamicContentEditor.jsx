@@ -5,7 +5,7 @@ import React, {
 import PropTypes from "prop-types";
 import JoditEditor from "jodit-react";
 import { encodeBase64, decodeBase64 } from "./rXBase64";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../services/api.service";
 import { Progress } from "reactstrap";
 import Swal from "sweetalert2";
 import {
@@ -49,7 +49,7 @@ const FF = "var(--wp-font, -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Ox
 // ─────────────────────────────────────────────
 // Env / auth helpers
 // ─────────────────────────────────────────────
-const API_URL = import.meta.env.VITE_API_URL;
+
 const getToken = () => {
   const raw = sessionStorage.getItem("authToken");
   if (!raw) return "";
@@ -346,9 +346,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     try {
       setLoading(true);
       setError(null);
-      const res = await axios.get(`${API_URL}/api/files/list`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await apiClient.get('/files/list');
       const data = res.data?.data;
       setFiles(Array.isArray(data) ? data : (data?.files ?? []));
     } catch (err) {
@@ -397,7 +395,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
   const copyFileUrl = useCallback((filePath, fileName) => {
-    const fullUrl = `${API_URL}${filePath}`;
+    const fullUrl = `${BASE_HOST}${filePath}`;
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(fullUrl);
     } else {
@@ -491,8 +489,8 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
     fd.append("file", uploadFile);
     try {
       setUploading(true);
-      await axios.post(`${API_URL}/api/files/upload`, fd, {
-        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${getToken()}` },
+      await apiClient.post('/files/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => setUploadProgress(Math.round((e.loaded * 100) / e.total)),
       });
       onShowToast?.("File uploaded successfully", "success");
@@ -890,7 +888,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                     )}
                     <div style={{ width: 56, height: 56, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, background: "#f6f7f7", overflow: "hidden" }}>
                       {isImg
-                        ? <img src={`${API_URL}${file.filePath}`} alt={file.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ? <img src={`${BASE_HOST}${file.filePath}`} alt={file.originalName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : getFileIcon(file.mimeType, 28)}
                     </div>
                     <span style={{
@@ -947,7 +945,7 @@ function AttachModal({ selection, onAttach, onClose, onShowToast }) {
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <div style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                               {isImg
-                                ? <img src={`${API_URL}${file.filePath}`} alt="" style={{ width: 24, height: 24, objectFit: "cover", borderRadius: 4 }} />
+                                ? <img src={`${BASE_HOST}${file.filePath}`} alt="" style={{ width: 24, height: 24, objectFit: "cover", borderRadius: 4 }} />
                                 : getFileIcon(file.mimeType, 16)}
                             </div>
                             <span style={{ fontWeight: isSel ? 600 : 400, color: WP.text }}>{file.originalName}</span>
@@ -1347,7 +1345,7 @@ const DynamicContentEditor = forwardRef(({
     const editor = editorRef.current;
     if (!editor) { showToast("Editor not ready", "error"); setShowModal(false); return; }
 
-    const url = `${API_URL}${file.url}`;
+    const url = `${BASE_HOST}${file.url}`;
     const text = file.linkText?.trim() || file.title;
     const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" data-file-id="${file._id}" data-category="${file.category}">${text}</a>`;
 

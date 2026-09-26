@@ -1,7 +1,7 @@
 // components/SessionManager.jsx
 
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import {
   Row,
   Col,
@@ -29,7 +29,7 @@ import {
 } from "reactstrap";
 import PageLoader from "../../components/PageLoader";
 
-const API = import.meta.env.VITE_API_URL;
+
 const token = sessionStorage.getItem("authToken");
 const SessionManager = () => {
   // ─── State ──────────────────────────────────────────────
@@ -235,12 +235,7 @@ const SessionManager = () => {
       if (dateFrom) params.dateFrom = dateFrom;
       if (dateTo) params.dateTo = dateTo;
 
-     const res = await axios.get(`${API}/api/sessions`, {
-  params,
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+     const res = await apiClient.get('/sessions/list');
 
       if (res.data?.success) {
         setSessions(res.data.data.sessions || []);
@@ -285,17 +280,11 @@ const SessionManager = () => {
       setRevoking(true);
       setError("");
 
-      const res = await axios.patch(
-        `${API}/api/sessions/${selectedSession._id}/revoke`,
+      const res = await apiClient.patch(
+        `/sessions/revoke/${selectedSession._id}`,
         {
           reason: revokeReason,
           message: revokeMessage || undefined,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          }
         }
       );
          
@@ -323,16 +312,7 @@ const SessionManager = () => {
       setRevoking(true);
       setError("");
 
-      const res = await axios.patch(`${API}/api/sessions/revoke-all`, {
-        reason: revokeReason,
-        message: revokeMessage || "All sessions revoked by admin",
-      },
-    {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const res = await apiClient.patch('/sessions/revoke-all', {});
   
 
       if (res.data?.success) {

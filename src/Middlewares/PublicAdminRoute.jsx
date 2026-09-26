@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
-import axios from "axios";
 import Swal from "sweetalert2";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "../services/api.service";
 
 const PublicAdminRoute = ({ redirectTo = "/authorized/dashboard" }) => {
   const [loading, setLoading] = useState(true);
@@ -20,12 +18,8 @@ const PublicAdminRoute = ({ redirectTo = "/authorized/dashboard" }) => {
 
     const validateToken = async () => {
       try {
-        const res = await axios.post(
-          `${API_URL}/api/check-auth-token`,
-          { token }
-        );
-
-        if (res.status === 200 && res.data?.success) {
+        const res = await apiClient.post('/auth/verify-token', { token });
+        if (res?.success) {
           setIsAuthenticated(true);
         } else {
           throw new Error("Invalid Token");

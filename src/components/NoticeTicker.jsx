@@ -1,11 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FaBullhorn, FaNewspaper, FaClock } from "react-icons/fa";
-import axios from "axios";
 import Swal from "sweetalert2";
 import { useLanguage } from "../contexts/LanguageContext";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "../services/api.service";
 
 const NoticeTicker = () => {
   const [data, setData] = useState([]);
@@ -17,8 +15,8 @@ const NoticeTicker = () => {
     let isMounted = true;
     const fetchNotices = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/notice-ticker`);
-        const notices = res.data?.data || [];
+        const res = await apiClient.get('/notice-ticker/list');
+        const notices = res?.data || res || [];
         if (isMounted) {
           if (notices.length > 0) {
             setData(notices);

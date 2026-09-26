@@ -6,12 +6,12 @@ import {
 } from 'reactstrap';
 import { FaTrash, FaEye, FaSyncAlt, FaTrashAlt, FaSearch, FaInfoCircle } from 'react-icons/fa';
 import { useLanguage } from '../../contexts/LanguageContext';
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import PageLoader from "../../components/PageLoader";
 
 const ActivityLogManagement = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const { isHindi } = useLanguage();
 
   // State variables
@@ -28,7 +28,7 @@ const ActivityLogManagement = () => {
 
   // Helper: Get auth headers (adjust token key as per your project)
   const getAuthHeaders = () => {
-   const token = sessionStorage.getItem("authToken");
+   
     return {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -39,13 +39,8 @@ const ActivityLogManagement = () => {
   const fetchLogs = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/get-all-activity-logs`, {
-        params: {
-          page: currentPage,
-          limit: limit,
-          search: searchTerm
-        },
-        headers: getAuthHeaders()
+      const response = await apiClient.get('/activity-logs/list', {
+        params: { page: currentPage, limit, search: searchTerm }
       });
       if (response.data.success) {
         setLogs(response.data.data);
@@ -67,7 +62,7 @@ const ActivityLogManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, limit, searchTerm, API_URL, isHindi]);
+  }, [currentPage, limit, searchTerm, isHindi]);
 
   // Refetch when dependencies change
   useEffect(() => {
@@ -97,9 +92,7 @@ const ActivityLogManagement = () => {
   const handleViewLog = async (logId) => {
     try {
       setViewLoading(true);
-      const response = await axios.get(`${API_URL}/api/get-single-activity-log/${logId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.get(`/activity-logs/detail/${logId}`);
       if (response.data.success) {
         setSelectedLog(response.data.data);
         setViewModal(true);
@@ -134,9 +127,7 @@ const ActivityLogManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/api/delete-activity-log/${logId}`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.delete(`/activity-logs/delete/${logId}`);
       if (response.data.success) {
         Swal.fire({
           icon: "success",
@@ -173,9 +164,7 @@ const ActivityLogManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/api/delete-all-activity-logs`, {
-        headers: getAuthHeaders()
-      });
+      const response = await apiClient.delete('/activity-logs/delete-all');
       if (response.data.success) {
         Swal.fire({
           icon: "success",

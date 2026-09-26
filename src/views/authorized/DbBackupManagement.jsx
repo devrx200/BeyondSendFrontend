@@ -7,12 +7,12 @@ import {
   FaPlayCircle, FaDownload, FaChevronLeft,
   FaChevronRight, FaFolderOpen, FaDatabase, FaHdd
 } from "react-icons/fa";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const API = import.meta.env.VITE_API_URL;
+
 const ITEMS_PER_PAGE = 6;
 
 const DbBackupManagement = () => {
@@ -41,7 +41,7 @@ const DbBackupManagement = () => {
   const fetchBackups = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/api/nic/get-db-backup-list`, getAuthConfig());
+      const res = await apiClient.get('/backup/list');
       setData(res?.data?.backups || []);
     } catch (err) {
       console.error("Error fetching backup list:", err);
@@ -106,7 +106,7 @@ const DbBackupManagement = () => {
 
       // 2. Parallel API processing combined with a deliberate 1500ms transition 
       const [res] = await Promise.all([
-        axios.post(`${API}/api/nic/get-db-backup-run`, {}, getAuthConfig()),
+        apiClient.post('/backup/run', {}),
         new Promise((resolve) => setTimeout(resolve, 1500))
       ]);
 
@@ -155,12 +155,7 @@ const DbBackupManagement = () => {
       });
 
       const [response] = await Promise.all([
-        axios({
-          url: `${API}/api/nic/get-db-backup-download/${folderName}`,
-          method: 'GET',
-          responseType: 'blob',
-          ...getAuthConfig()
-        }),
+        apiClient.get(`/backup/download/${folderName}`, { responseType: 'blob' }),
         new Promise((resolve) => setTimeout(resolve, 1000))
       ]);
 

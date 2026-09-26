@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
   Row, Col,
   Nav, NavItem, NavLink,
@@ -14,8 +13,7 @@ import Swal from 'sweetalert2';
 import PageLayout from '../../components/PageLayout';
 import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient, { BASE_HOST } from '../../services/api.service';
 
 const getFileIcon = (type = '') => {
   switch (type.toUpperCase()) {
@@ -47,9 +45,9 @@ const Downloads = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/get-categories`);
-        const cats = res.data?.data || [];
-        setCategories(cats);
+        const res = await apiClient.get('/category/list');
+        const cats = res?.data || res || [];
+        setCategories(Array.isArray(cats) ? cats : []);
         if (cats.length > 0) handleTabChange(cats[0]._id);
       } catch {
         Swal.fire('Error', 'Failed to load categories', 'error');
@@ -64,8 +62,9 @@ const Downloads = () => {
     try {
       setLoading(true);
       setDownloads([]);
-      const res = await axios.get(`${API_URL}/api/get-downloads-by-categary/${categoryId}`);
-      setDownloads(res.data || []);
+      const res = await apiClient.get(`/downloads/category/${categoryId}`);
+      const list = res?.data || res || [];
+      setDownloads(Array.isArray(list) ? list : []);
     } catch {
       Swal.fire('Error', 'Failed to load downloads', 'error');
     } finally {
@@ -206,7 +205,7 @@ const Downloads = () => {
                                   <td className="text-center">
                                     <a
                                       className="downloads-btn"
-                                      href={`${API_URL}${item.filePath}`}
+                                      href={item.filePath?.startsWith('http') ? item.filePath : `${BASE_HOST}${item.filePath?.startsWith('/') ? '' : '/'}${item.filePath}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       aria-label={`${isHindi ? 'डाउनलोड' : 'Download'} ${isHindi ? item.titleHi : item.titleEn}`}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Container, Spinner } from "reactstrap";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
   FaUniversity,
@@ -12,7 +11,7 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "../services/api.service";
 
 const DEFAULT_STATS = {
   academicYear: "2026-2027",
@@ -29,11 +28,12 @@ const AfterCarousel = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/education-stats/current`)
+    apiClient
+      .get('/education-stats/current')
       .then((res) => {
-        if (res.data?.data) {
-          setStats(res.data.data);
+        const data = res?.data || res;
+        if (data && typeof data === 'object') {
+          setStats(data);
         }
       })
       .catch(() => {

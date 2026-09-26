@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col, Card, CardBody } from "reactstrap";
-import axios from "axios";
+import apiClient from "../services/api.service";
 import {
   FaCommentDots,
   FaWhatsapp,
@@ -39,7 +39,6 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
   const isHindi = propIsHindi !== undefined ? propIsHindi : ctxIsHindi;
 
   const [links, setLinks] = useState(DEFAULT_QUICK_LINKS);
-  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     let isMounted = true;
@@ -51,9 +50,10 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
 
     const fetchQuickAccess = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/quick-access`);
-        if (isMounted && res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          const activeItems = res.data.data.filter((item) => item.isActive !== false && !isLegacy(item));
+        const res = await apiClient.get('/quick-access/list');
+        const list = res?.data || res || [];
+        if (isMounted && Array.isArray(list) && list.length > 0) {
+          const activeItems = list.filter((item) => item.isActive !== false && !isLegacy(item));
           if (activeItems.length > 0) {
             setLinks(activeItems);
           }
@@ -68,7 +68,7 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
     return () => {
       isMounted = false;
     };
-  }, [API_URL]);
+  }, []);
 
   return (
     <Container className="my-3">

@@ -12,10 +12,10 @@ import {
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBullhorn, FaList, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
 import Swal from "sweetalert2";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 
 const NewUpdates = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const token = sessionStorage.getItem("authToken");
   const [list, setList] = useState([]);
   
@@ -64,10 +64,8 @@ const NewUpdates = () => {
   /* ================= LOAD LIST ================= */
   const loadNotices = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/notice-ticker/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setList(res.data.data || []);
+      const res = await apiClient.get('/notice-ticker/list-all').catch(() => apiClient.get('/notice-ticker/all'));
+      setList(res.data?.data || res.data || []);
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Failed to load notices", "error");
     }
@@ -75,7 +73,7 @@ const NewUpdates = () => {
 
   useEffect(() => {
     loadNotices();
-  }, [API_URL, token]);
+  }, []);
 
   // Save active tab to sessionStorage whenever it changes
   useEffect(() => {
@@ -148,10 +146,8 @@ const NewUpdates = () => {
     if (!confirm.isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/notice-ticker/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      Swal.fire("Success", res.data.message, "success");
+      const res = await apiClient.delete(`/notice-ticker/delete/${id}`).catch(() => apiClient.delete(`/notice-ticker/${id}`));
+      Swal.fire("Success", res.data?.message || "Deleted", "success");
       loadNotices();
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || "Failed", "error");
@@ -178,21 +174,9 @@ const NewUpdates = () => {
       let res;
 
       if (editingId) {
-        res = await axios.put(
-          `${API_URL}/api/notice-ticker/${editingId}`,
-          formData,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        res = await apiClient.put(`/notice-ticker/update/${editingId}`, formData).catch(() => apiClient.put(`/notice-ticker/${editingId}`, formData));
       } else {
-        res = await axios.post(
-          `${API_URL}/api/notice-ticker`,
-          formData,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
+        res = await apiClient.post('/notice-ticker/create', formData).catch(() => apiClient.post('/notice-ticker', formData));
       }
 
       Swal.fire({

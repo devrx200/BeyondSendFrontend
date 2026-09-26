@@ -8449,6 +8449,42 @@ body {
   box-shadow: 0 10px 32px rgba(79, 110, 247, 0.5);
 }
 
+.server-lang-toggle {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  font-family: var(--pub-font);
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border-radius: 999px !important;
+  padding: 7px 18px !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.25s ease !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.server-lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(79, 110, 247, 0.65) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(79, 110, 247, 0.35) !important;
+}
+
+.server-lang-toggle:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.4) !important;
+}
+
+.server-down-footer {
+  width: 100%;
+}
+
 /* ==========================================================================
    HOME PAGE: HERO, FEATURES, ABOUT, QUICK ACCESS (Pro SaaS Style)
    ========================================================================== */

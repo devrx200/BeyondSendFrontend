@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge, Container } from "reactstrap";
 import {
@@ -10,9 +9,16 @@ import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import Swal from "sweetalert2";
+import apiClient, { BASE_HOST } from "../services/api.service";
 
-const API_URL = import.meta.env.VITE_API_URL;
-const BASE_URL = import.meta.env.BASE_URL;
+const BASE_URL = import.meta.env.BASE_URL || "/";
+
+const getImageUrl = (path) => {
+  if (!path) return `${BASE_URL}beyondsend-logo.svg`;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const clean = path.replace(/\\/g, "/");
+  return `${BASE_HOST}/${clean.replace(/^\/+/, '')}`;
+};
 
 /* ── Desktop Dropdown ── */
 const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 }) => {
@@ -122,8 +128,8 @@ const Header = () => {
 
   useEffect(() => {
     Promise.all([
-      axios.get(`${API_URL}/api/get-active-header`).then(r => setHeaderData(r.data.data)).catch(console.error),
-      axios.get(`${API_URL}/api/menu-list`).then(r => setMenuItems(r?.data?.data || [])).catch(console.error),
+      apiClient.get('/header/active').then(r => setHeaderData(r?.data || r || null)).catch(console.error),
+      apiClient.get('/menu/list').then(r => setMenuItems(r?.data || r || [])).catch(console.error),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -196,7 +202,7 @@ const Header = () => {
             aria-label="Go to home"
           >
             <img
-              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}beyondsend-logo.svg`}
+              src={getImageUrl(headerData?.logo)}
               alt="BeyondSend Logo"
               className="corp-brand-logo"
               onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
@@ -227,7 +233,7 @@ const Header = () => {
             onClick={() => navigate("/")}
           >
             <img
-              src={headerData?.logo ? `${API_URL}${headerData.logo}` : `${BASE_URL}beyondsend-logo.svg`}
+              src={getImageUrl(headerData?.logo)}
               alt="BeyondSend Logo"
               height={36}
               style={{ objectFit: "contain" }}

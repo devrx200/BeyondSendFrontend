@@ -12,12 +12,12 @@ import {
   CardHeader
 } from "reactstrap";
 import { FaSave } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 
 
 const HeaderManagement = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const token = sessionStorage.getItem("authToken");
   const [formData, setFormData] = useState({
     phone: "",
@@ -35,11 +35,7 @@ const HeaderManagement = () => {
 
   // ================= LOAD =================
   const fetchData = async () => {
-    const res = await axios.get(`${API_URL}/api/header/get-all`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const res = await apiClient.get('/header/list');
     if (res.data?.data) {
       const data = res.data.data;
 
@@ -53,9 +49,9 @@ const HeaderManagement = () => {
       });
 
       setPreview({
-        logo: `${API_URL}${data.logo}`,
-        emblem: `${API_URL}${data.emblem}`,
-        digitalLogo: `${API_URL}${data.digitalLogo}`
+        logo: `${BASE_HOST}${data.logo}`,
+        emblem: `${BASE_HOST}${data.emblem}`,
+        digitalLogo: `${BASE_HOST}${data.digitalLogo}`
       });
     }
   };
@@ -89,14 +85,7 @@ const HeaderManagement = () => {
     });
 
     try {
-      await axios.post(`${API_URL}/api/header/create`, fd,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`
-          },
-        }
-      );
+      await apiClient.post('/header/create', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       Swal.fire("Success", "Header saved successfully", "success");
 

@@ -1,14 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { Spinner, Container } from "reactstrap";
 import PageLoader from "../components/PageLoader";
 import ImportantPageDetail from "../views/pages/ImportantPageDetail";
 import RichContentPages from "../views/pages/RichContentPages";
 import { useLanguage } from "../contexts/LanguageContext";
+import apiClient from "../services/api.service";
 
-const API = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = "BeyondSend";
 
 const SlugResolver = ({ preview = false, fullSlugOverride }) => {
@@ -28,33 +27,17 @@ const SlugResolver = ({ preview = false, fullSlugOverride }) => {
   const fetchData = useCallback(async (page = 1, limit = 10) => {
     try {
       setStatus("loading");
-      let response = await axios.post(
-        `${API}/api/resolve-slug/get-page`,
-        {
-          fullSlug: slugForApi,
-          preview: isPreview,
-          page,
-          limit,
-        },
-        {
-          validateStatus: (status) => status < 500,
-        }
-      );
+      const postSlug = async (slugVal) => {
+        const payload = { fullSlug: slugVal, preview: isPreview, page, limit };
+        const opt = { validateStatus: (status) => status < 500 };
+        return await apiClient.post('/slug/resolve', payload, opt);
+      };
+
+      let response = await postSlug(slugForApi);
 
       if ((!response.data?.success || response.status !== 200) && (slugForApi === "about" || slugForApi === "about-us")) {
         const altSlug = slugForApi === "about" ? "about-us" : "about";
-        const altResponse = await axios.post(
-          `${API}/api/resolve-slug/get-page`,
-          {
-            fullSlug: altSlug,
-            preview: isPreview,
-            page,
-            limit,
-          },
-          {
-            validateStatus: (status) => status < 500,
-          }
-        );
+        const altResponse = await postSlug(altSlug);
         if (altResponse.status === 200 && altResponse.data?.success) {
           response = altResponse;
         }

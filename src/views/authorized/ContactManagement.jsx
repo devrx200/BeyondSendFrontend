@@ -3,7 +3,7 @@ import {
   Card, CardBody, CardHeader, Button, Table, Form, FormGroup,
   Label, Input, Modal, ModalHeader, ModalBody, ModalFooter, Row, Col, Container
 } from "reactstrap";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import { FaSave } from "react-icons/fa";
 import {
@@ -17,7 +17,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OFFICE_HOURS_REGEX = /^[A-Za-z0-9 :–\-()]+$/;
 
 const ContactManagement = () => {
-  const API = import.meta.env.VITE_API_URL;
+  
 const token = sessionStorage.getItem("authToken");
   const [data, setData] = useState({ address: {}, officeHours: {}, officials: [] });
   const [modal, setModal] = useState(false);
@@ -34,7 +34,7 @@ const token = sessionStorage.getItem("authToken");
   /* ================= LOAD DATA ================= */
   useEffect(() => {
   const getData = async () => {
-    const res = await axios.get(`${API}/api/contact-list-officials`);
+    const res = await apiClient.get('/contact/officials/list');
     setData(res.data.data || {});
   };
 
@@ -157,7 +157,7 @@ const token = sessionStorage.getItem("authToken");
 
     try {
       setLoading(true);
-      const res = await axios.put(`${API}/api/contact`, {
+      const res = await apiClient.put(`/contact`, {
         address,
         officeHours
       }, {
@@ -258,11 +258,7 @@ const token = sessionStorage.getItem("authToken");
     if (file) formData.append("image", file);
 
     try {
-      const res = await axios.post(`${API}/api/contact/official`, formData, {
-        headers: { "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`
-         }
-      });
+      const res = await apiClient.post('/contact/officials/create', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
     Swal.fire("Success", res.data.message, "success").then(() => {
   setTimeout(() => {
@@ -298,9 +294,7 @@ const handleDelete = (o) => {
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${API}/api/contact/official/${o._id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await apiClient.delete(`/contact/officials/delete/${o._id}`);
       Swal.fire({
   title: "Deleted!",
   text: `${o.name} has been deleted.`,

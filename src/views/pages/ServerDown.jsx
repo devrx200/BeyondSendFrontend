@@ -197,22 +197,24 @@ const ServerDown = ({ onRetry, retrying }) => {
             </div>
 
             {/* Footer */}
-            <div className="text-center mt-4 small px-2" style={{ color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--pub-font)' }}>
-              © {new Date().getFullYear()} {t.copyright}
+            <div className="server-down-footer d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 mt-4 pt-2 px-2 text-center text-sm-start">
+              <span className="small order-2 order-sm-1" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--pub-font)' }}>
+                © {new Date().getFullYear()} {t.copyright}
+              </span>
+              <button
+                type="button"
+                className="server-lang-toggle btn d-inline-flex align-items-center gap-2 order-1 order-sm-2"
+                onClick={() => setLanguage((p) => (p === 'en' ? 'hi' : 'en'))}
+                title={language === 'en' ? 'हिंदी में बदलें / Switch to Hindi' : 'Switch to English'}
+                aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+              >
+                <FaLanguage size={18} aria-hidden="true" />
+                <span>{language === 'en' ? 'हिंदी' : 'English'}</span>
+              </button>
             </div>
           </Col>
         </Row>
       </Container>
-
-      {/* Language toggle */}
-      <button
-        className="server-lang-toggle"
-        onClick={() => setLanguage((p) => (p === 'en' ? 'hi' : 'en'))}
-        aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
-      >
-        <FaLanguage size={16} aria-hidden="true" />
-        {language === 'en' ? 'हिंदी' : 'English'}
-      </button>
     </div>
   );
 };

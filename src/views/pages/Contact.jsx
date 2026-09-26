@@ -7,10 +7,8 @@ import {
 import PageLayout from '../../components/PageLayout';
 import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
-import axios from 'axios';
+import apiClient from '../../services/api.service';
 import officeImage from '/image.png';
-
-const API = import.meta.env.VITE_API_URL;
 
 /* ── Reusable contact info row ── */
 const ContactRow = ({ icon, label, value, href, color = 'blue' }) => {
@@ -144,11 +142,11 @@ const Contact = () => {
     const load = async () => {
       try {
         const [contactRes, cardsRes] = await Promise.all([
-          axios.get(`${API}/api/contact`),
-          axios.get(`${API}/api/contact-card/get`),
+          apiClient.get('/contact/detail'),
+          apiClient.get('/contact-card/detail'),
         ]);
-        setContact(contactRes.data.data);
-        setCards(cardsRes.data.data || []);
+        setContact(contactRes?.data || contactRes || {});
+        setCards(cardsRes?.data || cardsRes || []);
       } catch (err) {
         console.error(err);
       } finally {

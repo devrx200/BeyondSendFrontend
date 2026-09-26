@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { FaLandmark } from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
-
-const API_URL = import.meta.env.VITE_API_URL;
-const BASE_URL = import.meta.env.BASE_URL || "/";
+import apiClient, { BASE_HOST } from "../services/api.service";
 
 const BrandItem = ({ brand }) => {
   const [imgError, setImgError] = useState(false);
@@ -13,7 +10,7 @@ const BrandItem = ({ brand }) => {
     if (!path) return "";
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
     const cleanPath = path.replace(/\\/g, "/");
-    return `${API_URL}${cleanPath.startsWith("/") ? "" : "/"}${cleanPath}`;
+    return `${BASE_HOST}/${cleanPath.replace(/^\/+/, '')}`;
   };
 
   const imgUrl = getUrl(brand.image);
@@ -56,9 +53,9 @@ const FooterBrandCarousel = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/get-brands`);
-
-        const activeBrands = (res.data.data || [])
+        const res = await apiClient.get('/brands/list');
+        const list = res?.data || res || [];
+        const activeBrands = (Array.isArray(list) ? list : [])
           .filter((b) => b.isActive)
           .sort((a, b) => (a.position || 0) - (b.position || 0));
 

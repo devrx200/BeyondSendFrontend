@@ -1,5 +1,5 @@
 import { useEffect, useState, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import AdminHeader from "./AdminHeader";
 import AdminSidebar from "./AdminSidebar";
 import AdminFooter from "./AdminFooter";
@@ -7,12 +7,21 @@ import BreadcrumbBar from "./AdminBreadcrumbBar";
 import NoticeTiker from "./NoticeTicker";
 import PageLoader from "./PageLoader";
 import { useToast, ToastContainer } from "../utilities/WPToast";
+import apiClient from "../services/api.service";
 import "../css/WPStyleTheme.scss";
 
 const AdminLayout = () => {
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { toasts, toast } = useToast();
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+    if (!token) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const syncLayoutState = () => {
@@ -63,7 +72,7 @@ const AdminLayout = () => {
         <BreadcrumbBar />
         <div className="adm-content-scroll">
           <Suspense fallback={<PageLoader />}>
-            <Outlet />
+            <Outlet context={{ apiClient }} />
           </Suspense>
         </div>
 

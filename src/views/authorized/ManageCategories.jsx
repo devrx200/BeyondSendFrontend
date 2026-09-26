@@ -4,7 +4,7 @@ import {
   Input, Table, Spinner, Row, Col, Badge,
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 import PageLoader from "../../components/PageLoader";
@@ -21,7 +21,7 @@ const getToken = () => {
 };
 
 const ManageCategories = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const { toasts, toast } = useToast();
 
   /* ---------- CREATE ---------- */
@@ -45,9 +45,7 @@ const ManageCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-categories`, {
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
+      const res = await apiClient.get('/category/list');
       setCategories(res.data.data || []);
     } catch {
       toast.error("Failed to fetch categories");
@@ -71,13 +69,9 @@ const ManageCategories = () => {
 
     try {
       setBtnLoading(true);
-      const res = await axios.post(`${API_URL}/api/create-category`, {
+      const res = await apiClient.post('/category/create', {
         categoryNameEn,
         categoryNameHi,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       });
 
       toast.success(res.data.message || "Category created successfully");
@@ -109,17 +103,12 @@ const ManageCategories = () => {
 
     try {
       setUpdateLoading(true);
-      const res = await axios.put(
-        `${API_URL}/api/update-category/${editId}`,
+      const res = await apiClient.put(
+        `/category/update/${editId}`,
         {
           categoryNameEn: editEn,
           categoryNameHi: editHi,
           isActive: editStatus
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
         }
       );
 
@@ -140,11 +129,7 @@ const ManageCategories = () => {
     if (!isConfirmed) return;
 
     try {
-      const res = await axios.delete(`${API_URL}/api/delete-category/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const res = await apiClient.delete(`/category/delete/${id}`);
       toast.success(res.data.message || "Category deleted");
       fetchCategories();
     } catch (err) {

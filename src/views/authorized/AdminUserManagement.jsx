@@ -10,7 +10,7 @@ import {
   FaEye, FaEyeSlash, FaUserShield, FaCheck, FaTimes,
   FaSearch, FaSyncAlt
 } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -117,8 +117,8 @@ const headerGradient = {
 
 /* ================================================= */
 const AdminUserManagement = () => {
-  const token = sessionStorage.getItem("authToken");
-  const API_URL = import.meta.env.VITE_API_URL;
+  
+  
   const { isHindi } = useLanguage();
   const navigate = useNavigate();
 
@@ -138,6 +138,7 @@ const AdminUserManagement = () => {
   const [filterStatus, setFilterStatus] = useState("ALL");
 
   // Decode Token and Logged-In User Information
+  const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
   const currentUser = useMemo(() => {
     if (!token) return null;
     try {
@@ -181,10 +182,8 @@ const AdminUserManagement = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-all-users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const allUsers = res.data?.data || [];
+      const res = await apiClient.get('/users/list').catch(() => apiClient.get('/get-all-users'));
+      const allUsers = res.data?.data || res.data || [];
 
       // Hierarchy filtering:
       // DEVOPS: Sees ALL users without restriction
@@ -231,7 +230,7 @@ const AdminUserManagement = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [API_URL, token]);
+  }, []);
 
   /* ================= FILTERED USERS ================= */
   const filteredUsers = useMemo(() => {
@@ -352,12 +351,7 @@ const AdminUserManagement = () => {
       });
 
       if (editing) {
-        await axios.put(`${API_URL}/api/update-user/${editing._id}`, payload, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        await apiClient.put(`/users/update/${editing._id}`, payload).catch(() => apiClient.put(`/update-user/${editing._id}`, payload));
         Swal.fire({
           icon: "success",
           title: isHindi ? "सफल" : "Updated!",
@@ -366,12 +360,7 @@ const AdminUserManagement = () => {
           showConfirmButton: false
         });
       } else {
-        await axios.post(`${API_URL}/api/create-user`, payload, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        await apiClient.post('/users/create', payload).catch(() => apiClient.post('/create-user', payload));
         Swal.fire({
           icon: "success",
           title: isHindi ? "सफल" : "Created!",
@@ -420,7 +409,7 @@ const AdminUserManagement = () => {
       isActive: user.isActive ?? true,
     });
     setErrors({});
-    setImagePreview(user.profileImage ? `${API_URL}${user.profileImage}` : null);
+    setImagePreview(user.profileImage ? `${BASE_HOST}${user.profileImage}` : null);
     setModal(true);
   };
 
@@ -450,9 +439,7 @@ const AdminUserManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await axios.delete(`${API_URL}/api/delete-user/${user._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await apiClient.delete(`/users/delete/${user._id}`).catch(() => apiClient.delete(`/delete-user/${user._id}`));
       Swal.fire("Deleted!", "User has been deleted.", "success");
       loadUsers();
     } catch (err) {
@@ -466,12 +453,7 @@ const AdminUserManagement = () => {
       const payload = new FormData();
       payload.append("status", newStatus);
 
-      await axios.put(`${API_URL}/api/update-user/${user._id}`, payload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await apiClient.put(`/users/update/${user._id}`, payload).catch(() => apiClient.put(`/update-user/${user._id}`, payload));
 
       Swal.fire({
         icon: "success",
@@ -491,12 +473,7 @@ const AdminUserManagement = () => {
       const payload = new FormData();
       payload.append("isActive", !user.isActive);
 
-      await axios.put(`${API_URL}/api/update-user/${user._id}`, payload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await apiClient.put(`/users/update/${user._id}`, payload).catch(() => apiClient.put(`/update-user/${user._id}`, payload));
 
       Swal.fire({
         icon: "success",
@@ -706,7 +683,7 @@ const AdminUserManagement = () => {
                       <td>
                         {u.profileImage ? (
                           <img
-                            src={`${API_URL}${u.profileImage}`}
+                            src={`${BASE_HOST}${u.profileImage}`}
                             alt={u.name}
                             className="rounded-circle shadow-xs"
                             style={{

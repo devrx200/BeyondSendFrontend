@@ -29,11 +29,8 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
-import Swal from "sweetalert2";
-import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient, { BASE_HOST } from "../services/api.service";
 
 const AdminHeader = ({ toggleSidebar }) => {
 
@@ -76,21 +73,22 @@ const AdminHeader = ({ toggleSidebar }) => {
       decoded._id ||
       decoded.userId;
 
-    if (!userId) return;
+    const storedUser = sessionStorage.getItem('userData') || localStorage.getItem('userData');
+    if (storedUser) {
+      try {
+        setProfile(JSON.parse(storedUser));
+      } catch {}
+    }
 
-    axios
-      .get(`${API_URL}/api/get-user-profile/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+    const fetchProfile = async () => {
+      try {
+        const res = await apiClient.get('/users/profile').catch(() => null);
+        if (res?.data?.data || res?.data) {
+          setProfile(res.data.data || res.data);
         }
-      })
-      .then((res) => {
-        if (res.data?.success) {
-          setProfile(res.data.data);
-        }
-      })
-      .catch(() => { });
-
+      } catch {}
+    };
+    fetchProfile();
   }, []);
 
   /* ================= LOGOUT ================= */
@@ -112,13 +110,12 @@ const AdminHeader = ({ toggleSidebar }) => {
     if (!result.isConfirmed) return;
 
     try {
-
       const token = sessionStorage.getItem("authToken");
-
-      await axios.post(`${API_URL}/api/logout-user`, {
-        token
-      });
-
+      try {
+        await apiClient.post('/auth/logout', { token });
+      } catch {
+        await apiClient.post('/logout-user', { token });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -247,7 +244,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                 <img
                   src={
                     profile?.profileImage
-                      ? `${API_URL}${profile.profileImage}`
+                      ? `${BASE_HOST}${profile.profileImage}`
                       : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || "Admin")}&background=0d9488&color=fff&bold=true`
                   }
                   onError={(e) => {
@@ -361,7 +358,7 @@ const AdminHeader = ({ toggleSidebar }) => {
                       <img
                         src={
                           profile?.profileImage
-                            ? `${API_URL}${profile.profileImage}`
+                            ? `${BASE_HOST}${profile.profileImage}`
                             : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || "Admin")}&background=0d9488&color=fff&bold=true&size=160`
                         }
                         onError={(e) => {

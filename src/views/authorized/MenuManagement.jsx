@@ -1,5 +1,5 @@
 import React, { useEffect, useState, Fragment } from "react";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import {
   Card,
   CardBody,
@@ -20,7 +20,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import Swal from "sweetalert2";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
-const API = import.meta.env.VITE_API_URL;
+
 
 const getAuthHeaders = () => ({
   "Content-Type": "application/json",
@@ -56,9 +56,7 @@ const MenuManagement = () => {
   const loadMenus = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API}/api/menu-list-all/get-all`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiClient.get('/menu/list-all');
       setMenuItems(res.data.data || []);
     } catch (err) {
       console.error("Menu fetch error", err);
@@ -73,15 +71,7 @@ const MenuManagement = () => {
 
   const saveMenuOrder = async (updatedMenus) => {
     try {
-      await axios.post(
-        `${API}/api/menu/reorder`,
-        {
-          menus: updatedMenus, // <-- full ordered tree
-        },
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      await apiClient.post('/menu/reorder', { menus: updatedMenus });
 
       // FIX: replaced alert() with the same SweetAlert2 pattern used
       // everywhere else in this component, so feedback is consistent.
@@ -181,9 +171,7 @@ const MenuManagement = () => {
 
   /* ================= CREATE ================= */
   const createMenu = async () => {
-    await axios.post(`${API}/api/menu`, form, {
-      headers: getAuthHeaders(),
-    });
+    await apiClient.post('/menu/create', form);
   };
 
   /* ================= UPDATE ================= */
@@ -192,27 +180,13 @@ const MenuManagement = () => {
     // (menu-update / submenu-update / submenuchild-update), instead of
     // one shared "/menu/..." path.
     if (editing.type === "MENU") {
-      await axios.put(`${API}/api/menu-update/${editing.menuId}`, form, {
-        headers: getAuthHeaders(),
-      });
+      await apiClient.put(`/menu/update/${editing.menuId}`, form);
     }
     if (editing.type === "SUBMENU") {
-      await axios.put(
-        `${API}/api/submenu-update/${editing.menuId}/submenu/${editing.submenuId}`,
-        form,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      await apiClient.put(`/menu/update-submenu/${editing.menuId}/submenu/${editing.submenuId}`, form);
     }
     if (editing.type === "CHILD") {
-      await axios.put(
-        `${API}/api/submenuchild-update/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`,
-        form,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      await apiClient.put(`/menu/update-submenuchild/${editing.menuId}/submenu/${editing.submenuId}/child/${editing.childId}`, form);
     }
   };
 
@@ -252,28 +226,19 @@ const MenuManagement = () => {
     }
     try {
       if (type === "MENU") {
-        await axios.delete(`${API}/api/menu/${menuId}`, {
-          headers: getAuthHeaders(),
-        });
+        await apiClient.delete(`/menu/delete/${menuId}`);
       }
 
       if (type === "SUBMENU") {
         // FIX: submenu delete now lives under "/submenu/...", not "/menu/...".
-        await axios.delete(`${API}/api/submenu/${menuId}/submenu/${submenuId}`, {
-          headers: getAuthHeaders(),
-        });
+        await apiClient.delete(`/menu/delete-submenu/${menuId}/submenu/${submenuId}`);
       }
 
       if (type === "CHILD") {
         // FIX: child delete now lives under "/submenuchild/...". (Earlier
         // versions of this URL had a duplicate "/api/" segment and later
         // used the wrong prefix — this now matches the actual route.)
-        await axios.delete(
-          `${API}/api/submenuchild/${menuId}/submenu/${submenuId}/child/${childId}`,
-          {
-            headers: getAuthHeaders(),
-          }
-        );
+        await apiClient.delete(`/menu/delete-submenuchild/${menuId}/submenu/${submenuId}/child/${childId}`);
       }
 
       Swal.fire({

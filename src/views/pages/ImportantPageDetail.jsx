@@ -7,11 +7,10 @@ import {
   FaDownload, FaHome, FaList, FaPrint, FaArrowLeft,
 } from 'react-icons/fa';
 import { FaTicketSimple } from 'react-icons/fa6';
-import axios from 'axios';
+import apiClient from '../../services/api.service';
 import PageLoader from '../../components/PageLoader';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-const API = import.meta.env.VITE_API_URL;
 const SITE_TITLE_SUFFIX = 'BeyondSend';
 
 const formatDateTime = (date, isHindi) => {
@@ -44,8 +43,8 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
     (async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API}/api/important-page/${slug}`);
-        if (mounted) setDetail(res.data.data);
+        const res = await apiClient.get(`/important-pages/slug/${slug}`);
+        if (mounted) setDetail(res?.data || res || null);
       } catch (err) {
         console.error(err);
         if (mounted) setDetail(null);

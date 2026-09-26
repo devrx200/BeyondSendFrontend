@@ -7,9 +7,7 @@ import {
   FaPhone, FaEnvelope,
 } from "react-icons/fa";
 import { useLanguage } from "../contexts/LanguageContext";
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "../services/api.service";
 
 const SOCIAL_ICONS = {
   facebook: <FaFacebook />,
@@ -19,7 +17,17 @@ const SOCIAL_ICONS = {
   linkedin: <FaLinkedin />,
 };
 
-
+const DEFAULT_CONTACT_INFO = {
+  brandLogo: "/beyondsend-logo.svg",
+  departmentNameEn: "BeyondSend Communications Inc.",
+  departmentNameHi: "बियॉन्डसेंड कम्युनिकेशंस",
+  addressEn: "123 Tech Park, Cyber City, New Delhi",
+  addressHi: "123 टेक पार्क, साइबर सिटी, नई दिल्ली",
+  phone: "+91-1234567890",
+  email: "support@beyondsend.com",
+  organizerNameEn: "Anand Charpe",
+  organizerNameHi: "आनंद चपटे",
+};
 
 const FlipDigit = ({ digit }) => {
   const [animate, setAnimate] = useState(false);
@@ -54,8 +62,6 @@ const FlipCounter = ({ count }) => {
   );
 };
 
-
-
 const Footer = () => {
   const { isHindi } = useLanguage();
   const [footer, setFooter] = useState(null);
@@ -75,8 +81,11 @@ const Footer = () => {
 
   /* Fetch footer content */
   useEffect(() => {
-    axios.get(`${API_URL}/api/get-all-footer`)
-      .then(res => { if (res.data) setFooter(res.data); })
+    apiClient.get('/footer/detail')
+      .then(res => {
+        const data = res?.data || res;
+        if (data && typeof data === 'object') setFooter(data);
+      })
       .catch(err => console.error("Footer fetch error", err));
   }, []);
 
@@ -85,19 +94,22 @@ const Footer = () => {
     (async () => {
       try {
         if (!sessionStorage.getItem("visited")) {
-          await axios.post(`${API_URL}/api/visitor-count`);
+          await apiClient.post('/visitor/count');
           sessionStorage.setItem("visited", "true");
         }
-        const res = await axios.get(`${API_URL}/api/visitor-count`);
-        if (res.data?.success) setVisitorCount(res.data.count);
+        const res = await apiClient.get('/visitor/count');
+        const count = res?.count ?? res?.data?.count;
+        if (count !== undefined) setVisitorCount(count);
       } catch (err) {
         console.error("Visitor error", err);
       }
     })();
   }, []);
 
-  if (!footer) return null;
-  const { contactInfo, quickLinks, importantLinks, socialLinks } = footer;
+  const contactInfo = footer?.contactInfo || DEFAULT_CONTACT_INFO;
+  const quickLinks = Array.isArray(footer?.quickLinks) ? footer.quickLinks : [];
+  const importantLinks = Array.isArray(footer?.importantLinks) ? footer.importantLinks : [];
+  const socialLinks = Array.isArray(footer?.socialLinks) ? footer.socialLinks : [];
 
   return (
     <footer className="footer mt-0 pt-3">

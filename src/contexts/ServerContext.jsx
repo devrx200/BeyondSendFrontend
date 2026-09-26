@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import axios from "axios";
+import apiClient from "../services/api.service";
 import ServerDown from "../views/pages/ServerDown";
 
 const ServerContext = createContext();
-const API_URL = import.meta.env.VITE_API_URL;
 const POLL_INTERVAL = 300000;
 
 export const ServerProvider = ({ children }) => {
@@ -11,13 +10,17 @@ export const ServerProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
   const intervalRef = useRef(null);
+
   const checkServer = async (isManualRetry = false) => {
     if (isManualRetry) setRetrying(true);
 
     try {
-      const { data } = await axios.get(`${API_URL}/api/health-check`);
-      if (data.success) setServerOnline(true);
-      else setServerOnline(false);
+      const data = await apiClient.get('/health-check', { timeout: 6000 });
+      if (data && (data.success || data.status === 'online')) {
+        setServerOnline(true);
+      } else {
+        setServerOnline(false);
+      }
     } catch {
       setServerOnline(false);
     } finally {

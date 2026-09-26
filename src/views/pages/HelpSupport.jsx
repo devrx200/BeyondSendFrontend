@@ -8,12 +8,11 @@ import {
   FaChevronRight, FaFolderOpen, FaVideoSlash,
   FaYoutube,
 } from "react-icons/fa";
-import axios from "axios";
 import PageLayout from "../../components/PageLayout";
 import PageLoader from "../../components/PageLoader";
 import { useLanguage } from "../../contexts/LanguageContext";
+import apiClient from "../../services/api.service";
 
-const API = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 6;
 
 const formatDate = (d) => {
@@ -241,8 +240,8 @@ const HelpSupport = () => {
   const [previewTitle, setPreviewTitle] = useState("");
 
   useEffect(() => {
-    axios.get(`${API}/api/get-active-help-guidance`)
-      .then(r => setData(r?.data?.data || []))
+    apiClient.get('/help-guidance/active')
+      .then(r => setData(r?.data || r || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

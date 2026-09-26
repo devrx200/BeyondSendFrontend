@@ -21,10 +21,10 @@ import {
     FaLink, FaEdit, FaSave, FaTimes,
     FaUser
 } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 
-const API = import.meta.env.VITE_API_URL;
+
 const token = sessionStorage.getItem("authToken");
 const HINDI_TEXT_ONLY = /^[\u0900-\u097F .,!?'"()\-\n\r]+$/;
 const HINDI_WITH_NUMBERS = /^[\u0900-\u097F0-9०-९ .,!?'"()\-\n\r]+$/;
@@ -93,9 +93,7 @@ const FooterSection = () => {
             }));
 
             if (link?._id) {
-                await axios.delete(`${API}/api/delete-link/${type}/${link._id}`, {
-                    headers: { "Content-Type": "application/json", "web-url": window.location.href, Authorization: `Bearer ${token}` },
-                });
+                await apiClient.delete(`/footer/link/delete/${type}/${link._id}`);
             }
 
             await saveFooterToDB({
@@ -116,9 +114,7 @@ const FooterSection = () => {
     }, []);
 
     const fetchFooter = async () => {
-        const { data } = await axios.get(`${API}/api/get-all-footer`, {
-            headers: { "Content-Type": "application/json", },
-        });
+        const { data } = await apiClient.get('/footer/detail');
         if (data) setFooter(data);
     };
 
@@ -276,12 +272,7 @@ const FooterSection = () => {
             formData.append("organizerLogo", footerPayload.contactInfo.organizerLogo);
         }
 
-        await axios.post(`${API}/api/save-footer`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        await apiClient.post('/footer/create', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     };
 
     const saveFooter = async () => {
@@ -680,7 +671,7 @@ const FooterSection = () => {
                                                     src={
                                                         footer.contactInfo.organizerLogo instanceof File
                                                             ? URL.createObjectURL(footer.contactInfo.organizerLogo) // new upload
-                                                            : `${API}${footer.contactInfo.organizerLogo}` // existing from DB
+                                                            : `${BASE_HOST}${footer.contactInfo.organizerLogo}` // existing from DB
                                                     }
                                                     alt="Preview"
                                                     height="60"

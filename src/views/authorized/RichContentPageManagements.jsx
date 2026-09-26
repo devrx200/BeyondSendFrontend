@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import { Spinner, Card as RCard, CardHeader, CardBody, Button, UncontrolledTooltip } from "reactstrap";
 import {
   FaEye, FaEdit, FaCloudUploadAlt, FaFileAlt, FaTrashAlt,
@@ -10,7 +10,7 @@ import { encodeBase64, decodeBase64 } from "../../utilities/rXBase64";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 import PageLoader from "../../components/PageLoader";
 
-const API = import.meta.env.VITE_API_URL;
+
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 
 const sanitiseSlug = (v) => v.toLowerCase().replace(/[^a-z0-9-/]+/g, "-").replace(/-+/g, "-").replace(/\/+/g, "/");
@@ -23,12 +23,6 @@ const validateSlug = (v) => {
   return "";
 };
 const titleToSlug = (t) => sanitiseSlug(t || "").replace(/^-+|-+$/g, "");
-const getToken = () => {
-  const t = sessionStorage.getItem("authToken");
-  if (!t) return "";
-  try { const p = JSON.parse(t); return p?.token || p?.access || t; } catch { return t; }
-};
-const authH = () => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };
 
 const copyToClipboard = async (text) => {
   if (!text) return false;
@@ -322,7 +316,10 @@ const RichContentPageManagements = () => {
   }, [searchInput]);
 
   const fetchCategories = useCallback(async () => {
-    try { const r = await axios.get(`${API}/api/get-categories`, { headers: authH() }); setCategories(r.data.data || []); } catch { }
+    try {
+      const r = await apiClient.get('/category/list').catch(() => apiClient.get('/category/list'));
+      setCategories(r?.data?.data || []);
+    } catch { }
   }, []);
 
   const getAllPages = useCallback(async () => {
@@ -333,7 +330,7 @@ const RichContentPageManagements = () => {
       if (filterStatus === "draft") params.isPublished = false;
       if (filterStatus === "active") params.isActive = true;
       if (filterStatus === "inactive") params.isActive = false;
-      const res = await axios.get(`${API}/api/rich-content-pages/get-all`, { headers: authH(), params });
+      const res = await apiClient.get('/rich-content/list', { params });
       const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setPages(data);
       setTotalPages(res.data?.pagination?.totalPages || 1);
@@ -388,14 +385,14 @@ const RichContentPageManagements = () => {
       let savedId = editingId;
       let res;
       if (editingId) {
-        res = await axios.post(`${API}/api/rich-content-page/update/${editingId}`, payload, { headers: authH() });
+        res = await apiClient.post(`/rich-content/update/${editingId}`, payload);
       } else {
-        res = await axios.post(`${API}/api/rich-content-page/create`, payload, { headers: authH() });
+        res = await apiClient.post('/rich-content/create', payload);
         savedId = res.data.data?._id || res.data._id;
         if (savedId) setEditingId(savedId);
       }
       if (publishAfter && savedId) {
-        res = await axios.post(`${API}/api/rich-content-page/publish/${savedId}`, {}, { headers: authH() });
+        res = await apiClient.post(`/rich-content/publish/${savedId}`, {});
       }
       toast.success(res?.data?.message || (publishAfter ? "Page published successfully." : "Draft saved successfully."));
       getAllPages();
@@ -405,7 +402,7 @@ const RichContentPageManagements = () => {
 
   const handlePublish = async (id) => {
     try {
-      const res = await axios.post(`${API}/api/rich-content-page/publish/${id}`, {}, { headers: authH() });
+      const res = await apiClient.post(`/rich-content/publish/${id}`, {});
       toast.success(res.data?.message || "Page published.");
       getAllPages();
     } catch (e) { toast.error(e?.response?.data?.message || "Publish failed"); }
@@ -413,7 +410,7 @@ const RichContentPageManagements = () => {
 
   const handleDraft = async (id) => {
     try {
-      const res = await axios.post(`${API}/api/rich-content-page/draft/${id}`, {}, { headers: authH() });
+      const res = await apiClient.post(`/rich-content/draft/${id}`, {});
       toast.info(res.data?.message || "Moved to draft.");
       getAllPages();
     } catch (e) { toast.error(e?.response?.data?.message || "Operation failed"); }
@@ -423,7 +420,7 @@ const RichContentPageManagements = () => {
     const ok = await wpSwal.confirm("Delete this page?", `Permanently delete "<strong>${title || "Untitled"}</strong>"?<br>This cannot be undone.`);
     if (!ok) return;
     try {
-      const res = await axios.delete(`${API}/api/rich-content-page-delete/${id}`, { headers: authH() });
+      const res = await apiClient.delete(`/rich-content/delete/${id}`);
       toast.success(res.data?.message || "Page deleted.");
       getAllPages();
     } catch (e) { toast.error(e?.response?.data?.message || "Delete failed"); }
@@ -556,7 +553,7 @@ const RichContentPageManagements = () => {
       const isConfirmed = await wpSwal.confirm(`Delete ${count} ${label}?`, "This will permanently remove the selected pages.");
       if (!isConfirmed) return;
       try {
-        await Promise.all(selectedIds.map(id => axios.delete(`${API}/api/rich-content-page-delete/${id}`, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.delete(`/rich-content/delete/${id}`)));
         toast.success(`${count} ${label} deleted.`);
         setSelectedIds([]);
         setBulkAction("");
@@ -567,7 +564,7 @@ const RichContentPageManagements = () => {
       }
     } else if (bulkAction === "publish") {
       try {
-        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/rich-content-page/publish/${id}`, {}, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.post(`/rich-content/publish/${id}`, {})));
         toast.success(`${count} ${label} published.`);
         setSelectedIds([]);
         setBulkAction("");
@@ -578,7 +575,7 @@ const RichContentPageManagements = () => {
       }
     } else if (bulkAction === "draft") {
       try {
-        await Promise.all(selectedIds.map(id => axios.post(`${API}/api/rich-content-page/draft/${id}`, {}, { headers: authH() })));
+        await Promise.all(selectedIds.map(id => apiClient.post(`/rich-content/draft/${id}`, {})));
         toast.info(`${count} ${label} moved to draft.`);
         setSelectedIds([]);
         setBulkAction("");

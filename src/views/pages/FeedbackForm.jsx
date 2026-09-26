@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Row, Col } from 'reactstrap';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 import PageLayout from '../../components/PageLayout';
 import { useLanguage } from '../../contexts/LanguageContext';
+import apiClient from '../../services/api.service';
 import {
   FaUser, FaEnvelope, FaPhone, FaCommentDots,
   FaShieldAlt, FaCheckCircle, FaBullhorn, FaSms,
   FaHeadset, FaChartLine,
 } from 'react-icons/fa';
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const initialState = { fullName: '', email: '', phone: '', feedback: '', captcha: '' };
 
@@ -81,15 +79,14 @@ const FeedbackForm = () => {
 
     try {
       setLoading(true);
-      await axios.post(
-        `${API_URL}/api/feedback-creat`,
+      await apiClient.post(
+        '/feedback/create',
         {
           name:    values.fullName.trim(),
           email:   values.email.trim().toLowerCase(),
           phone:   values.phone.trim(),
           message: values.feedback.trim(),
-        },
-        { headers: { 'Content-Type': 'application/json' } }
+        }
       );
       Swal.fire({
         icon: 'success',

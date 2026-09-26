@@ -4,7 +4,6 @@ import {
   Container, Row, Col, Card, Form, FormGroup, Label,
   Input, Button, InputGroup, InputGroupText, Spinner
 } from "reactstrap";
-import axios from "axios";
 import Swal from "sweetalert2";
 import {
   FaUser, FaLock, FaSignInAlt, FaEye, FaEyeSlash,
@@ -13,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { useLanguage } from "../../contexts/LanguageContext";
 import AdminLoginIllustration from "../../components/AdminLoginIllustration";
+import apiClient from "../../services/api.service";
 
 const createCaptchaString = () => {
   const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz";
@@ -42,7 +42,6 @@ const AdminLogin = () => {
 
   const navigate = useNavigate();
   const { isHindi } = useLanguage();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const generateCaptcha = () => setCaptcha(createCaptchaString());
 
@@ -98,24 +97,23 @@ const AdminLogin = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/auth/login`,
+      const res = await apiClient.post(
+        `/auth/login`,
         { identifier, password },
-        { timeout: 10000 },
-        { headers: { "Content-Type": "application/json" } }
+        { timeout: 10000 }
       );
-      sessionStorage.setItem("authToken", res.data.token);
+      sessionStorage.setItem("authToken", res.token || res.data?.token);
+      localStorage.setItem("authToken", res.token || res.data?.token);
       Swal.fire({
         icon: "success",
         title: isHindi ? "लॉगिन सफल" : "Login Successful",
-        text: isHindi ? "व्यवस्थापक पैनल पर रीडायरेक्ट किया जा रहा है..." : "Redirecting to Admin Portal...",
+        text: res.message || (isHindi ? "व्यवस्थापक पैनल पर रीडायरेक्ट किया जा रहा है..." : "Redirecting to Admin Portal..."),
         timer: 1500,
         showConfirmButton: false
       });
       setTimeout(() => navigate("/authorized/dashboard"), 1500);
     } catch (err) {
-      let message = isHindi ? "सर्वर से कनेक्ट करने में असमर्थ" : "Unable to connect to server";
-      if (err.response?.data?.message) message = err.response.data.message;
+      const message = err.message || err.response?.data?.message || (isHindi ? "सर्वर से कनेक्ट करने में असमर्थ" : "Unable to connect to server");
       Swal.fire({
         icon: "error",
         title: isHindi ? "लॉगिन विफल" : "Login Failed",

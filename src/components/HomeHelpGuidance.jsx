@@ -7,9 +7,8 @@ import {
     CardBody,
     Button,
 } from "reactstrap";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../services/api.service";
 
-const API_URL = import.meta.env.VITE_API_URL;
 const ITEMS_PER_PAGE = 10;
 
 function HomeHelpGuidance() {
@@ -23,10 +22,8 @@ function HomeHelpGuidance() {
 
     const fetchActiveHelp = async () => {
         try {
-            const res = await axios.get(
-                `${API_URL}/api/get-active-help-guidance`
-            );
-            setData(res.data.data || []);
+            const res = await apiClient.get('/help-guidance/active');
+            setData(res?.data || res || []);
         } catch (error) {
             console.log("Failed to load Help & Guidance");
         }
@@ -82,7 +79,7 @@ function HomeHelpGuidance() {
                                     <Button
                                         size="sm"
                                         color="danger"
-                                        href={`${API_URL}${item.pdfUrl}`}
+                                        href={`${BASE_HOST}${item.pdfUrl}`}
                                         target="_blank"
                                     >
                                         Download PDF

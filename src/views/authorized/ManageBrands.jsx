@@ -4,20 +4,18 @@ import {
   Input, Table, Spinner, Row, Col, Badge,
   Modal, ModalHeader, ModalBody, ModalFooter
 } from "reactstrap";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import { FaPlus, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 import PageLoader from "../../components/PageLoader";
 
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 const ManageBrands = () => {
   const token = sessionStorage.getItem("authToken");
   const { toasts, toast } = useToast();
 
-  const authHeaders = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
+  
 
   const multipartHeaders = {
     headers: {
@@ -45,7 +43,7 @@ const ManageBrands = () => {
   const fetchBrands = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/get-brands`, authHeaders);
+      const res = await apiClient.get('/brands/list');
       setBrands(res.data.data || []);
     } catch (err) {
       toast.error(err.response?.data?.message || "Load failed");
@@ -73,11 +71,7 @@ const ManageBrands = () => {
 
     try {
       setBtnLoading(true);
-      const res = await axios.post(
-        `${API_URL}/api/create-brand`,
-        formData,
-        multipartHeaders
-      );
+      const res = await apiClient.post('/brands/create', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       toast.success(res.data.message || "Brand created successfully");
       setName("");
@@ -109,11 +103,7 @@ const ManageBrands = () => {
 
     try {
       setUpdateLoading(true);
-      const res = await axios.put(
-        `${API_URL}/api/update-brand/${editId}`,
-        formData,
-        multipartHeaders
-      );
+      const res = await apiClient.put(`/brands/update/${editId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       toast.success(res.data.message || "Brand updated successfully");
       setEditModal(false);
@@ -131,10 +121,7 @@ const ManageBrands = () => {
     if (!isConfirmed) return;
 
     try {
-      const res = await axios.delete(
-        `${API_URL}/api/delete-brand/${id}`,
-        authHeaders
-      );
+      const res = await apiClient.delete(`/brands/delete/${id}`);
       toast.success(res.data.message || "Brand deleted");
       fetchBrands();
     } catch (err) {
@@ -209,7 +196,7 @@ const ManageBrands = () => {
                         <td>{i + 1}</td>
                         <td>
                           {b.image ? (
-                            <img src={`${API_URL}${b.image}`} alt={b.name} style={{ height: "36px", objectFit: "contain" }} />
+                            <img src={`${BASE_HOST}${b.image}`} alt={b.name} style={{ height: "36px", objectFit: "contain" }} />
                           ) : "—"}
                         </td>
                         <td className="fw-medium">{b.name}</td>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, Button, Modal, ModalHeader, ModalBody, Card, CardBody, CardHeader, Spinner } from "reactstrap";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import PageLoader from "../../components/PageLoader";
 
@@ -16,7 +16,7 @@ const getToken = () => {
 };
 
 const AdminFeedbackList = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
+  
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,20 +34,10 @@ const AdminFeedbackList = () => {
     try {
       let res;
       try {
-        res = await axios.get(`${API_URL}/api/get-all-feedbacks`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        res = await apiClient.get('/feedback/list').catch(() => apiClient.get('/admin/feedbacks'));
       } catch (err) {
         // Fallback endpoint if needed
-        res = await axios.get(`${API_URL}/api/admin/feedbacks`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        res = await apiClient.get('/admin/feedbacks');
       }
       setFeedbacks(res.data.data || []);
     } catch (err) {
@@ -69,19 +59,9 @@ const AdminFeedbackList = () => {
     try {
       let res;
       try {
-        res = await axios.get(`${API_URL}/api/get-feedback/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        res = await apiClient.get(`/feedback/detail/${id}`).catch(() => apiClient.get(`/feedback/delete/${id}`));
       } catch (err) {
-        res = await axios.get(`${API_URL}/api/admin/feedbacks/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        res = await apiClient.get(`/feedback/delete/${id}`);
       }
       setSelectedFeedback(res.data.data);
       setModalOpen(true);
@@ -114,12 +94,7 @@ const AdminFeedbackList = () => {
 
     const token = getToken();
     try {
-      await axios.delete(`${API_URL}/api/admin/feedbacks/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await apiClient.delete(`/feedback/delete/${id}`);
 
       setFeedbacks((prev) => prev.filter((item) => item._id !== id));
 

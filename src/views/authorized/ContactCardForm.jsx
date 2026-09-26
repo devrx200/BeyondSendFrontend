@@ -12,11 +12,11 @@ import {
   Table,
   CardHeader
 } from "reactstrap";
-import axios from "axios";
+import apiClient from "../../services/api.service";
 import Swal from "sweetalert2";
 import { FaBuilding, FaUniversity } from "react-icons/fa";
 
-const API = import.meta.env.VITE_API_URL;
+
 const token = sessionStorage.getItem("authToken");
 const ContactCardCMS = () => {
   const [cards, setCards] = useState([]);
@@ -37,7 +37,7 @@ const ContactCardCMS = () => {
 
   // ================= FETCH =================
   const fetchCards = async () => {
-    const res = await axios.get(`${API}/api/contact-card/get-all`);
+    const res = await apiClient.get('/contact-card/list');
     setCards(res.data.data || []);
   };
 
@@ -53,9 +53,7 @@ const ContactCardCMS = () => {
   // ================= SAVE =================
   const save = async () => {
     try {
-      await axios.post(`${API}/api/contact-card/save`, form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await apiClient.post('/contact-card/create', form);
 
       Swal.fire("Success", "Saved successfully", "success");
 
@@ -95,9 +93,7 @@ const ContactCardCMS = () => {
 
     if (!confirm.isConfirmed) return;
 
-    await axios.delete(`${API}/api/contact-card/delete/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    await apiClient.delete(`/contact-card/delete/${id}`);
 
     Swal.fire("Deleted", "Removed", "success");
     fetchCards();

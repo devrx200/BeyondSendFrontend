@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Collapse } from "reactstrap";
-import axios from "axios";
 import Swal from "sweetalert2";
 import { jwtDecode } from "jwt-decode";
 
@@ -55,8 +54,7 @@ import {
 import { FaPager } from "react-icons/fa6";
 
 import { useLanguage } from "../contexts/LanguageContext";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient, { BASE_HOST } from "../services/api.service";
 const PORTAL_VERSION = import.meta.env.VITE_PORTAL_VERSION;
 
 
@@ -509,7 +507,11 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
 
     try {
       const token = sessionStorage.getItem("authToken");
-      await axios.post(`${API_URL}/api/logout-user`, { token });
+      try {
+        await apiClient.post('/auth/logout', { token });
+      } catch {
+        await apiClient.post('/logout-user', { token });
+      }
     } catch (error) {
       console.error("Logout API Error:", error?.response?.data || error.message);
     }
@@ -740,7 +742,7 @@ const AdminSidebar = ({ collapsed, mobileOpen = false, onCloseMobile }) => {
             <img
               src={
                 userProfile.profileImage
-                  ? `${API_URL}${userProfile.profileImage}`
+                  ? `${BASE_HOST}${userProfile.profileImage}`
                   : avatarFallback(userProfile.name)
               }
               onError={(e) => {

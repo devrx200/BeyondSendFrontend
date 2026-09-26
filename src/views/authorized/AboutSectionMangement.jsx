@@ -16,11 +16,11 @@ import {
   Col, Badge, CardHeader, UncontrolledCollapse
 } from "reactstrap";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaImage } from "react-icons/fa";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-const API_URL = import.meta.env.VITE_API_URL;
+
 const token = sessionStorage.getItem("authToken");
 
 const AboutSectionMangement = () => {
@@ -55,7 +55,7 @@ const AboutSectionMangement = () => {
 
   const loadList = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/get-about-sections`);
+      const res = await apiClient.get('/about-sections/list');
       setList(res.data?.departmentLeaderProfiles || []);
       setAboutDepartment({
         titleEng: res.data?.aboutDepartment?.titleEng || "",
@@ -275,15 +275,13 @@ const AboutSectionMangement = () => {
 
       let res;
       if (editingId) {
-        res = await axios.put(
-          `${API_URL}/api/update-about-section/${editingId}`,
+        res = await apiClient.put(
+          `/about-sections/update/${editingId}`,
           payload,
-          { headers: { authorization: `Bearer ${token}` } }
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         );
       } else {
-        res = await axios.post(`${API_URL}/api/create-about-section`, payload, {
-          headers: { authorization: `Bearer ${token}` }
-        });
+        res = await apiClient.post('/about-sections/create', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
 
       Swal.fire("Success", res.data.msg, "success");
@@ -309,7 +307,7 @@ const AboutSectionMangement = () => {
       isShowOnHeader: item.isShowOnHeader ?? true,
       isHideOnAboutSection: item.isHideOnAboutSection ?? false
     });
-    setImagePreview(item.profileUrl ? `${API_URL}${item.profileUrl}` : null);
+    setImagePreview(item.profileUrl ? `${BASE_HOST}${item.profileUrl}` : null);
     setModal(true);
   };
 
@@ -325,10 +323,7 @@ const AboutSectionMangement = () => {
 
     if (!confirm.isConfirmed) return;
     try {
-      const res = await axios.delete(
-        `${API_URL}/api/delete-about-section/${id}`,
-        { headers: { authorization: `Bearer ${token}` } }
-      );
+      const res = await apiClient.delete(`/about-sections/delete/${id}`);
       Swal.fire("Deleted", res.data.msg, "success");
       loadList();
     } catch (err) {
@@ -344,10 +339,9 @@ const AboutSectionMangement = () => {
   const saveAboutDepartment = async () => {
     setDeptSaving(true);
     try {
-      const res = await axios.put(
-        `${API_URL}/api/update-about-department`,
-        aboutDepartment,
-        { headers: { authorization: `Bearer ${token}` } }
+      const res = await apiClient.put(
+        '/about-sections/update-department',
+        aboutDepartment
       );
       Swal.fire("Success", res.data.msg, "success");
     } catch (err) {
@@ -454,7 +448,7 @@ const AboutSectionMangement = () => {
                   <tr key={item._id}>
                     <td>{i + 1}</td>
                     <td>
-                      <img src={`${API_URL}${item.profileUrl}`} width={60} alt="" />
+                      <img src={`${BASE_HOST}${item.profileUrl}`} width={60} alt="" />
                     </td>
                     <td>{isHindi ? item.imgNameHin : item.imgNameEng}</td>
                     <td>{isHindi ? item.designationHin : item.designationEng}</td>

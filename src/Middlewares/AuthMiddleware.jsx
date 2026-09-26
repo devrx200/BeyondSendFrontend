@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import Swal from "sweetalert2";
 import PageLoader from "../components/PageLoader";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import apiClient from "../services/api.service";
 
 let authInFlightPromise = null;
 let lastAuthValidationTime = 0;
@@ -55,24 +53,24 @@ const AuthMiddleware = ({ allowedRoles = [] }) => {
       }
 
       if (!authInFlightPromise) {
-        authInFlightPromise = axios
-          .post(`${API_URL}/api/check-auth-token`, { token: curToken })
-          .finally(() => {
-            setTimeout(() => {
-              authInFlightPromise = null;
-            }, 300);
-          });
+        authInFlightPromise = (async () => {
+          return await apiClient.post('/auth/verify-token', { token: curToken });
+        })().finally(() => {
+          setTimeout(() => {
+            authInFlightPromise = null;
+          }, 300);
+        });
       }
 
       const res = await authInFlightPromise;
-      if (res.status !== 200 || !res.data?.success) {
+      if (!res?.success) {
         sessionStorage.clear();
         navigate("/", { replace: true });
         return;
       }
 
       lastAuthValidationTime = Date.now();
-      const user = res.data?.user || {};
+      const user = res.user || res.data?.user || {};
       const role = (user?.role || "").toUpperCase();
       sessionStorage.setItem("userData", JSON.stringify(user));
       sessionStorage.setItem("userRole", role);

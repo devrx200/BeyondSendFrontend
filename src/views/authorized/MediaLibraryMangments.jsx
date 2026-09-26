@@ -5,7 +5,7 @@ import {
   CardHeader, Progress, Label, InputGroup, InputGroupText, Alert
 } from "reactstrap";
 import { useDropzone } from "react-dropzone";
-import axios from "axios";
+import apiClient, { BASE_HOST } from "../../services/api.service";
 import Swal from "sweetalert2";
 import {
   FaTh, FaList, FaCopy, FaEye, FaUpload,
@@ -17,7 +17,7 @@ import {
 import { useToast, ToastContainer, wpSwal } from "../../utilities/WPToast";
 import PageLoader from "../../components/PageLoader";
 
-const API = import.meta.env.VITE_API_URL;
+
 const getToken = () => sessionStorage.getItem("authToken");
 const authHeader = () => ({ Authorization: `Bearer ${getToken()}` });
 
@@ -71,7 +71,7 @@ const PdfViewer = ({ url, fileName }) => {
     setLoading(true);
     setError(null);
 
-    axios.get(url, { responseType: "blob" })
+    apiClient.get(url, { responseType: "blob" })
       .then((response) => {
         if (!isMounted) return;
         createdUrl = URL.createObjectURL(response.data);
@@ -135,7 +135,7 @@ const DocxViewer = ({ url, fileName }) => {
     setLoading(true);
     setError(null);
 
-    axios.get(url, { responseType: "blob" })
+    apiClient.get(url, { responseType: "blob" })
       .then(async (response) => {
         if (!isMounted) return;
         if (containerRef.current) {
@@ -211,7 +211,7 @@ const ExcelViewer = ({ url, fileName }) => {
     setLoading(true);
     setError(null);
 
-    axios.get(url, { responseType: "arraybuffer" })
+    apiClient.get(url, { responseType: "arraybuffer" })
       .then(async (response) => {
         if (!isMounted) return;
         try {
@@ -391,7 +391,7 @@ const PptxViewer = ({ url, fileName }) => {
     setLoading(true);
     setError(null);
 
-    axios.get(url, { responseType: "arraybuffer" })
+    apiClient.get(url, { responseType: "arraybuffer" })
       .then(async (response) => {
         if (!isMounted) return;
         try {
@@ -561,9 +561,7 @@ const MediaLibraryMangments = () => {
   const fetchFiles = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/files/list`, {
-        headers: authHeader()
-      });
+      const res = await apiClient.get('/files/list');
       setFiles(res.data?.data || []);
     } catch (err) {
       const message = err?.response?.data?.message || "Failed to load media files";
@@ -583,7 +581,7 @@ const MediaLibraryMangments = () => {
 
   // ----------------------------- COPY LINK -----------------------------
   const copyLink = (filePath) => {
-    const fullUrl = `${API}${filePath}`;
+    const fullUrl = `${BASE_HOST}${filePath}`;
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(fullUrl);
     } else {
@@ -609,7 +607,7 @@ const MediaLibraryMangments = () => {
     const ext = (file?.originalName || "").split(".").pop()?.toLowerCase();
     if (["txt", "csv", "json", "md", "xml", "html", "css", "js", "jsx", "ts", "tsx"].includes(ext)) {
       setTextLoading(true);
-      axios.get(`${API}${file.filePath}`, { responseType: "text" })
+      apiClient.get(`${BASE_HOST}${file.filePath}`, { responseType: "text" })
         .then((res) => {
           setTextContent(typeof res.data === "string" ? res.data : JSON.stringify(res.data, null, 2));
         })
@@ -624,7 +622,7 @@ const MediaLibraryMangments = () => {
 
   const getPreviewContent = () => {
     if (!previewFile) return null;
-    const fileUrl = `${API}${previewFile.filePath}`;
+    const fileUrl = `${BASE_HOST}${previewFile.filePath}`;
     const extension = (previewFile.originalName || "").split(".").pop()?.toLowerCase();
     const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension);
     const isAudio = ["mp3", "wav", "ogg", "m4a"].includes(extension);
@@ -826,8 +824,8 @@ const MediaLibraryMangments = () => {
     setUploadProgress(0);
 
     try {
-      const res = await axios.post(`${API}/api/files/upload`, formData, {
-        headers: { ...authHeader(), "Content-Type": "multipart/form-data" },
+      const res = await apiClient.post('/files/upload', formData, {
+        headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
@@ -937,7 +935,7 @@ const MediaLibraryMangments = () => {
           <Card className="h-100 shadow-sm border-0 rounded-3 overflow-hidden" style={{ transition: "transform 0.1s ease", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"} onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
             <div className="text-center p-3 bg-light" style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => openPreview(file)}>
               {file.filePath?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <img src={`${API}${file.filePath}`} alt="thumb" style={{ maxHeight: 100, maxWidth: "100%", objectFit: "contain" }} />
+                <img src={`${BASE_HOST}${file.filePath}`} alt="thumb" style={{ maxHeight: 100, maxWidth: "100%", objectFit: "contain" }} />
               ) : (
                 getFileIcon(file.originalName)
               )}
@@ -984,7 +982,7 @@ const MediaLibraryMangments = () => {
               <td style={{ padding: "12px 16px" }}>{formatSize(file.fileSize)}</td>
               <td style={{ padding: "12px 16px" }}>{formatDateTime(file.createdAt)}</td>
               <td style={{ padding: "12px 16px" }}>
-                <a href={`${API}${file.filePath}`} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none">
+                <a href={`${BASE_HOST}${file.filePath}`} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none">
                   Open Link
                 </a>
               </td>
@@ -1315,7 +1313,7 @@ const MediaLibraryMangments = () => {
               <FaCopy className="me-1 text-success" /> Copy Link
             </Button>
             <a
-              href={`${API}${previewFile?.filePath}`}
+              href={`${BASE_HOST}${previewFile?.filePath}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-outline-primary d-inline-flex align-items-center gap-1"
@@ -1323,7 +1321,7 @@ const MediaLibraryMangments = () => {
               <FaExternalLinkAlt size={12} /> Open in New Tab
             </a>
             <a
-              href={`${API}${previewFile?.filePath}`}
+              href={`${BASE_HOST}${previewFile?.filePath}`}
               download={previewFile?.originalName}
               className="btn btn-primary d-inline-flex align-items-center gap-1"
             >
