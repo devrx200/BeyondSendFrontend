@@ -1,19 +1,16 @@
 import React from "react";
-import { Badge, Button } from "reactstrap";
+import { Badge } from "reactstrap";
 import { FaExternalLinkAlt } from "react-icons/fa";
 
 const AdminLoginIllustration = ({ isHindi }) => {
   return (
     <div className="login-illustration-container d-flex flex-column align-items-center justify-content-between h-100 p-1 p-lg-4 text-center position-relative">
-      {/* BACKGROUND DECORATIVE LINES (lines-greeen-drow.png) */}
+      {/* BACKGROUND DECORATIVE GLOW */}
       <div
         className="illustration-bg-wave position-absolute start-0 bottom-5 w-100 h-100 pointer-events-none"
         style={{
-          backgroundImage: "url('/lines-greeen-drow.png')",
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "bottom right",
-          backgroundSize: "cover",
-          opacity: 0.35,
+          backgroundImage: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(79, 110, 247, 0.18), transparent 70%)",
+          opacity: 0.8,
           zIndex: 0,
           pointerEvents: "none"
         }}
@@ -23,15 +20,15 @@ const AdminLoginIllustration = ({ isHindi }) => {
       <div className="illustration-top-badge z-1 mb-2">
         <Badge
           color="light"
-          className="py-2 px-3 rounded-pill fw-semibold shadow-xs border text-primary"
+          className="py-2 px-3 rounded-pill fw-bold shadow-xs border text-primary"
           style={{
-            background: "rgba(255, 255, 255, 0.9)",
-            borderColor: "rgba(191, 219, 254, 0.8)",
+            background: "rgba(255, 255, 255, 0.95)",
+            borderColor: "rgba(191, 219, 254, 0.9)",
             fontSize: "12px",
-            letterSpacing: "0.3px"
+            letterSpacing: "0.4px"
           }}
         >
-          🎓 {isHindi ? "बियॉन्डसेंड " : "BeyondSend "}
+          🚀 {isHindi ? "बियॉन्डसेंड · ओमनीचैनल टेलीकॉम प्लेटफॉर्म" : "BeyondSend · Omnichannel Messaging Suite"}
         </Badge>
       </div>
 
@@ -46,23 +43,23 @@ const AdminLoginIllustration = ({ isHindi }) => {
           <defs>
             {/* Gradients */}
             <linearGradient id="deskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#8d6e63" />
-              <stop offset="100%" stopColor="#5d4037" />
+              <stop offset="0%" stopColor="#334155" />
+              <stop offset="100%" stopColor="#1e293b" />
             </linearGradient>
 
             <linearGradient id="laptopBody" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#cbd5e1" />
+              <stop offset="0%" stopColor="#e2e8f0" />
               <stop offset="100%" stopColor="#94a3b8" />
             </linearGradient>
 
             <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#1e3a8a" />
-              <stop offset="100%" stopColor="#0f172a" />
+              <stop offset="0%" stopColor="#0f172a" />
+              <stop offset="100%" stopColor="#1e293b" />
             </linearGradient>
 
             <linearGradient id="shirtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#2563eb" />
-              <stop offset="100%" stopColor="#1d4ed8" />
+              <stop offset="0%" stopColor="#4f6ef7" />
+              <stop offset="100%" stopColor="#3b5bdb" />
             </linearGradient>
 
             <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -70,218 +67,184 @@ const AdminLoginIllustration = ({ isHindi }) => {
               <stop offset="100%" stopColor="#fba868" />
             </linearGradient>
 
-            <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fef08a" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.2" />
+            <linearGradient id="waGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#25d366" />
+              <stop offset="100%" stopColor="#128c7e" />
             </linearGradient>
 
-            <linearGradient id="dnaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="emailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#0284c7" />
+            </linearGradient>
+
+            <linearGradient id="smsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#818cf8" />
+              <stop offset="100%" stopColor="#4f46e5" />
+            </linearGradient>
+
+            <linearGradient id="socialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#f43f5e" />
               <stop offset="100%" stopColor="#e11d48" />
             </linearGradient>
 
-            <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#64748b" />
-              <stop offset="100%" stopColor="#475569" />
+            <linearGradient id="voiceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fb923c" />
+              <stop offset="100%" stopColor="#ea580c" />
             </linearGradient>
 
             {/* Filters */}
-            <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
-              <feDropShadow dx="0" dy="4" stdDeviation="5" floodOpacity="0.12" floodColor="#0f172a" />
+            <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="4" stdDeviation="5" floodOpacity="0.18" floodColor="#0f172a" />
             </filter>
-
-            <filter id="bulbGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+            <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
 
-          {/* BACKDROP SOFT ILLUMINATION CIRCLES */}
-          <circle cx="270" cy="210" r="150" fill="url(#glowGrad)" opacity="0.18" />
-          <circle cx="390" cy="110" r="65" fill="#bae6fd" opacity="0.25" />
-          <circle cx="110" cy="130" r="50" fill="#fed7aa" opacity="0.2" />
+          {/* BACKDROP SOFT ILLUMINATION */}
+          <circle cx="270" cy="200" r="140" fill="#4f6ef7" opacity="0.08" />
+          <circle cx="110" cy="110" r="70" fill="#25d366" opacity="0.08" />
+          <circle cx="430" cy="120" r="70" fill="#38bdf8" opacity="0.08" />
 
-          {/* ── 1. FLOATING ANIMATED ITEMS AROUND THE SCENE ── */}
+          {/* ── FLOATING SERVICES & CHANNELS ICONS ── */}
 
-          {/* CLOCK (Floating top-left) */}
-          <g transform="translate(45, 30)">
+          {/* 1. WHATSAPP BUSINESS BADGE (Floating Top-Left) */}
+          <g transform="translate(45, 35)">
             <g className="anim-float-slow">
-              <circle cx="32" cy="32" r="30" fill="#ffffff" stroke="#94a3b8" strokeWidth="2" strokeDasharray="3 3" filter="url(#softShadow)" />
-              <circle cx="32" cy="32" r="26" fill="#f8fafc" />
-              {/* Marks */}
-              <line x1="32" y1="9" x2="32" y2="14" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
-              <line x1="32" y1="50" x2="32" y2="55" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
-              <line x1="9" y1="32" x2="14" y2="32" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
-              <line x1="50" y1="32" x2="55" y2="32" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
-              {/* Hands */}
-              <line x1="32" y1="32" x2="22" y2="22" stroke="#e11d48" strokeWidth="2.5" strokeLinecap="round" />
-              <line x1="32" y1="32" x2="43" y2="26" stroke="#1e293b" strokeWidth="2.2" strokeLinecap="round" />
-              <circle cx="32" cy="32" r="2.8" fill="#e11d48" />
-            </g>
-          </g>
-
-          {/* LIGHT BULB (Floating top-center with pulsating rays) */}
-          <g transform="translate(195, 38)">
-            <g className="anim-pulse-glow">
-              {/* Rays */}
-              <g stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" opacity="0.85">
-                <line x1="22" y1="2" x2="22" y2="8" />
-                <line x1="7" y1="8" x2="12" y2="13" />
-                <line x1="37" y1="8" x2="32" y2="13" />
-                <line x1="1" y1="22" x2="7" y2="22" />
-                <line x1="43" y1="22" x2="37" y2="22" />
-              </g>
-              {/* Bulb Glass */}
+              <circle cx="32" cy="32" r="28" fill="url(#waGrad)" filter="url(#softShadow)" />
+              {/* WhatsApp Speech Bubble */}
               <path
-                d="M15 28 C11 24 9 20 9 16 C9 9 15 3 22 3 C29 3 35 9 35 16 C35 20 33 24 29 28 L27 34 L17 34 Z"
-                fill="#fbbf24"
-                stroke="#d97706"
-                strokeWidth="1.5"
-                filter="url(#bulbGlow)"
+                d="M32 18 C24.2 18 18 24.2 18 32 C18 34.6 18.7 37.1 20 39.2 L18.5 45.5 L25 43.8 C27.1 45 29.5 45.7 32 45.7 C39.8 45.7 46 39.5 46 32 C46 24.2 39.8 18 32 18 Z"
+                fill="#ffffff"
               />
-              <path d="M18 21 Q22 14 26 21" fill="none" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" />
-              <rect x="18" y="34" width="8" height="2.5" rx="1" fill="#94a3b8" />
-              <rect x="19" y="37" width="6" height="2" rx="1" fill="#64748b" />
+              {/* WhatsApp Phone shape inside */}
+              <path
+                d="M27.5 25.5 C27 24.5 26.2 24.5 25.5 24.5 C25 24.5 24.2 24.8 23.8 25.5 C23.2 26.2 22 27.5 22 29.8 C22 32.2 23.8 34.5 24 34.8 C24.3 35.1 27.2 39.8 31.8 41.5 C35.6 42.9 36.4 42.6 37.2 42.5 C38.2 42.4 39.5 41.5 40 40.2 C40.5 38.9 40.5 37.8 40.3 37.5 C40.1 37.2 39.5 37 38.5 36.5 C37.5 36 33.2 34 32.7 33.8 C32.2 33.6 31.8 33.5 31.4 34.1 C30.9 34.8 29.8 36.2 29.5 36.5 C29.2 36.8 28.8 36.8 28 36.5 C27.2 36.2 25 35.2 23.8 34 Z"
+                fill="#25d366"
+              />
             </g>
           </g>
 
-          {/* DNA HELIX (Floating top-center-right) */}
-          <g transform="translate(295, 32)">
+          {/* 2. BULK SMS & RCS MESSAGING BADGE (Floating Top-Center-Left) */}
+          <g transform="translate(180, 25)">
             <g className="anim-float-gentle">
-              <circle cx="20" cy="32" r="22" fill="#fff" opacity="0.85" filter="url(#softShadow)" />
-              <path
-                d="M14 12 Q26 22 14 32 Q26 42 14 52"
-                fill="none"
-                stroke="url(#dnaGrad)"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <path
-                d="M26 12 Q14 22 26 32 Q14 42 26 52"
-                fill="none"
-                stroke="#0ea5e9"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <line x1="16" y1="18" x2="24" y2="18" stroke="#f59e0b" strokeWidth="1.8" />
-              <line x1="15" y1="32" x2="25" y2="32" stroke="#10b981" strokeWidth="1.8" />
-              <line x1="16" y1="46" x2="24" y2="46" stroke="#f59e0b" strokeWidth="1.8" />
+              <rect x="0" y="0" width="70" height="42" rx="12" fill="#ffffff" filter="url(#softShadow)" />
+              <rect x="2" y="2" width="66" height="38" rx="10" fill="url(#smsGrad)" />
+              {/* Chat lines inside */}
+              <circle cx="16" cy="21" r="5" fill="#ffffff" />
+              <rect x="26" y="15" width="30" height="4" rx="2" fill="#ffffff" />
+              <rect x="26" y="23" width="22" height="4" rx="2" fill="#ffffff" opacity="0.8" />
+              {/* Little speech tail */}
+              <polygon points="12,42 20,42 16,48" fill="#4f46e5" />
             </g>
           </g>
 
-          {/* ATOM MODEL (Floating top-right with rotating orbit) */}
+          {/* 3. EMAIL AUTOMATION & SMTP GATEWAY (Floating Top-Right) */}
           <g transform="translate(415, 35)">
-            <g className="anim-orbit-spin">
-              <circle cx="28" cy="28" r="28" fill="transparent" />
-              <ellipse cx="28" cy="28" rx="26" ry="10" fill="none" stroke="#2563eb" strokeWidth="1.8" transform="rotate(30 28 28)" opacity="0.8" />
-              <ellipse cx="28" cy="28" rx="26" ry="10" fill="none" stroke="#0d9488" strokeWidth="1.8" transform="rotate(90 28 28)" opacity="0.8" />
-              <ellipse cx="28" cy="28" rx="26" ry="10" fill="none" stroke="#e11d48" strokeWidth="1.8" transform="rotate(150 28 28)" opacity="0.8" />
-              <circle cx="28" cy="28" r="6" fill="#f59e0b" filter="url(#softShadow)" />
-              <circle cx="50" cy="20" r="2.8" fill="#2563eb" />
-              <circle cx="28" cy="54" r="2.8" fill="#0d9488" />
-              <circle cx="6" cy="22" r="2.8" fill="#e11d48" />
-            </g>
-          </g>
-
-          {/* RINGED PLANET (Floating mid-left) */}
-          <g transform="translate(48, 145)">
             <g className="anim-float-bob">
-              <circle cx="24" cy="24" r="16" fill="#f97316" />
-              <path d="M12 18 Q24 22 36 18" fill="none" stroke="#ea580c" strokeWidth="2.5" opacity="0.6" />
-              <path d="M10 25 Q24 29 38 25" fill="none" stroke="#c2410c" strokeWidth="2" opacity="0.6" />
-              <ellipse cx="24" cy="24" rx="27" ry="7" fill="none" stroke="#38bdf8" strokeWidth="3" transform="rotate(-20 24 24)" />
+              <circle cx="32" cy="32" r="28" fill="url(#emailGrad)" filter="url(#softShadow)" />
+              {/* Envelope */}
+              <rect x="18" y="21" width="28" height="20" rx="3" fill="#ffffff" />
+              <path d="M19 23 L32 32 L45 23" fill="none" stroke="#0284c7" strokeWidth="2.2" strokeLinecap="round" />
+              <line x1="19" y1="39" x2="28" y2="30" stroke="#0284c7" strokeWidth="1.5" />
+              <line x1="45" y1="39" x2="36" y2="30" stroke="#0284c7" strokeWidth="1.5" />
+              {/* Notification dot */}
+              <circle cx="44" cy="20" r="4.5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.5" />
             </g>
           </g>
 
-          {/* CHEMICAL FLASK (Floating mid-right) */}
-          <g transform="translate(425, 140)">
-            <g className="anim-float-gentle">
-              <path
-                d="M15 5 L15 16 L5 34 C3 38 6 42 10 42 L24 42 C29 42 32 38 30 34 L20 16 L20 5 Z"
-                fill="#e0f2fe"
-                stroke="#0284c7"
-                strokeWidth="1.8"
-              />
-              <path
-                d="M8 30 Q17 27 27 30 L28 35 C28 39 26 40 22 40 L12 40 C8 40 6 39 6 35 Z"
-                fill="#06b6d4"
-                opacity="0.8"
-              />
-              <circle cx="17" cy="33" r="1.8" fill="#ffffff" opacity="0.85" className="anim-pulse-glow" />
-              <circle cx="14" cy="37" r="1.3" fill="#ffffff" opacity="0.85" />
-              <circle cx="21" cy="35" r="1.3" fill="#ffffff" opacity="0.85" />
-              <rect x="13" y="3" width="9" height="2.5" rx="1" fill="#0284c7" />
+          {/* 4. SOCIAL MEDIA MULTI-CHANNEL (Floating Mid-Left) */}
+          <g transform="translate(40, 135)">
+            <g className="anim-float-bob">
+              <rect x="0" y="0" width="76" height="36" rx="18" fill="#ffffff" filter="url(#softShadow)" />
+              {/* Social icons row */}
+              <circle cx="18" cy="18" r="11" fill="#1877f2" />
+              <text x="18" y="23" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="bold">f</text>
+              <circle cx="38" cy="18" r="11" fill="#e1306c" />
+              <rect x="33" y="13" width="10" height="10" rx="3" fill="none" stroke="#ffffff" strokeWidth="1.5" />
+              <circle cx="58" cy="18" r="11" fill="#0a66c2" />
+              <text x="58" y="22" textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="bold">in</text>
             </g>
           </g>
 
-          {/* ROTATING GEARS (Floating lower-right behind desk) */}
-          <g transform="translate(435, 230)">
-            <g className="anim-spin-gear">
-              <path
-                d="M18 4 L22 4 L23 8 L27 9 L30 6 L33 9 L31 13 L33 16 L37 17 L37 21 L33 22 L31 26 L34 29 L31 32 L27 29 L23 31 L22 35 L18 35 L17 31 L13 29 L10 32 L7 29 L9 26 L7 22 L3 21 L3 17 L7 16 L9 13 L6 9 L9 6 L13 9 L17 8 Z"
-                fill="url(#gearGrad)"
-                opacity="0.65"
-              />
-              <circle cx="20" cy="20" r="5" fill="#f8fafc" />
-            </g>
-          </g>
-
-          {/* FORMULA (Floating soft text) */}
-          <g transform="translate(235, 145)">
+          {/* 5. VOICE BROADCASTING & CALLING (Floating Mid-Right) */}
+          <g transform="translate(415, 130)">
             <g className="anim-float-slow">
-              <text
-                x="0"
-                y="0"
-                fill="#e11d48"
-                fontSize="17"
-                fontWeight="bold"
-                fontFamily="Georgia, serif"
-                fontStyle="italic"
-                opacity="0.85"
-              >
-                e = mc²
-              </text>
+              <circle cx="32" cy="32" r="28" fill="url(#voiceGrad)" filter="url(#softShadow)" />
+              {/* Headset / Phone wave */}
+              <path
+                d="M22 34 C20 34 18 32 18 30 L18 26 C18 20 23 16 32 16 C41 16 46 20 46 26 L46 30 C46 32 44 34 42 34"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <rect x="17" y="26" width="5" height="10" rx="2" fill="#ffffff" />
+              <rect x="42" y="26" width="5" height="10" rx="2" fill="#ffffff" />
+              {/* Mic arm */}
+              <path d="M42 32 Q40 40 33 40" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="31" cy="40" r="2.5" fill="#ffffff" />
             </g>
           </g>
 
-          {/* ── 2. DESK & WORKSTATION PLATFORM ── */}
+          {/* 6. TELECOM HIGH-SPEED CONNECTIVITY CLOUD (Floating Top-Center) */}
+          <g transform="translate(300, 25)">
+            <g className="anim-pulse-glow">
+              <rect x="0" y="0" width="72" height="34" rx="10" fill="#0f172a" stroke="#334155" strokeWidth="1.5" filter="url(#softShadow)" />
+              <circle cx="16" cy="17" r="4" fill="#10b981">
+                <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" />
+              </circle>
+              <text x="44" y="21" fill="#38bdf8" fontSize="11" fontWeight="bold" fontFamily="monospace">API 99.9%</text>
+            </g>
+          </g>
+
+          {/* ── WORKSTATION DESK ── */}
           <rect x="40" y="318" width="460" height="14" rx="7" fill="url(#deskGrad)" filter="url(#softShadow)" />
-          <rect x="48" y="330" width="444" height="4" fill="#3e2723" opacity="0.5" />
+          <rect x="48" y="330" width="444" height="4" fill="#0f172a" opacity="0.6" />
 
-          {/* ── 3. BOOKS & GLOBE ON DESK ── */}
-          <g transform="translate(68, 238)">
-            {/* Book 1 (Blue) */}
-            <rect x="0" y="55" width="80" height="14" rx="3" fill="#2563eb" />
-            <rect x="6" y="57" width="68" height="10" rx="1" fill="#f8fafc" />
-            <rect x="74" y="55" width="6" height="14" rx="1" fill="#1e40af" />
-            {/* Book 2 (Green) */}
-            <rect x="5" y="38" width="72" height="14" rx="3" fill="#10b981" />
-            <rect x="11" y="40" width="60" height="10" rx="1" fill="#f8fafc" />
-            <rect x="71" y="38" width="6" height="14" rx="1" fill="#047857" />
-            {/* Book 3 (Orange) */}
-            <rect x="12" y="22" width="60" height="13" rx="3" fill="#f97316" />
-            <rect x="16" y="24" width="50" height="9" rx="1" fill="#f8fafc" />
-            <rect x="66" y="22" width="6" height="13" rx="1" fill="#c2410c" />
-
-            {/* Globe on top of books */}
-            <g transform="translate(24, -30)">
-              <path d="M18 42 L24 42 M21 34 L21 42" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M10 24 C10 34 32 34 32 24" fill="none" stroke="#64748b" strokeWidth="2.5" />
-              <circle cx="21" cy="20" r="13" fill="#38bdf8" />
-              <path d="M12 18 Q16 14 20 18 Q24 22 28 17 Q32 20 30 26 Q24 28 18 24 Z" fill="#4ade80" />
-            </g>
+          {/* ── SMARTPHONE ON STAND (DESK LEFT: Showing live message) ── */}
+          <g transform="translate(85, 236)">
+            {/* Phone Body */}
+            <rect x="0" y="0" width="40" height="74" rx="8" fill="#1e293b" stroke="#475569" strokeWidth="2" filter="url(#softShadow)" />
+            {/* Screen */}
+            <rect x="3" y="6" width="34" height="62" rx="4" fill="#0f172a" />
+            {/* Speaker bar */}
+            <rect x="15" y="3" width="10" height="2" rx="1" fill="#64748b" />
+            {/* Message bubble on screen */}
+            <rect x="6" y="15" width="28" height="14" rx="4" fill="#25d366" />
+            <rect x="8" y="19" width="18" height="2.5" rx="1" fill="#ffffff" />
+            <rect x="8" y="23" width="12" height="2.5" rx="1" fill="#ffffff" opacity="0.8" />
+            {/* Second bubble */}
+            <rect x="6" y="33" width="28" height="14" rx="4" fill="#3b82f6" />
+            <rect x="8" y="37" width="20" height="2.5" rx="1" fill="#ffffff" />
+            <rect x="8" y="41" width="14" height="2.5" rx="1" fill="#ffffff" opacity="0.8" />
+            {/* Stand */}
+            <polygon points="12,74 28,74 24,82 16,82" fill="#334155" />
           </g>
 
-          {/* Plant Pot on Desk */}
-          <g transform="translate(385, 260)">
-            <path d="M10 32 L14 56 L34 56 L38 32 Z" fill="#fdba74" stroke="#ea580c" strokeWidth="1.5" />
-            <rect x="8" y="28" width="32" height="5" rx="2" fill="#fb923c" />
-            <path d="M24 28 Q14 12 8 18 Q16 28 24 28 Z" fill="#22c55e" />
-            <path d="M24 28 Q34 10 40 16 Q32 28 24 28 Z" fill="#16a34a" />
-            <path d="M24 28 Q24 6 20 8 Q20 20 24 28 Z" fill="#4ade80" />
+          {/* ── TELECOM RACK ROUTER / HARDWARE (DESK RIGHT) ── */}
+          <g transform="translate(390, 260)">
+            <rect x="0" y="15" width="60" height="42" rx="6" fill="#1e293b" stroke="#334155" strokeWidth="1.5" filter="url(#softShadow)" />
+            <rect x="5" y="24" width="50" height="12" rx="3" fill="#0f172a" />
+            {/* Blinking status LEDs */}
+            <circle cx="12" cy="30" r="2.5" fill="#10b981">
+              <animate attributeName="opacity" values="1;0.2;1" dur="0.8s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="20" cy="30" r="2.5" fill="#10b981">
+              <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="28" cy="30" r="2.5" fill="#38bdf8">
+              <animate attributeName="opacity" values="1;0.3;1" dur="1.2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="36" cy="30" r="2.5" fill="#f59e0b" />
+            <circle cx="48" cy="30" r="3" fill="#64748b" />
+            {/* Antenna */}
+            <line x1="50" y1="15" x2="50" y2="0" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="50" cy="0" r="3.5" fill="#38bdf8" />
           </g>
 
-          {/* ── 4. PERSON (ADMINISTRATOR / SCHOLAR / OFFICER) ── */}
+          {/* ── PERSON (PROFESSIONAL OPERATIONS & CAMPAIGN MANAGER) ── */}
           <g transform="translate(150, 160)">
             {/* Body / Shirt */}
             <path
@@ -294,11 +257,11 @@ const AdminLoginIllustration = ({ isHindi }) => {
             <polygon points="65,72 61,86 65,92 69,86" fill="#f59e0b" />
 
             {/* Left Arm */}
-            <path d="M30 92 Q25 125 70 145" fill="none" stroke="#2563eb" strokeWidth="18" strokeLinecap="round" />
+            <path d="M30 92 Q25 125 70 145" fill="none" stroke="#4f6ef7" strokeWidth="18" strokeLinecap="round" />
             <circle cx="72" cy="146" r="8" fill="url(#skinGrad)" />
 
             {/* Right Arm */}
-            <path d="M98 92 Q115 125 92 145" fill="none" stroke="#1d4ed8" strokeWidth="18" strokeLinecap="round" />
+            <path d="M98 92 Q115 125 92 145" fill="none" stroke="#3b5bdb" strokeWidth="18" strokeLinecap="round" />
             <circle cx="90" cy="146" r="8" fill="url(#skinGrad)" />
 
             {/* Neck */}
@@ -321,7 +284,7 @@ const AdminLoginIllustration = ({ isHindi }) => {
             />
           </g>
 
-          {/* ── 5. LAPTOP & INTERACTIVE SCREEN ── */}
+          {/* ── LAPTOP & REAL-TIME CAMPAIGN CONSOLE ── */}
           <g transform="translate(235, 222)">
             {/* Laptop Screen Open */}
             <path
@@ -337,23 +300,24 @@ const AdminLoginIllustration = ({ isHindi }) => {
 
             {/* Screen Top Bar */}
             <line x1="36" y1="23" x2="128" y2="23" stroke="#38bdf8" strokeWidth="2" opacity="0.6" />
-            {/* Dashboard Graphs */}
+            {/* Analytics Bar Charts on Screen */}
+            <rect x="36" y="58" width="12" height="26" rx="2" fill="#38bdf8" opacity="0.8" />
+            <rect x="52" y="44" width="12" height="40" rx="2" fill="#4f6ef7" />
+            <rect x="68" y="32" width="12" height="52" rx="2" fill="#10b981" />
+            <rect x="84" y="48" width="12" height="36" rx="2" fill="#25d366" />
+            <rect x="100" y="38" width="12" height="46" rx="2" fill="#f59e0b" />
+
+            {/* Upward Growth Trendline */}
             <path
-              d="M40 70 L55 52 L72 62 L90 40 L110 48 L126 32"
+              d="M36 68 L52 50 L68 36 L84 52 L100 42 L120 28"
               fill="none"
               stroke="#22c55e"
-              strokeWidth="3"
+              strokeWidth="2.5"
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
-            {/* Security Shield */}
-            <path
-              d="M80 46 Q86 42 92 46 L92 56 Q86 64 80 56 Z"
-              fill="#f59e0b"
-              opacity="0.9"
-            />
+            <circle cx="120" cy="28" r="3" fill="#22c55e" />
 
-            {/* Base */}
+            {/* Laptop Base */}
             <polygon
               points="10,95 155,95 170,105 0,105"
               fill="#94a3b8"
@@ -362,20 +326,20 @@ const AdminLoginIllustration = ({ isHindi }) => {
           </g>
         </svg>
       </div>
-      {/* BOTTOM "Visit WebApplication" SMALL TEXT LINK */}
-      <div className="z-1  mt-1 ">
 
+      {/* BOTTOM LINK */}
+      <div className="z-1 mt-1">
         <a
           href="https://beyondsend.in/"
           target="_blank"
           rel="noopener noreferrer"
-          className="d-inline-flex align-items-center gap-1 text-primary text-decoration-none fw-semibold small bg-white bg-opacity-75 px-3 py-1  rounded-pill border border-primary border-opacity-25 shadow-xs"
-          title={isHindi ? "बियॉन्डसेंड वेबसाइट खोलें" : "Visit BeyondSend Website"}
+          className="d-inline-flex align-items-center gap-1 text-primary text-decoration-none fw-semibold small bg-white bg-opacity-90 px-3 py-1 rounded-pill border border-primary border-opacity-25 shadow-xs"
+          title={isHindi ? "बियॉन्डसेंड पोर्टल देखें" : "Visit BeyondSend Platform"}
           style={{ fontSize: "12px" }}
         >
           <span>🌐</span>
-          <span>{isHindi ? "वेबसाइट देखें:" : "Visit Website:"}</span>
-          <span className="text-primary">https://beyondsend.in</span>
+          <span>{isHindi ? "आधिकारिक पोर्टल:" : "Platform Console:"}</span>
+          <span className="text-primary fw-bold">https://beyondsend.in</span>
           <FaExternalLinkAlt size={10} className="ms-1 opacity-75" />
         </a>
       </div>

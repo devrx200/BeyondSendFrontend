@@ -1,64 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter, Form, FormGroup,
-  Label, Input, Badge, Row, Col, InputGroup, InputGroupText
+  Label, Input, Badge, Row, Col, InputGroup, InputGroupText, Spinner
 } from "reactstrap";
 import {
   FaComments, FaPlus, FaSearch, FaEdit, FaTrash,
-  FaMobileAlt, FaImage, FaLink, FaPhone, FaReply, FaCheckCircle
+  FaMobileAlt, FaCheckCircle
 } from "react-icons/fa";
-import Swal from "sweetalert2";
-
-const initialRcsTemplates = [
-  {
-    id: "RCS-301",
-    name: "Product Showcase Card",
-    brand: "BeyondSend Retail",
-    cardType: "STANDALONE_RICH_CARD",
-    title: "Introducing Cloud Telecom 2.0 🚀",
-    description: "Experience ultra-fast SMS, WhatsApp, and Voice dispatch with 99.99% deliverability SLA.",
-    mediaUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
-    buttons: [
-      { type: "URL", label: "Explore Platform", value: "https://beyondsend.in" },
-      { type: "DIAL", label: "Call Telecom Support", value: "+919876543210" }
-    ],
-    status: "VERIFIED",
-    updatedAt: "2026-09-21 16:40"
-  },
-  {
-    id: "RCS-302",
-    name: "Interactive Appointment Confirm",
-    brand: "BeyondSend Support",
-    cardType: "QUICK_REPLY_CARD",
-    title: "Appointment Confirmation Required",
-    description: "Your technical onboarding call is scheduled for tomorrow at 3:00 PM IST.",
-    mediaUrl: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&auto=format&fit=crop&q=80",
-    buttons: [
-      { type: "QUICK_REPLY", label: "✅ Confirm Booking", value: "CONFIRM_APPT" },
-      { type: "QUICK_REPLY", label: "🔄 Reschedule", value: "RESCHEDULE_APPT" }
-    ],
-    status: "VERIFIED",
-    updatedAt: "2026-09-19 12:15"
-  },
-  {
-    id: "RCS-303",
-    name: "E-Commerce Carousel Offer",
-    brand: "BeyondSend Deals",
-    cardType: "CAROUSEL",
-    title: "Festival Telecom Credit Bundle",
-    description: "Save big on enterprise high-throughput routes today.",
-    mediaUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80",
-    buttons: [
-      { type: "URL", label: "Claim Offer", value: "https://beyondsend.in/pricing" }
-    ],
-    status: "SUBMITTED",
-    updatedAt: "2026-09-23 10:00"
-  }
-];
+import apiClient from "@apiService";
+import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
+import { PageLoader } from "@/components";
 
 const RcsTemplates = () => {
-  const [templates, setTemplates] = useState(initialRcsTemplates);
+  const { toasts, toast } = useToast();
+
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -66,29 +25,56 @@ const RcsTemplates = () => {
 
   const [form, setForm] = useState({
     name: "",
-    brand: "BeyondSend Official",
+    senderId: "BeyondSend Official",
     cardType: "STANDALONE_RICH_CARD",
-    title: "",
+    rcsCardTitle: "",
     description: "",
-    mediaUrl: "",
-    buttons: [
-      { type: "URL", label: "Visit Website", value: "https://beyondsend.in" }
-    ]
+    rcsMediaUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
+    buttons: [{ type: "URL", label: "Explore Platform", value: "https://beyondsend.in" }]
   });
+
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get("/templates/list?channel=RCS");
+      const data = res?.data?.data || res?.data || [];
+
+      setTemplates(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch RCS templates error:", err);
+      toast.error(err?.response?.data?.message || "Failed to load RCS templates");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
   const handleOpenModal = (template = null) => {
     if (template) {
-      setEditingId(template.id);
-      setForm({ ...template });
+      setEditingId(template._id);
+      setForm({
+        name: template.name || "",
+        senderId: template.senderId || "BeyondSend Official",
+        cardType: template.cardType || "STANDALONE_RICH_CARD",
+        rcsCardTitle: template.rcsCardTitle || "",
+        description: template.description || "",
+        rcsMediaUrl: template.rcsMediaUrl || "",
+        buttons: template.buttons?.length
+          ? template.buttons
+          : [{ type: "URL", label: "Explore Platform", value: "https://beyondsend.in" }]
+      });
     } else {
       setEditingId(null);
       setForm({
         name: "",
-        brand: "BeyondSend Official",
+        senderId: "BeyondSend Official",
         cardType: "STANDALONE_RICH_CARD",
-        title: "",
+        rcsCardTitle: "",
         description: "",
-        mediaUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
+        rcsMediaUrl: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
         buttons: [{ type: "URL", label: "Explore Platform", value: "https://beyondsend.in" }]
       });
     }
@@ -97,7 +83,7 @@ const RcsTemplates = () => {
 
   const handleAddButton = () => {
     if (form.buttons.length >= 3) {
-      Swal.fire("Limit Reached", "RCS allows maximum 3 action chips per card.", "info");
+      toast.warning("RCS allows maximum 3 action chips per card.");
       return;
     }
     setForm({
@@ -113,65 +99,67 @@ const RcsTemplates = () => {
     });
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.title || !form.description) {
-      Swal.fire("Required", "Please fill in Name, Title, and Description.", "warning");
+    if (!form.name.trim() || !form.rcsCardTitle.trim() || !form.description.trim()) {
+      toast.warning("Please fill in Name, Card Title, and Description.");
       return;
     }
 
-    if (editingId) {
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === editingId
-            ? { ...t, ...form, updatedAt: new Date().toISOString().slice(0, 16).replace("T", " ") }
-            : t
-        )
-      );
-      Swal.fire("Saved", "RCS template updated.", "success");
-    } else {
-      const newTpl = {
-        ...form,
-        id: `RCS-${Math.floor(300 + Math.random() * 700)}`,
-        status: "SUBMITTED",
-        updatedAt: new Date().toISOString().slice(0, 16).replace("T", " ")
-      };
-      setTemplates([newTpl, ...templates]);
-      Swal.fire("Submitted", "RCS template submitted to Google Jibe carrier network.", "success");
+    try {
+      setBtnLoading(true);
+      if (editingId) {
+        const res = await apiClient.put(`/templates/update/${editingId}`, {
+          ...form,
+          channel: "RCS"
+        });
+        toast.success(res?.data?.message || "RCS template updated successfully");
+      } else {
+        const res = await apiClient.post("/templates/create", {
+          ...form,
+          channel: "RCS",
+          status: "APPROVED"
+        });
+        toast.success(res?.data?.message || "RCS template submitted to Google Jibe carrier network");
+      }
+      setModal(false);
+      fetchTemplates();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to save RCS template");
+    } finally {
+      setBtnLoading(false);
     }
-    setModal(false);
   };
 
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: "Delete RCS Template?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#fe5d70",
-      confirmButtonText: "Yes, Delete"
-    }).then((res) => {
-      if (res.isConfirmed) {
-        setTemplates(templates.filter((t) => t.id !== id));
-        Swal.fire("Deleted", "Template removed.", "success");
-      }
-    });
+  const handleDelete = async (id, name) => {
+    const isConfirmed = await wpSwal.confirm(
+      "Delete RCS Template?",
+      `Are you sure you want to delete '${name}'?`
+    );
+    if (!isConfirmed) return;
+
+    try {
+      const res = await apiClient.delete(`/templates/delete/${id}`);
+      toast.success(res?.data?.message || "Template removed");
+      fetchTemplates();
+    } catch (err) {
+      toast.error("Delete failed");
+    }
   };
 
   const filtered = templates.filter(
     (t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.brand.toLowerCase().includes(search.toLowerCase())
+      (t.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.rcsCardTitle || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="telecom-module-wrapper">
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+
       {/* ── HEADER ── */}
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <CardHeader
-          className="border-0 py-3.5 px-4 text-white d-flex flex-wrap justify-content-between align-items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
-        >
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
               className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
@@ -180,24 +168,25 @@ const RcsTemplates = () => {
               <FaComments size={20} className="text-white" />
             </div>
             <div>
-              <h5 className="fw-bold mb-0 text-white">RCS Templates (Rich Communication Services)</h5>
-              <small className="text-white-50" style={{ fontSize: "12px" }}>
+              <h4 className="adm-page-title mb-0 text-white">RCS Templates (Rich Communication Services)</h4>
+              <p className="adm-page-subtitle mb-0 text-white-50">
                 Next-gen interactive messaging with high-res media, carousels & instant action buttons
-              </small>
+              </p>
             </div>
           </div>
           <Button
             color="primary"
             className="fw-bold shadow-sm px-3.5 d-flex align-items-center gap-1.5"
-            style={{ background: "var(--pub-grad-primary)", border: "none" }}
             onClick={() => handleOpenModal()}
           >
             <FaPlus size={12} /> Create RCS Template
           </Button>
         </CardHeader>
+      </Card>
 
+      {/* ── MAIN TABLE CARD ── */}
+      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <CardBody className="p-0">
-          {/* STATS STRIP */}
           <div className="p-3 bg-light border-bottom">
             <Row className="g-2 align-items-center">
               <Col xs={12} md={5}>
@@ -206,7 +195,7 @@ const RcsTemplates = () => {
                     <FaSearch size={12} />
                   </InputGroupText>
                   <Input
-                    placeholder="Search RCS templates by title, brand, ID..."
+                    placeholder="Search RCS templates by title..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="border-start-0 bg-white"
@@ -218,7 +207,7 @@ const RcsTemplates = () => {
                   Total: {templates.length}
                 </Badge>
                 <Badge color="success" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  Carrier Verified: {templates.filter((t) => t.status === "VERIFIED").length}
+                  Carrier Verified: {templates.filter((t) => t.status === "APPROVED").length}
                 </Badge>
                 <Badge color="info" className="py-1.5 px-2.5 rounded-pill shadow-xs">
                   Google Jibe Connected
@@ -227,92 +216,104 @@ const RcsTemplates = () => {
             </Row>
           </div>
 
-          {/* TABLE */}
           <div className="table-responsive">
-            <Table hover striped className="mb-0 align-middle">
-              <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
-                <tr>
-                  <th style={{ width: "95px" }}>ID</th>
-                  <th>Template Name & Brand</th>
-                  <th>Layout Card Type</th>
-                  <th>Action Buttons</th>
-                  <th>Status</th>
-                  <th>Last Modified</th>
-                  <th className="text-center" style={{ width: "140px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody style={{ fontSize: "13px" }}>
-                {filtered.map((t) => (
-                  <tr key={t.id}>
-                    <td className="fw-bold text-primary font-monospace">{t.id}</td>
-                    <td>
-                      <div className="fw-bold text-dark">{t.name}</div>
-                      <small className="text-muted">{t.brand} · {t.title}</small>
-                    </td>
-                    <td>
-                      <span className="badge bg-light border text-dark fw-semibold">
-                        {t.cardType.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="d-flex flex-wrap gap-1">
-                        {t.buttons.map((b, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 rounded-pill bg-light border text-primary fw-semibold"
-                            style={{ fontSize: "10.5px" }}
-                          >
-                            {b.type === "URL" ? "🔗 " : b.type === "DIAL" ? "📞 " : "💬 "}
-                            {b.label}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td>
-                      <Badge
-                        color={t.status === "VERIFIED" ? "success" : "info"}
-                        pill
-                        className="fw-semibold px-2 py-1"
-                      >
-                        {t.status === "VERIFIED" ? "Verified" : "Submitted"}
-                      </Badge>
-                    </td>
-                    <td className="text-muted small">{t.updatedAt}</td>
-                    <td className="text-center">
-                      <div className="d-inline-flex gap-1">
-                        <Button
-                          size="sm"
-                          color="light"
-                          className="border p-1 px-2 text-dark"
-                          title="Preview on Android Device"
-                          onClick={() => setPreviewTemplate(t)}
-                        >
-                          <FaMobileAlt size={12} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="light"
-                          className="border p-1 px-2 text-success"
-                          title="Edit"
-                          onClick={() => handleOpenModal(t)}
-                        >
-                          <FaEdit size={12} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="light"
-                          className="border p-1 px-2 text-danger"
-                          title="Delete"
-                          onClick={() => handleDelete(t.id)}
-                        >
-                          <FaTrash size={12} />
-                        </Button>
-                      </div>
-                    </td>
+            {loading ? (
+              <PageLoader inline={true} />
+            ) : (
+              <Table hover striped className="mb-0 align-middle">
+                <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
+                  <tr>
+                    <th style={{ width: "40px" }}>#</th>
+                    <th>Template Name & Title</th>
+                    <th>Sender ID</th>
+                    <th>Action Buttons</th>
+                    <th>Status</th>
+                    <th>Last Modified</th>
+                    <th className="text-center" style={{ width: "140px" }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody style={{ fontSize: "13px" }}>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-5 text-muted">
+                        No RCS templates found matching query.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((t, idx) => (
+                      <tr key={t._id || idx}>
+                        <td className="text-muted small">{idx + 1}</td>
+                        <td>
+                          <div className="fw-bold text-dark">{t.name}</div>
+                          <small className="text-muted">{t.rcsCardTitle || t.description}</small>
+                        </td>
+                        <td>
+                          <span className="badge bg-light border text-dark font-monospace">
+                            {t.senderId || "BeyondSend"}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="d-flex flex-wrap gap-1">
+                            {(t.buttons || []).map((b, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 rounded-pill bg-light border text-primary fw-semibold"
+                                style={{ fontSize: "10.5px" }}
+                              >
+                                {b.label || b.text}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td>
+                          <Badge
+                            color="success"
+                            pill
+                            className="fw-semibold px-2 py-1"
+                          >
+                            {t.status || "APPROVED"}
+                          </Badge>
+                        </td>
+                        <td className="text-muted small">
+                          {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="text-center">
+                          <div className="d-inline-flex gap-1.5 align-items-center">
+                            <Button
+                              size="sm"
+                              color="light"
+                              className="adm-icon-btn"
+                              data-tt="Preview on Android Device"
+                              onClick={() => setPreviewTemplate(t)}
+                            >
+                              <FaMobileAlt size={12} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="light"
+                              className="adm-icon-btn is-success"
+                              data-tt="Edit Template"
+                              onClick={() => handleOpenModal(t)}
+                            >
+                              <FaEdit size={12} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="light"
+                              className="adm-icon-btn is-danger"
+                              data-tt="Delete Template"
+                              onClick={() => handleDelete(t._id, t.name)}
+                            >
+                              <FaTrash size={12} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            )}
           </div>
         </CardBody>
       </Card>
@@ -321,8 +322,7 @@ const RcsTemplates = () => {
       <Modal isOpen={modal} toggle={() => setModal(false)} size="lg" backdrop="static" centered>
         <ModalHeader
           toggle={() => setModal(false)}
-          className="text-white"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
+          className="text-white bg-dark"
         >
           {editingId ? "Edit RCS Template" : "Build Interactive RCS Template"}
         </ModalHeader>
@@ -342,35 +342,21 @@ const RcsTemplates = () => {
               </Col>
               <Col md={5}>
                 <FormGroup className="mb-0">
-                  <Label className="fw-bold small text-dark">Verified Brand Sender</Label>
+                  <Label className="fw-bold small text-dark">Sender Identifier</Label>
                   <Input
-                    value={form.brand}
-                    onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                    value={form.senderId}
+                    onChange={(e) => setForm({ ...form, senderId: e.target.value })}
                     required
                   />
                 </FormGroup>
               </Col>
-              <Col md={6}>
-                <FormGroup className="mb-0">
-                  <Label className="fw-bold small text-dark">Card Type</Label>
-                  <Input
-                    type="select"
-                    value={form.cardType}
-                    onChange={(e) => setForm({ ...form, cardType: e.target.value })}
-                  >
-                    <option value="STANDALONE_RICH_CARD">Standalone Rich Card</option>
-                    <option value="CAROUSEL">Multi-Card Carousel</option>
-                    <option value="QUICK_REPLY_CARD">Quick Reply Action Card</option>
-                  </Input>
-                </FormGroup>
-              </Col>
-              <Col md={6}>
+              <Col md={12}>
                 <FormGroup className="mb-0">
                   <Label className="fw-bold small text-dark">Media Image URL</Label>
                   <Input
-                    placeholder="https://domain.com/banner.jpg"
-                    value={form.mediaUrl}
-                    onChange={(e) => setForm({ ...form, mediaUrl: e.target.value })}
+                    placeholder="https://images.unsplash.com/photo-1551836022-d5d88e9218df"
+                    value={form.rcsMediaUrl}
+                    onChange={(e) => setForm({ ...form, rcsMediaUrl: e.target.value })}
                   />
                 </FormGroup>
               </Col>
@@ -379,8 +365,8 @@ const RcsTemplates = () => {
                   <Label className="fw-bold small text-dark">Card Title *</Label>
                   <Input
                     placeholder="Bold primary headline"
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    value={form.rcsCardTitle}
+                    onChange={(e) => setForm({ ...form, rcsCardTitle: e.target.value })}
                     required
                   />
                 </FormGroup>
@@ -442,7 +428,7 @@ const RcsTemplates = () => {
                     <Col xs={4}>
                       <Input
                         size="sm"
-                        placeholder="URL / Phone / Reply Payload"
+                        placeholder="URL / Payload"
                         value={btn.value}
                         onChange={(e) => {
                           const updated = [...form.buttons];
@@ -473,15 +459,15 @@ const RcsTemplates = () => {
             <Button
               color="primary"
               type="submit"
-              style={{ background: "var(--pub-grad-primary)", border: "none" }}
+              disabled={btnLoading}
             >
-              Save RCS Template
+              {btnLoading ? <Spinner size="sm" /> : "Save RCS Template"}
             </Button>
           </ModalFooter>
         </Form>
       </Modal>
 
-      {/* ── GOOGLE MESSAGES RCS MOCKUP PREVIEW ── */}
+      {/* ── PREVIEW MODAL ── */}
       <Modal isOpen={!!previewTemplate} toggle={() => setPreviewTemplate(null)} centered size="sm">
         <ModalHeader toggle={() => setPreviewTemplate(null)} className="bg-light">
           Google Messages RCS View
@@ -500,7 +486,7 @@ const RcsTemplates = () => {
               </div>
               <div>
                 <small className="fw-bold d-block text-dark lh-1">
-                  {previewTemplate?.brand} <FaCheckCircle size={10} className="text-primary ms-0.5" />
+                  {previewTemplate?.senderId || "BeyondSend"} <FaCheckCircle size={10} className="text-primary ms-0.5" />
                 </small>
                 <span style={{ fontSize: "9.5px", color: "#64748b" }}>RCS Business Messaging</span>
               </div>
@@ -508,28 +494,28 @@ const RcsTemplates = () => {
 
             {/* RCS CARD */}
             <div className="rounded-3 border overflow-hidden shadow-xs bg-light">
-              {previewTemplate?.mediaUrl && (
+              {previewTemplate?.rcsMediaUrl && (
                 <img
-                  src={previewTemplate.mediaUrl}
+                  src={previewTemplate.rcsMediaUrl}
                   alt="RCS Banner"
                   style={{ width: "100%", height: "120px", objectFit: "cover" }}
                 />
               )}
               <div className="p-2.5">
                 <h6 className="fw-bold text-dark mb-1" style={{ fontSize: "13px" }}>
-                  {previewTemplate?.title}
+                  {previewTemplate?.rcsCardTitle || previewTemplate?.name}
                 </h6>
                 <p className="text-muted mb-2" style={{ fontSize: "11px", lineHeight: "1.3" }}>
                   {previewTemplate?.description}
                 </p>
                 <div className="d-flex flex-column gap-1.5 pt-1 border-top">
-                  {previewTemplate?.buttons?.map((b, i) => (
+                  {(previewTemplate?.buttons || []).map((b, i) => (
                     <div
                       key={i}
                       className="text-center py-1 rounded bg-white border text-primary fw-bold cursor-pointer"
                       style={{ fontSize: "11px" }}
                     >
-                      {b.label}
+                      {b.label || b.text}
                     </div>
                   ))}
                 </div>

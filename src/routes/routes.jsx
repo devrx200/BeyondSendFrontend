@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
-import { MainLayout, AdminLayout } from "@/components";
+import { MainLayout, AuthorizedLayout } from "@/components";
 
 /* ─── Eager Public Pages ─────────────────────────────────────────────────── */
 import Home from "../views/pages/Home";
@@ -19,12 +19,14 @@ import {
   ContactCardCMS, QuickAccessManagement, ImportantPageManagement,
   RichContentPageManagement, MediaLibraryManagement, DownloadManagement,
   HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
-  DbBackupManagement,
+  DbBackupManagement, SidebarMenuManagement,
   /* Telecom modules */
   EmailTemplates, SmsTemplates, RcsTemplates, WhatsappTemplates, VoiceTemplates,
   CampaignLists, CampaignSegments, CampaignsManagement, UnsubscribersManagement, BouncesSpamManagement,
   FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
-  ApiDocViewer, WhatsappResponses, RcsResponses
+  ApiDocViewer, WhatsappResponses, RcsResponses,
+  CreditTopupManagement, MyCreditWallet, UserChannelsConfig, UserCommunicationConfig, UserSettings, SubscriptionsManagement,
+  ChannelRegistry, ProviderRegistry, ChannelMatrix, Onboarding
 } from "./LazyLoadingRouter";
 
 /* Legacy "/admin/*" links are forwarded to the current "/authorized/*" tree */
@@ -34,7 +36,8 @@ const LegacyAdminRedirect = () => {
   return <Navigate to={`/authorized${rest}`} replace />;
 };
 
-/* ─── App Routes ──────────────────────────────────────────────────────────── */
+
+
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -71,17 +74,17 @@ const AppRoutes = () => {
           />
         }
       >
-        <Route element={<AdminLayout />}>
+        <Route element={<AuthorizedLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
 
           {/* ── BeyondSend Core Telecom & Marketing Modules ────────────────── */}
           {/* Templates */}
-          <Route path="templates/email" element={<EmailTemplates />} />
-          <Route path="templates/sms" element={<SmsTemplates />} />
-          <Route path="templates/rcs" element={<RcsTemplates />} />
-          <Route path="templates/whatsapp" element={<WhatsappTemplates />} />
-          <Route path="templates/voice" element={<VoiceTemplates />} />
+          <Route path="email/templates" element={<EmailTemplates />} />
+          <Route path="sms/templates" element={<SmsTemplates />} />
+          <Route path="rcs/templates" element={<RcsTemplates />} />
+          <Route path="whatsapp/templates" element={<WhatsappTemplates />} />
+          <Route path="voice/templates" element={<VoiceTemplates />} />
 
           {/* Bulk campaigns */}
           <Route path="campaigns/lists" element={<CampaignLists />} />
@@ -92,6 +95,19 @@ const AppRoutes = () => {
 
           {/* Config */}
           <Route path="config/from-ids" element={<FromIdsConfig />} />
+          <Route path="config/communication" element={<UserCommunicationConfig />} />
+          <Route path="config/communication/:userId" element={<UserCommunicationConfig />} />
+          <Route path="user-config" element={<UserCommunicationConfig />} />
+          <Route path="user-config/:userId" element={<UserCommunicationConfig />} />
+          {/* Account — per-user configuration */}
+          <Route path="account/channels" element={<UserChannelsConfig />} />
+          <Route path="account/settings" element={<UserSettings />} />
+          <Route path="account/credits-topup-management" element={<CreditTopupManagement />} />
+          <Route path="account/my-wallet" element={<MyCreditWallet />} />
+          <Route path="account/subscriptions" element={<SubscriptionsManagement />} />
+
+          {/* Onboarding */}
+          <Route path="onboarding" element={<Onboarding />} />
 
           {/* Transactional API */}
           <Route path="transactional/dashboard" element={<TransactionalDashboard />} />
@@ -114,7 +130,7 @@ const AppRoutes = () => {
           <Route
             element={
               <AuthMiddleware
-                allowedRoles={["DEVOPS", "ADMIN", "MANAGER"]}
+                allowedRoles={["DEVOPS", "ADMIN",]}
               />
             }
           >
@@ -131,6 +147,7 @@ const AppRoutes = () => {
             <Route path="rich-content-pages" element={<RichContentPageManagement />} />
             <Route path="media-library" element={<MediaLibraryManagement />} />
             <Route path="download-management" element={<DownloadManagement />} />
+            <Route path="sidebar-menu-management" element={<SidebarMenuManagement />} />
           </Route>
 
           {/* User Management (DEVOPS, ADMIN, RESELLER, CLIENT, MANAGER) */}
@@ -157,6 +174,11 @@ const AppRoutes = () => {
             <Route path="sessions" element={<SessionManager />} />
             <Route path="activity-logs" element={<ActivityLogManagement />} />
             <Route path="database-backup" element={<DbBackupManagement />} />
+
+            {/* Dynamic channel & provider registry */}
+            <Route path="settings/channels" element={<ChannelRegistry />} />
+            <Route path="settings/providers" element={<ProviderRegistry />} />
+            <Route path="settings/channel-matrix" element={<ChannelMatrix />} />
           </Route>
 
           {/* Unknown console path → dashboard */}

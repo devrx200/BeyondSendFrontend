@@ -1,6 +1,5 @@
 import axios from 'axios';
-import Swal from 'sweetalert2';
-
+import Swal from 'sweetalert2';   
 export const BASE_HOST = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').trim().replace(/\/+$/, '');
 export const API_VERSION = (import.meta.env.VITE_API_VERSION || 'v0').trim().replace(/^\/+|\/+$/g, '');
 export const API_BASE_URL = `${BASE_HOST}/api/${API_VERSION}`;
@@ -52,7 +51,7 @@ apiClient.interceptors.response.use(
             confirmButtonText: 'Login',
             allowOutsideClick: false,
           }).then(() => {
-            window.location.href = '/admin-login';
+            window.location.href = '/';
           });
         }
       }

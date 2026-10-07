@@ -47,12 +47,13 @@ const Dashboard = () => {
       return {};
     }
   })();
-  const userRole = (
-    sessionStorage.getItem("userRole") ||
-    storedUser?.role ||
-    window.userRole ||
-    "ADMIN"
-  ).toUpperCase();
+  // Never fall back to a privileged role: an unknown role resolves to "" so
+  // privileged widgets stay hidden until the server-verified role is known.
+  const userRole = String(
+    storedUser?.role || sessionStorage.getItem("userRole") || window.userRole || ""
+  )
+    .trim()
+    .toUpperCase();
 
   const isDevOps = userRole === "DEVOPS";
   const isAdmin = userRole === "ADMIN" || isDevOps;

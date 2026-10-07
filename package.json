@@ -10,6 +10,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
+    "check:routes": "node scripts/check-menu-routes.mjs",
     "preview": "vite preview --host"
   },
   "dependencies": {

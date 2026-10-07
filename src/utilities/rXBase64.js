@@ -1,8 +1,8 @@
 const encodeBase64 = (rowContent) => {
     if (typeof rowContent !== "string") return "";
 
-    if (typeof Buffer !== "undefined") {
-        return Buffer.from(rowContent, "utf8").toString("base64");
+    if (typeof globalThis.Buffer !== "undefined") {
+        return globalThis.Buffer.from(rowContent, "utf8").toString("base64");
     }
 
     const bytes = new TextEncoder().encode(rowContent);
@@ -21,9 +21,9 @@ const isBase64 = (str) => {
     if (trimmed.startsWith("<") || trimmed.startsWith("{") || trimmed.startsWith("[")) return false;
     if (!/^[A-Za-z0-9+/=]+$/.test(trimmed) || trimmed.length % 4 !== 0) return false;
     try {
-        if (typeof Buffer !== "undefined") {
-            const decoded = Buffer.from(trimmed, "base64").toString("utf8");
-            return Buffer.from(decoded, "utf8").toString("base64") === trimmed;
+        if (typeof globalThis.Buffer !== "undefined") {
+            const decoded = globalThis.Buffer.from(trimmed, "base64").toString("utf8");
+            return globalThis.Buffer.from(decoded, "utf8").toString("base64") === trimmed;
         }
         const binary = atob(trimmed);
         const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
@@ -44,8 +44,8 @@ const decodeBase64 = (base64RowContent) => {
     }
 
     try {
-        if (typeof Buffer !== "undefined") {
-            return Buffer.from(base64RowContent, "base64").toString("utf8");
+        if (typeof globalThis.Buffer !== "undefined") {
+            return globalThis.Buffer.from(base64RowContent, "base64").toString("utf8");
         }
 
         const binary = atob(base64RowContent);

@@ -1,124 +1,182 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { PageLoader } from "@/components";
 import apiClient from "@apiService";
 
+/**
+ * Guards the authorized console.
+ *
+ * The role is never trusted from storage alone: the token is verified against
+ * the server on entry and on every route change, and the verified role is
+ * what gets persisted. An absent role is treated as "no access" rather than
+ * defaulting to a privileged one.
+ */
+
 let authInFlightPromise = null;
 let lastAuthValidationTime = 0;
+
+const VALIDATION_TTL_MS = 3000;
+
+const SUPER_ROLES = ["DEVOPS", "ADMIN"];
+
+const clearAuth = () => {
+  sessionStorage.removeItem("authToken");
+  sessionStorage.removeItem("userRole");
+  sessionStorage.removeItem("userData");
+  localStorage.removeItem("authToken");
+  window.userRole = "";
+};
+
+const persistAuth = (user) => {
+  const role = (user?.role || "").toUpperCase();
+  sessionStorage.setItem("userData", JSON.stringify(user || {}));
+  sessionStorage.setItem("userRole", role);
+  window.userRole = role;
+  return role;
+};
 
 const AuthMiddleware = ({ allowedRoles = [] }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const token = sessionStorage.getItem("authToken");
-
-  // If there is NO auth token, immediately redirect to "/" without loader or alert
-  if (!token) {
-    return <Navigate to="/" replace />;
-  }
-
-  const userRole = (sessionStorage.getItem("userRole") || "").toUpperCase();
-
-  const isDevOps = userRole === "DEVOPS";
   const normalizedAllowedRoles = allowedRoles.map((r) => r.toUpperCase());
 
-  const hasRolePermission =
-    isDevOps || !normalizedAllowedRoles.length || (userRole && normalizedAllowedRoles.includes(userRole));
-  const isPreAuthorized = Boolean(token && hasRolePermission);
-
-  const [loading, setLoading] = useState(!isPreAuthorized);
-  const [isAuthorized, setIsAuthorized] = useState(isPreAuthorized);
+  // Always start unauthorised so the role can never be trusted from a stale
+  // sessionStorage value written by a previous (possibly privileged) session.
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const alertShownRef = useRef(false);
 
+  const unauthorizedAccess = useCallback(
+    async (message) => {
+      if (alertShownRef.current) return;
+      alertShownRef.current = true;
+      setIsAuthorized(false);
+
+      await Swal.fire({
+        icon: "warning",
+        title: "Access Denied",
+        text: message,
+        confirmButtonText: "Go To Dashboard",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+      navigate("/authorized/dashboard", { replace: true });
+    },
+    [navigate]
+  );
+
   useEffect(() => {
-    validateAuth();
-  }, [location.pathname]);
+    let cancelled = false;
 
-  const validateAuth = async () => {
-    try {
-      const curToken = sessionStorage.getItem("authToken");
-      if (!curToken) {
-        sessionStorage.clear();
-        navigate("/", { replace: true });
+    const validateAuth = async () => {
+      const token = sessionStorage.getItem("authToken");
+      if (!token) {
+        if (!cancelled) {
+          clearAuth();
+          setIsAuthorized(false);
+          setLoading(false);
+          navigate("/", { replace: true });
+        }
         return;
       }
 
-      const now = Date.now();
-      if (now - lastAuthValidationTime < 3000 && isPreAuthorized) {
+      // Re-use a very recent successful validation to avoid hammering the API
+      // on every in-app navigation.
+      if (Date.now() - lastAuthValidationTime < VALIDATION_TTL_MS) {
+        const known = (sessionStorage.getItem("userRole") || "").toUpperCase();
+        if (known) {
+          if (
+            !SUPER_ROLES.includes(known) &&
+            normalizedAllowedRoles.length > 0 &&
+            !normalizedAllowedRoles.includes(known)
+          ) {
+            if (!cancelled) {
+              await unauthorizedAccess("You Don't Have Permission To Access This Page.");
+            }
+            return;
+          }
+          if (!cancelled) {
+            setIsAuthorized(true);
+            setLoading(false);
+          }
+          return;
+        }
+      }
+
+      try {
+        if (!authInFlightPromise) {
+          authInFlightPromise = apiClient
+            .post("/auth/verify-token", { token })
+            .finally(() => {
+              setTimeout(() => {
+                authInFlightPromise = null;
+              }, 300);
+            });
+        }
+
+        const res = await authInFlightPromise;
+        if (cancelled) return;
+
+        if (!res?.success) {
+          clearAuth();
+          navigate("/", { replace: true });
+          return;
+        }
+
+        lastAuthValidationTime = Date.now();
+
+        const user = res.user || res.data?.user || {};
+        const role = persistAuth(user);
+
+        if (
+          !SUPER_ROLES.includes(role) &&
+          normalizedAllowedRoles.length > 0 &&
+          !normalizedAllowedRoles.includes(role)
+        ) {
+          await unauthorizedAccess("You Don't Have Permission To Access This Page.");
+          return;
+        }
+
         setIsAuthorized(true);
-        setLoading(false);
-        return;
-      }
-
-      if (!authInFlightPromise) {
-        authInFlightPromise = (async () => {
-          return await apiClient.post('/auth/verify-token', { token: curToken });
-        })().finally(() => {
-          setTimeout(() => {
-            authInFlightPromise = null;
-          }, 300);
-        });
-      }
-
-      const res = await authInFlightPromise;
-      if (!res?.success) {
-        sessionStorage.clear();
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Auth Middleware Error:", error?.response?.data || error?.message);
+        clearAuth();
         navigate("/", { replace: true });
-        return;
+      } finally {
+        if (!cancelled) setLoading(false);
       }
+    };
 
-      lastAuthValidationTime = Date.now();
-      const user = res.user || res.data?.user || {};
-      const role = (user?.role || "").toUpperCase();
-      sessionStorage.setItem("userData", JSON.stringify(user));
-      sessionStorage.setItem("userRole", role);
+    validateAuth();
 
-      window.userRole = role;
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, normalizedAllowedRoles.join(","), unauthorizedAccess]);
 
-      const isSuperUser = role === "DEVOPS";
-
-      if (
-        !isSuperUser &&
-        normalizedAllowedRoles.length > 0 &&
-        !normalizedAllowedRoles.includes(role)
-      ) {
-        unauthorizedAccess("You Don't Have Permission To Access This Page.");
-        return;
+  // A role change (e.g. impersonation or an upgrade) must re-run validation.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "authToken") {
+        lastAuthValidationTime = 0;
       }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-      setIsAuthorized(true);
-    } catch (error) {
-      console.error(
-        "Auth Middleware Error:",
-        error?.response?.data || error.message
-      );
-      sessionStorage.clear();
-      navigate("/", { replace: true });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) return <PageLoader />;
 
-  const unauthorizedAccess = async (message) => {
-    if (alertShownRef.current) return;
-    alertShownRef.current = true;
-    setIsAuthorized(false);
-
-    await Swal.fire({
-      icon: "warning",
-      title: "Access Denied",
-      text: message,
-      confirmButtonText: "Go To Dashboard",
-      allowOutsideClick: false,
-      allowEscapeKey: false
-    });
-    navigate("/authorized/dashboard", { replace: true });
-  };
-
-  if (!isAuthorized || loading) {
-    return <PageLoader />;
+  if (!isAuthorized) {
+    return sessionStorage.getItem("authToken") ? (
+      <PageLoader />
+    ) : (
+      <Navigate to="/" replace />
+    );
   }
 
   return <Outlet />;

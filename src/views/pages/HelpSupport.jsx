@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from "../../contexts/LanguageContext";
-import apiClient from "@apiService";
+import apiClient, { BASE_HOST as API } from "@apiService";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -96,17 +96,15 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
       </div>
       <div className="hs-item-right">
         <button
-          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-          style={{ background: 'linear-gradient(135deg, var(--pub-primary), var(--pub-primary-hover))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          className="btn btn-sm hs-btn-primary w-100"
           onClick={() => onPreview(fullPdfUrl, item.title)}
         >
           <FaEye size={12} aria-hidden="true" />
           {isHindi ? "देखें" : "Preview"}
         </button>
-        <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="w-100">
+        <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="w-100 text-decoration-none">
           <button
-            className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-            style={{ background: 'linear-gradient(135deg, var(--pub-danger-dark), var(--pub-danger))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+            className="btn btn-sm hs-btn-video w-100"
           >
             <FaDownload size={12} aria-hidden="true" />
             {isHindi ? "डाउनलोड" : "Download"}
@@ -145,24 +143,22 @@ const VideoItem = ({ item, onPreview, isHindi }) => {
           </div>
         </div>
         <div className="d-flex flex-wrap gap-2 mt-1">
-          <span style={{ fontSize: ".7rem", background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: 999, fontWeight: 600 }}>
+          <span className="hs-date-badge">
             {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
           </span>
         </div>
       </div>
       <div className="hs-item-right">
         <button
-          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-          style={{ background: 'linear-gradient(135deg, var(--pub-danger-dark), var(--pub-danger))', color: '#fff', border: 'none', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+          className="btn btn-sm hs-btn-video w-100"
           onClick={() => embedUrl ? onPreview(embedUrl, item.title) : window.open(item.videoUrl, "_blank")}
         >
           <FaPlayCircle size={12} aria-hidden="true" />
           {isHindi ? "देखें" : "Play"}
         </button>
-        <a href={item.videoUrl} target="_blank" rel="noreferrer" className="w-100">
+        <a href={item.videoUrl} target="_blank" rel="noreferrer" className="w-100 text-decoration-none">
           <button
-            className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-1"
-            style={{ background: 'rgba(254,93,112,0.08)', color: 'var(--pub-danger)', border: '1.5px solid rgba(254,93,112,0.25)', borderRadius: 8, fontSize: ".78rem", fontWeight: 600, padding: '6px 10px' }}
+            className="btn btn-sm btn-outline-danger w-100 d-inline-flex align-items-center justify-content-center gap-1"
           >
             <FaExternalLinkAlt size={11} aria-hidden="true" />
             YouTube

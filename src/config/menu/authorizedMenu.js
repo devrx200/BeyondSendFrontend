@@ -1,0 +1,1867 @@
+import {
+  FaTachometerAlt,
+  FaChartPie,
+  FaFileAlt,
+  FaPaperPlane,
+  FaExchangeAlt,
+  FaChartLine,
+  FaEnvelope,
+  FaCommentAlt,
+  FaComments,
+  FaWhatsapp,
+  FaPhoneAlt,
+  FaList,
+  FaUserSlash,
+  FaKey,
+  FaListUl,
+  FaNetworkWired,
+  FaNewspaper,
+  FaBolt,
+  FaListAlt,
+  FaExclamationCircle,
+  FaFolderOpen,
+  FaDownload,
+  FaLayerGroup,
+  FaWindowMaximize,
+  FaWindowMinimize,
+  FaBars,
+  FaImage,
+  FaThLarge,
+  FaTags,
+  FaAddressBook,
+  FaIdCard,
+  FaHeadset,
+  FaHandsHelping,
+  FaBookOpen,
+  FaCommentDots,
+  FaUsers,
+  FaHistory,
+  FaUserShield,
+  FaDatabase,
+  FaChevronRight,
+  FaClock,
+  FaPager,
+  FaCoins,
+  FaUserCog,
+  FaCalendarCheck,
+  FaSignOutAlt,
+  FaShieldAlt,
+  FaSitemap,
+  FaPlug,
+  FaBullhorn,
+  FaBell,
+  FaUserFriends,
+  FaSlidersH,
+  FaCogs,
+} from "react-icons/fa";
+
+/* =========================================================
+   ROLES
+========================================================= */
+
+export const ROLES = {
+  DEVOPS: "DEVOPS",
+  ADMIN: "ADMIN",
+  RESELLER: "RESELLER",
+  CLIENT: "CLIENT",
+  MANAGER: "MANAGER",
+};
+
+/* =========================================================
+   ROLE GROUPS
+========================================================= */
+
+const ALL_ROLES = [
+  ROLES.DEVOPS,
+  ROLES.ADMIN,
+  ROLES.RESELLER,
+  ROLES.CLIENT,
+  ROLES.MANAGER,
+];
+
+const ADMIN_ROLES = [
+  ROLES.DEVOPS,
+  ROLES.ADMIN,
+];
+
+const TENANT_ROLES = [
+  ROLES.DEVOPS,
+  ROLES.ADMIN,
+  ROLES.RESELLER,
+  ROLES.CLIENT,
+];
+
+const CHANNEL_ROLES = [
+  ROLES.DEVOPS,
+  ROLES.ADMIN,
+  ROLES.RESELLER,
+  ROLES.CLIENT,
+];
+
+/* =========================================================
+   ICON MAP
+========================================================= */
+
+export const ICON_MAP = {
+  FaTachometerAlt,
+  FaChartPie,
+  FaFileAlt,
+  FaPaperPlane,
+  FaExchangeAlt,
+  FaChartLine,
+  FaEnvelope,
+  FaCommentAlt,
+  FaComments,
+  FaWhatsapp,
+  FaPhoneAlt,
+  FaList,
+  FaUserSlash,
+  FaKey,
+  FaListUl,
+  FaNetworkWired,
+  FaNewspaper,
+  FaBolt,
+  FaListAlt,
+  FaExclamationCircle,
+  FaFolderOpen,
+  FaDownload,
+  FaLayerGroup,
+  FaWindowMaximize,
+  FaWindowMinimize,
+  FaBars,
+  FaImage,
+  FaThLarge,
+  FaTags,
+  FaAddressBook,
+  FaIdCard,
+  FaHeadset,
+  FaHandsHelping,
+  FaBookOpen,
+  FaCommentDots,
+  FaUsers,
+  FaHistory,
+  FaUserShield,
+  FaDatabase,
+  FaChevronRight,
+  FaClock,
+  FaPager,
+  FaCoins,
+  FaUserCog,
+  FaCalendarCheck,
+  FaSignOutAlt,
+  FaShieldAlt,
+  FaSitemap,
+  FaPlug,
+  FaBullhorn,
+  FaBell,
+  FaUserFriends,
+  FaSlidersH,
+};
+
+/* =========================================================
+   LABEL HELPER
+========================================================= */
+
+const t = (en, hi = en) => ({
+  en,
+  hi,
+});
+
+/* =========================================================
+   NORMALIZERS
+========================================================= */
+
+const normalizeRole = (role) =>
+  String(role || "")
+    .trim()
+    .toUpperCase();
+
+const normalizePermission = (permission) =>
+  String(permission || "")
+    .trim()
+    .toLowerCase();
+
+const normalizePermissions = (permissions) => {
+  if (!permissions) return [];
+
+  if (Array.isArray(permissions)) {
+    return permissions
+      .map((permission) => {
+        if (typeof permission === "string") {
+          return normalizePermission(permission);
+        }
+
+        if (
+          permission &&
+          typeof permission === "object"
+        ) {
+          return normalizePermission(
+            permission.name ??
+              permission.permission ??
+              permission.key ??
+              permission.code
+          );
+        }
+
+        return "";
+      })
+      .filter(Boolean);
+  }
+
+  if (
+    typeof permissions === "object"
+  ) {
+    return Object.entries(permissions)
+      .filter(([, value]) => value === true)
+      .map(([key]) =>
+        normalizePermission(key)
+      );
+  }
+
+  return [];
+};
+
+const normalizeRoles = (roles) => {
+  if (!Array.isArray(roles)) {
+    return [];
+  }
+
+  return roles
+    .map(normalizeRole)
+    .filter(Boolean);
+};
+
+/* =========================================================
+   ICON RESOLVER
+========================================================= */
+
+export const resolveIcon = (
+  icon,
+  fallback = FaFileAlt
+) => {
+  if (!icon) {
+    return fallback;
+  }
+
+  if (typeof icon === "function") {
+    return icon;
+  }
+
+  if (typeof icon === "string") {
+    return (
+      ICON_MAP[icon] ||
+      fallback
+    );
+  }
+
+  return fallback;
+};
+
+/* =========================================================
+   LABEL RESOLVER
+========================================================= */
+
+export const resolveLabel = (
+  label,
+  fallback = ""
+) => {
+  if (!label) {
+    return {
+      en: fallback,
+      hi: fallback,
+    };
+  }
+
+  if (typeof label === "string") {
+    return {
+      en: label,
+      hi: label,
+    };
+  }
+
+  return {
+    en:
+      label.en ||
+      label.hi ||
+      fallback,
+
+    hi:
+      label.hi ||
+      label.en ||
+      fallback,
+  };
+};
+
+/* =========================================================
+   CHANNEL PERMISSIONS
+========================================================= */
+
+const CHANNEL_PERMISSIONS = [
+  "whatsapp",
+  "sms",
+  "email",
+  "rcs",
+  "voice",
+  "push",
+];
+
+/*
+ * CLIENT MUST ALWAYS SEE THESE CHANNELS.
+ *
+ * This is independent of the permissions API.
+ */
+const CLIENT_ALWAYS_VISIBLE_CHANNELS = [
+  "whatsapp-modules",
+  "sms-modules",
+  "email-modules",
+  "rcs-modules",
+  "voice-modules",
+];
+
+/* =========================================================
+   CHANNEL GROUPS
+ *
+ * REQUIRED ORDER:
+ *
+ * WhatsApp
+ * SMS
+ * Email
+ * RCS
+ * Voice / OBD
+ * Push
+========================================================= */
+
+const CHANNEL_GROUPS = [
+  /* =======================================================
+     WHATSAPP
+  ======================================================= */
+
+  {
+    id: "whatsapp-modules",
+    icon: FaWhatsapp,
+    requiredPerm: "whatsapp",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "WhatsApp Services",
+      "व्हाट्सएप सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "wa-templates",
+        icon: FaFileAlt,
+        path: "/authorized/whatsapp/templates",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Templates",
+          "टेम्पलेट्स"
+        ),
+      },
+
+      {
+        id: "wa-responses",
+        icon: FaComments,
+        path: "/authorized/responses/whatsapp",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Responses",
+          "रिस्पॉन्स"
+        ),
+      },
+
+      {
+        id: "wa-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=WHATSAPP",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Campaigns",
+          "बल्क कैंपेन"
+        ),
+      },
+    ],
+  },
+
+  /* =======================================================
+     SMS
+  ======================================================= */
+
+  {
+    id: "sms-modules",
+    icon: FaCommentAlt,
+    requiredPerm: "sms",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "SMS Services ",
+      "एसएमएस सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "sms-templates",
+        icon: FaFileAlt,
+        path: "/authorized/sms/templates",
+        requiredPerm: "sms",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Templates",
+          "टेम्पलेट्स"
+        ),
+      },
+
+      {
+        id: "sms-sender-ids",
+        icon: FaIdCard,
+        path: "/authorized/config/from-ids?channel=SMS",
+        requiredPerm: "sms",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Sender / From IDs",
+          "सेंडर / From IDs"
+        ),
+      },
+
+      {
+        id: "sms-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=SMS",
+        requiredPerm: "sms",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Campaigns",
+          "बल्क कैंपेन"
+        ),
+      },
+
+      {
+        id: "sms-unsubscribers",
+        icon: FaUserSlash,
+        path: "/authorized/campaigns/unsubscribers?channel=SMS",
+        requiredPerm: "sms",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Unsubscribers (DND)",
+          "Unsubscribers (DND)"
+        ),
+      },
+    ],
+  },
+
+  /* =======================================================
+     EMAIL
+  ======================================================= */
+
+  {
+    id: "email-modules",
+    icon: FaEnvelope,
+    requiredPerm: "email",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "Email Services",
+      "ईमेल सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "email-templates",
+        icon: FaFileAlt,
+        path: "/authorized/templates/email",
+        requiredPerm: "email",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Templates",
+          "टेम्पलेट्स"
+        ),
+      },
+
+      {
+        id: "email-sender-ids",
+        icon: FaIdCard,
+        path: "/authorized/config/from-ids?channel=EMAIL",
+        requiredPerm: "email",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Sender / From IDs",
+          "सेंडर / From IDs"
+        ),
+      },
+
+      {
+        id: "email-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=EMAIL",
+        requiredPerm: "email",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Campaigns",
+          "बल्क कैंपेन"
+        ),
+      },
+
+      {
+        id: "email-unsubscribers",
+        icon: FaUserSlash,
+        path: "/authorized/campaigns/unsubscribers?channel=EMAIL",
+        requiredPerm: "email",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Unsubscribers (DND)",
+          "Unsubscribers (DND)"
+        ),
+      },
+    ],
+  },
+
+  /* =======================================================
+     RCS
+  ======================================================= */
+
+  {
+    id: "rcs-modules",
+    icon: FaComments,
+    requiredPerm: "rcs",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "RCS Services",
+      "आरसीएस सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "rcs-templates",
+        icon: FaFileAlt,
+        path: "/authorized/templates/rcs",
+        requiredPerm: "rcs",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Templates",
+          "टेम्पलेट्स"
+        ),
+      },
+
+      {
+        id: "rcs-responses",
+        icon: FaComments,
+        path: "/authorized/responses/rcs",
+        requiredPerm: "rcs",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Responses",
+          "रिस्पॉन्स"
+        ),
+      },
+
+      {
+        id: "rcs-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=RCS",
+        requiredPerm: "rcs",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Campaigns",
+          "बल्क कैंपेन"
+        ),
+      },
+    ],
+  },
+
+  /* =======================================================
+     VOICE / OBD
+  ======================================================= */
+
+  {
+    id: "voice-modules",
+    icon: FaPhoneAlt,
+    requiredPerm: "voice",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "Voice / OBD Services",
+      "वॉइस / OBD सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "voice-templates",
+        icon: FaFileAlt,
+        path: "/authorized/templates/voice",
+        requiredPerm: "voice",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Voice Scripts",
+          "वॉइस स्क्रिप्ट्स"
+        ),
+      },
+
+      {
+        id: "voice-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=VOICE",
+        requiredPerm: "voice",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Campaigns",
+          "बल्क कैंपेन"
+        ),
+      },
+    ],
+  },
+
+  /* =======================================================
+     PUSH
+  ======================================================= */
+
+  {
+    id: "push-modules",
+    icon: FaBell,
+    requiredPerm: "push",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "Push",
+      "पुश"
+    ),
+
+    submenu: [
+      {
+        id: "push-campaigns",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all?channel=PUSH",
+        requiredPerm: "push",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Push Campaigns",
+          "पुश कैंपेन"
+        ),
+      },
+    ],
+  },
+];
+
+/* =========================================================
+   PLATFORM GROUPS
+========================================================= */
+
+const PLATFORM_GROUPS = [
+  {
+    id: "registry-modules",
+    icon: FaPlug,
+    allowedRoles: ADMIN_ROLES,
+    label: t(
+      "Channels & APIs",
+      "चैनल और API"
+    ),
+
+    submenu: [
+      {
+        id: "reg-channels",
+        icon: FaBullhorn,
+        path: "/authorized/settings/channels",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Channels",
+          "चैनल"
+        ),
+      },
+
+      {
+        id: "reg-providers",
+        icon: FaPlug,
+        path: "/authorized/settings/providers",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Provider APIs",
+          "Provider APIs"
+        ),
+      },
+
+      {
+        id: "reg-matrix",
+        icon: FaThLarge,
+        path: "/authorized/settings/channel-matrix",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Channel Assignment Matrix",
+          "चैनल असाइनमेंट मैट्रिक्स"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "cms-modules",
+    icon: FaNewspaper,
+    allowedRoles: ADMIN_ROLES,
+    label: t(
+      "CMS - Modules",
+      "cms - मॉड्यूल"
+    ),
+
+    submenu: [
+      {
+        id: "cms-updates",
+        icon: FaBolt,
+        path: "/authorized/new-updates",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Latest Updates",
+          "लेटेस्ट अपडेट्स"
+        ),
+      },
+
+      {
+        id: "cms-quick-access",
+        icon: FaBolt,
+        path: "/authorized/quick-access",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Quick Access",
+          "क्विक एक्सेस"
+        ),
+      },
+
+      {
+        id: "cms-categories",
+        icon: FaListAlt,
+        path: "/authorized/categories",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Categories",
+          "कैटेगरी"
+        ),
+      },
+
+      {
+        id: "cms-pages",
+        icon: FaPager,
+        path: "/authorized/rich-content-pages",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Rich Content Pages",
+          "रिच कंटेंट पेज"
+        ),
+      },
+
+      {
+        id: "cms-important-pages",
+        icon: FaExclamationCircle,
+        path: "/authorized/important-page-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Important Pages",
+          "इंपोर्टेंट पेज"
+        ),
+      },
+
+      {
+        id: "cms-media",
+        icon: FaFolderOpen,
+        path: "/authorized/media-library",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Media Library",
+          "मीडिया लाइब्रेरी"
+        ),
+      },
+
+      {
+        id: "cms-downloads",
+        icon: FaDownload,
+        path: "/authorized/download-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Downloads",
+          "डाउनलोड्स"
+        ),
+      },
+
+      {
+        id: "cms-menu",
+        icon: FaBars,
+        path: "/authorized/menu",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Menu Management",
+          "मेनू मैनेजमेंट"
+        ),
+      },
+
+      {
+        id: "cms-header",
+        icon: FaWindowMaximize,
+        path: "/authorized/header-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Header Management",
+          "हेडर मैनेजमेंट"
+        ),
+      },
+
+      {
+        id: "cms-footer",
+        icon: FaWindowMinimize,
+        path: "/authorized/footer-section-manager",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Footer Management",
+          "फूटर मैनेजमेंट"
+        ),
+      },
+
+      {
+        id: "cms-brands",
+        icon: FaTags,
+        path: "/authorized/brands",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Brands & Partners",
+          "ब्रांड्स और पार्टनर्स"
+        ),
+      },
+
+      {
+        id: "cms-about",
+        icon: FaFileAlt,
+        path: "/authorized/about-section",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "About Section",
+          "अबाउट सेक्शन"
+        ),
+      },
+
+      {
+        id: "cms-contacts",
+        icon: FaAddressBook,
+        path: "/authorized/contact-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Contact Info CMS",
+          "कॉन्टैक्ट Info CMS"
+        ),
+      },
+
+      {
+        id: "cms-contact-cards",
+        icon: FaIdCard,
+        path: "/authorized/contact-card-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Contact Cards",
+          "कॉन्टैक्ट कार्ड्स"
+        ),
+      },
+
+      {
+        id: "cms-sidebar-menus",
+        icon: FaBars,
+        path: "/authorized/sidebar-menu-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Sidebar Menus",
+          "साइडबार मेनू"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "system-security",
+    icon: FaUserShield,
+    allowedRoles: ADMIN_ROLES,
+    label: t(
+      "System & Security",
+      "सिस्टम और सिक्योरिटी"
+    ),
+
+    submenu: [
+      {
+        id: "sec-activity-logs",
+        icon: FaHistory,
+        path: "/authorized/activity-logs",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Activity Logs",
+          "एक्टिविटी लॉग्स"
+        ),
+      },
+
+      {
+        id: "sec-sessions",
+        icon: FaUserShield,
+        path: "/authorized/session-manager",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "User Sessions",
+          "यूज़र सेशन्स"
+        ),
+      },
+
+      {
+        id: "sec-backup",
+        icon: FaDatabase,
+        path: "/authorized/database-backup",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Database Backup",
+          "डेटाबेस बैकअप"
+        ),
+      },
+    ],
+  },
+];
+
+/* =========================================================
+   SHARED GROUPS
+========================================================= */
+
+const SHARED_GROUPS = [
+  {
+    id: "campaigns-module",
+    icon: FaLayerGroup,
+    allowedRoles: TENANT_ROLES,
+    label: t(
+      "Campaigns & Audience",
+      "कैंपेन और ऑडियंस"
+    ),
+
+    submenu: [
+      {
+        id: "camp-lists",
+        icon: FaList,
+        path: "/authorized/campaigns/lists",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "Contact Lists",
+          "कॉन्टैक्ट लिस्ट"
+        ),
+      },
+
+      {
+        id: "camp-segments",
+        icon: FaLayerGroup,
+        path: "/authorized/campaigns/segments",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "Audience Segments",
+          "ऑडियंस सेगमेंट"
+        ),
+      },
+
+      {
+        id: "camp-all",
+        icon: FaPaperPlane,
+        path: "/authorized/campaigns/all",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "All Campaigns",
+          "सभी कैंपेन"
+        ),
+      },
+
+      {
+        id: "camp-bounces",
+        icon: FaExclamationCircle,
+        path: "/authorized/campaigns/bounces-spam",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "Bounces & SPAM",
+          "बाउंस और SPAM"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "apis-modules",
+    icon: FaExchangeAlt,
+    allowedRoles: TENANT_ROLES,
+    label: t(
+      "APIs & Docs & Webhooks",
+      "API और Docs और Webhooks"
+    ),
+
+    submenu: [
+      {
+        id: "api-dashboard",
+        icon: FaChartPie,
+        path: "/authorized/transactional/dashboard",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "API Dashboard",
+          "API डैशबोर्ड"
+        ),
+      },
+
+      {
+        id: "api-keys",
+        icon: FaKey,
+        path: "/authorized/transactional/api-key",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "API Keys",
+          "API Keys"
+        ),
+      },
+
+      {
+        id: "api-message-logs",
+        icon: FaListUl,
+        path: "/authorized/transactional/message-log",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "Message Logs",
+          "मैसेज लॉग्स"
+        ),
+      },
+
+      {
+        id: "api-webhook-setup",
+        icon: FaNetworkWired,
+        path: "/authorized/transactional/webhook-setup",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Webhook Setup",
+          "Webhook Setup"
+        ),
+      },
+
+      {
+        id: "api-webhook-logs",
+        icon: FaHistory,
+        path: "/authorized/transactional/webhook-logs",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Webhook Logs",
+          "Webhook Logs"
+        ),
+      },
+
+      {
+        id: "api-doc",
+        icon: FaBookOpen,
+        path: "/authorized/transactional/api-doc",
+        allowedRoles: TENANT_ROLES,
+        label: t(
+          "API Documentation",
+          "API Documentation"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "account-config",
+    icon: FaUserCog,
+    allowedRoles: ALL_ROLES,
+    label: t(
+      "Account & Configuration",
+      "खाता और विन्यास और सेटिंग्स"
+    ),
+
+    submenu: [
+      {
+        id: "acc-channels",
+        icon: FaPlug,
+        path: "/authorized/account/channels",
+               allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+          ROLES.RESELLER,
+        ],
+        label: t(
+          "My Channels & APIs",
+          "मेरे चैनल और APIs"
+        ),
+      },
+
+      {
+        id: "acc-settings",
+        icon: FaSlidersH,
+        path: "/authorized/account/settings",
+                allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+          ROLES.RESELLER,
+        ],
+        label: t(
+          "My Settings",
+          "मेरी सेटिंग्स"
+        ),
+      },
+
+      {
+        id: "acc-communication",
+        icon: FaCogs,
+        path: "/authorized/config/communication",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+          ROLES.RESELLER,
+        ],
+        label: t(
+          "Communication Config",
+          "संचार विन्यास"
+        ),
+      },
+      
+      {
+        id: "acc-credits",
+        icon: FaCoins,
+        path: "/authorized/account/my-wallet",
+        allowedRoles: [
+          ROLES.RESELLER,
+          ROLES.CLIENT,
+          ROLES.MANAGER,
+        ],
+        label: t(
+          "My Credit Wallet",
+          "मेरा क्रेडिट वॉलेट"
+        ),
+      },
+
+      {
+        id: "acc-credits-manager",
+        icon: FaCoins,
+        path: "/authorized/account/credits-topup-management",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Credit Wallet Management",
+          "क्रेडिट वॉलेट मैनेजमेंट"
+        ),
+      },
+{
+        id: "acc-billing-settings",
+        icon: FaCoins,
+        path: "/authorized/account/billing-settings",
+        allowedRoles: [ROLES.ADMIN],
+        label: t(
+          "Billing Settings",
+          "बिलिंग सेटिंग्स"
+        ),
+      },
+
+      {
+        id: "acc-subscriptions",
+        icon: FaCalendarCheck,
+        path: "/authorized/account/subscriptions",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+          ROLES.RESELLER,
+        ],
+        label: t(
+          "Subscriptions",
+          "सब्सक्रिप्शन"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "support-feedback",
+    icon: FaHeadset,
+    allowedRoles:[
+      ROLES.DEVOPS,
+      ROLES.ADMIN,
+      ROLES.RESELLER,
+      ROLES.CLIENT,
+      ROLES.MANAGER,
+    ],
+    label: t(
+      "Support",
+      "सहायता"
+    ),
+
+    submenu: [
+      {
+        id: "sup-feedbacks",
+        icon: FaCommentDots,
+        path: "/authorized/feedbacks",
+        allowedRoles: [ROLES.DEVOPS,ROLES.ADMIN,],
+        label: t(
+          "Feedback Inbox",
+          "फीडबैक इनबॉक्स"
+        ),
+      },
+
+      {
+        id: "sup-guidance",
+        icon: FaHandsHelping,
+        path: "/authorized/help-guidance",
+        allowedRoles: [ROLES.DEVOPS,ROLES.ADMIN,],
+        label: t(
+          "Help Guidance",
+          "हेल्प गाइडेंस"
+        ),
+      },
+
+      {
+        id: "sup-tutorials",
+        icon: FaBookOpen,
+        path: "/authorized/tutorials",
+        allowedRoles: [ROLES.ADMIN, ROLES.RESELLER, ROLES.CLIENT, ROLES.MANAGER],
+        label: t(
+          "Video Tutorials",
+          "वीडियो ट्यूटोरियल"
+        ),
+      },
+    ],
+  },
+];
+
+/* =========================================================
+   FINAL DEFAULT SIDEBAR
+========================================================= */
+
+export const defaultSidebarMenus = [
+  /* Dashboard */
+
+  {
+    id: "dashboard",
+    icon: FaChartPie,
+    path: "/authorized/dashboard",
+    allowedRoles: TENANT_ROLES,
+    label: t(
+      "Dashboard",
+      "डैशबोर्ड"
+    ),
+  },
+
+  /*
+   * CHANNELS
+   *
+   * WhatsApp
+   * SMS
+   * Email
+   * RCS
+   * Voice / OBD
+   * Push
+   */
+  ...CHANNEL_GROUPS,
+
+  /* Shared */
+  ...SHARED_GROUPS,
+
+  /* Admin */
+  {
+    id: "onboarding",
+    icon: FaSitemap,
+    path: "/authorized/onboarding",
+    allowedRoles: ADMIN_ROLES,
+    label: t(
+      "Onboarding",
+      "ऑनबोर्डिंग"
+    ),
+  },
+
+  {
+    id: "users-management",
+    icon: FaUsers,
+    path: "/authorized/users-management",
+    allowedRoles: [
+      ROLES.DEVOPS,
+      ROLES.ADMIN,
+      ROLES.RESELLER,
+      ROLES.CLIENT,
+    ],
+    label: t(
+      "Users Management",
+      "यूज़र्स"
+    ),
+  },
+
+  ...PLATFORM_GROUPS,
+];
+
+/* =========================================================
+   PERMISSION CHECK
+========================================================= */
+
+export const isAllowed = (
+  item,
+  userRole,
+  userPerms = []
+) => {
+  const role = normalizeRole(
+    userRole
+  );
+
+  if (!role || !item) {
+    return false;
+  }
+
+  /*
+   * Disabled
+   */
+  if (item.isActive === false) {
+    return false;
+  }
+
+  /*
+   * =======================================================
+   * CLIENT CHANNEL OVERRIDE
+   *
+   * CLIENT ALWAYS GETS THE FIVE MAIN CHANNELS.
+   * =======================================================
+   */
+
+  if (
+    role === ROLES.CLIENT &&
+    CLIENT_ALWAYS_VISIBLE_CHANNELS.includes(
+      String(item.id)
+    )
+  ) {
+    return true;
+  }
+
+  /*
+   * CLIENT CHANNEL CHILDREN
+   *
+   * If the child belongs to one of the five channels,
+   * allow it too.
+   */
+
+  if (
+    role === ROLES.CLIENT &&
+    CHANNEL_PERMISSIONS.includes(
+      normalizePermission(
+        item.requiredPerm
+      )
+    )
+  ) {
+    return true;
+  }
+
+  /*
+   * =======================================================
+   * ROLE CHECK
+   * =======================================================
+   */
+
+  const allowedRoles =
+    normalizeRoles(
+      item.allowedRoles
+    );
+
+  if (
+    allowedRoles.length > 0 &&
+    !allowedRoles.includes(role)
+  ) {
+    return false;
+  }
+
+  /*
+   * =======================================================
+   * ADMIN / DEVOPS
+   * =======================================================
+   */
+
+  if (
+    ADMIN_ROLES.includes(role)
+  ) {
+    return true;
+  }
+
+  /*
+   * =======================================================
+   * PERMISSION CHECK
+   * =======================================================
+   */
+
+  if (item.requiredPerm) {
+    const permissions =
+      normalizePermissions(
+        userPerms
+      );
+
+    const required =
+      normalizePermission(
+        item.requiredPerm
+      );
+
+    if (
+      !permissions.includes(
+        required
+      )
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+/* =========================================================
+   FILTER MENU
+========================================================= */
+
+export const filterMenu = (
+  menu,
+  userRole,
+  userPerms = []
+) => {
+  if (!Array.isArray(menu)) {
+    return [];
+  }
+
+  return menu.reduce(
+    (result, item) => {
+      /*
+       * Parent check
+       */
+      if (
+        !isAllowed(
+          item,
+          userRole,
+          userPerms
+        )
+      ) {
+        return result;
+      }
+
+      /*
+       * Group
+       */
+      if (
+        Array.isArray(
+          item.submenu
+        )
+      ) {
+        const visibleChildren =
+          item.submenu.filter(
+            (child) =>
+              isAllowed(
+                child,
+                userRole,
+                userPerms
+              )
+          );
+
+        /*
+         * Empty group should not show.
+         */
+        if (
+          visibleChildren.length === 0
+        ) {
+          return result;
+        }
+
+        result.push({
+          ...item,
+
+          icon: resolveIcon(
+            item.icon
+          ),
+
+          label: resolveLabel(
+            item.label,
+            item.id
+          ),
+
+          submenu:
+            visibleChildren.map(
+              (child) => ({
+                ...child,
+
+                icon: resolveIcon(
+                  child.icon
+                ),
+
+                label: resolveLabel(
+                  child.label,
+                  child.id
+                ),
+              })
+            ),
+        });
+
+        return result;
+      }
+
+      /*
+       * Leaf
+       */
+      if (!item.path) {
+        return result;
+      }
+
+      result.push({
+        ...item,
+
+        icon: resolveIcon(
+          item.icon
+        ),
+
+        label: resolveLabel(
+          item.label,
+          item.id
+        ),
+      });
+
+      return result;
+    },
+    []
+  );
+};
+
+/* =========================================================
+   MENU OVERRIDE HELPERS
+========================================================= */
+
+const getId = (item) =>
+  String(
+    item?.id ??
+      item?._id ??
+      ""
+  ).trim();
+
+const getOrder = (
+  value,
+  fallback
+) => {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : fallback;
+};
+
+/* =========================================================
+   MERGE DB OVERRIDES
+========================================================= */
+
+export const mergeMenuOverrides = (
+  baseMenu,
+  overrides = []
+) => {
+  if (!Array.isArray(baseMenu)) {
+    return [];
+  }
+
+  const rows = Array.isArray(
+    overrides
+  )
+    ? overrides
+    : [];
+
+  const byId = new Map();
+
+  const register = (row) => {
+    const id = getId(row);
+
+    if (id) {
+      byId.set(id, row);
+    }
+
+    if (
+      Array.isArray(row?.submenu)
+    ) {
+      row.submenu.forEach(register);
+    }
+  };
+
+  rows.forEach(register);
+
+  const mergeItem = (
+    item,
+    index
+  ) => {
+    const override =
+      byId.get(
+        String(item.id)
+      );
+
+    const merged = {
+      ...item,
+
+      icon: resolveIcon(
+        override?.icon ??
+          item.icon
+      ),
+
+      label: resolveLabel(
+        override?.label ??
+          item.label,
+        item.id
+      ),
+
+      order: getOrder(
+        override?.order,
+        getOrder(
+          item.order,
+          index
+        )
+      ),
+
+      isActive:
+        override?.isActive === false
+          ? false
+          : item.isActive !== false,
+
+      allowedRoles:
+        Array.isArray(
+          override?.allowedRoles
+        ) &&
+        override.allowedRoles.length
+          ? normalizeRoles(
+              override.allowedRoles
+            )
+          : item.allowedRoles,
+
+      requiredPerm:
+        override?.requiredPerm !==
+        undefined
+          ? override.requiredPerm ||
+            null
+          : item.requiredPerm,
+    };
+
+    /*
+     * Children
+     */
+    if (
+      Array.isArray(
+        item.submenu
+      )
+    ) {
+      const existingIds =
+        new Set(
+          item.submenu.map(
+            (child) =>
+              String(child.id)
+          )
+        );
+
+      let children =
+        item.submenu
+          .map(
+            (child, childIndex) =>
+              mergeItem(
+                child,
+                childIndex
+              )
+          )
+          .filter(
+            (child) =>
+              child.isActive !==
+              false
+          );
+
+      /*
+       * DB-added children
+       */
+      const dbChildren =
+        Array.isArray(
+          override?.submenu
+        )
+          ? override.submenu
+          : [];
+
+      dbChildren.forEach(
+        (child) => {
+          const childId =
+            getId(child);
+
+          if (!childId) {
+            return;
+          }
+
+          if (
+            existingIds.has(
+              childId
+            )
+          ) {
+            return;
+          }
+
+          if (
+            child.isActive === false
+          ) {
+            return;
+          }
+
+          if (!child.path) {
+            return;
+          }
+
+          children.push({
+            id: childId,
+
+            icon: resolveIcon(
+              child.icon,
+              merged.icon
+            ),
+
+            path: child.path,
+
+            order: getOrder(
+              child.order,
+              children.length
+            ),
+
+            label: resolveLabel(
+              child.label ?? {
+                en:
+                  child.labelEn ??
+                  child.name ??
+                  childId,
+
+                hi:
+                  child.labelHi ??
+                  child.labelEn ??
+                  child.name ??
+                  childId,
+              },
+              childId
+            ),
+
+            allowedRoles:
+              Array.isArray(
+                child.allowedRoles
+              ) &&
+              child.allowedRoles.length
+                ? normalizeRoles(
+                    child.allowedRoles
+                  )
+                : merged.allowedRoles,
+
+            requiredPerm:
+              child.requiredPerm ??
+              null,
+
+            isActive: true,
+          });
+        }
+      );
+
+      children.sort(
+        (a, b) =>
+          getOrder(a.order, 0) -
+          getOrder(b.order, 0)
+      );
+
+      merged.submenu =
+        children;
+    }
+
+    return merged;
+  };
+
+  const merged =
+    baseMenu
+      .map(
+        (item, index) =>
+          mergeItem(
+            item,
+            index
+          )
+      )
+      .filter(
+        (item) =>
+          item.isActive !== false
+      );
+
+  merged.sort(
+    (a, b) =>
+      getOrder(a.order, 0) -
+      getOrder(b.order, 0)
+  );
+
+  return merged;
+};
+
+/* =========================================================
+   MENU DIAGNOSTICS
+========================================================= */
+
+export const getMenuDiagnostics = (
+  baseMenu,
+  overrides = []
+) => {
+  const knownIds =
+    new Set();
+
+  const walk = (items) => {
+    if (!Array.isArray(items)) {
+      return;
+    }
+
+    items.forEach((item) => {
+      const id = getId(item);
+
+      if (id) {
+        knownIds.add(id);
+      }
+
+      if (
+        Array.isArray(
+          item.submenu
+        )
+      ) {
+        walk(item.submenu);
+      }
+    });
+  };
+
+  walk(baseMenu);
+
+  const overrideIds =
+    new Set();
+
+  const collect = (items) => {
+    if (!Array.isArray(items)) {
+      return;
+    }
+
+    items.forEach((item) => {
+      const id = getId(item);
+
+      if (id) {
+        overrideIds.add(id);
+      }
+
+      if (
+        Array.isArray(
+          item.submenu
+        )
+      ) {
+        collect(item.submenu);
+      }
+    });
+  };
+
+  collect(overrides);
+
+  const orphans =
+    [...overrideIds].filter(
+      (id) =>
+        !knownIds.has(id)
+    );
+
+  return {
+    knownIds,
+    orphans,
+  };
+};
+
+/* =========================================================
+   EXPORTS
+========================================================= */
+
+export {
+  CHANNEL_GROUPS,
+  PLATFORM_GROUPS,
+  SHARED_GROUPS,
+  ALL_ROLES,
+  ADMIN_ROLES,
+  TENANT_ROLES,
+  CHANNEL_ROLES,
+  CLIENT_ALWAYS_VISIBLE_CHANNELS,
+};
+
+export default defaultSidebarMenus;

@@ -187,8 +187,8 @@ const CampaignSegments = () => {
                       <Button
                         size="sm"
                         color="light"
-                        className="border p-1 px-2 text-danger"
-                        title="Delete"
+                        className="adm-icon-btn is-danger"
+                        data-tt="Delete Segment"
                         onClick={() => handleDelete(s.id)}
                       >
                         <FaTrash size={11} />

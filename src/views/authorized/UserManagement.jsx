@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter,
@@ -8,7 +8,8 @@ import {
 import {
   FaUsers, FaPlus, FaEdit, FaTrash,
   FaEye, FaEyeSlash, FaUserShield, FaCheck, FaTimes,
-  FaSearch, FaSyncAlt
+  FaSearch, FaSyncAlt, FaWallet, FaSlidersH, FaClock,
+  FaChevronDown, FaChevronRight, FaSitemap
 } from "react-icons/fa";
 import apiClient, { BASE_HOST } from "@apiService";
 import Swal from "sweetalert2";
@@ -24,19 +25,21 @@ export const ROLE_WEIGHTS = {
   RESELLER: 3,
   CLIENT: 2,
   MANAGER: 1,
+  USER: 0,
 };
 
 export const ROLE_BADGES = {
-  DEVOPS: { bg: "#748ffc", color: "#ffffff", label: "DevOps" },
-  ADMIN: { bg: "#4f6ef7", color: "#ffffff", label: "Admin" },
-  RESELLER: { bg: "#20c997", color: "#ffffff", label: "Reseller" },
-  CLIENT: { bg: "#00c5eb", color: "#ffffff", label: "Client" },
-  MANAGER: { bg: "#fe9365", color: "#ffffff", label: "Manager" },
+  DEVOPS: { color: "primary", label: "DevOps" },
+  ADMIN: { color: "indigo", bgClass: "bg-primary text-white", label: "Admin" },
+  RESELLER: { color: "success", bgClass: "bg-success text-white", label: "Reseller" },
+  CLIENT: { color: "info", bgClass: "bg-info text-dark", label: "Client" },
+  MANAGER: { color: "warning", bgClass: "bg-warning text-dark", label: "Manager" },
+  USER: { color: "secondary", bgClass: "bg-secondary text-white", label: "User" },
 };
 
 const getRoleBadge = (role) => {
   const normalized = (role || "").toUpperCase();
-  return ROLE_BADGES[normalized] || { bg: "#64748b", color: "#ffffff", label: role || "User" };
+  return ROLE_BADGES[normalized] || { color: "secondary", bgClass: "bg-secondary text-white", label: role || "User" };
 };
 
 /* ================= INITIAL FORM ================= */
@@ -110,15 +113,138 @@ const validateField = (name, value, isEditing = false) => {
   return "";
 };
 
-/* ================= HELPERS & THEMES ================= */
-const headerGradient = {
-  background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+/* ================= RECURSIVE TREE HELPERS ================= */
+export const flattenUserTree = (nodes = []) => {
+  const result = [];
+  const walk = (items) => {
+    if (!Array.isArray(items)) return;
+    items.forEach((user) => {
+      result.push(user);
+      if (Array.isArray(user.children) && user.children.length > 0) {
+        walk(user.children);
+      }
+    });
+  };
+  walk(nodes);
+  return result;
+};
+
+const filterUserTree = (nodes = [], query = "", role = "ALL", status = "ALL") => {
+  const q = query.trim().toLowerCase();
+
+  const nodeMatchesSelf = (u) => {
+    const matchSearch =
+      !q ||
+      u.name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
+      u.mobile?.includes(q) ||
+      u.userDesignations?.toLowerCase().includes(q) ||
+      u.role?.toLowerCase().includes(q);
+
+    const matchRole =
+      role === "ALL" || (u.role || "").toUpperCase() === role;
+
+    const matchStatus =
+      status === "ALL" ||
+      (status === "ACTIVE" && u.isActive) ||
+      (status === "INACTIVE" && !u.isActive) ||
+      u.status === status;
+
+    return matchSearch && matchRole && matchStatus;
+  };
+
+  const processNode = (node) => {
+    const isMatch = nodeMatchesSelf(node);
+    const filteredChildren = Array.isArray(node.children)
+      ? node.children.map(processNode).filter(Boolean)
+      : [];
+
+    if (isMatch || filteredChildren.length > 0) {
+      return {
+        ...node,
+        children:
+          isMatch && role === "ALL" && status === "ALL" && filteredChildren.length === 0 && Array.isArray(node.children)
+            ? node.children
+            : filteredChildren,
+        __hasMatchingDescendant: filteredChildren.length > 0,
+      };
+    }
+    return null;
+  };
+
+  return nodes.map(processNode).filter(Boolean);
+};
+
+export const buildOrNormalizeUserTree = (rawUsers = [], loggedRole = "", currentUserId = "", currentUserEmail = "") => {
+  if (!Array.isArray(rawUsers) || rawUsers.length === 0) return [];
+
+  // Check if rawUsers is already nested (i.e. has at least one node with children array)
+  const isAlreadyNested = rawUsers.some((u) => Array.isArray(u.children) && u.children.length > 0);
+
+  let fullTree = [];
+
+  if (isAlreadyNested) {
+    fullTree = rawUsers;
+  } else {
+    // If backend returned flat list, construct tree using createdBy / owner / manager
+    const idMap = new Map();
+    rawUsers.forEach((u) => {
+      idMap.set(String(u._id), { ...u, children: [] });
+    });
+
+    const roots = [];
+    rawUsers.forEach((u) => {
+      const node = idMap.get(String(u._id));
+      const parentId =
+        (u.manager && typeof u.manager === "object" ? u.manager._id : u.manager) ||
+        (u.owner && typeof u.owner === "object" ? u.owner._id : u.owner) ||
+        (u.createdBy && typeof u.createdBy === "object" ? u.createdBy._id : u.createdBy);
+
+      if (parentId && idMap.has(String(parentId)) && String(parentId) !== String(u._id)) {
+        idMap.get(String(parentId)).children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    fullTree = roots;
+  }
+
+  // Hierarchy access filter:
+  // DEVOPS & ADMIN see ALL users
+  const normalizedRole = (loggedRole || "").toUpperCase();
+  if (normalizedRole === "DEVOPS" || normalizedRole === "ADMIN") {
+    return fullTree;
+  }
+
+  // RESELLER, CLIENT, MANAGER, USER only see their own authorized hierarchy:
+  // Traverse fullTree to find the logged-in user's node
+  const findSubtree = (nodes) => {
+    for (const node of nodes) {
+      const matchId = currentUserId && String(node._id) === String(currentUserId);
+      const matchEmail = currentUserEmail && node.email && node.email.toLowerCase() === currentUserEmail.toLowerCase();
+      if (matchId || matchEmail) {
+        return node;
+      }
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        const found = findSubtree(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const userSubtree = findSubtree(fullTree);
+  if (userSubtree) {
+    return [userSubtree];
+  }
+
+  // Fallback: If not found in tree, return fullTree
+  return fullTree;
 };
 
 /* ================================================= */
 const UserManagement = () => {
-  
-  
   const { isHindi } = useLanguage();
   const navigate = useNavigate();
 
@@ -137,6 +263,9 @@ const UserManagement = () => {
   const [filterRole, setFilterRole] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL");
 
+  // Accordion Expand/Collapse Map
+  const [expandedRows, setExpandedRows] = useState({});
+
   // Decode Token and Logged-In User Information
   const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
   const currentUser = useMemo(() => {
@@ -150,31 +279,52 @@ const UserManagement = () => {
 
   const storedUser = useMemo(() => {
     try {
-      const data = sessionStorage.getItem("userData") || sessionStorage.getItem("user");
+      const data =
+        sessionStorage.getItem("userData") ||
+        localStorage.getItem("userData") ||
+        sessionStorage.getItem("user");
       return data ? JSON.parse(data) : null;
     } catch {
       return null;
     }
   }, []);
 
-  const loggedInId = currentUser?._id || currentUser?.id || currentUser?.userId || storedUser?._id || storedUser?.id || storedUser?.userId;
-  const loggedInEmail = (currentUser?.email || storedUser?.email || "").toLowerCase().trim();
-
-  const loggedRole = (currentUser?.role || storedUser?.role || window.userRole || "").toUpperCase();
+  const currentUserId =
+    currentUser?._id ||
+    currentUser?.id ||
+    currentUser?.userId ||
+    storedUser?._id ||
+    storedUser?.id ||
+    "";
+  const currentUserEmail = currentUser?.email || storedUser?.email || "";
+  const loggedRole = (
+    currentUser?.role ||
+    storedUser?.role ||
+    sessionStorage.getItem("userRole") ||
+    localStorage.getItem("userRole") ||
+    window.userRole ||
+    ""
+  ).toUpperCase();
   const isDevOps = loggedRole === "DEVOPS";
   const isAdmin = loggedRole === "ADMIN";
   const isReseller = loggedRole === "RESELLER";
   const isClient = loggedRole === "CLIENT";
   const loggedWeight = ROLE_WEIGHTS[loggedRole] || 0;
 
-  // Determine assignable roles based on hierarchy
+  // Determine assignable roles based on hierarchy:
+  // DEVOPS -> ADMIN, RESELLER, CLIENT, MANAGER
+  // ADMIN -> RESELLER, CLIENT, MANAGER
+  // RESELLER -> CLIENT, MANAGER
+  // CLIENT -> MANAGER
+  // MANAGER -> USER
   const assignableRoles = useMemo(() => {
-    if (isDevOps) return ["DEVOPS", "ADMIN", "RESELLER", "CLIENT", "MANAGER"];
-    if (isAdmin) return ["ADMIN", "RESELLER", "CLIENT", "MANAGER"];
+    if (isDevOps) return ["ADMIN", "RESELLER", "CLIENT", "MANAGER"];
+    if (isAdmin) return ["RESELLER", "CLIENT", "MANAGER"];
     if (isReseller) return ["CLIENT", "MANAGER"];
     if (isClient) return ["MANAGER"];
+    if (loggedRole === "MANAGER") return ["USER"];
     return [];
-  }, [isDevOps, isAdmin, isReseller, isClient]);
+  }, [isDevOps, isAdmin, isReseller, isClient, loggedRole]);
 
   const canCreateUser = assignableRoles.length > 0;
 
@@ -183,46 +333,31 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const res = await apiClient.get('/users/list');
-      const allUsers = res.data?.data || res.data || [];
+      const responseUsers = res.data?.data || [];
+      const rawUserList = Array.isArray(responseUsers) ? responseUsers : [];
 
-      // Hierarchy filtering:
-      // DEVOPS: Sees ALL users without restriction
-      // ADMIN: Sees users with role weight <= 4 (non-DEVOPS)
-      // RESELLER: Sees CLIENT and MANAGER accounts
-      // CLIENT: Sees MANAGER accounts
-      let visibleUsers = allUsers;
-      if (isDevOps) {
-        visibleUsers = allUsers;
-      } else if (isAdmin) {
-        visibleUsers = allUsers.filter((u) => {
-          const r = (u.role || "").toUpperCase();
-          return r !== "DEVOPS" && (ROLE_WEIGHTS[r] || 0) <= 4;
-        });
-      } else if (isReseller) {
-        visibleUsers = allUsers.filter((u) => {
-          const r = (u.role || "").toUpperCase();
-          return ["CLIENT", "MANAGER"].includes(r);
-        });
-      } else if (isClient) {
-        visibleUsers = allUsers.filter((u) => (u.role || "").toUpperCase() === "MANAGER");
-      } else {
-        visibleUsers = [];
-      }
+      const userList = buildOrNormalizeUserTree(rawUserList, loggedRole, currentUserId, currentUserEmail);
+      setUsers(userList);
 
-      // Filter out self account from management list
-      visibleUsers = visibleUsers.filter((u) => {
-        const uId = u._id || u.id;
-        const uEmail = (u.email || "").toLowerCase().trim();
-        const isSelf =
-          (loggedInId && uId && String(uId) === String(loggedInId)) ||
-          (loggedInEmail && uEmail && uEmail === loggedInEmail);
-        return !isSelf;
+      // Auto-expand all root and intermediate nodes initially
+      const initialExpanded = {};
+      const allTreeUsers = flattenUserTree(userList);
+      allTreeUsers.forEach((u) => {
+        if (u._id) initialExpanded[u._id] = true;
       });
-
-      setUsers(visibleUsers);
+      setExpandedRows(initialExpanded);
     } catch (err) {
       console.error("Failed to load users", err);
-      Swal.fire("Error", "Failed to load users. Please try again.", "error");
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (isHindi ? "उपयोगकर्ता लोड करने में विफल। कृपया पुन: प्रयास करें।" : "Failed to load users. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: errMsg,
+      });
     } finally {
       setLoading(false);
     }
@@ -232,28 +367,53 @@ const UserManagement = () => {
     loadUsers();
   }, []);
 
-  /* ================= FILTERED USERS ================= */
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      const matchSearch =
-        !searchQuery ||
-        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.mobile?.includes(searchQuery) ||
-        u.userDesignations?.toLowerCase().includes(searchQuery.toLowerCase());
+  /* ================= TOGGLE EXPAND ================= */
+  const toggleRow = (id) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
-      const matchRole =
-        filterRole === "ALL" || (u.role || "").toUpperCase() === filterRole;
-
-      const matchStatus =
-        filterStatus === "ALL" ||
-        (filterStatus === "ACTIVE" && u.isActive) ||
-        (filterStatus === "INACTIVE" && !u.isActive) ||
-        u.status === filterStatus;
-
-      return matchSearch && matchRole && matchStatus;
+  const expandAll = () => {
+    const all = flattenUserTree(users);
+    const next = {};
+    all.forEach((u) => {
+      if (u._id) next[u._id] = true;
     });
+    setExpandedRows(next);
+  };
+
+  const collapseAll = () => {
+    setExpandedRows({});
+  };
+
+  /* ================= FILTERED HIERARCHY ================= */
+  const filteredTree = useMemo(() => {
+    return filterUserTree(users, searchQuery, filterRole, filterStatus);
   }, [users, searchQuery, filterRole, filterStatus]);
+
+  // When searching or filtering, automatically expand matching branches
+  useEffect(() => {
+    if (searchQuery.trim() || filterRole !== "ALL" || filterStatus !== "ALL") {
+      const flattened = flattenUserTree(filteredTree);
+      setExpandedRows((prev) => {
+        const next = { ...prev };
+        flattened.forEach((u) => {
+          if (u.children?.length) next[u._id] = true;
+        });
+        return next;
+      });
+    }
+  }, [searchQuery, filterRole, filterStatus, filteredTree]);
+
+  /* ================= STATISTICS (FLATTENED) ================= */
+  const allFlattenedUsers = useMemo(() => flattenUserTree(users), [users]);
+  const filteredFlattenedUsers = useMemo(() => flattenUserTree(filteredTree), [filteredTree]);
+
+  const totalUsers = allFlattenedUsers.length;
+  const activeUsers = allFlattenedUsers.filter((u) => u.isActive).length;
+  const pendingUsers = allFlattenedUsers.filter((u) => u.status === "PENDING").length;
 
   /* ================= MODAL TOGGLE & INITIALIZATION ================= */
   const openModal = () => {
@@ -351,20 +511,26 @@ const UserManagement = () => {
       });
 
       if (editing) {
-        await apiClient.put(`/users/update/${editing._id}`, payload);
+        const res = await apiClient.put(`/users/update/${editing._id}`, payload);
+        const successMsg =
+          res.data?.message ||
+          (isHindi ? "उपयोगकर्ता विवरण सफलतापूर्वक अद्यतन किया गया।" : "User details updated successfully.");
         Swal.fire({
           icon: "success",
           title: isHindi ? "सफल" : "Updated!",
-          text: isHindi ? "उपयोगकर्ता विवरण सफलतापूर्वक अद्यतन किया गया।" : "User details updated successfully.",
+          text: successMsg,
           timer: 1500,
           showConfirmButton: false
         });
       } else {
-        await apiClient.post('/users/create', payload);
+        const res = await apiClient.post('/users/create', payload);
+        const successMsg =
+          res.data?.message ||
+          (isHindi ? "नया उपयोगकर्ता सफलतापूर्वक जोड़ा गया।" : "New user created successfully.");
         Swal.fire({
           icon: "success",
           title: isHindi ? "सफल" : "Created!",
-          text: isHindi ? "नया उपयोगकर्ता सफलतापूर्वक जोड़ा गया।" : "New user created successfully.",
+          text: successMsg,
           timer: 1500,
           showConfirmButton: false
         });
@@ -374,10 +540,15 @@ const UserManagement = () => {
       loadUsers();
     } catch (err) {
       console.error("Submit Error:", err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (isHindi ? "ऑपरेशन विफल रहा। कृपया पुन: प्रयास करें।" : "Operation failed. Please try again.");
       Swal.fire({
         icon: "error",
         title: isHindi ? "त्रुटि" : "Error",
-        text: err.response?.data?.message || "Operation failed. Please try again."
+        text: errMsg
       });
     } finally {
       setSubmitting(false);
@@ -391,7 +562,13 @@ const UserManagement = () => {
 
     // Check authority: cannot edit superiors, or peers unless DevOps
     if (!isDevOps && targetWeight >= loggedWeight) {
-      return Swal.fire("Permission Denied", "You do not have permission to edit accounts of equal or higher authority.", "warning");
+      return Swal.fire({
+        icon: "warning",
+        title: isHindi ? "अनुमति अस्वीकृत" : "Permission Denied",
+        text: isHindi
+          ? "आपके पास इस स्तर के खाते को संपादित करने की अनुमति नहीं है।"
+          : "You do not have permission to edit accounts of equal or higher authority."
+      });
     }
 
     setEditing(user);
@@ -420,7 +597,13 @@ const UserManagement = () => {
 
     // Check authority: cannot delete superiors or peers unless DevOps
     if (!isDevOps && targetWeight >= loggedWeight) {
-      return Swal.fire("Permission Denied", "You do not have permission to delete accounts of equal or higher authority.", "warning");
+      return Swal.fire({
+        icon: "warning",
+        title: isHindi ? "अनुमति अस्वीकृत" : "Permission Denied",
+        text: isHindi
+          ? "आपके पास इस स्तर के खाते को हटाने की अनुमति नहीं है।"
+          : "You do not have permission to delete accounts of equal or higher authority."
+      });
     }
 
     const result = await Swal.fire({
@@ -439,11 +622,29 @@ const UserManagement = () => {
     if (!result.isConfirmed) return;
 
     try {
-      await apiClient.delete(`/users/delete/${user._id}`);
-      Swal.fire("Deleted!", "User has been deleted.", "success");
+      const res = await apiClient.delete(`/users/delete/${user._id}`);
+      const successMsg =
+        res.data?.message ||
+        (isHindi ? "उपयोगकर्ता को सफलतापूर्वक हटा दिया गया।" : "User has been deleted successfully.");
+      Swal.fire({
+        icon: "success",
+        title: isHindi ? "हटाया गया!" : "Deleted!",
+        text: successMsg,
+        timer: 1500,
+        showConfirmButton: false
+      });
       loadUsers();
     } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || "Failed to delete user.", "error");
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (isHindi ? "हटाने में विफल।" : "Failed to delete user.");
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: errMsg
+      });
     }
   };
 
@@ -453,17 +654,31 @@ const UserManagement = () => {
       const payload = new FormData();
       payload.append("status", newStatus);
 
-      await apiClient.put(`/users/update/${user._id}`, payload);
+      const res = await apiClient.put(`/users/update/${user._id}`, payload);
+      const defaultStatusText =
+        newStatus === "APPROVED"
+          ? (isHindi ? "उपयोगकर्ता स्वीकृत किया गया" : "User Approved")
+          : (isHindi ? "उपयोगकर्ता अस्वीकृत किया गया" : "User Rejected");
+      const msg = res.data?.message || defaultStatusText;
 
       Swal.fire({
         icon: "success",
-        title: `Status set to ${newStatus}`,
-        timer: 1200,
+        title: msg,
+        timer: 1500,
         showConfirmButton: false,
       });
       loadUsers();
     } catch (err) {
-      Swal.fire("Error", "Failed to update status", "error");
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (isHindi ? "स्थिति अद्यतन करने में विफल" : "Failed to update status");
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: errMsg
+      });
     }
   };
 
@@ -473,43 +688,328 @@ const UserManagement = () => {
       const payload = new FormData();
       payload.append("isActive", !user.isActive);
 
-      await apiClient.put(`/users/update/${user._id}`, payload).catch(() => apiClient.put(`/update-user/${user._id}`, payload));
+      const res = await apiClient
+        .put(`/users/update/${user._id}`, payload)
+        .catch(() => apiClient.put(`/update-user/${user._id}`, payload));
+
+      const defaultToggleText = !user.isActive
+        ? (isHindi ? "उपयोगकर्ता सक्रिय किया गया" : "User Activated")
+        : (isHindi ? "उपयोगकर्ता निष्क्रिय किया गया" : "User Deactivated");
+      const msg = res.data?.message || defaultToggleText;
 
       Swal.fire({
         icon: "success",
-        title: user.isActive ? "User Deactivated" : "User Activated",
-        timer: 1200,
+        title: msg,
+        timer: 1500,
         showConfirmButton: false,
       });
       loadUsers();
     } catch (err) {
-      Swal.fire("Error", "Failed to toggle status", "error");
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        (isHindi ? "स्थिति बदलने में विफल" : "Failed to toggle status");
+      Swal.fire({
+        icon: "error",
+        title: isHindi ? "त्रुटि" : "Error",
+        text: errMsg
+      });
     }
   };
 
+  /* ================= RECURSIVE USER ROW COMPONENT ================= */
+  const UserTreeRow = ({ user, level = 0, index = 1 }) => {
+    const hasChildren = Array.isArray(user.children) && user.children.length > 0;
+    const isExpanded = !!expandedRows[user._id];
+    const roleBadge = getRoleBadge(user.role);
+
+    return (
+      <>
+        <tr
+          className={`${user.isActive ? "" : "table-secondary bg-opacity-25"} ${level > 0 ? "bg-light bg-opacity-50" : ""}`}
+        >
+          {/* # & Hierarchy Indent */}
+          <td className="text-center align-middle" style={{ width: "50px" }}>
+            <span className="small text-muted fw-bold">{level === 0 ? index : ""}</span>
+          </td>
+
+          {/* Photo */}
+          <td className="align-middle" style={{ width: "55px" }}>
+            {user.profileImage ? (
+              <img
+                src={`${BASE_HOST}${user.profileImage}`}
+                alt={user.name}
+                className="rounded-circle shadow-sm border"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  objectFit: "cover"
+                }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+            ) : (
+              <div
+                className={`rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm ${
+                  user.role === "ADMIN"
+                    ? "bg-primary"
+                    : user.role === "RESELLER"
+                      ? "bg-success"
+                      : user.role === "CLIENT"
+                        ? "bg-info text-dark"
+                        : user.role === "MANAGER"
+                          ? "bg-warning text-dark"
+                          : "bg-secondary"
+                }`}
+                style={{ width: "36px", height: "36px", fontSize: "14px" }}
+              >
+                {user.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+            )}
+          </td>
+
+          {/* User Details & Expand Chevron */}
+          <td className="align-middle">
+            <div
+              className="d-flex align-items-center gap-2"
+              style={{ paddingLeft: `${level * 24}px` }}
+            >
+              {/* Expand / Collapse Button if has children */}
+              {hasChildren ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-secondary p-0 d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                  style={{ width: "22px", height: "22px" }}
+                  onClick={() => toggleRow(user._id)}
+                  title={isExpanded ? "Collapse Downline" : "Expand Downline"}
+                >
+                  {isExpanded ? <FaChevronDown size={10} /> : <FaChevronRight size={10} />}
+                </button>
+              ) : level > 0 ? (
+                <span
+                  className="text-muted d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                  style={{ width: "22px", height: "22px", opacity: 0.4 }}
+                >
+                  └
+                </span>
+              ) : null}
+
+              <div>
+                <div className="fw-bold text-dark d-flex align-items-center gap-2 flex-wrap">
+                  <span>{user.name}</span>
+                  {hasChildren && (
+                    <Badge color="light" className="text-secondary border py-1 px-2 fw-normal">
+                      {user.children.length} {user.children.length === 1 ? "downline" : "downlines"}
+                    </Badge>
+                  )}
+                </div>
+                <small className="text-muted">{user.email}</small>
+              </div>
+            </div>
+          </td>
+
+          {/* Role */}
+          <td className="align-middle">
+            <span className={`badge rounded-pill fw-bold ${roleBadge.bgClass || "bg-secondary text-white"}`}>
+              {roleBadge.label}
+            </span>
+          </td>
+
+          {/* Contact */}
+          <td className="text-nowrap align-middle">{user.mobile || "—"}</td>
+
+          {/* Designation */}
+          <td className="align-middle">
+            {user.userDesignations ? (
+              <span className="badge bg-light text-dark border fw-normal">
+                {user.userDesignations}
+              </span>
+            ) : (
+              <span className="text-muted small">—</span>
+            )}
+          </td>
+
+          {/* Permissions */}
+          <td className="align-middle" style={{ maxWidth: "180px" }}>
+            {user.permissions?.length ? (
+              <div className="d-flex flex-wrap gap-1">
+                {user.permissions.slice(0, 3).map((p, pIdx) => (
+                  <span key={pIdx} className="badge bg-light text-secondary border fw-normal">
+                    {p}
+                  </span>
+                ))}
+                {user.permissions.length > 3 && (
+                  <span className="badge bg-secondary">
+                    +{user.permissions.length - 3}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-muted small">Standard</span>
+            )}
+          </td>
+
+          {/* Access & Approval Status */}
+          <td className="align-middle text-center">
+            <div className="d-flex flex-column align-items-center justify-content-center gap-1 py-1">
+              {/* Approval Status Badge */}
+              <span
+                className={`badge rounded-pill d-inline-flex align-items-center gap-1 px-2.5 py-1 ${
+                  user.status === "APPROVED"
+                    ? "bg-success-subtle text-success border border-success"
+                    : user.status === "REJECTED"
+                      ? "bg-danger-subtle text-danger border border-danger"
+                      : "bg-warning-subtle text-warning-emphasis border border-warning"
+                }`}
+              >
+                {user.status === "APPROVED" && <FaCheck size={9} />}
+                {user.status === "REJECTED" && <FaTimes size={9} />}
+                {user.status === "PENDING" && <FaClock size={9} />}
+                <span>
+                  {user.status === "APPROVED" ? "Approved" : user.status === "REJECTED" ? "Rejected" : "Pending"}
+                </span>
+              </span>
+
+              {/* Modern Bootstrap Switch Toggle */}
+              <div className="form-check form-switch d-inline-flex align-items-center justify-content-center m-0 gap-1">
+                <input
+                  className="form-check-input m-0"
+                  type="checkbox"
+                  role="switch"
+                  id={`switch-user-${user._id}`}
+                  checked={!!user.isActive}
+                  onChange={() => handleToggleActive(user)}
+                  title={user.isActive ? "Click to Deactivate" : "Click to Activate"}
+                  style={{ cursor: "pointer" }}
+                />
+                <label
+                  className={`form-check-label small fw-semibold cursor-pointer user-select-none ${user.isActive ? "text-success" : "text-danger"}`}
+                  htmlFor={`switch-user-${user._id}`}
+                >
+                  {user.isActive ? "Active" : "Inactive"}
+                </label>
+              </div>
+            </div>
+          </td>
+
+          {/* Actions */}
+          <td className="text-center text-nowrap align-middle">
+            <div className="d-inline-flex gap-1 align-items-center justify-content-center">
+              {/* Quick Approve / Reject for Pending */}
+              {user.status === "PENDING" && (
+                <>
+                  <Button
+                    size="sm"
+                    color="success"
+                    className="p-1 px-2 shadow-sm text-white"
+                    title="Approve User"
+                    onClick={() => handleQuickStatus(user, "APPROVED")}
+                  >
+                    <FaCheck size={11} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    color="warning"
+                    className="p-1 px-2 shadow-sm text-dark"
+                    title="Reject User"
+                    onClick={() => handleQuickStatus(user, "REJECTED")}
+                  >
+                    <FaTimes size={11} />
+                  </Button>
+                </>
+              )}
+
+              {/* Manage Wallet & Topup — ADMIN & DEVOPS ONLY */}
+              {(isAdmin || isDevOps) && (
+                <Button
+                  size="sm"
+                  color="success"
+                  className="p-1 px-2 text-white shadow-sm"
+                  title={isHindi ? "वॉलेट और टॉपअप (Wallet & Topup)" : "Manage Wallet & Topup"}
+                  onClick={() => navigate(`/authorized/account/credits-topup-management?userId=${user._id}`)}
+                >
+                  <FaWallet size={12} />
+                </Button>
+              )}
+
+              {/* Communication Config — ADMIN & DEVOPS ONLY */}
+              {(isAdmin || isDevOps) && (
+                <Button
+                  size="sm"
+                  color="primary"
+                  className="p-1 px-2 text-white shadow-sm"
+                  title={isHindi ? "संचार विन्यास (Communication Config)" : "Communication Configuration"}
+                  onClick={() => navigate(`/authorized/config/communication/${user._id}`)}
+                >
+                  <FaSlidersH size={12} />
+                </Button>
+              )}
+
+              {/* Edit Button */}
+              <Button
+                size="sm"
+                color="info"
+                className="p-1 px-2 text-white shadow-sm"
+                title="Edit User"
+                onClick={() => handleEdit(user)}
+              >
+                <FaEdit size={12} />
+              </Button>
+
+              {/* Delete Button */}
+              <Button
+                size="sm"
+                color="danger"
+                className="p-1 px-2 text-white shadow-sm"
+                title="Delete User"
+                onClick={() => handleDelete(user)}
+              >
+                <FaTrash size={12} />
+              </Button>
+            </div>
+          </td>
+        </tr>
+
+        {/* Recursive Children (Downlines) if expanded */}
+        {hasChildren && isExpanded && (
+          user.children.map((child, cIdx) => (
+            <UserTreeRow
+              key={child._id || `${user._id}-child-${cIdx}`}
+              user={child}
+              level={level + 1}
+              index={`${index}.${cIdx + 1}`}
+            />
+          ))
+        )}
+      </>
+    );
+  };
+
   return (
-    <Card className="adm-card border-0 shadow-sm overflow-hidden mb-4">
+    <Card className="border-0 shadow-sm overflow-hidden mb-4">
       {/* ── UNIFIED COMMAND HEADER ── */}
-      <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-3 px-md-4">
-        <div className="d-flex align-items-center gap-2.5">
+      <CardHeader className="bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2 py-3 px-3 px-md-4">
+        <div className="d-flex align-items-center gap-2">
           <div
-            className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-xs flex-shrink-0"
-            style={{ width: "38px", height: "38px", background: "rgba(255, 255, 255, 0.15)", fontSize: "1.1rem" }}
+            className="rounded-3 d-flex align-items-center justify-content-center text-white bg-white bg-opacity-10 p-2 fs-5 flex-shrink-0"
+            style={{ width: "38px", height: "38px" }}
           >
             <FaUsers />
           </div>
           <div>
-            <h4 className="adm-page-title mb-0 text-white fw-bold d-flex align-items-center gap-2" style={{ fontSize: "1.1rem" }}>
+            <h4 className="mb-0 text-white fw-bold d-flex align-items-center gap-2 fs-5">
               <span>{isHindi ? "उपयोगकर्ता एवं भूमिका प्रबंधन" : "User & Role Management"}</span>
             </h4>
-            <small className="text-white-50" style={{ fontSize: "11px" }}>
+            <small className="text-white-50">
               {isDevOps
                 ? "DevOps Platform Administration"
                 : isAdmin
-                  ? "Administrative Control"
+                  ? "Administrative Control & Hierarchy Tree"
                   : isReseller
-                    ? "Reseller Account & Client Management"
-                    : "Client Team Management"}
+                    ? "Reseller Account & Client Hierarchy"
+                    : "Client Team & Manager Hierarchy"}
             </small>
           </div>
         </div>
@@ -520,8 +1020,7 @@ const UserManagement = () => {
             <Button
               color="light"
               size="sm"
-              className="fw-semibold d-flex align-items-center gap-1.5 border-white border-opacity-40 text-white shadow-xs"
-              style={{ background: "rgba(255,255,255,0.15)" }}
+              className="fw-semibold d-flex align-items-center gap-1 bg-white bg-opacity-10 text-white border-0 shadow-sm"
               onClick={() => navigate("/authorized/session-manager")}
               title="View Active Sessions"
             >
@@ -534,8 +1033,7 @@ const UserManagement = () => {
           <Button
             color="light"
             size="sm"
-            className="fw-semibold d-flex align-items-center gap-1.5 border-white border-opacity-40 text-white shadow-xs"
-            style={{ background: "rgba(255,255,255,0.15)" }}
+            className="fw-semibold d-flex align-items-center gap-1 bg-white bg-opacity-10 text-white border-0 shadow-sm"
             onClick={loadUsers}
             title="Refresh user list"
           >
@@ -546,9 +1044,9 @@ const UserManagement = () => {
           {/* Add User Button */}
           {canCreateUser && (
             <Button
-              color="light"
+              color="primary"
               size="sm"
-              className="fw-bold d-flex align-items-center gap-1.5 shadow-sm px-3 text-primary border-0"
+              className="fw-bold d-flex align-items-center gap-1 shadow-sm px-3 text-white border-0"
               onClick={openModal}
             >
               <FaPlus size={11} />
@@ -563,8 +1061,8 @@ const UserManagement = () => {
         <div className="p-3 bg-light border-bottom">
           <Row className="g-2 align-items-center">
             {/* Search Box */}
-            <Col xs={12} md={4} lg={4}>
-              <InputGroup size="sm" className="shadow-xs">
+            <Col xs={12} md={4} lg={3}>
+              <InputGroup size="sm" className="shadow-sm">
                 <InputGroupText className="bg-white border-end-0 text-muted">
                   <FaSearch size={12} />
                 </InputGroupText>
@@ -585,7 +1083,7 @@ const UserManagement = () => {
                 size="sm"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="shadow-xs bg-white fw-semibold cursor-pointer"
+                className="shadow-sm bg-white fw-semibold cursor-pointer"
               >
                 <option value="ALL">All Roles</option>
                 {isDevOps && <option value="DEVOPS">DevOps</option>}
@@ -593,6 +1091,7 @@ const UserManagement = () => {
                 {(isDevOps || isAdmin || isReseller) && <option value="RESELLER">Reseller</option>}
                 <option value="CLIENT">Client</option>
                 <option value="MANAGER">Manager</option>
+                <option value="USER">User</option>
               </Input>
             </Col>
 
@@ -603,7 +1102,7 @@ const UserManagement = () => {
                 size="sm"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="shadow-xs bg-white fw-semibold cursor-pointer"
+                className="shadow-sm bg-white fw-semibold cursor-pointer"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="APPROVED">Approved</option>
@@ -614,49 +1113,71 @@ const UserManagement = () => {
               </Input>
             </Col>
 
-            {/* Stats Summary Badges */}
-            <Col xs={12} md={12} lg={4} className="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
-              <Badge color="primary" className="py-1.5 px-2.5 rounded-pill shadow-xs fw-semibold">
-                Total: {users.length}
+            {/* Tree Expand / Collapse controls */}
+            <Col xs={12} md={2} lg={2} className="d-flex align-items-center gap-1">
+              <Button
+                color="light"
+                size="sm"
+                className="border bg-white text-secondary shadow-sm px-2 py-1 small fw-semibold"
+                onClick={expandAll}
+                title="Expand All Hierarchy"
+              >
+                <FaChevronDown size={10} className="me-1" /> Expand All
+              </Button>
+              <Button
+                color="light"
+                size="sm"
+                className="border bg-white text-secondary shadow-sm px-2 py-1 small fw-semibold"
+                onClick={collapseAll}
+                title="Collapse All Hierarchy"
+              >
+                <FaChevronRight size={10} className="me-1" /> Collapse
+              </Button>
+            </Col>
+
+            {/* Stats Summary Badges (from recursive flattened count) */}
+            <Col xs={12} md={12} lg={3} className="d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
+              <Badge color="primary" className="py-1 px-2 rounded-pill shadow-sm fw-semibold">
+                Total: {totalUsers}
               </Badge>
-              <Badge color="success" className="py-1.5 px-2.5 rounded-pill shadow-xs fw-semibold">
-                Active: {users.filter((u) => u.isActive).length}
+              <Badge color="success" className="py-1 px-2 rounded-pill shadow-sm fw-semibold">
+                Active: {activeUsers}
               </Badge>
-              <Badge color="warning" className="py-1.5 px-2.5 rounded-pill shadow-xs text-dark fw-semibold">
-                Pending: {users.filter((u) => u.status === "PENDING").length}
+              <Badge color="warning" className="py-1 px-2 rounded-pill shadow-sm text-dark fw-semibold">
+                Pending: {pendingUsers}
               </Badge>
             </Col>
           </Row>
         </div>
 
-        {/* ── USERS TABLE ── */}
+        {/* ── USERS TABLE (RECURSIVE ACCORDION TREE) ── */}
         <div className="table-responsive">
-          <Table hover striped className="mb-0 align-middle">
-            <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
+          <Table hover className="table-hover mb-0 align-middle">
+            <thead className="table-light small">
               <tr>
-                <th className="text-center" style={{ width: "45px" }}>#</th>
+                <th className="text-center" style={{ width: "50px" }}>#</th>
                 <th style={{ width: "55px" }}>Photo</th>
-                <th>User Details</th>
+                <th style={{ minWidth: "220px" }}>User Details & Hierarchy</th>
                 <th>Role</th>
                 <th>Contact</th>
                 <th>Designation</th>
                 <th>Permissions</th>
-                <th>Access / Status</th>
-                <th className="text-center" style={{ width: "110px" }}>Actions</th>
+                <th className="text-center" style={{ minWidth: "135px" }}>Access / Status</th>
+                <th className="text-center" style={{ minWidth: "160px" }}>Actions</th>
               </tr>
             </thead>
 
-            <tbody style={{ fontSize: "13px" }}>
+            <tbody>
               {loading ? (
                 <tr>
                   <td colSpan="9" className="text-center py-4">
                     <PageLoader inline={true} />
                   </td>
                 </tr>
-              ) : filteredUsers.length === 0 ? (
+              ) : filteredTree.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="text-center py-5 text-muted">
-                    <div style={{ fontSize: "2.5rem" }}>👥</div>
+                    <div className="fs-1">👥</div>
                     <p className="fw-semibold mb-1">No users found matching your criteria.</p>
                     {canCreateUser && (
                       <Button color="primary" size="sm" onClick={openModal} className="mt-2">
@@ -666,205 +1187,14 @@ const UserManagement = () => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((u, i) => {
-                  const roleBadge = getRoleBadge(u.role);
-
-                  return (
-                    <tr key={u._id || i}>
-                      {/* # */}
-                      <td className="text-center fw-bold text-muted">{i + 1}</td>
-
-                      {/* Photo */}
-                      <td>
-                        {u.profileImage ? (
-                          <img
-                            src={`${BASE_HOST}${u.profileImage}`}
-                            alt={u.name}
-                            className="rounded-circle shadow-xs"
-                            style={{
-                              width: "38px",
-                              height: "38px",
-                              objectFit: "cover",
-                              border: "2px solid #e2e8f0"
-                            }}
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div
-                            className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-xs"
-                            style={{
-                              width: "38px",
-                              height: "38px",
-                              fontSize: "13px",
-                              background: "linear-gradient(135deg, #4f6ef7 0%, #00c5eb 100%)"
-                            }}
-                          >
-                            {u.name?.charAt(0)?.toUpperCase() || "U"}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Name & Email */}
-                      <td>
-                        <div className="fw-bold text-dark">{u.name}</div>
-                        <small className="text-muted">{u.email}</small>
-                      </td>
-
-                      {/* Role */}
-                      <td>
-                        <span
-                          className="px-2.5 py-1 rounded-pill fw-bold text-white shadow-xs d-inline-block"
-                          style={{
-                            fontSize: "10.5px",
-                            letterSpacing: "0.2px",
-                            backgroundColor: roleBadge.bg
-                          }}
-                        >
-                          {roleBadge.label}
-                        </span>
-                      </td>
-
-                      {/* Mobile */}
-                      <td className="text-nowrap">{u.mobile || "—"}</td>
-
-                      {/* Designation */}
-                      <td>
-                        {u.userDesignations ? (
-                          <span
-                            className="px-2 py-0.5 rounded-pill fw-semibold"
-                            style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155" }}
-                          >
-                            {u.userDesignations}
-                          </span>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
-                      </td>
-
-                      {/* Permissions */}
-                      <td style={{ maxWidth: "160px" }}>
-                        {u.permissions?.length ? (
-                          <div className="d-flex flex-wrap gap-1">
-                            {u.permissions.slice(0, 3).map((p, pIdx) => (
-                              <span
-                                key={pIdx}
-                                className="px-1.5 py-0.5 rounded bg-light border text-dark fw-semibold"
-                                style={{ fontSize: "10px" }}
-                              >
-                                {p}
-                              </span>
-                            ))}
-                            {u.permissions.length > 3 && (
-                              <span className="badge bg-secondary" style={{ fontSize: "9.5px" }}>
-                                +{u.permissions.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted small">Standard</span>
-                        )}
-                      </td>
-
-                      {/* Access & Approval Status */}
-                      <td>
-                        <div className="d-flex flex-column gap-1">
-                          {/* Approval Status Badge */}
-                          <span
-                            className="px-2 py-0.5 rounded-pill fw-bold text-center"
-                            style={{
-                              fontSize: "10.5px",
-                              background:
-                                u.status === "APPROVED"
-                                  ? "#ecfdf5"
-                                  : u.status === "REJECTED"
-                                    ? "#fef2f2"
-                                    : "#fffbeb",
-                              color:
-                                u.status === "APPROVED"
-                                  ? "#047857"
-                                  : u.status === "REJECTED"
-                                    ? "#b91c1c"
-                                    : "#b45309",
-                              border: `1px solid ${
-                                u.status === "APPROVED"
-                                  ? "#a7f3d0"
-                                  : u.status === "REJECTED"
-                                    ? "#fecaca"
-                                    : "#fde68a"
-                              }`
-                            }}
-                          >
-                            {u.status === "APPROVED" ? "✅ Approved" : u.status === "REJECTED" ? "❌ Rejected" : "⏳ Pending"}
-                          </span>
-
-                          {/* Active / Inactive switch badge */}
-                          <span
-                            role="button"
-                            onClick={() => handleToggleActive(u)}
-                            className={`badge ${u.isActive ? "bg-success" : "bg-danger"} shadow-xs cursor-pointer`}
-                            title="Click to toggle active status"
-                            style={{ fontSize: "10px", cursor: "pointer" }}
-                          >
-                            {u.isActive ? "🟢 Active" : "🔴 Inactive"}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="text-center text-nowrap">
-                        <div className="d-inline-flex gap-1.5 align-items-center">
-                          {/* Quick Approve / Reject for Pending */}
-                          {u.status === "PENDING" && (
-                            <>
-                              <Button
-                                size="sm"
-                                color="success"
-                                className="p-1 px-1.5"
-                                title="Approve User"
-                                onClick={() => handleQuickStatus(u, "APPROVED")}
-                              >
-                                <FaCheck size={11} />
-                              </Button>
-                              <Button
-                                size="sm"
-                                color="warning"
-                                className="p-1 px-1.5 text-dark"
-                                title="Reject User"
-                                onClick={() => handleQuickStatus(u, "REJECTED")}
-                              >
-                                <FaTimes size={11} />
-                              </Button>
-                            </>
-                          )}
-
-                          {/* Edit Button */}
-                          <Button
-                            size="sm"
-                            color="info"
-                            className="p-1 px-2 text-white"
-                            title="Edit User"
-                            onClick={() => handleEdit(u)}
-                          >
-                            <FaEdit size={12} />
-                          </Button>
-
-                          {/* Delete Button */}
-                          <Button
-                            size="sm"
-                            color="danger"
-                            className="p-1 px-2"
-                            title="Delete User"
-                            onClick={() => handleDelete(u)}
-                          >
-                            <FaTrash size={12} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                filteredTree.map((u, i) => (
+                  <UserTreeRow
+                    key={u._id || `root-${i}`}
+                    user={u}
+                    level={0}
+                    index={i + 1}
+                  />
+                ))
               )}
             </tbody>
           </Table>
@@ -873,10 +1203,10 @@ const UserManagement = () => {
         {/* ── FOOTER BAR ── */}
         <div className="px-4 py-2.5 bg-light border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
           <small className="text-muted fw-semibold">
-            Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> user(s)
+            Showing <strong>{filteredFlattenedUsers.length}</strong> of <strong>{totalUsers}</strong> user(s) across hierarchy
           </small>
-          <small className="text-muted">
-            BeyondSend Cloud Telecom & Marketing
+          <small className="text-muted d-flex align-items-center gap-1">
+            <FaSitemap className="text-secondary" /> BeyondSend Cloud Telecom Hierarchy
           </small>
         </div>
       </CardBody>
@@ -885,8 +1215,7 @@ const UserManagement = () => {
       <Modal isOpen={modal} toggle={closeModal} size="lg" backdrop="static" centered>
         <ModalHeader
           toggle={closeModal}
-          className="border-bottom-0 shadow-sm text-white"
-          style={headerGradient}
+          className="bg-dark text-white border-0 shadow-sm"
           close={
             <button
               className="btn-close btn-close-white"
@@ -908,12 +1237,11 @@ const UserManagement = () => {
                 <img
                   src={imagePreview || "https://ui-avatars.com/api/?name=User&background=e2e8f0&color=1e40af&size=120"}
                   alt="Avatar Preview"
-                  className="rounded-circle shadow-sm bg-white"
+                  className="rounded-circle shadow-sm bg-white border border-3 border-white"
                   style={{
-                    width: "100px",
-                    height: "100px",
-                    objectFit: "cover",
-                    border: "3px solid #ffffff"
+                    width: "96px",
+                    height: "96px",
+                    objectFit: "cover"
                   }}
                 />
                 {imagePreview && (
@@ -939,16 +1267,15 @@ const UserManagement = () => {
                 name="profileImage"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleChange}
-                className="form-control form-control-sm shadow-xs"
-                style={{ maxWidth: "240px" }}
+                className="form-control form-control-sm shadow-sm w-auto"
               />
-              <small className="text-muted mt-1" style={{ fontSize: "11px" }}>
+              <small className="text-muted mt-1 small">
                 JPG, PNG or WEBP (Max 2MB)
               </small>
             </div>
 
             {/* FORM INPUTS */}
-            <div className="bg-white p-3.5 p-md-4 rounded-3 shadow-xs border">
+            <div className="bg-white p-3 p-md-4 rounded-3 shadow-sm border">
               <Row className="g-3">
                 {/* FULL NAME */}
                 <Col md={6}>
@@ -962,7 +1289,7 @@ const UserManagement = () => {
                       value={formData.name}
                       onChange={handleChange}
                       invalid={!!errors.name}
-                      className="shadow-xs"
+                      className="shadow-sm"
                       required
                     />
                     {errors.name && <div className="invalid-feedback">{errors.name}</div>}
@@ -983,10 +1310,10 @@ const UserManagement = () => {
                       onChange={handleChange}
                       disabled={!!editing}
                       invalid={!!errors.email}
-                      className="shadow-xs"
+                      className="shadow-sm"
                       required
                     />
-                    {editing && <small className="text-muted" style={{ fontSize: "11px" }}>Email cannot be altered once registered.</small>}
+                    {editing && <small className="text-muted small">Email cannot be altered once registered.</small>}
                     {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                   </FormGroup>
                 </Col>
@@ -1004,7 +1331,7 @@ const UserManagement = () => {
                       onChange={handleChange}
                       invalid={!!errors.mobile}
                       maxLength={13}
-                      className="shadow-xs"
+                      className="shadow-sm"
                       required
                     />
                     {errors.mobile && <div className="invalid-feedback">{errors.mobile}</div>}
@@ -1023,7 +1350,7 @@ const UserManagement = () => {
                       value={formData.userDesignations}
                       onChange={handleChange}
                       invalid={!!errors.userDesignations}
-                      className="shadow-xs"
+                      className="shadow-sm"
                       required
                     />
                     {errors.userDesignations && <div className="invalid-feedback">{errors.userDesignations}</div>}
@@ -1041,7 +1368,7 @@ const UserManagement = () => {
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="shadow-xs fw-semibold cursor-pointer"
+                      className="shadow-sm fw-semibold cursor-pointer"
                     >
                       {assignableRoles.map((r) => (
                         <option key={r} value={r}>
@@ -1058,7 +1385,7 @@ const UserManagement = () => {
                     <Label className="fw-bold text-dark small mb-1">
                       {editing ? "Password (Leave blank to keep current)" : "Password"} {!editing && <span className="text-danger">*</span>}
                     </Label>
-                    <InputGroup className="shadow-xs">
+                    <InputGroup className="shadow-sm">
                       <Input
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -1090,7 +1417,7 @@ const UserManagement = () => {
                       name="isActive"
                       value={formData.isActive ? "true" : "false"}
                       onChange={handleChange}
-                      className="shadow-xs fw-semibold cursor-pointer"
+                      className="shadow-sm fw-semibold cursor-pointer"
                     >
                       <option value="true">🟢 Active (Allowed to Login)</option>
                       <option value="false">🔴 Inactive (Blocked / Suspended)</option>
@@ -1109,7 +1436,7 @@ const UserManagement = () => {
                       name="status"
                       value={formData.status}
                       onChange={handleChange}
-                      className="shadow-xs fw-semibold cursor-pointer"
+                      className="shadow-sm fw-semibold cursor-pointer"
                     >
                       <option value="APPROVED">✅ Approved</option>
                       <option value="PENDING">⏳ Pending Review</option>
@@ -1130,7 +1457,7 @@ const UserManagement = () => {
                       value={formData.permissions.join(", ")}
                       onChange={handleChange}
                       invalid={!!errors.permissions}
-                      className="shadow-xs"
+                      className="shadow-sm"
                     />
                     {errors.permissions && <div className="invalid-feedback">{errors.permissions}</div>}
                   </FormGroup>
@@ -1155,8 +1482,7 @@ const UserManagement = () => {
               color="primary"
               type="submit"
               disabled={submitting}
-              className="px-4 shadow-sm text-white"
-              style={{ background: "linear-gradient(135deg, #4f6ef7 0%, #00c5eb 100%)", border: "none" }}
+              className="px-4 shadow-sm text-white fw-bold"
             >
               {submitting ? (
                 <>

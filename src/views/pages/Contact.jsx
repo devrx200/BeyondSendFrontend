@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fa';
 import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
-import apiClient from "@apiService";
+import apiClient, { BASE_HOST as API } from "@apiService";
 import officeImage from '/image.png';
 
 /* ── Reusable contact info row ── */

@@ -1,88 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter, Form, FormGroup,
-  Label, Input, Badge, Row, Col, Progress, InputGroup, InputGroupText
+  Label, Input, Badge, Row, Col, Progress, InputGroup, InputGroupText, Spinner
 } from "reactstrap";
 import {
   FaPaperPlane, FaPlus, FaSearch, FaPlay, FaPause,
   FaCheckCircle, FaClock, FaChartBar, FaWhatsapp, FaEnvelope,
-  FaCommentAlt, FaComments, FaPhoneAlt
+  FaCommentAlt, FaComments, FaPhoneAlt, FaTrash
 } from "react-icons/fa";
-import Swal from "sweetalert2";
+import apiClient from "@apiService";
+import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
+import { PageLoader } from "@/components";
 
-const initialCampaigns = [
-  {
-    id: "CMP-801",
-    name: "Festive Flash Sale Blast",
-    channel: "WHATSAPP",
-    senderId: "+91 98765 00000",
-    audience: "Enterprise Prime Clients (14,250)",
-    totalSent: 14250,
-    delivered: 13980,
-    read: 11420,
-    clicked: 3820,
-    failed: 270,
-    status: "COMPLETED",
-    scheduledFor: "2026-09-22 10:00"
-  },
-  {
-    id: "CMP-802",
-    name: "September Monthly Statement Notification",
-    channel: "EMAIL",
-    senderId: "billing@beyondsend.in",
-    audience: "All Active B2B Accounts (8,400)",
-    totalSent: 8400,
-    delivered: 8320,
-    read: 5210,
-    clicked: 2100,
-    failed: 80,
-    status: "IN_PROGRESS",
-    scheduledFor: "2026-09-23 09:00"
-  },
-  {
-    id: "CMP-803",
-    name: "OTP Service Route Stress Test",
-    channel: "SMS",
-    senderId: "BYDSND",
-    audience: "VIP Loyalty Members (6,400)",
-    totalSent: 6400,
-    delivered: 6385,
-    read: 0,
-    clicked: 0,
-    failed: 15,
-    status: "COMPLETED",
-    scheduledFor: "2026-09-20 14:00"
-  },
-  {
-    id: "CMP-804",
-    name: "Interactive Product Showcase Card",
-    channel: "RCS",
-    senderId: "BeyondSend Retail",
-    audience: "Metro Cities High-Spenders (9,200)",
-    totalSent: 9200,
-    delivered: 0,
-    read: 0,
-    clicked: 0,
-    failed: 0,
-    status: "SCHEDULED",
-    scheduledFor: "2026-09-24 11:30"
-  }
-];
 
 const CampaignsManagement = () => {
-  const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const { toasts, toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const channelParam = searchParams.get("channel");
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [lists, setLists] = useState([]);
+  const [fromIds, setFromIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
+
   const [search, setSearch] = useState("");
-  const [channelFilter, setChannelFilter] = useState("ALL");
+  const [channelFilter, setChannelFilter] = useState(() => (channelParam ? channelParam.toUpperCase() : "ALL"));
   const [modal, setModal] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
-    channel: "WHATSAPP",
-    senderId: "BYDSND",
-    audience: "Enterprise Prime Clients (14,250)",
-    scheduledFor: new Date().toISOString().slice(0, 16)
+    channel: channelParam ? channelParam.toUpperCase() : "WHATSAPP",
+    senderId: "",
+    listId: "",
+    audienceName: "All Subscribers",
+    totalRecipients: 1000,
+    scheduleType: "IMMEDIATE",
+    scheduledFor: new Date().toISOString().slice(0, 16),
+    messageBody: ""
   });
+
+  useEffect(() => {
+    if (channelParam) {
+      setChannelFilter(channelParam.toUpperCase());
+      setForm((prev) => ({ ...prev, channel: channelParam.toUpperCase() }));
+    } else {
+      setChannelFilter("ALL");
+    }
+  }, [channelParam]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [cmpRes, listRes, fromRes] = await Promise.all([
+        apiClient.get("/campaigns/list"),
+        apiClient.get("/contact-lists/list"),
+        apiClient.get("/from-ids/list")
+      ]);
+
+      let cmpData = cmpRes?.data?.data || cmpRes?.data || [];
+      const listData = listRes?.data?.data || listRes?.data || [];
+      const fromData = fromRes?.data?.data || fromRes?.data || [];
+
+      setLists(Array.isArray(listData) ? listData : []);
+      setFromIds(Array.isArray(fromData) ? fromData : []);
+
+      setCampaigns(Array.isArray(cmpData) ? cmpData : []);
+    } catch (err) {
+      console.error("Fetch campaigns error:", err);
+      toast.error(err?.response?.data?.message || "Failed to load campaigns");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const getChannelBadge = (ch) => {
     switch (ch) {
@@ -101,51 +97,89 @@ const CampaignsManagement = () => {
     }
   };
 
-  const handleCreate = (e) => {
-    e.preventDefault();
-    if (!form.name) return;
-
-    const newCmp = {
+  const handleOpenModal = () => {
+    const relevantSenders = fromIds.filter((f) => f.channel === form.channel);
+    setForm({
       ...form,
-      id: `CMP-${Math.floor(800 + Math.random() * 200)}`,
-      totalSent: 5000,
-      delivered: 0,
-      read: 0,
-      clicked: 0,
-      failed: 0,
-      status: "SCHEDULED"
-    };
-
-    setCampaigns([newCmp, ...campaigns]);
-    setModal(false);
-    Swal.fire("Campaign Scheduled", "Your multi-channel broadcast has been queued for dispatch.", "success");
+      name: "",
+      senderId: relevantSenders[0]?.identifier || (form.channel === "SMS" ? "BYDSND" : "notifications@beyondsend.in"),
+      audienceName: lists[0]?.name || "All Subscribers",
+      listId: lists[0]?._id || "",
+      totalRecipients: lists[0]?.totalContacts || 1000
+    });
+    setModal(true);
   };
 
-  const handleToggleStatus = (cmp) => {
-    const nextStatus = cmp.status === "IN_PROGRESS" ? "PAUSED" : cmp.status === "PAUSED" ? "IN_PROGRESS" : cmp.status;
-    setCampaigns(
-      campaigns.map((c) => (c.id === cmp.id ? { ...c, status: nextStatus } : c))
+  const handleChannelChange = (channel) => {
+    const relevantSenders = fromIds.filter((f) => f.channel === channel);
+    setForm({
+      ...form,
+      channel,
+      senderId: relevantSenders[0]?.identifier || (channel === "SMS" ? "BYDSND" : "support@beyondsend.in")
+    });
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.senderId.trim()) {
+      toast.warning("Campaign name and sender identifier are required");
+      return;
+    }
+
+    try {
+      setBtnLoading(true);
+      const res = await apiClient.post("/campaigns/create", form);
+      toast.success(res?.data?.message || "Campaign queued successfully");
+      setModal(false);
+      fetchData();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Campaign dispatch failed");
+    } finally {
+      setBtnLoading(false);
+    }
+  };
+
+  const handleToggleStatus = async (cmp) => {
+    try {
+      const res = await apiClient.patch(`/campaigns/toggle-status/${cmp._id}`);
+      toast.success(res?.data?.message || "Status updated");
+      fetchData();
+    } catch {
+      toast.error("Failed to toggle status");
+    }
+  };
+
+  const handleDelete = async (id, name) => {
+    const isConfirmed = await wpSwal.confirm(
+      "Delete Campaign?",
+      `Are you sure you want to delete campaign '${name}'?`
     );
-    Swal.fire("Status Updated", `Campaign is now ${nextStatus}`, "info");
+    if (!isConfirmed) return;
+
+    try {
+      const res = await apiClient.delete(`/campaigns/delete/${id}`);
+      toast.success(res?.data?.message || "Campaign deleted");
+      fetchData();
+    } catch {
+      toast.error("Delete failed");
+    }
   };
 
   const filtered = campaigns.filter((c) => {
     const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.id.toLowerCase().includes(search.toLowerCase()) ||
-      c.senderId.toLowerCase().includes(search.toLowerCase());
+      (c.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (c.senderId || "").toLowerCase().includes(search.toLowerCase());
     const matchCh = channelFilter === "ALL" || c.channel === channelFilter;
     return matchSearch && matchCh;
   });
 
   return (
     <div className="telecom-module-wrapper">
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+
       {/* ── HEADER ── */}
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <CardHeader
-          className="border-0 py-3.5 px-4 text-white d-flex flex-wrap justify-content-between align-items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
-        >
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
               className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
@@ -154,22 +188,24 @@ const CampaignsManagement = () => {
               <FaPaperPlane size={20} className="text-white" />
             </div>
             <div>
-              <h5 className="fw-bold mb-0 text-white">Bulk Campaigns Dispatcher</h5>
-              <small className="text-white-50" style={{ fontSize: "12px" }}>
+              <h4 className="adm-page-title mb-0 text-white">Bulk Campaigns Dispatcher</h4>
+              <p className="adm-page-subtitle mb-0 text-white-50">
                 Multi-channel blast orchestrator (WhatsApp, SMS, Email, RCS, Voice) with delivery tracking
-              </small>
+              </p>
             </div>
           </div>
           <Button
             color="primary"
             className="fw-bold shadow-sm px-3.5 d-flex align-items-center gap-1.5"
-            style={{ background: "var(--pub-grad-primary)", border: "none" }}
-            onClick={() => setModal(true)}
+            onClick={handleOpenModal}
           >
             <FaPlus size={12} /> Launch New Campaign
           </Button>
         </CardHeader>
+      </Card>
 
+      {/* ── MAIN TABLE CARD ── */}
+      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <CardBody className="p-0">
           <div className="p-3 bg-light border-bottom">
             <Row className="g-2 align-items-center">
@@ -199,6 +235,7 @@ const CampaignsManagement = () => {
                   <option value="SMS">SMS DLT</option>
                   <option value="EMAIL">Email</option>
                   <option value="RCS">RCS</option>
+                  <option value="VOICE">Voice</option>
                 </Input>
               </Col>
               <Col xs={12} md={5} className="d-flex justify-content-md-end gap-2 flex-wrap">
@@ -209,117 +246,136 @@ const CampaignsManagement = () => {
                   Completed: {campaigns.filter((c) => c.status === "COMPLETED").length}
                 </Badge>
                 <Badge color="info" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  Running: {campaigns.filter((c) => c.status === "IN_PROGRESS").length}
+                  Scheduled / Running: {campaigns.filter((c) => ["SCHEDULED", "PROCESSING"].includes(c.status)).length}
                 </Badge>
               </Col>
             </Row>
           </div>
 
           <div className="table-responsive">
-            <Table hover striped className="mb-0 align-middle">
-              <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
-                <tr>
-                  <th style={{ width: "95px" }}>ID</th>
-                  <th>Campaign Name & Sender</th>
-                  <th>Channel</th>
-                  <th>Target Audience</th>
-                  <th>Delivery Rate</th>
-                  <th>Status</th>
-                  <th>Scheduled / Executed</th>
-                  <th className="text-center" style={{ width: "110px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody style={{ fontSize: "13px" }}>
-                {filtered.map((c) => {
-                  const delivPct = c.totalSent > 0 ? Math.round((c.delivered / c.totalSent) * 100) : 0;
-
-                  return (
-                    <tr key={c.id}>
-                      <td className="fw-bold text-primary font-monospace">{c.id}</td>
-                      <td>
-                        <div className="fw-bold text-dark">{c.name}</div>
-                        <small className="text-muted">{c.senderId}</small>
-                      </td>
-                      <td>{getChannelBadge(c.channel)}</td>
-                      <td className="small text-muted">{c.audience}</td>
-                      <td style={{ minWidth: "140px" }}>
-                        <div className="d-flex justify-content-between small fw-bold mb-1">
-                          <span>{c.delivered.toLocaleString()} / {c.totalSent.toLocaleString()}</span>
-                          <span className="text-success">{delivPct}%</span>
-                        </div>
-                        <Progress value={delivPct} color={delivPct > 90 ? "success" : "primary"} style={{ height: "6px" }} />
-                      </td>
-                      <td>
-                        <Badge
-                          color={
-                            c.status === "COMPLETED"
-                              ? "success"
-                              : c.status === "IN_PROGRESS"
-                                ? "primary"
-                                : c.status === "SCHEDULED"
-                                  ? "info"
-                                  : "secondary"
-                          }
-                          pill
-                          className="fw-semibold px-2 py-1"
-                        >
-                          {c.status}
-                        </Badge>
-                      </td>
-                      <td className="small text-muted">{c.scheduledFor}</td>
-                      <td className="text-center">
-                        <div className="d-inline-flex gap-1">
-                          {(c.status === "IN_PROGRESS" || c.status === "PAUSED") && (
-                            <Button
-                              size="sm"
-                              color="light"
-                              className="border p-1 px-2 text-warning"
-                              onClick={() => handleToggleStatus(c)}
-                              title={c.status === "IN_PROGRESS" ? "Pause" : "Resume"}
-                            >
-                              {c.status === "IN_PROGRESS" ? <FaPause size={10} /> : <FaPlay size={10} />}
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            color="light"
-                            className="border p-1 px-2 text-primary"
-                            title="Analytics Breakdown"
-                            onClick={() =>
-                              Swal.fire({
-                                title: c.name,
-                                html: `
-                                  <div style="text-align:left;font-size:13px;line-height:1.8;">
-                                    <b>Total Sent:</b> ${c.totalSent.toLocaleString()}<br/>
-                                    <b>Delivered:</b> ${c.delivered.toLocaleString()}<br/>
-                                    <b>Read:</b> ${c.read.toLocaleString()}<br/>
-                                    <b>Clicked:</b> ${c.clicked.toLocaleString()}<br/>
-                                    <b>Failed:</b> ${c.failed.toLocaleString()}
-                                  </div>
-                                `,
-                                icon: "info"
-                              })
-                            }
-                          >
-                            <FaChartBar size={11} />
-                          </Button>
-                        </div>
+            {loading ? (
+              <PageLoader inline={true} />
+            ) : (
+              <Table hover striped className="mb-0 align-middle">
+                <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
+                  <tr>
+                    <th style={{ width: "40px" }}>#</th>
+                    <th>Campaign Name & Sender</th>
+                    <th>Channel</th>
+                    <th>Target Audience</th>
+                    <th>Delivery Rate</th>
+                    <th>Status</th>
+                    <th>Created / Scheduled</th>
+                    <th className="text-center" style={{ width: "130px" }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody style={{ fontSize: "13px" }}>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-5 text-muted">
+                        No campaigns found. Click <strong>Launch New Campaign</strong> to start a blast.
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+                  ) : (
+                    filtered.map((c, idx) => {
+                      const total = c.totalSent || c.totalRecipients || 1;
+                      const delivered = c.delivered || 0;
+                      const delivPct = Math.round((delivered / total) * 100);
+
+                      return (
+                        <tr key={c._id || idx}>
+                          <td className="text-muted small">{idx + 1}</td>
+                          <td>
+                            <div className="fw-bold text-dark">{c.name}</div>
+                            <small className="text-muted font-monospace">{c.senderId}</small>
+                          </td>
+                          <td>{getChannelBadge(c.channel)}</td>
+                          <td className="small text-muted">{c.audienceName || "All Subscribers"}</td>
+                          <td style={{ minWidth: "140px" }}>
+                            <div className="d-flex justify-content-between small fw-bold mb-1">
+                              <span>{delivered.toLocaleString()} / {total.toLocaleString()}</span>
+                              <span className="text-success">{delivPct}%</span>
+                            </div>
+                            <Progress
+                              value={delivPct}
+                              color={delivPct > 90 ? "success" : "primary"}
+                              style={{ height: "6px" }}
+                            />
+                          </td>
+                          <td>
+                            <Badge
+                              color={
+                                c.status === "COMPLETED"
+                                  ? "success"
+                                  : c.status === "PROCESSING"
+                                  ? "primary"
+                                  : c.status === "SCHEDULED"
+                                  ? "info"
+                                  : "secondary"
+                              }
+                              pill
+                              className="fw-semibold px-2 py-1"
+                            >
+                              {c.status}
+                            </Badge>
+                          </td>
+                          <td className="small text-muted">
+                            {c.scheduledFor ? new Date(c.scheduledFor).toLocaleString() : c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Immediate"}
+                          </td>
+                          <td className="text-center">
+                            <div className="d-inline-flex gap-1.5 align-items-center">
+                              {["PROCESSING", "PAUSED"].includes(c.status) && (
+                                <Button
+                                  size="sm"
+                                  color="light"
+                                  className="adm-icon-btn is-warning"
+                                  data-tt={c.status === "PROCESSING" ? "Pause Campaign" : "Resume Campaign"}
+                                  onClick={() => handleToggleStatus(c)}
+                                >
+                                  {c.status === "PROCESSING" ? <FaPause size={10} /> : <FaPlay size={10} />}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                color="light"
+                                className="adm-icon-btn"
+                                data-tt="Metrics Breakdown"
+                                onClick={() =>
+                                  wpSwal.alert(
+                                    c.name,
+                                    `Sent: ${total.toLocaleString()} | Delivered: ${delivered.toLocaleString()} | Read: ${(c.read || 0).toLocaleString()} | Clicked: ${(c.clicked || 0).toLocaleString()} | Failed: ${(c.failed || 0).toLocaleString()}`
+                                  )
+                                }
+                              >
+                                <FaChartBar size={11} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                color="light"
+                                className="adm-icon-btn is-danger"
+                                data-tt="Delete Campaign"
+                                onClick={() => handleDelete(c._id, c.name)}
+                              >
+                                <FaTrash size={11} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </Table>
+            )}
           </div>
         </CardBody>
       </Card>
 
-      {/* ── CREATE CAMPAIGN WIZARD MODAL ── */}
+      {/* ── CREATE CAMPAIGN MODAL ── */}
       <Modal isOpen={modal} toggle={() => setModal(false)} size="lg" backdrop="static" centered>
         <ModalHeader
           toggle={() => setModal(false)}
-          className="text-white"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
+          className="text-white bg-dark"
         >
           Launch Multi-Channel Campaign
         </ModalHeader>
@@ -330,7 +386,7 @@ const CampaignsManagement = () => {
                 <FormGroup className="mb-0">
                   <Label className="fw-bold small text-dark">Campaign Name *</Label>
                   <Input
-                    placeholder="e.g. October Festival Weekend Blast"
+                    placeholder="e.g. Festive Weekend Blast"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     required
@@ -343,7 +399,7 @@ const CampaignsManagement = () => {
                   <Input
                     type="select"
                     value={form.channel}
-                    onChange={(e) => setForm({ ...form, channel: e.target.value })}
+                    onChange={(e) => handleChannelChange(e.target.value)}
                   >
                     <option value="WHATSAPP">WhatsApp Official WABA</option>
                     <option value="SMS">SMS DLT Route</option>
@@ -355,28 +411,68 @@ const CampaignsManagement = () => {
               </Col>
               <Col md={6}>
                 <FormGroup className="mb-0">
-                  <Label className="fw-bold small text-dark">Target Contact Audience *</Label>
+                  <Label className="fw-bold small text-dark">Sender Identifier / Header *</Label>
+                  <Input
+                    placeholder={form.channel === "SMS" ? "BYDSND" : "support@beyondsend.in"}
+                    value={form.senderId}
+                    onChange={(e) => setForm({ ...form, senderId: e.target.value })}
+                    required
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={6}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Target Audience List</Label>
                   <Input
                     type="select"
-                    value={form.audience}
-                    onChange={(e) => setForm({ ...form, audience: e.target.value })}
+                    value={form.listId}
+                    onChange={(e) => {
+                      const selected = lists.find((l) => l._id === e.target.value);
+                      setForm({
+                        ...form,
+                        listId: e.target.value,
+                        audienceName: selected ? selected.name : "All Subscribers",
+                        totalRecipients: selected ? selected.totalContacts : 1000
+                      });
+                    }}
                   >
-                    <option value="Enterprise Prime Clients (14,250)">Enterprise Prime Clients (14,250)</option>
-                    <option value="E-Commerce Festival Leads Q3 (48,900)">E-Commerce Festival Leads Q3 (48,900)</option>
-                    <option value="WhatsApp VIP Loyalty Members (6,400)">WhatsApp VIP Loyalty Members (6,400)</option>
+                    {lists.length > 0 ? (
+                      lists.map((l) => (
+                        <option key={l._id} value={l._id}>
+                          {l.name} ({l.totalContacts || 0} contacts)
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Default All Subscribers</option>
+                    )}
                   </Input>
                 </FormGroup>
               </Col>
               <Col md={6}>
                 <FormGroup className="mb-0">
-                  <Label className="fw-bold small text-dark">Schedule Timing</Label>
+                  <Label className="fw-bold small text-dark">Schedule Type</Label>
                   <Input
-                    type="datetime-local"
-                    value={form.scheduledFor}
-                    onChange={(e) => setForm({ ...form, scheduledFor: e.target.value })}
-                  />
+                    type="select"
+                    value={form.scheduleType}
+                    onChange={(e) => setForm({ ...form, scheduleType: e.target.value })}
+                  >
+                    <option value="IMMEDIATE">Immediate Dispatch</option>
+                    <option value="SCHEDULED">Schedule for Later</option>
+                  </Input>
                 </FormGroup>
               </Col>
+              {form.scheduleType === "SCHEDULED" && (
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="fw-bold small text-dark">Schedule Time</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.scheduledFor}
+                      onChange={(e) => setForm({ ...form, scheduledFor: e.target.value })}
+                    />
+                  </FormGroup>
+                </Col>
+              )}
             </Row>
           </ModalBody>
           <ModalFooter className="bg-white">
@@ -386,9 +482,9 @@ const CampaignsManagement = () => {
             <Button
               color="primary"
               type="submit"
-              style={{ background: "var(--pub-grad-primary)", border: "none" }}
+              disabled={btnLoading}
             >
-              🚀 Schedule & Queue Campaign
+              {btnLoading ? <Spinner size="sm" /> : "🚀 Queue & Dispatch Campaign"}
             </Button>
           </ModalFooter>
         </Form>

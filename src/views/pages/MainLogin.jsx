@@ -102,12 +102,34 @@ const MainLogin = () => {
         { identifier, password },
         { timeout: 10000 }
       );
-      sessionStorage.setItem("authToken", res.token || res.data?.token);
-      localStorage.setItem("authToken", res.token || res.data?.token);
+
+      const token = res.token || res.data?.token;
+      const user = res.user || res.data?.user || {};
+      const role = (user.role || "").toUpperCase();
+
+      if (!token) {
+        throw new Error("Login response did not contain a token");
+      }
+
+      // Clear any role/permission state left over from a previous session
+      // before writing this one, otherwise a stale privileged role can leak
+      // into the new session.
+      sessionStorage.removeItem("userData");
+      sessionStorage.removeItem("userRole");
+      sessionStorage.setItem("authToken", token);
+      sessionStorage.setItem("userRole", role);
+      sessionStorage.setItem("userData", JSON.stringify(user));
+      localStorage.setItem("authToken", token);
+      window.userRole = role;
+
       Swal.fire({
         icon: "success",
         title: isHindi ? "लॉगिन सफल" : "Login Successful",
-        text: res.message || (isHindi ? "व्यवस्थापक पैनल पर रीडायरेक्ट किया जा रहा है..." : "Redirecting to Admin Portal..."),
+        text:
+          res.message ||
+          (isHindi
+            ? "व्यवस्थापक पैनल पर रीडायरेक्ट किया जा रहा है..."
+            : `Signed in as ${role}`),
         timer: 1500,
         showConfirmButton: false
       });
@@ -183,11 +205,11 @@ const MainLogin = () => {
                         src="/beyondsend-logo.svg"
                         alt="BeyondSend Logo"
                         className="img-fluid rounded p-1 bg-white"
-                        style={{ maxHeight: "56px", width: "auto", objectFit: "contain" }}
+                        style={{ maxHeight: "56px" }}
                         onError={(e) => { e.target.src = "/beyondsend-logo.svg"; }}
                       />
                     </div>
-                    <h2 className="fw-bold mb-1" style={{ fontFamily: "var(--pub-font)", fontSize: "1.35rem", color: "var(--pub-default)", letterSpacing: "-0.3px" }}>
+                    <h2 className="fw-bold mb-1">
                       {isHindi ? "लॉगिन करें" : "Welcome Back"}
                     </h2>
                     <p className="text-muted small mb-0">
@@ -272,8 +294,7 @@ const MainLogin = () => {
                           value={userCaptcha}
                           maxLength={6}
                           onChange={(e) => setUserCaptcha(e.target.value.replace(/\s/g, "").slice(0, 6))}
-                          className="fw-semibold"
-                          style={{ letterSpacing: "2px", borderRadius: "10px", border: "1.5px solid #e2e8f0" }}
+                          className="captcha-input flex-grow-1"
                           autoComplete="off"
                           required
                         />
@@ -281,8 +302,7 @@ const MainLogin = () => {
                         {userCaptcha && (
                           <button
                             type="button"
-                            className="btn btn-light border text-danger d-flex align-items-center justify-content-center flex-shrink-0"
-                            style={{ width: "42px", height: "42px", borderRadius: "10px" }}
+                            className="btn-captcha-clear flex-shrink-0"
                             onClick={() => setUserCaptcha("")}
                             title="Clear"
                           >

@@ -1,89 +1,107 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Card, CardBody, CardHeader, Button, Table, Badge,
   Row, Col, InputGroup, InputGroupText, Input
 } from "reactstrap";
 import {
-  FaExclamationCircle, FaSearch, FaTrash, FaShieldAlt,
-  FaFileExport, FaRedoAlt, FaCheckCircle
+  FaExclamationCircle, FaSearch, FaTrash, FaFileExport
 } from "react-icons/fa";
-import Swal from "sweetalert2";
+import apiClient from "@apiService";
+import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
+import { PageLoader } from "@/components";
 
-const initialBounces = [
-  {
-    id: "BNC-101",
-    recipient: "+91 90000 00001",
-    channel: "SMS",
-    type: "HARD_BOUNCE",
-    errorCode: "ERR_UNALLOCATED_NUMBER",
-    reason: "Subscriber number does not exist on carrier network",
-    timestamp: "2026-09-22 17:42"
-  },
-  {
-    id: "BNC-102",
-    recipient: "invalid-user@corporate-defunct.org",
-    channel: "EMAIL",
-    type: "HARD_BOUNCE",
-    errorCode: "550_NO_SUCH_USER",
-    reason: "Mailbox unavailable or disabled by domain MX",
-    timestamp: "2026-09-21 11:20"
-  },
-  {
-    id: "BNC-103",
-    recipient: "+91 98111 22334",
-    channel: "WHATSAPP",
-    type: "SPAM_COMPLAINT",
-    errorCode: "WABA_USER_REPORT",
-    reason: "Recipient flagged message as unsolicited marketing",
-    timestamp: "2026-09-20 15:05"
-  },
-  {
-    id: "BNC-104",
-    recipient: "+91 97222 33445",
-    channel: "SMS",
-    type: "SOFT_BOUNCE",
-    errorCode: "ERR_OUT_OF_COVERAGE",
-    reason: "Subscriber out of cellular range / handset turned off",
-    timestamp: "2026-09-23 08:30"
-  }
-];
 
 const BouncesSpamManagement = () => {
-  const [bounces, setBounces] = useState(initialBounces);
+  const { toasts, toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const channelParam = searchParams.get("channel");
+
+  const [bounces, setBounces] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("ALL");
+  const [channelFilter, setChannelFilter] = useState(() => (channelParam ? channelParam.toUpperCase() : "ALL"));
 
-  const handleClear = (id) => {
-    Swal.fire({
-      title: "Remove from Bounce Log?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Remove"
-    }).then((res) => {
-      if (res.isConfirmed) {
-        setBounces(bounces.filter((b) => b.id !== id));
-        Swal.fire("Cleared", "Record removed.", "success");
-      }
-    });
+  useEffect(() => {
+    if (channelParam) {
+      setChannelFilter(channelParam.toUpperCase());
+    } else {
+      setChannelFilter("ALL");
+    }
+  }, [channelParam]);
+
+  const fetchBounces = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get("/suppressions/list");
+      const data = res?.data?.data || res?.data || [];
+
+      setBounces(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Fetch bounces error:", err);
+      toast.error(err?.response?.data?.message || "Failed to load bounce logs");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBounces();
+  }, []);
+
+  const handleClear = async (id, identifier) => {
+    const isConfirmed = await wpSwal.confirm(
+      "Remove from Bounce Log?",
+      `Re-enable message dispatching to '${identifier}'?`
+    );
+    if (!isConfirmed) return;
+
+    try {
+      await apiClient.delete(`/suppressions/delete/${id}`);
+      toast.success("Recipient removed from bounce suppression");
+      fetchBounces();
+    } catch {
+      toast.error("Failed to remove bounce record");
+    }
+  };
+
+  const handleExport = () => {
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      ["Identifier,Channel,Type,Reason,Date"]
+        .concat(
+          filtered.map(
+            (b) =>
+              `"${b.identifier}","${b.channel}","${b.type}","${b.reason}","${b.createdAt || ""}"`
+          )
+        )
+        .join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `BeyondSend_Bounces_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Bounce log exported as CSV");
   };
 
   const filtered = bounces.filter((b) => {
     const matchSearch =
-      b.recipient.toLowerCase().includes(search.toLowerCase()) ||
-      b.errorCode.toLowerCase().includes(search.toLowerCase()) ||
-      b.reason.toLowerCase().includes(search.toLowerCase());
+      (b.identifier || "").toLowerCase().includes(search.toLowerCase()) ||
+      (b.reason || "").toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "ALL" || b.type === filterType;
     return matchSearch && matchType;
   });
 
   return (
     <div className="telecom-module-wrapper">
+      <ToastContainer toasts={toasts} onRemove={toast.remove} />
+
       {/* ── HEADER ── */}
-      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <CardHeader
-          className="border-0 py-3.5 px-4 text-white d-flex flex-wrap justify-content-between align-items-center gap-3"
-          style={{ background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)" }}
-        >
+      <Card className="adm-card mb-4">
+        <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-3">
             <div
               className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
@@ -92,22 +110,25 @@ const BouncesSpamManagement = () => {
               <FaExclamationCircle size={22} className="text-white" />
             </div>
             <div>
-              <h5 className="fw-bold mb-0 text-white">Bounces & SPAM Logs</h5>
-              <small className="text-white-50" style={{ fontSize: "12px" }}>
+              <h4 className="adm-page-title mb-0 text-white">Bounces & SPAM Logs</h4>
+              <p className="adm-page-subtitle mb-0 text-white-50">
                 Delivery failure audit, hard/soft bounce diagnosis, and spam complaint monitoring
-              </small>
+              </p>
             </div>
           </div>
           <Button
             color="light"
             size="sm"
-            className="fw-semibold d-flex align-items-center gap-1.5"
-            onClick={() => Swal.fire("Exported", "Bounce report downloaded.", "info")}
+            className="fw-semibold d-flex align-items-center gap-1.5 shadow-xs"
+            onClick={handleExport}
           >
             <FaFileExport size={12} /> Export Failure Log
           </Button>
         </CardHeader>
+      </Card>
 
+      {/* ── MAIN TABLE CARD ── */}
+      <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <CardBody className="p-0">
           <div className="p-3 bg-light border-bottom">
             <Row className="g-2 align-items-center">
@@ -117,7 +138,7 @@ const BouncesSpamManagement = () => {
                     <FaSearch size={12} />
                   </InputGroupText>
                   <Input
-                    placeholder="Search by recipient, error code..."
+                    placeholder="Search by recipient or reason..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="border-start-0 bg-white"
@@ -136,85 +157,86 @@ const BouncesSpamManagement = () => {
                   <option value="HARD_BOUNCE">Hard Bounce</option>
                   <option value="SOFT_BOUNCE">Soft Bounce</option>
                   <option value="SPAM_COMPLAINT">SPAM Complaint</option>
+                  <option value="UNSUBSCRIBE">Unsubscribed</option>
                 </Input>
               </Col>
               <Col xs={12} md={4} className="d-flex justify-content-md-end gap-2 flex-wrap">
                 <Badge color="danger" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  Hard Bounces: {bounces.filter((b) => b.type === "HARD_BOUNCE").length}
-                </Badge>
-                <Badge color="warning" className="py-1.5 px-2.5 rounded-pill shadow-xs text-dark">
-                  Complaints: {bounces.filter((b) => b.type === "SPAM_COMPLAINT").length}
+                  Total Failures: {bounces.length}
                 </Badge>
               </Col>
             </Row>
           </div>
 
           <div className="table-responsive">
-            <Table hover striped className="mb-0 align-middle">
-              <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
-                <tr>
-                  <th style={{ width: "95px" }}>ID</th>
-                  <th>Recipient Contact</th>
-                  <th>Channel</th>
-                  <th>Failure Classification</th>
-                  <th>Carrier Error Code</th>
-                  <th>Reason Description</th>
-                  <th>Event Time</th>
-                  <th className="text-center" style={{ width: "90px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody style={{ fontSize: "13px" }}>
-                {filtered.map((b) => (
-                  <tr key={b.id}>
-                    <td className="fw-bold text-primary font-monospace">{b.id}</td>
-                    <td className="fw-bold font-monospace text-dark">{b.recipient}</td>
-                    <td>
-                      <Badge color="secondary" pill className="px-2 py-1">
-                        {b.channel}
-                      </Badge>
-                    </td>
-                    <td>
-                      <span
-                        className="px-2.5 py-0.5 rounded-pill fw-semibold"
-                        style={{
-                          fontSize: "11px",
-                          background:
-                            b.type === "HARD_BOUNCE"
-                              ? "#ffe3e3"
-                              : b.type === "SPAM_COMPLAINT"
-                                ? "#ffec99"
-                                : "#e9ecef",
-                          color:
-                            b.type === "HARD_BOUNCE"
-                              ? "#c92a2a"
-                              : b.type === "SPAM_COMPLAINT"
-                                ? "#e67700"
-                                : "#495057"
-                        }}
-                      >
-                        {b.type.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td>
-                      <code className="text-danger small">{b.errorCode}</code>
-                    </td>
-                    <td className="small text-muted">{b.reason}</td>
-                    <td className="small text-muted">{b.timestamp}</td>
-                    <td className="text-center">
-                      <Button
-                        size="sm"
-                        color="light"
-                        className="border p-1 px-2 text-danger"
-                        title="Dismiss Record"
-                        onClick={() => handleClear(b.id)}
-                      >
-                        <FaTrash size={11} />
-                      </Button>
-                    </td>
+            {loading ? (
+              <PageLoader inline={true} />
+            ) : (
+              <Table hover striped className="mb-0 align-middle">
+                <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
+                  <tr>
+                    <th style={{ width: "40px" }}>#</th>
+                    <th>Failed Recipient</th>
+                    <th>Channel</th>
+                    <th>Failure Type</th>
+                    <th>Carrier Error & Diagnosis</th>
+                    <th>Timestamp</th>
+                    <th className="text-center" style={{ width: "110px" }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody style={{ fontSize: "13px" }}>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-5 text-muted">
+                        No bounce or spam records found matching query.
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((b, idx) => (
+                      <tr key={b._id || idx}>
+                        <td className="text-muted small">{idx + 1}</td>
+                        <td className="fw-bold font-monospace text-dark">
+                          {b.identifier}
+                        </td>
+                        <td>
+                          <Badge color="secondary" pill className="px-2 py-0.5">
+                            {b.channel || "ALL"}
+                          </Badge>
+                        </td>
+                        <td>
+                          <span
+                            className={`badge px-2.5 py-1 ${
+                              b.type === "HARD_BOUNCE"
+                                ? "bg-danger bg-opacity-10 text-danger"
+                                : b.type === "SPAM_COMPLAINT"
+                                ? "bg-warning bg-opacity-20 text-dark"
+                                : "bg-info bg-opacity-10 text-info"
+                            } fw-bold`}
+                          >
+                            {(b.type || "HARD_BOUNCE").replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="small text-muted">{b.reason || "Delivery failed"}</td>
+                        <td className="small text-muted">
+                          {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "Recent"}
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            size="sm"
+                            color="light"
+                            className="border px-2.5 py-1 fw-semibold"
+                            data-tt="Whitelist / Clear Bounce"
+                            onClick={() => handleClear(b._id, b.identifier)}
+                          >
+                            <FaTrash size={11} className="me-1" /> Clear
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            )}
           </div>
         </CardBody>
       </Card>

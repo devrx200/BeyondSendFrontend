@@ -7,7 +7,7 @@ import {
   FaDownload, FaHome, FaList, FaPrint, FaArrowLeft,
 } from 'react-icons/fa';
 import { FaTicketSimple } from 'react-icons/fa6';
-import apiClient from "@apiService";
+import apiClient, { BASE_HOST as API } from "@apiService";
 import { PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
 

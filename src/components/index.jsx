@@ -1,13 +1,12 @@
 /* ─── Layouts ─────────────────────────────────────────────────────────────── */
 export { default as MainLayout } from "./layouts/MainLayout";
-export { default as AdminLayout } from "./layouts/AdminLayout";
-export { default as AuthorizedLayout } from "./layouts/AdminLayout";
+export { default as AuthorizedLayout } from "./layouts/AuthorizedLayout";
 export { default as PageLayout } from "./layouts/PageLayout";
 
 /* ─── Headers & Navigation ────────────────────────────────────────────────── */
 export { default as Header } from "./headers/Header";
-export { default as AdminHeader } from "./headers/AdminHeader";
-export { default as AdminSidebar } from "./headers/AdminSidebar";
+export { default as AuthorizedHeader } from "./headers/AuthorizedHeader";
+export { default as AuthorizedSidebar } from "./headers/AuthorizedSidebar";
 export { default as AdminBreadcrumbBar } from "./headers/AdminBreadcrumbBar";
 export { default as Breadcrumb } from "./headers/Breadcrumb";
 
