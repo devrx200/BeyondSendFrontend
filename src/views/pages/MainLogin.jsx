@@ -288,27 +288,30 @@ const MainLogin = () => {
                           <FaSyncAlt />
                         </button>
 
-                        <Input
-                          type="text"
-                          placeholder={isHindi ? "कैप्चा कोड दर्ज करें" : "Enter Captcha"}
-                          value={userCaptcha}
-                          maxLength={6}
-                          onChange={(e) => setUserCaptcha(e.target.value.replace(/\s/g, "").slice(0, 6))}
-                          className="captcha-input flex-grow-1"
-                          autoComplete="off"
-                          required
-                        />
+                        <div className="captcha-input-wrapper position-relative flex-grow-1">
+                          <Input
+                            type="text"
+                            placeholder={isHindi ? "कैप्चा कोड दर्ज करें" : "Enter Captcha"}
+                            value={userCaptcha}
+                            maxLength={6}
+                            onChange={(e) => setUserCaptcha(e.target.value.replace(/\s/g, "").slice(0, 6))}
+                            className="captcha-input w-100"
+                            autoComplete="off"
+                            required
+                          />
 
-                        {userCaptcha && (
-                          <button
-                            type="button"
-                            className="btn-captcha-clear flex-shrink-0"
-                            onClick={() => setUserCaptcha("")}
-                            title="Clear"
-                          >
-                            <FaTimes />
-                          </button>
-                        )}
+                          {userCaptcha && (
+                            <button
+                              type="button"
+                              className="btn-captcha-clear"
+                              onClick={() => setUserCaptcha("")}
+                              title={isHindi ? "साफ़ करें" : "Clear Captcha"}
+                              aria-label={isHindi ? "साफ़ करें" : "Clear Captcha"}
+                            >
+                              <FaTimes />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </FormGroup>
 

@@ -6,23 +6,24 @@ import {
 } from "reactstrap";
 import {
   FaCommentAlt, FaPlus, FaSearch, FaEdit, FaTrash,
-  FaMobileAlt, FaShieldAlt
+  FaMobileAlt, FaServer, FaShieldAlt
 } from "react-icons/fa";
 import apiClient from "@apiService";
 import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
 import { PageLoader } from "@/components";
 
-
 const SmsTemplates = () => {
   const { toasts, toast } = useToast();
 
   const [templates, setTemplates] = useState([]);
+  const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
   const [senderIds, setSenderIds] = useState([]);
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("ALL");
+  const [filterProvider, setFilterProvider] = useState("ALL");
   const [modal, setModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [previewTemplate, setPreviewTemplate] = useState(null);
@@ -31,7 +32,9 @@ const SmsTemplates = () => {
     name: "",
     senderId: "BYDSND",
     dltTemplateId: "",
-    category: "SERVICE_IMPLICIT",
+    category: "IMPLICIT",
+    provider: "ALL",
+    providerTemplateId: "",
     body: "",
     status: "APPROVED"
   });
@@ -44,6 +47,8 @@ const SmsTemplates = () => {
   };
 
   const currentCalc = calculateSmsCredits(form.body);
+
+  const [categories, setCategories] = useState([]);
 
   const fetchSenders = async () => {
     try {
@@ -62,10 +67,14 @@ const SmsTemplates = () => {
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get("/templates/list?channel=SMS");
-      const list = res?.data?.data || res?.data || [];
+      const res = await apiClient.get("/sms/templates/list");
+      const list = res?.data?.data || [];
+      const provs = res?.data?.availableProviders || [];
+      const cats = res?.data?.availableCategories || [];
 
       setTemplates(Array.isArray(list) ? list : []);
+      if (provs.length > 0) setProviders(provs);
+      if (cats.length > 0) setCategories(cats);
     } catch (err) {
       console.error("Fetch SMS templates error:", err);
       toast.error(err?.response?.data?.message || "Failed to load SMS templates");
@@ -74,9 +83,20 @@ const SmsTemplates = () => {
     }
   };
 
+  const fetchProviders = async () => {
+    try {
+      const res = await apiClient.get("/sms/templates/providers");
+      const list = res?.data?.data || [];
+      if (list.length > 0) setProviders(list);
+    } catch {
+      // Fallback: will be populated from fetchTemplates
+    }
+  };
+
   useEffect(() => {
     fetchSenders();
     fetchTemplates();
+    fetchProviders();
   }, []);
 
   const handleOpenModal = (template = null) => {
@@ -86,7 +106,9 @@ const SmsTemplates = () => {
         name: template.name || "",
         senderId: template.senderId || (senderIds[0] || "BYDSND"),
         dltTemplateId: template.dltTemplateId || "",
-        category: template.category || "SERVICE_IMPLICIT",
+        category: template.category || "IMPLICIT",
+        provider: template.provider || "ALL",
+        providerTemplateId: template.providerTemplateId || "",
         body: template.body || "",
         status: template.status || "APPROVED"
       });
@@ -96,7 +118,9 @@ const SmsTemplates = () => {
         name: "",
         senderId: senderIds[0] || "BYDSND",
         dltTemplateId: "",
-        category: "SERVICE_IMPLICIT",
+        category: "IMPLICIT",
+        provider: "ALL",
+        providerTemplateId: "",
         body: "Hello {#var#}, your requested OTP is {#var#}. Valid for 10 minutes.",
         status: "APPROVED"
       });
@@ -113,17 +137,17 @@ const SmsTemplates = () => {
 
     try {
       setBtnLoading(true);
+      const payload = {
+        ...form,
+        channelCategoryCode: form.channelCategoryCode || (form.category ? `SMS_${form.category}` : "SMS_IMPLICIT"),
+      };
+      delete payload.channel;
+
       if (editingId) {
-        const res = await apiClient.put(`/templates/update/${editingId}`, {
-          ...form,
-          channel: "SMS"
-        });
+        const res = await apiClient.put(`/sms/templates/update/${editingId}`, payload);
         toast.success(res?.data?.message || "SMS template updated successfully");
       } else {
-        const res = await apiClient.post("/templates/create", {
-          ...form,
-          channel: "SMS"
-        });
+        const res = await apiClient.post("/sms/templates/create", payload);
         toast.success(res?.data?.message || "New SMS template registered");
       }
       setModal(false);
@@ -143,7 +167,7 @@ const SmsTemplates = () => {
     if (!isConfirmed) return;
 
     try {
-      const res = await apiClient.delete(`/templates/delete/${id}`);
+      const res = await apiClient.delete(`/sms/templates/delete/${id}`);
       toast.success(res?.data?.message || "Template deleted");
       fetchTemplates();
     } catch (err) {
@@ -156,9 +180,11 @@ const SmsTemplates = () => {
       (t.name || "").toLowerCase().includes(search.toLowerCase()) ||
       (t.senderId || "").toLowerCase().includes(search.toLowerCase()) ||
       (t.body || "").toLowerCase().includes(search.toLowerCase()) ||
-      (t.dltTemplateId || "").includes(search);
+      (t.dltTemplateId || "").includes(search) ||
+      (t.provider || "").toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === "ALL" || t.category === filterType;
-    return matchSearch && matchType;
+    const matchProvider = filterProvider === "ALL" || (t.provider || "ALL") === filterProvider;
+    return matchSearch && matchType && matchProvider;
   });
 
   return (
@@ -176,9 +202,9 @@ const SmsTemplates = () => {
               <FaCommentAlt size={20} className="text-white" />
             </div>
             <div>
-              <h4 className="adm-page-title mb-0 text-white">SMS Templates (DLT Aligned)</h4>
+              <h4 className="adm-page-title mb-0 text-white">SMS Templates (DLT & Multi-Provider Aligned)</h4>
               <p className="adm-page-subtitle mb-0 text-white-50">
-                TRAI DLT compliant SMS templates with automated character & credit calculation
+                TRAI DLT compliant SMS templates with dynamic provider routing and automated character & credit calculation
               </p>
             </div>
           </div>
@@ -195,80 +221,91 @@ const SmsTemplates = () => {
       {/* ── MAIN TABLE CARD ── */}
       <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <CardBody className="p-0">
-          {/* STATS STRIP */}
+          {/* STATS STRIP & FILTERS */}
           <div className="p-3 bg-light border-bottom">
             <Row className="g-2 align-items-center">
-              <Col xs={12} md={4}>
+              <Col lg={4} md={6}>
                 <InputGroup size="sm">
-                  <InputGroupText className="bg-white border-end-0 text-muted">
-                    <FaSearch size={12} />
+                  <InputGroupText className="bg-white border-end-0">
+                    <FaSearch className="text-muted" />
                   </InputGroupText>
                   <Input
-                    placeholder="Search by name, sender ID, DLT ID, text..."
+                    placeholder="Search templates, DLT ID, sender, provider..."
+                    className="border-start-0"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="border-start-0 bg-white"
                   />
                 </InputGroup>
               </Col>
-              <Col xs={6} md={3}>
+              <Col lg={3} md={6}>
                 <Input
                   type="select"
                   size="sm"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="bg-white fw-semibold"
                 >
-                  <option value="ALL">All SMS Categories</option>
-                  <option value="SERVICE_IMPLICIT">Service Implicit (OTP)</option>
-                  <option value="TRANSACTIONAL">Transactional</option>
-                  <option value="SERVICE_EXPLICIT">Service Explicit</option>
-                  <option value="PROMOTIONAL">Promotional</option>
+                  <option value="ALL">All Categories</option>
+                  <option value="OTP">OTP (24x7 Route)</option>
+                  <option value="IMPLICIT">Service Implicit (Alerts/Bills)</option>
+                  <option value="EXPLICIT">Service Explicit (Consented)</option>
+                  <option value="PROMOTIONAL">Promotional (Marketing)</option>
+                  <option value="INTERNATIONAL">International Route</option>
+                  <option value="DLT_SCRUBBING">DLT Scrubbing Active</option>
                 </Input>
               </Col>
-              <Col xs={12} md={5} className="d-flex justify-content-md-end gap-2 flex-wrap">
-                <Badge color="primary" className="py-1.5 px-2.5 rounded-pill shadow-xs">
+              <Col lg={3} md={6}>
+                <Input
+                  type="select"
+                  size="sm"
+                  value={filterProvider}
+                  onChange={(e) => setFilterProvider(e.target.value)}
+                >
+                  <option value="ALL">All Providers ({providers.length})</option>
+                  {providers.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name || p.code}
+                    </option>
+                  ))}
+                </Input>
+              </Col>
+              <Col lg={2} md={6} className="text-end">
+                <span className="badge bg-white border text-dark fw-bold px-2 py-1.5">
                   Total: {templates.length}
-                </Badge>
-                <Badge color="success" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  Approved: {templates.filter((t) => t.status === "APPROVED").length}
-                </Badge>
-                <Badge color="warning" className="py-1.5 px-2.5 rounded-pill shadow-xs text-dark">
-                  Pending: {templates.filter((t) => t.status === "PENDING_APPROVAL").length}
-                </Badge>
+                </span>
               </Col>
             </Row>
           </div>
 
           {/* TABLE */}
-          <div className="table-responsive">
-            {loading ? (
-              <PageLoader inline={true} />
-            ) : (
-              <Table hover striped className="mb-0 align-middle">
-                <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
+          {loading ? (
+            <div className="p-5 text-center">
+              <PageLoader />
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover className="align-middle mb-0 text-nowrap">
+                <thead className="table-light text-muted small text-uppercase">
                   <tr>
                     <th style={{ width: "40px" }}>#</th>
-                    <th>Header (Sender ID)</th>
-                    <th>Template Name & Content</th>
-                    <th>SMS Category</th>
-                    <th>DLT Content ID</th>
-                    <th>Credit Cost</th>
+                    <th>Sender ID</th>
+                    <th>Template Name & Preview</th>
+                    <th>Category</th>
+                    <th>Provider</th>
+                    <th>DLT ID</th>
+                    <th>Credits</th>
                     <th>Status</th>
-                    <th className="text-center" style={{ width: "140px" }}>Actions</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody style={{ fontSize: "13px" }}>
+                <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="p-0">
+                      <td colSpan="9" className="text-center py-5">
                         <div className="adm-empty-state">
-                          <span className="adm-empty-icon">
-                            <FaCommentAlt size={24} />
-                          </span>
+                          <FaCommentAlt size={36} className="text-muted mb-2 opacity-50" />
                           <div className="adm-empty-title">No SMS templates found</div>
                           <p className="adm-empty-sub mb-0">
-                            No templates match your current search or category filter. Try adjusting the query or register a new DLT template.
+                            No templates match your current filters. Try adjusting your query or create a new template.
                           </p>
                         </div>
                       </td>
@@ -284,31 +321,35 @@ const SmsTemplates = () => {
                         </td>
                         <td>
                           <div className="fw-bold text-dark">{t.name}</div>
-                          <small className="text-muted text-truncate d-block" style={{ maxWidth: "340px" }}>
+                          <small className="text-muted text-truncate d-block" style={{ maxWidth: "300px" }}>
                             {t.body}
                           </small>
                         </td>
                         <td>
-                          <span
-                            className="px-2 py-0.5 rounded-pill fw-semibold"
-                            style={{
-                              fontSize: "11px",
-                              background:
-                                t.category === "TRANSACTIONAL"
-                                  ? "#e6fcf5"
-                                  : t.category === "SERVICE_IMPLICIT"
-                                  ? "#edf2ff"
-                                  : "#fff4e6",
-                              color:
-                                t.category === "TRANSACTIONAL"
-                                  ? "#0ca678"
-                                  : t.category === "SERVICE_IMPLICIT"
-                                  ? "#3b5bdb"
-                                  : "#e8590c"
-                            }}
-                          >
-                            {(t.category || "SERVICE_IMPLICIT").replace("_", " ")}
-                          </span>
+                          <Badge color="light" className="border text-dark">
+                            {t.category}
+                          </Badge>
+                        </td>
+                        <td>
+                          {t.providerTemplates && t.providerTemplates.length > 0 ? (
+                            <div className="d-flex flex-wrap gap-1">
+                              {t.providerTemplates.map((p, pIdx) => (
+                                <Badge key={pIdx} color="primary" pill className="font-monospace px-2 py-0.5 text-uppercase" style={{ fontSize: "10px" }}>
+                                  <FaServer className="me-1" size={8} />
+                                  {p.providerCode} {p.status ? `(${p.status})` : ""}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <Badge
+                              color={t.provider && t.provider !== "ALL" ? "primary" : "secondary"}
+                              pill
+                              className="font-monospace px-2 py-1"
+                            >
+                              <FaServer className="me-1" size={9} />
+                              {t.provider || "ALL"}
+                            </Badge>
+                          )}
                         </td>
                         <td className="font-monospace small text-muted">
                           {t.dltTemplateId || <span className="fst-italic text-warning">DLT Pending</span>}
@@ -333,7 +374,7 @@ const SmsTemplates = () => {
                               size="sm"
                               color="light"
                               className="adm-icon-btn"
-                              data-tt="Preview on Mobile"
+                              title="Preview on Mobile"
                               onClick={() => setPreviewTemplate(t)}
                             >
                               <FaMobileAlt size={12} />
@@ -342,7 +383,7 @@ const SmsTemplates = () => {
                               size="sm"
                               color="light"
                               className="adm-icon-btn is-success"
-                              data-tt="Edit Template"
+                              title="Edit Template"
                               onClick={() => handleOpenModal(t)}
                             >
                               <FaEdit size={12} />
@@ -351,7 +392,7 @@ const SmsTemplates = () => {
                               size="sm"
                               color="light"
                               className="adm-icon-btn is-danger"
-                              data-tt="Delete Template"
+                              title="Delete Template"
                               onClick={() => handleDelete(t._id, t.name)}
                             >
                               <FaTrash size={12} />
@@ -363,17 +404,14 @@ const SmsTemplates = () => {
                   )}
                 </tbody>
               </Table>
-            )}
-          </div>
+            </div>
+          )}
         </CardBody>
       </Card>
 
       {/* ── CREATE / EDIT MODAL ── */}
       <Modal isOpen={modal} toggle={() => setModal(false)} size="lg" backdrop="static" centered>
-        <ModalHeader
-          toggle={() => setModal(false)}
-          className="text-white bg-dark"
-        >
+        <ModalHeader toggle={() => setModal(false)} className="text-white bg-dark">
           {editingId ? "Edit SMS Template" : "Register New SMS Template"}
         </ModalHeader>
         <Form onSubmit={handleSave}>
@@ -415,10 +453,29 @@ const SmsTemplates = () => {
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
                   >
-                    <option value="SERVICE_IMPLICIT">Service Implicit (OTP / Alerts)</option>
-                    <option value="TRANSACTIONAL">Transactional (Banking & Invoices)</option>
-                    <option value="SERVICE_EXPLICIT">Service Explicit (Opted Updates)</option>
-                    <option value="PROMOTIONAL">Promotional (Marketing / Sales)</option>
+                    <option value="OTP">OTP (DLT Service Implicit - 24x7 Route)</option>
+                    <option value="IMPLICIT">Service Implicit (Transactional notifications)</option>
+                    <option value="EXPLICIT">Service Explicit (Consented updates)</option>
+                    <option value="PROMOTIONAL">Promotional (Marketing campaigns)</option>
+                    <option value="INTERNATIONAL">International Route (Global SMS)</option>
+                    <option value="DLT_SCRUBBING">DLT Scrubbing Active (Strict Verification)</option>
+                  </Input>
+                </FormGroup>
+              </Col>
+              <Col md={6}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Carrier Provider (Dynamic)</Label>
+                  <Input
+                    type="select"
+                    value={form.provider}
+                    onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                  >
+                    <option value="ALL">ALL (Dynamic Routing & Failover)</option>
+                    {providers.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.name || p.code} ({p.code})
+                      </option>
+                    ))}
                   </Input>
                 </FormGroup>
               </Col>
@@ -429,6 +486,17 @@ const SmsTemplates = () => {
                     placeholder="19-digit DLT ID (e.g. 1407161...)"
                     value={form.dltTemplateId}
                     onChange={(e) => setForm({ ...form, dltTemplateId: e.target.value })}
+                    className="font-monospace"
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={6}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Provider External Template ID</Label>
+                  <Input
+                    placeholder="External provider template reference ID"
+                    value={form.providerTemplateId}
+                    onChange={(e) => setForm({ ...form, providerTemplateId: e.target.value })}
                     className="font-monospace"
                   />
                 </FormGroup>

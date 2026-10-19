@@ -41,7 +41,9 @@ const HINDI_SEGMENTS = {
   "db-backup-management": "डेटाबेस बैकअप",
   "session-manager": "सत्र प्रबंधन",
   "footer-section-manager": "पाद अनुभाग",
-  "header-management": "शीर्षलेख प्रबंधन"
+  "header-management": "शीर्षलेख प्रबंधन",
+  account: "खाता",
+  "profile-settings": "प्रोफ़ाइल सेटिंग्स"
 };
 
 const pad = (n) => String(n).padStart(2, "0");

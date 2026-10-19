@@ -5,6 +5,7 @@ import { MainLayout, AuthorizedLayout } from "@/components";
 
 /* ─── Eager Public Pages ─────────────────────────────────────────────────── */
 import Home from "../views/pages/Home";
+import ImpersonateSessionBridge from "../views/pages/ImpersonateSessionBridge";
 
 /* ─── Middleware ──────────────────────────────────────────────────────────── */
 import AuthMiddleware from "../middlewares/AuthMiddleware";
@@ -22,11 +23,12 @@ import {
   DbBackupManagement, SidebarMenuManagement,
   /* Telecom modules */
   EmailTemplates, SmsTemplates, RcsTemplates, WhatsappTemplates, VoiceTemplates,
+  TelegramTemplates, TelegramBroadcasts, TelegramGatewayOtp, TelegramBotConfig, TelegramDocs,
   CampaignLists, CampaignSegments, CampaignsManagement, UnsubscribersManagement, BouncesSpamManagement,
   FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
   ApiDocViewer, WhatsappResponses, RcsResponses,
-  CreditTopupManagement, MyCreditWallet, UserChannelsConfig, UserCommunicationConfig, UserSettings, SubscriptionsManagement,
-  ChannelRegistry, ProviderRegistry, ChannelMatrix, Onboarding
+  CreditTopupManagement, MyCreditWallet, UserCommunicationConfig, UserSettings, SubscriptionsManagement,
+  ChannelRegistry, ProviderRegistry, ChannelMatrix, Onboarding, ChannelCategoryMaster, CreditPlanChartManagement
 } from "./LazyLoadingRouter";
 
 /* Legacy "/admin/*" links are forwarded to the current "/authorized/*" tree */
@@ -59,6 +61,8 @@ const AppRoutes = () => {
       </Route>
 
       {/* ── Admin: Login (public) ─────────────────────────────────────────── */}
+      <Route path="/auth/impersonate-session" element={<ImpersonateSessionBridge />} />
+
       <Route element={<PublicAdminRoute />}>
         <Route path="/auth/login" element={<MainLayout><MainLogin /></MainLayout>} />
         <Route path="/admin-login" element={<MainLayout><MainLogin /></MainLayout>} />
@@ -81,10 +85,21 @@ const AppRoutes = () => {
           {/* ── BeyondSend Core Telecom & Marketing Modules ────────────────── */}
           {/* Templates */}
           <Route path="email/templates" element={<EmailTemplates />} />
+          <Route path="templates/email" element={<EmailTemplates />} />
           <Route path="sms/templates" element={<SmsTemplates />} />
+          <Route path="templates/sms" element={<SmsTemplates />} />
           <Route path="rcs/templates" element={<RcsTemplates />} />
+          <Route path="templates/rcs" element={<RcsTemplates />} />
           <Route path="whatsapp/templates" element={<WhatsappTemplates />} />
+          <Route path="templates/whatsapp" element={<WhatsappTemplates />} />
           <Route path="voice/templates" element={<VoiceTemplates />} />
+          <Route path="templates/voice" element={<VoiceTemplates />} />
+          <Route path="telegram/templates" element={<TelegramTemplates />} />
+          <Route path="templates/telegram" element={<TelegramTemplates />} />
+          <Route path="telegram/broadcasts" element={<TelegramBroadcasts />} />
+          <Route path="telegram/gateway-otp" element={<TelegramGatewayOtp />} />
+          <Route path="telegram/bot-config" element={<TelegramBotConfig />} />
+          <Route path="telegram/docs" element={<TelegramDocs />} />
 
           {/* Bulk campaigns */}
           <Route path="campaigns/lists" element={<CampaignLists />} />
@@ -100,9 +115,13 @@ const AppRoutes = () => {
           <Route path="user-config" element={<UserCommunicationConfig />} />
           <Route path="user-config/:userId" element={<UserCommunicationConfig />} />
           {/* Account — per-user configuration */}
-          <Route path="account/channels" element={<UserChannelsConfig />} />
-          <Route path="account/settings" element={<UserSettings />} />
-          <Route path="account/credits-topup-management" element={<CreditTopupManagement />} />
+          <Route path="account/channels" element={<Navigate to="/authorized/config/communication" replace />} />
+          <Route path="account/profile-settings" element={<UserSettings />} />
+          <Route path="account/profile-settings/:userId" element={<UserSettings />} />
+          <Route path="account/settings" element={<Navigate to="/authorized/account/profile-settings" replace />} />
+          <Route path="account/settings/:userId" element={<UserSettings />} />
+          <Route path="account/profile" element={<Navigate to="/authorized/account/profile-settings" replace />} />
+          <Route path="account/profile/:userId" element={<UserSettings />} />
           <Route path="account/my-wallet" element={<MyCreditWallet />} />
           <Route path="account/subscriptions" element={<SubscriptionsManagement />} />
 
@@ -179,6 +198,17 @@ const AppRoutes = () => {
             <Route path="settings/channels" element={<ChannelRegistry />} />
             <Route path="settings/providers" element={<ProviderRegistry />} />
             <Route path="settings/channel-matrix" element={<ChannelMatrix />} />
+            <Route path="settings/matrix" element={<ChannelMatrix />} />
+            <Route path="account/credits-topup-management" element={<CreditTopupManagement defaultTab="accounts" />} />
+            <Route path="credits/accounts" element={<CreditTopupManagement defaultTab="accounts" />} />
+            <Route path="credits/requests" element={<CreditTopupManagement defaultTab="requests" />} />
+            <Route path="credits/history" element={<CreditTopupManagement defaultTab="history" />} />
+            <Route path="credits/reports" element={<CreditTopupManagement defaultTab="reports" />} />
+            <Route path="credits/dlr-simulator" element={<CreditTopupManagement defaultTab="dlr" />} />
+            <Route path="settings/channel-categories" element={<ChannelCategoryMaster />} />
+            <Route path="settings/channel-category-master" element={<ChannelCategoryMaster />} />
+            <Route path="settings/credit-plans" element={<CreditPlanChartManagement />} />
+            <Route path="settings/credit-plan-charts" element={<CreditPlanChartManagement />} />
           </Route>
 
           {/* Unknown console path → dashboard */}

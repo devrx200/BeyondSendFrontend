@@ -133,7 +133,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
                   <div className="pub-dot-grid" aria-hidden="true" />
                 </div>
                 <div className="p-5">
-                  <p className="fw-bold mb-3" style={{ fontSize: '80px', background: 'linear-gradient(135deg, #4f6ef7, #00c5eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>404</p>
+                  <p className="fw-bold mb-3" style={{ fontSize: '80px', background: 'linear-gradient(135deg, #191919, #d99a00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>404</p>
                   <h1 className="h4 fw-semibold mb-2" style={{ fontFamily: 'var(--pub-font)', color: 'var(--pub-default)' }}>
                     {isHindi ? 'उफ़! पृष्ठ नहीं मिला' : 'Oops! Page Not Found'}
                   </h1>
@@ -239,7 +239,7 @@ const ImportantPageDetail = ({ prefetchedData = null }) => {
               dangerouslySetInnerHTML={{ __html: rawDesc }}
             />
 
-            <hr style={{ borderColor: '#e2e8f0', margin: '28px 0 20px' }} />
+            <hr style={{ borderColor: '#eee9dd', margin: '28px 0 20px' }} />
 
             {/* Action Buttons */}
             <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">

@@ -89,7 +89,7 @@ const PdfItem = ({ item, onPreview, isHindi }) => {
           </p>
         )}
         <div className="d-flex flex-wrap gap-2 ps-1">
-          <span style={{ fontSize: ".7rem", background: '#f1f5f9', color: '#475569', padding: '2px 10px', borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: ".7rem", background: '#f3f2ee', color: '#605b50', padding: '2px 10px', borderRadius: 999, fontWeight: 600 }}>
             {isHindi ? "बनाया:" : "Created:"} {formatDate(item.createdAt)}
           </span>
         </div>
@@ -204,7 +204,7 @@ const Section = ({ type, arr, page, setPage, onPreview, isHindi }) => {
         {items.length === 0 ? (
           <div className="text-center text-muted py-5 d-flex flex-column align-items-center gap-3">
             {isPdf
-              ? <FaFolderOpen size={38} style={{ color: '#3b82f6', opacity: 0.4 }} aria-hidden="true" />
+              ? <FaFolderOpen size={38} style={{ color: '#8f6500', opacity: 0.55 }} aria-hidden="true" />
               : <FaVideoSlash size={38} style={{ color: '#dc2626', opacity: 0.4 }} aria-hidden="true" />}
             <span className="small fw-semibold">
               {isHindi ? "कोई सामग्री उपलब्ध नहीं है" : "No items available"}
@@ -288,7 +288,7 @@ const HelpSupport = () => {
         <Modal isOpen={modal} toggle={() => setModal(false)} size="xl" centered>
           <ModalHeader
             toggle={() => setModal(false)}
-            style={{ background: 'linear-gradient(135deg, #0f172a, #1a3a6b)', border: 'none' }}
+            style={{ background: 'linear-gradient(135deg, #171717, #353535 65%, #906600)', border: 'none' }}
           >
             <span className="fw-semibold text-white" style={{ fontSize: ".95rem" }}>{previewTitle}</span>
           </ModalHeader>

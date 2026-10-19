@@ -12,6 +12,19 @@ import {
 
 const initialState = { fullName: '', email: '', phone: '', feedback: '', captcha: '' };
 
+const fieldStyle = (hasError) => ({
+  width: '100%',
+  padding: '11px 14px',
+  border: `1px solid ${hasError ? '#dc3545' : '#eee9dd'}`,
+  borderRadius: '11px',
+  color: '#292929',
+  background: '#fff',
+  font: 'inherit',
+  outline: 'none',
+  boxShadow: hasError ? '0 0 0 3px rgba(220,53,69,0.1)' : 'none',
+  transition: 'border-color 180ms ease, box-shadow 180ms ease',
+});
+
 const validate = (values, captchaAnswer) => {
   const errors = {};
   const name     = values.fullName.trim();
@@ -94,7 +107,7 @@ const FeedbackForm = () => {
         text: isHindi
           ? 'आपकी प्रतिक्रिया सफलतापूर्वक जमा की गई।'
           : 'Your feedback has been submitted successfully.',
-        confirmButtonColor: '#4f6ef7',
+        confirmButtonColor: '#d99a00',
       });
       setValues(initialState);
       generateCaptcha();
@@ -293,7 +306,7 @@ const FeedbackForm = () => {
                 </button>
 
                 {/* Trust note */}
-                <div className="d-flex align-items-center justify-content-center gap-2 mt-3" style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                <div className="d-flex align-items-center justify-content-center gap-2 mt-3" style={{ fontSize: '0.78rem', color: '#746f64' }}>
                   <FaCheckCircle style={{ color: '#10b981' }} />
                   {isHindi ? 'आपका डेटा सुरक्षित है' : 'Your data is secure & private'}
                 </div>

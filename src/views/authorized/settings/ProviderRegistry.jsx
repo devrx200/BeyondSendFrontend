@@ -7,7 +7,7 @@ import {
 } from "reactstrap";
 import { FaPlug, FaPlus, FaEdit, FaTrash, FaSyncAlt, FaToggleOn, FaToggleOff, FaExternalLinkAlt, FaEllipsisV } from "react-icons/fa";
 import apiClient from "@apiService";
-import { useToast, ToastContainer } from "@/utilities/WPToast";
+import { useToast, ToastContainer, wpSwal } from "@/utilities/WPToast";
 import { PageLoader } from "@/components";
 
 const AUTH_TYPES = ["api_key", "basic", "oauth2", "bearer", "custom"];
@@ -108,8 +108,22 @@ const ProviderRegistry = () => {
         apiClient.get("/registry/providers/all"),
         apiClient.get("/registry/channels/all"),
       ]);
-      setProviders(pRes?.data?.data || []);
-      setChannels(cRes?.data?.data || []);
+      const provList = Array.isArray(pRes?.data)
+        ? pRes.data
+        : Array.isArray(pRes?.data?.data)
+        ? pRes.data.data
+        : Array.isArray(pRes)
+        ? pRes
+        : [];
+      const chanList = Array.isArray(cRes?.data)
+        ? cRes.data
+        : Array.isArray(cRes?.data?.data)
+        ? cRes.data.data
+        : Array.isArray(cRes)
+        ? cRes
+        : [];
+      setProviders(provList);
+      setChannels(chanList);
     } catch (err) {
       toast.error(err?.message || "Failed to load providers");
     } finally {
@@ -179,7 +193,11 @@ const ProviderRegistry = () => {
   };
 
   const remove = async (p) => {
-    if (!window.confirm(`Delete provider ${p.code}?`)) return;
+    const isConfirmed = await wpSwal.confirm(
+      "Delete Provider?",
+      `Are you sure you want to delete provider <strong>${p.code}</strong>?`
+    );
+    if (!isConfirmed) return;
     try {
       const res = await apiClient.delete(`/registry/providers/${p.code}`);
       toast.success(res?.data?.message || "Provider deleted");

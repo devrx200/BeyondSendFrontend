@@ -15,7 +15,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,11 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status;
-    const message = error.response?.data?.message || error.message || 'Something went wrong';
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Something went wrong';
 
     if (status === 401) {
       localStorage.removeItem('authToken');
@@ -61,6 +65,7 @@ apiClient.interceptors.response.use(
       status,
       message,
       data: error.response?.data,
+      response: error.response,
       originalError: error,
     });
   }

@@ -6,7 +6,7 @@ import {
 } from "reactstrap";
 import { FaCalendarCheck, FaPlus, FaTrash, FaEdit, FaSyncAlt } from "react-icons/fa";
 import apiClient from "@apiService";
-import { useToast, ToastContainer } from "@/utilities/WPToast";
+import { useToast, ToastContainer, wpSwal } from "@/utilities/WPToast";
 import { PageLoader } from "@/components";
 
 const PAID_STATUSES = ["PAID", "PENDING", "PARTIAL", "UNPAID"];
@@ -110,7 +110,11 @@ const SubscriptionsManagement = () => {
   };
 
   const handleDelete = async (record) => {
-    if (!window.confirm("Delete this subscription?")) return;
+    const isConfirmed = await wpSwal.confirm(
+      "Delete Subscription?",
+      "Are you sure you want to permanently delete this subscription record?"
+    );
+    if (!isConfirmed) return;
     try {
       setActionLoading(true);
       const res = await apiClient.delete(`/subscriptions/delete/${record._id}`);

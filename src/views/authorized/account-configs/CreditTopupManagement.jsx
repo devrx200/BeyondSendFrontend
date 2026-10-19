@@ -1,42 +1,33 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
-  Card, CardBody, CardHeader, Button, Table, Modal,
-  ModalHeader, ModalBody, ModalFooter, Form, FormGroup,
-  Label, Input, Badge, Row, Col, Nav, NavItem, NavLink,
-  Spinner, InputGroup, ButtonGroup, Alert
+  Card, CardBody, CardHeader, Button, Row, Col, Input
 } from "reactstrap";
 import {
-  FaCoins, FaPlus, FaMinus, FaSearch, FaSyncAlt,
-  FaWallet, FaHistory, FaUsers, FaExchangeAlt, FaArrowUp,
-  FaArrowDown, FaCheck, FaTimes, FaHourglassHalf, FaChartBar,
-  FaUserTie, FaUser, FaIdBadge
+  FaCoins, FaPlus, FaMinus, FaSyncAlt, FaHistory, FaExchangeAlt,
+  FaTimes, FaHourglassHalf, FaChartBar, FaShieldAlt
 } from "react-icons/fa";
 import apiClient from "@apiService";
-import { useToast, ToastContainer } from "@/utilities/WPToast";
+import { useToast, ToastContainer, wpSwal } from "@/utilities/WPToast";
 import { PageLoader } from "@/components";
 
-export const CREDIT_KEYS = [
-  "emailCredits",
-  "smsCredits",
-  "voiceCredits",
-  "whatsappCredits",
-  "whatsappPromoCredits",
-  "rcsCredits",
-  "pushCredits",
-];
+import {
+  CREDIT_KEYS,
+  CHANNEL_META,
+  getEmptyCreditForm,
+} from "./creditConstants";
 
-export const CHANNEL_META = {
-  emailCredits: { label: "Email", color: "#2271b1", icon: "✉", desc: "Outbound SMTP & API Email" },
-  smsCredits: { label: "SMS", color: "#0ca678", icon: "✆", desc: "Promotional & Transactional SMS" },
-  voiceCredits: { label: "Voice", color: "#e8590c", icon: "☎", desc: "IVR & Voice Broadcasts" },
-  whatsappCredits: { label: "WhatsApp", color: "#25D366", icon: "💬", desc: "WhatsApp Official API" },
-  whatsappPromoCredits: { label: "WhatsApp Promo", color: "#128c7e", icon: "📣", desc: "WhatsApp Marketing Campaigns" },
-  rcsCredits: { label: "RCS", color: "#7950f2", icon: "◈", desc: "Rich Communication Services" },
-  pushCredits: { label: "Push", color: "#d63638", icon: "◆", desc: "Web & Mobile Push Notifications" },
-};
+// Separated Modular Tab and Modal Components
+import TopupRequestsTab from "./credit-topup/TopupRequestsTab";
+import ResellersDirectoryTab from "./credit-topup/ResellersDirectoryTab";
+import UsersHistoryTab from "./credit-topup/UsersHistoryTab";
+import CreditReportsTab from "./credit-topup/CreditReportsTab";
+import CarrierDlrSimulatorTab from "./credit-topup/CarrierDlrSimulatorTab";
+import DirectCreditAdjustmentModal from "./credit-topup/DirectCreditAdjustmentModal";
+import RejectTopupModal from "./credit-topup/RejectTopupModal";
+import AssignPricingPlanModal from "./credit-topup/AssignPricingPlanModal";
 
-const PAYMENT_MODES = ["cash", "upi", "neft", "imps", "card", "bank_transfer", "wallet", "other"];
+export { CREDIT_KEYS, CHANNEL_META };
 
 const emptyForm = {
   userId: "",
@@ -44,13 +35,7 @@ const emptyForm = {
   paymentMode: "cash",
   paymentReference: "",
   remarks: "",
-  emailCredits: 0,
-  smsCredits: 0,
-  voiceCredits: 0,
-  whatsappCredits: 0,
-  whatsappPromoCredits: 0,
-  rcsCredits: 0,
-  pushCredits: 0,
+  ...getEmptyCreditForm(),
 };
 
 const unwrapData = (res) => {
@@ -66,12 +51,21 @@ const unwrapData = (res) => {
   return res;
 };
 
-const CreditTopupManagement = () => {
+const CreditTopupManagement = ({ defaultTab = "accounts" }) => {
   const { toasts, toast } = useToast();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlUserId = searchParams.get("userId") || "";
 
-  const [tab, setTab] = useState("requests");
+  const activeTab = useMemo(() => {
+    if (location.pathname.includes("/requests")) return "requests";
+    if (location.pathname.includes("/history")) return "history";
+    if (location.pathname.includes("/reports")) return "reports";
+    if (location.pathname.includes("/dlr")) return "dlr";
+    if (location.pathname.includes("/accounts")) return "accounts";
+    return searchParams.get("tab") || defaultTab || "accounts";
+  }, [location.pathname, searchParams, defaultTab]);
+
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -92,15 +86,91 @@ const CreditTopupManagement = () => {
   const [historySearch, setHistorySearch] = useState("");
   const [creditTypeFilter, setCreditTypeFilter] = useState("ALL");
 
-  // Topup / Deduct modal
+  // Topup / Deduct modal state
   const [modal, setModal] = useState(false);
   const [mode, setMode] = useState("topup"); // "topup" | "deduct"
   const [form, setForm] = useState(emptyForm);
+  const [modalChannel, setModalChannel] = useState("ALL");
+  const [modalTargetSearch, setModalTargetSearch] = useState("");
+  const [modalRoleFilter, setModalRoleFilter] = useState("ALL");
 
-  // Reject request modal
+  // Reject request modal state
   const [rejectModal, setRejectModal] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  // Pricing Plan Mapping Modal state
+  const [planModal, setPlanModal] = useState(false);
+  const [selectedUserForPlan, setSelectedUserForPlan] = useState(null);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [planForm, setPlanForm] = useState({
+    creditPlanId: "",
+    isActive: true,
+    isShow: true,
+    isUse: true,
+  });
+
+  // DLR Webhook Simulator state
+  const [dlrForm, setDlrForm] = useState({
+    userId: "",
+    channel: "SMS",
+    category: "OTP",
+    status: "DELIVERED",
+    campaignId: "CAMP-SIM-" + Math.floor(100000 + Math.random() * 900000),
+    units: 1,
+  });
+  const [dlrLoading, setDlrLoading] = useState(false);
+  const [dlrResult, setDlrResult] = useState(null);
+
+  // Overview small cards channel filter
+  const [overviewChannelFilter, setOverviewChannelFilter] = useState("ALL");
+
+  // Current user role check
+  const currentUserData = useMemo(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("userData") || localStorage.getItem("userData") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const isAdminOrDevops = ["ADMIN", "DEVOPS"].includes((currentUserData?.role || "").toUpperCase());
+
+  const headerMeta = useMemo(() => {
+    switch (activeTab) {
+      case "requests":
+        return {
+          title: "Topup Requests Approval Workflow",
+          subtitle: "Review, approve, or reject user credit allocation requests",
+          icon: <FaHourglassHalf size={20} className="text-white" />,
+        };
+      case "history":
+        return {
+          title: "Credit Transactions & Deductions History",
+          subtitle: "Comprehensive audit ledger of all credit topups, deductions, refunds, and usage",
+          icon: <FaHistory size={20} className="text-white" />,
+        };
+      case "reports":
+        return {
+          title: "Platform Credit Analytics & Reports",
+          subtitle: "System-wide credit breakdown, inflows, and deductions overview",
+          icon: <FaChartBar size={20} className="text-white" />,
+        };
+      case "dlr":
+        return {
+          title: "Carrier DLR Webhook Simulator",
+          subtitle: "Simulate live carrier delivery receipts and verify automated wallet refunds",
+          icon: <FaExchangeAlt size={20} className="text-white" />,
+        };
+      case "accounts":
+      default:
+        return {
+          title: "Credit Wallets & Directory",
+          subtitle: "Manage client and reseller wallets, allocate credits, and set pricing plans",
+          icon: <FaCoins size={20} className="text-white" />,
+        };
+    }
+  }, [activeTab]);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -145,6 +215,16 @@ const CreditTopupManagement = () => {
     }
   }, []);
 
+  const loadAvailablePlans = useCallback(async () => {
+    try {
+      const res = await apiClient.get("/credit-plans");
+      const list = unwrapData(res) || [];
+      setAvailablePlans(Array.isArray(list) ? list : []);
+    } catch {
+      setAvailablePlans([]);
+    }
+  }, []);
+
   const loadHistory = useCallback(async (userId, page = 1) => {
     try {
       const params = new URLSearchParams({ page: String(page), limit: "25" });
@@ -179,6 +259,7 @@ const CreditTopupManagement = () => {
         loadRequests(),
         loadUsers(),
         loadTotals(),
+        loadAvailablePlans(),
       ]);
       setSummary(sumRes);
       window.dispatchEvent(new Event("wallet-updated"));
@@ -187,7 +268,7 @@ const CreditTopupManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedUserId, loadSummary, loadHistory, loadRequests, loadUsers, loadTotals, toast]);
+  }, [selectedUserId, loadSummary, loadHistory, loadRequests, loadUsers, loadTotals, loadAvailablePlans, toast]);
 
   useEffect(() => {
     refreshAll();
@@ -197,7 +278,7 @@ const CreditTopupManagement = () => {
     if (urlUserId && urlUserId !== selectedUserId) {
       setSelectedUserId(urlUserId);
     }
-  }, [urlUserId]);
+  }, [urlUserId, selectedUserId]);
 
   useEffect(() => {
     loadRequests();
@@ -228,6 +309,9 @@ const CreditTopupManagement = () => {
       userId: targetId,
       paymentMode: "cash",
     });
+    setModalTargetSearch("");
+    setModalRoleFilter("ALL");
+    setModalChannel("ALL");
     setModal(true);
   };
 
@@ -275,9 +359,12 @@ const CreditTopupManagement = () => {
     }
   };
 
-  // Approve Request
   const handleApprove = async (reqId) => {
-    if (!window.confirm("Are you sure you want to approve this request and credit the user's wallet?")) return;
+    const isConfirmed = await wpSwal.confirm(
+      "Approve Topup Request?",
+      "Are you sure you want to approve this request and credit the user's wallet?"
+    );
+    if (!isConfirmed) return;
     try {
       setActionLoading(true);
       const res = await apiClient.post(`/credits/requests/${reqId}/approve`);
@@ -290,7 +377,6 @@ const CreditTopupManagement = () => {
     }
   };
 
-  // Reject Request
   const handleRejectPrompt = (req) => {
     setActiveRequest(req);
     setRejectionReason("");
@@ -316,38 +402,170 @@ const CreditTopupManagement = () => {
     }
   };
 
+  const handleSimulateDlr = async (e) => {
+    e.preventDefault();
+    if (!dlrForm.userId) {
+      toast.warning("Please select a target user for DLR webhook simulation");
+      return;
+    }
+    try {
+      setDlrLoading(true);
+      setDlrResult(null);
+      const res = await apiClient.post("/webhooks/delivery-report/simulate", dlrForm);
+      const data = unwrapData(res) || res;
+      setDlrResult(data);
+      const isDelivered = ["DELIVERED", "SENT", "ANSWERED"].includes((dlrForm.status || "").toUpperCase());
+      toast.success(
+        isDelivered
+          ? `Settled delivery unit for ${dlrForm.channel}/${dlrForm.category}`
+          : `Processed carrier status (${dlrForm.status}) & auto-refunded credit back to user wallet!`
+      );
+      await refreshAll();
+    } catch (err) {
+      toast.error(err?.message || "Failed to simulate carrier webhook");
+    } finally {
+      setDlrLoading(false);
+    }
+  };
+
+  const openPlanModal = (user) => {
+    setSelectedUserForPlan(user);
+    const existing = user.myCreditPlan || {};
+    const hasExisting = Boolean(existing.creditPlanId);
+    setPlanForm({
+      creditPlanId: existing.creditPlanId?._id || existing.creditPlanId || "",
+      isActive: hasExisting ? existing.isActive === true : false,
+      isShow: hasExisting ? existing.isShow === true : false,
+      isUse: hasExisting ? existing.isUse === true : false,
+    });
+    setPlanModal(true);
+  };
+
+  const handleAssignPlanSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedUserForPlan?._id) return;
+    setActionLoading(true);
+    try {
+      const payload = {
+        creditPlanId: planForm.creditPlanId || null,
+        isActive: Boolean(planForm.creditPlanId && planForm.isActive),
+        isShow: Boolean(planForm.creditPlanId && planForm.isShow),
+        isUse: Boolean(planForm.creditPlanId && planForm.isUse),
+      };
+      const res = await apiClient.patch(`/credit-plans/user/${selectedUserForPlan._id}/assign`, payload);
+      if (res?.data?.success !== false) {
+        toast.success(`Credit Pricing Plan updated for ${selectedUserForPlan.name}`);
+        setPlanModal(false);
+        await loadUsers();
+      } else {
+        toast.error(res?.data?.message || "Failed to assign pricing plan");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || "Failed to assign pricing plan");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const balances = useMemo(() => {
+    if (selectedUserId) {
+      const u = users.find((x) => x._id === selectedUserId);
+      if (u) {
+        const w = u.creditWallet || u.myWallet || u;
+        return CREDIT_KEYS.reduce((acc, k) => {
+          acc[k] = Number(w[k]) || 0;
+          return acc;
+        }, {});
+      }
+      return summary?.myWallet || summary?.balances || {};
+    }
+
+    const targetAccounts = users.filter((u) => {
+      if (["ADMIN", "DEVOPS"].includes((u.role || "").toUpperCase())) return false;
+      if (userRoleFilter !== "ALL" && u.role !== userRoleFilter) return false;
+      return true;
+    });
+
+    if (targetAccounts.length > 0) {
+      return CREDIT_KEYS.reduce((acc, k) => {
+        acc[k] = targetAccounts.reduce((sum, u) => {
+          const w = u.creditWallet || u.myWallet || u;
+          return sum + (Number(w[k]) || 0);
+        }, 0);
+        return acc;
+      }, {});
+    }
+
+    if (totals && typeof totals === "object") {
+      return CREDIT_KEYS.reduce((acc, k) => {
+        acc[k] = Number(totals[k]) || 0;
+        return acc;
+      }, {});
+    }
+
     return summary?.myWallet || summary?.balances || {};
-  }, [summary]);
+  }, [selectedUserId, users, userRoleFilter, totals, summary]);
 
   const totalCurrentBalance = useMemo(() => {
     return CREDIT_KEYS.reduce((sum, key) => sum + (Number(balances[key]) || 0), 0);
   }, [balances]);
+
+  const channelSubtotals = useMemo(() => {
+    return {
+      SMS: CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === "SMS")
+        .reduce((s, k) => s + (Number(balances[k]) || 0), 0),
+      WHATSAPP: CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === "WHATSAPP")
+        .reduce((s, k) => s + (Number(balances[k]) || 0), 0),
+      RCS: CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === "RCS")
+        .reduce((s, k) => s + (Number(balances[k]) || 0), 0),
+      VOICE: CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === "VOICE")
+        .reduce((s, k) => s + (Number(balances[k]) || 0), 0),
+      EMAIL: CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === "EMAIL")
+        .reduce((s, k) => s + (Number(balances[k]) || 0), 0),
+    };
+  }, [balances]);
+
+  const displayedCreditKeys = useMemo(() => {
+    if (!overviewChannelFilter || overviewChannelFilter === "ALL") return CREDIT_KEYS;
+    return CREDIT_KEYS.filter((k) => CHANNEL_META[k]?.channel === overviewChannelFilter);
+  }, [overviewChannelFilter]);
+
+  const targetUsers = useMemo(() => {
+    return users.filter((u) => u.role === "RESELLER" || u.role === "CLIENT");
+  }, [users]);
+
+  const selectedUserObj = useMemo(() => {
+    return users.find((u) => u._id === selectedUserId) || null;
+  }, [users, selectedUserId]);
 
   const pendingRequestsCount = useMemo(
     () => requests.filter((r) => r.status === "PENDING").length,
     [requests]
   );
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      if (userRoleFilter !== "ALL" && u.role !== userRoleFilter) return false;
-      if (!userSearch.trim()) return true;
-      const q = userSearch.toLowerCase();
-      return (
-        (u.name && u.name.toLowerCase().includes(q)) ||
-        (u.email && u.email.toLowerCase().includes(q)) ||
-        (u.role && u.role.toLowerCase().includes(q)) ||
-        (u.mobile && u.mobile.includes(q))
-      );
-    });
-  }, [users, userSearch, userRoleFilter]);
-
-  const resellerCount = useMemo(() => users.filter((u) => u.role === "RESELLER").length, [users]);
-  const clientCount = useMemo(() => users.filter((u) => u.role === "CLIENT").length, [users]);
-  const managerCount = useMemo(() => users.filter((u) => u.role === "MANAGER").length, [users]);
-
   if (loading && !summary) return <PageLoader />;
+
+  if (!isAdminOrDevops) {
+    return (
+      <div className="telecom-module-wrapper p-4">
+        <ToastContainer toasts={toasts} onRemove={toast.remove} />
+        <Card className="border-0 shadow-sm">
+          <CardBody className="p-5 text-center">
+            <div className="rounded-circle d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger p-3 mb-3">
+              <FaShieldAlt size={40} />
+            </div>
+            <h4 className="fw-bold text-dark">Access Denied: Admin Console Only</h4>
+            <p className="text-muted mx-auto mb-4" style={{ maxWidth: 480 }}>
+              The Credit &amp; Topup Management Console is strictly restricted to System Administrators and DevOps.
+            </p>
+            <Button color="primary" onClick={() => (window.location.href = "/authorized/account/my-wallet")}>
+              Go to My Credit Wallet
+            </Button>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="telecom-module-wrapper">
@@ -358,12 +576,12 @@ const CreditTopupManagement = () => {
         <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div className="d-flex align-items-center gap-3">
             <div className="rounded-circle d-flex align-items-center justify-content-center bg-info bg-opacity-20 flex-shrink-0 adm-header-icon-box">
-              <FaCoins size={20} className="text-white" />
+              {headerMeta.icon}
             </div>
             <div>
-              <h4 className="adm-page-title mb-0 text-white">Credit &amp; Topup Management Console</h4>
+              <h4 className="adm-page-title mb-0 text-white">{headerMeta.title}</h4>
               <p className="adm-page-subtitle mb-0 text-white-50">
-                Approve topups, execute deductions, manage client wallets, and audit transactions
+                {headerMeta.subtitle}
               </p>
             </div>
           </div>
@@ -395,902 +613,285 @@ const CreditTopupManagement = () => {
         </CardHeader>
       </Card>
 
-      {/* ── Channel Balances Strip ── */}
-      <div className="mb-3">
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <span className="small fw-semibold text-uppercase text-muted">
-            {selectedUserId ? `Filtered Balance — ${users.find(u => u._id === selectedUserId)?.name || "Selected User"}` : "System Overview Balances"}
-          </span>
-          <span className="badge bg-dark">
-            Combined Credits: {totalCurrentBalance.toLocaleString()}
-          </span>
-        </div>
-        <Row className="g-2">
-          {CREDIT_KEYS.map((key) => {
-            const meta = CHANNEL_META[key];
-            const val = Number(balances[key]) || 0;
-            return (
-              <Col key={key} xs={6} sm={4} md={3} lg={true}>
-                <Card className="h-100 shadow-sm border-0 border-top" style={{ borderTop: `3px solid ${meta.color} !important` }}>
-                  <CardBody className="text-center py-2 px-2">
-                    <div
-                      className="rounded-circle d-inline-flex align-items-center justify-content-center mb-1"
-                      style={{
-                        width: 32,
-                        height: 32,
-                        background: `${meta.color}18`,
-                        color: meta.color,
-                        fontSize: 16,
-                      }}
-                      title={meta.desc}
-                    >
-                      {meta.icon}
-                    </div>
-                    <div className="fs-5 fw-bold lh-1 text-dark">{val.toLocaleString()}</div>
-                    <div className="small text-muted text-truncate mt-1" title={meta.label}>
-                      {meta.label}
-                    </div>
-                  </CardBody>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-      </div>
+      {/* ── CLIENT WALLETS AVAILABLE BALANCE STRIP (Shown on accounts overview) ── */}
+      {activeTab === "accounts" && (
+        <div className="mb-4">
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2.5">
+            <div className="d-flex align-items-center gap-2">
+              <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 fw-semibold px-2 py-1">
+                {selectedUserId ? "FILTERED ACCOUNT" : "ALL CLIENTS OVERVIEW"}
+              </span>
+              <span className="fw-bold text-dark small">
+                {selectedUserId
+                  ? `${selectedUserObj?.name || "Selected Client"} (${selectedUserObj?.role || "CLIENT"}) — Available Credits`
+                  : `Total Available Balance Across All ${targetUsers.length} Clients & Resellers`}
+              </span>
+            </div>
 
-      {/* ── Main Tabbed Content ── */}
-      <Card className="shadow-sm border-0">
-        <CardHeader className="bg-white p-0 border-bottom">
-          <Nav tabs className="px-3 pt-2 border-0">
-            <NavItem>
-              <NavLink
-                active={tab === "requests"}
-                onClick={() => setTab("requests")}
-                role="button"
-                className="fw-semibold position-relative"
-              >
-                <FaHourglassHalf className="me-1 text-warning" /> Topup Requests
-                {pendingRequestsCount > 0 && (
-                  <Badge color="danger" pill className="ms-2">
-                    {pendingRequestsCount} Pending
-                  </Badge>
+            <div className="d-flex align-items-center gap-2">
+              <div className="d-flex align-items-center gap-1.5">
+                <span className="text-muted small fw-semibold text-nowrap d-none d-sm-inline">Filter Account:</span>
+                <Input
+                  type="select"
+                  bsSize="sm"
+                  value={selectedUserId}
+                  onChange={(e) => handleUserFilterChange(e.target.value)}
+                  style={{ width: "auto", minWidth: 200, fontSize: "12px" }}
+                  className="py-1"
+                >
+                  <option value="">All Client Accounts (Combined)</option>
+                  {targetUsers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name || "Unnamed"} ({u.role}) — {u.email}
+                    </option>
+                  ))}
+                </Input>
+                {selectedUserId && (
+                  <Button
+                    color="light"
+                    size="sm"
+                    className="py-1 px-2 text-danger small fw-semibold border"
+                    onClick={() => handleUserFilterChange("")}
+                    title="Clear filter"
+                  >
+                    <FaTimes size={10} className="me-1" /> All
+                  </Button>
                 )}
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                active={tab === "accounts"}
-                onClick={() => setTab("accounts")}
-                role="button"
-                className="fw-semibold"
-              >
-                <FaUsers className="me-1 text-primary" /> Resellers &amp; Clients Directory ({users.length})
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                active={tab === "history"}
-                onClick={() => setTab("history")}
-                role="button"
-                className="fw-semibold"
-              >
-                <FaHistory className="me-1 text-success" /> All Users History &amp; Deductions ({historyMeta.totalRecords})
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink
-                active={tab === "reports"}
-                onClick={() => setTab("reports")}
-                role="button"
-                className="fw-semibold"
-              >
-                <FaChartBar className="me-1 text-info" /> Platform Reports &amp; Analytics
-              </NavLink>
-            </NavItem>
-          </Nav>
-        </CardHeader>
+              </div>
 
+              <span
+                className="badge rounded-pill fw-bold px-3 py-1.5 shadow-sm text-nowrap"
+                style={{
+                  background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+                  color: "#38bdf8",
+                  fontSize: "12px",
+                  letterSpacing: "0.2px",
+                }}
+              >
+                Combined Pool: {totalCurrentBalance.toLocaleString()} units
+              </span>
+            </div>
+          </div>
+
+          {/* Channel Filter Pills */}
+          <div className="d-flex flex-wrap gap-1.5 mb-2.5">
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "ALL" ? "dark" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "ALL" ? "shadow-sm" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("ALL")}
+            >
+              All Channels (20)
+            </Button>
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "SMS" ? "success" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "SMS" ? "shadow-sm text-white" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("SMS")}
+            >
+              SMS (6) <span className="badge bg-success bg-opacity-25 text-white ms-1.5 small">{channelSubtotals.SMS.toLocaleString()}</span>
+            </Button>
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "WHATSAPP" ? "success" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "WHATSAPP" ? "shadow-sm text-white" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("WHATSAPP")}
+            >
+              WhatsApp (5) <span className="badge bg-success bg-opacity-25 text-white ms-1.5 small">{channelSubtotals.WHATSAPP.toLocaleString()}</span>
+            </Button>
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "RCS" ? "primary" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "RCS" ? "shadow-sm text-white" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("RCS")}
+            >
+              RCS (3) <span className="badge bg-primary bg-opacity-25 text-primary ms-1.5 small">{channelSubtotals.RCS.toLocaleString()}</span>
+            </Button>
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "VOICE" ? "warning" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "VOICE" ? "shadow-sm text-dark" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("VOICE")}
+            >
+              Voice (4) <span className="badge bg-warning bg-opacity-25 text-dark ms-1.5 small">{channelSubtotals.VOICE.toLocaleString()}</span>
+            </Button>
+            <Button
+              size="sm"
+              color={overviewChannelFilter === "EMAIL" ? "info" : "light"}
+              className={`py-1 px-2.5 fw-semibold border ${overviewChannelFilter === "EMAIL" ? "shadow-sm text-white" : "text-secondary"}`}
+              style={{ fontSize: "11.5px" }}
+              onClick={() => setOverviewChannelFilter("EMAIL")}
+            >
+              Email (2) <span className="badge bg-info bg-opacity-25 text-info ms-1.5 small">{channelSubtotals.EMAIL.toLocaleString()}</span>
+            </Button>
+          </div>
+
+          {/* High-Density Small Cards Grid */}
+          <Row className="g-2">
+            {displayedCreditKeys.map((key) => {
+              const meta = CHANNEL_META[key];
+              const val = Number(balances[key]) || 0;
+              return (
+                <Col key={key} xs={6} sm={4} md={3} lg={2}>
+                  <div
+                    className="telecom-small-card h-100 p-2 rounded-2 bg-white border shadow-sm d-flex align-items-center gap-2"
+                    style={{
+                      borderLeft: `3.5px solid ${meta?.color || "#0d6efd"} !important`,
+                      minHeight: 52,
+                    }}
+                    title={`${meta?.label || key}: ${meta?.desc || ""}`}
+                  >
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        background: `${meta?.color || "#0d6efd"}15`,
+                        color: meta?.color || "#0d6efd",
+                        fontSize: 12,
+                      }}
+                    >
+                      {meta?.icon}
+                    </div>
+                    <div className="min-w-0 flex-grow-1">
+                      <div
+                        className="text-truncate fw-semibold text-muted text-uppercase"
+                        style={{ fontSize: "10.5px", letterSpacing: "0.3px", lineHeight: 1.2 }}
+                        title={meta?.label || key}
+                      >
+                        {meta?.shortName || meta?.label || key}
+                      </div>
+                      <div
+                        className={`fw-bold lh-1 mt-0.5 ${val > 0 ? "text-dark" : "text-muted opacity-75"}`}
+                        style={{ fontSize: "13.5px" }}
+                      >
+                        {val.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+              );
+            })}
+          </Row>
+        </div>
+      )}
+
+      {/* ── Direct Dedicated Content (No Wrapped Tab Bar) ── */}
+      <Card className="shadow-sm border-0">
         <CardBody className="p-3">
-          {/* ──── TAB 1: TOPUP REQUESTS (APPROVAL WORKFLOW) ──── */}
-          {tab === "requests" && (
-            <>
-              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <ButtonGroup size="sm">
-                  <Button
-                    color={requestStatusFilter === "ALL" ? "primary" : "light"}
-                    onClick={() => setRequestStatusFilter("ALL")}
-                  >
-                    All ({requests.length})
-                  </Button>
-                  <Button
-                    color={requestStatusFilter === "PENDING" ? "warning" : "light"}
-                    onClick={() => setRequestStatusFilter("PENDING")}
-                  >
-                    Pending ({pendingRequestsCount})
-                  </Button>
-                  <Button
-                    color={requestStatusFilter === "APPROVED" ? "success" : "light"}
-                    onClick={() => setRequestStatusFilter("APPROVED")}
-                  >
-                    Approved
-                  </Button>
-                  <Button
-                    color={requestStatusFilter === "REJECTED" ? "danger" : "light"}
-                    onClick={() => setRequestStatusFilter("REJECTED")}
-                  >
-                    Rejected
-                  </Button>
-                </ButtonGroup>
-                <div className="small text-muted">
-                  Showing {requests.length} credit topup requests
-                </div>
-              </div>
-
-              <div className="table-responsive">
-                <Table hover bordered size="sm" className="align-middle small">
-                  <thead className="table-light text-nowrap">
-                    <tr>
-                      <th>Date</th>
-                      <th>Requester Account</th>
-                      <th>Credits Breakdown</th>
-                      <th className="text-end">Units</th>
-                      <th className="text-end">Amount (₹)</th>
-                      <th>Mode</th>
-                      <th>UTR / Reference</th>
-                      <th>Remarks</th>
-                      <th>Status</th>
-                      <th className="text-center">Review Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="text-center text-muted py-4">
-                          No credit topup requests found matching this filter.
-                        </td>
-                      </tr>
-                    ) : (
-                      requests.map((r) => (
-                        <tr key={r._id}>
-                          <td className="text-nowrap">
-                            {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}
-                          </td>
-                          <td>
-                            <div className="fw-bold text-dark d-flex align-items-center gap-1">
-                              {r.user?.role === "RESELLER" ? <FaUserTie className="text-primary" /> : <FaUser className="text-info" />}
-                              {r.user?.name || "User"}
-                            </div>
-                            <div className="text-muted small">
-                              {r.user?.email} [{r.user?.role}]
-                            </div>
-                            {r.user?.role === "MANAGER" && (r.user?.owner || r.user?.createdBy) && (
-                              <div className="text-primary small" style={{ fontSize: "11px" }}>
-                                Parent Client ID: {r.user.owner?._id || r.user.createdBy?._id}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex flex-wrap gap-1">
-                              {CREDIT_KEYS.map((k) => {
-                                const val = r[k] || r.creditsDelta?.[k];
-                                if (!val) return null;
-                                return (
-                                  <Badge key={k} color="light" className="border text-dark">
-                                    {CHANNEL_META[k].label}: +{val.toLocaleString()}
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          </td>
-                          <td className="text-end fw-bold">{r.units?.toLocaleString()}</td>
-                          <td className="text-end fw-semibold">₹{Number(r.amount || 0).toLocaleString()}</td>
-                          <td className="text-uppercase">{r.paymentMode}</td>
-                          <td className="fw-semibold">{r.paymentReference || "—"}</td>
-                          <td>
-                            <div className="text-truncate" style={{ maxWidth: 150 }} title={r.remarks}>
-                              {r.remarks || "—"}
-                            </div>
-                          </td>
-                          <td>
-                            {r.status === "PENDING" && (
-                              <Badge color="warning" pill className="d-inline-flex align-items-center gap-1">
-                                <FaHourglassHalf /> Pending
-                              </Badge>
-                            )}
-                            {r.status === "APPROVED" && (
-                              <Badge color="success" pill className="d-inline-flex align-items-center gap-1">
-                                <FaCheck /> Approved
-                              </Badge>
-                            )}
-                            {r.status === "REJECTED" && (
-                              <Badge color="danger" pill className="d-inline-flex align-items-center gap-1">
-                                <FaTimes /> Rejected
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="text-center text-nowrap">
-                            {r.status === "PENDING" ? (
-                              <>
-                                <Button
-                                  color="success"
-                                  size="sm"
-                                  className="py-0 px-2 me-1"
-                                  onClick={() => handleApprove(r._id)}
-                                  disabled={actionLoading}
-                                  title="Approve and credit wallet immediately"
-                                >
-                                  <FaCheck /> Approve
-                                </Button>
-                                <Button
-                                  color="danger"
-                                  size="sm"
-                                  className="py-0 px-2"
-                                  onClick={() => handleRejectPrompt(r)}
-                                  disabled={actionLoading}
-                                  title="Reject request with note"
-                                >
-                                  <FaTimes /> Reject
-                                </Button>
-                              </>
-                            ) : (
-                              <span className="text-muted small">
-                                {r.status === "APPROVED"
-                                  ? `Approved by ${r.approvedBy?.name || "Admin"}`
-                                  : r.rejectionReason || "Closed"}
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </>
+          {activeTab === "requests" && (
+            <TopupRequestsTab
+              requests={requests}
+              requestStatusFilter={requestStatusFilter}
+              setRequestStatusFilter={setRequestStatusFilter}
+              pendingRequestsCount={pendingRequestsCount}
+              onApprove={handleApprove}
+              onOpenRejectModal={handleRejectPrompt}
+              actionLoading={actionLoading}
+            />
           )}
 
-          {/* ──── TAB 2: RESELLERS & CLIENTS DIRECTORY ──── */}
-          {tab === "accounts" && (
-            <>
-              <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: 540 }}>
-                  <Input
-                    size="sm"
-                    placeholder="Search accounts by name, email, mobile…"
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                  />
-                  <ButtonGroup size="sm">
-                    <Button
-                      color={userRoleFilter === "ALL" ? "primary" : "light"}
-                      onClick={() => setUserRoleFilter("ALL")}
-                    >
-                      All ({users.length})
-                    </Button>
-                    <Button
-                      color={userRoleFilter === "RESELLER" ? "primary" : "light"}
-                      onClick={() => setUserRoleFilter("RESELLER")}
-                    >
-                      Resellers ({resellerCount})
-                    </Button>
-                    <Button
-                      color={userRoleFilter === "CLIENT" ? "primary" : "light"}
-                      onClick={() => setUserRoleFilter("CLIENT")}
-                    >
-                      Clients ({clientCount})
-                    </Button>
-                    <Button
-                      color={userRoleFilter === "MANAGER" ? "primary" : "light"}
-                      onClick={() => setUserRoleFilter("MANAGER")}
-                    >
-                      Managers ({managerCount})
-                    </Button>
-                  </ButtonGroup>
-                </div>
-                <div className="small text-muted">
-                  Showing {filteredUsers.length} accounts
-                </div>
-              </div>
-
-              <div className="table-responsive">
-                <Table hover bordered size="sm" className="align-middle small">
-                  <thead className="table-light text-nowrap">
-                    <tr>
-                      <th>Account Name / Email</th>
-                      <th>Role</th>
-                      <th>Parent Client Details</th>
-                      <th className="text-end">Email</th>
-                      <th className="text-end">SMS</th>
-                      <th className="text-end">WhatsApp</th>
-                      <th className="text-end">Voice</th>
-                      <th className="text-end">RCS</th>
-                      <th className="text-end">Push</th>
-                      <th className="text-end fw-bold">Total</th>
-                      <th className="text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.length === 0 ? (
-                      <tr>
-                        <td colSpan={11} className="text-center text-muted py-4">
-                          No accounts found matching your query.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredUsers.map((u) => {
-                        const w = u.myWallet || {};
-                        const userTotal =
-                          (w.emailCredits || 0) +
-                          (w.smsCredits || 0) +
-                          (w.whatsappCredits || 0) +
-                          (w.whatsappPromoCredits || 0) +
-                          (w.voiceCredits || 0) +
-                          (w.rcsCredits || 0) +
-                          (w.pushCredits || 0);
-
-                        return (
-                          <tr key={u._id} className={u._id === selectedUserId ? "table-active" : ""}>
-                            <td>
-                              <div className="fw-bold text-dark d-flex align-items-center gap-1">
-                                {u.role === "RESELLER" ? <FaUserTie className="text-primary" /> : <FaUser className="text-info" />}
-                                {u.name || "Unnamed"}
-                              </div>
-                              <div className="text-muted small">{u.email} {u.mobile ? `• ${u.mobile}` : ""}</div>
-                            </td>
-                            <td>
-                              <Badge color={u.role === "RESELLER" ? "primary" : u.role === "CLIENT" ? "info" : "dark"}>
-                                {u.role}
-                              </Badge>
-                            </td>
-                            <td>
-                              {u.parentClientId ? (
-                                <div>
-                                  <div className="fw-semibold text-dark small">{u.parentClientName || "Parent Client"}</div>
-                                  <div className="text-muted small" style={{ fontSize: "11px" }}>
-                                    ID: <code>{u.parentClientId}</code>
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-muted">—</span>
-                              )}
-                            </td>
-                            <td className="text-end">{(w.emailCredits || 0).toLocaleString()}</td>
-                            <td className="text-end">{(w.smsCredits || 0).toLocaleString()}</td>
-                            <td className="text-end">{((w.whatsappCredits || 0) + (w.whatsappPromoCredits || 0)).toLocaleString()}</td>
-                            <td className="text-end">{(w.voiceCredits || 0).toLocaleString()}</td>
-                            <td className="text-end">{(w.rcsCredits || 0).toLocaleString()}</td>
-                            <td className="text-end">{(w.pushCredits || 0).toLocaleString()}</td>
-                            <td className="text-end fw-bold text-dark">{userTotal.toLocaleString()}</td>
-                            <td className="text-center text-nowrap">
-                              <Button
-                                color="success"
-                                size="sm"
-                                className="py-0 px-2 me-1"
-                                onClick={() => openTopupModal("topup", u)}
-                                title="Topup Credits for this account"
-                              >
-                                <FaPlus /> Add
-                              </Button>
-                              <Button
-                                color="danger"
-                                size="sm"
-                                className="py-0 px-2 me-1"
-                                onClick={() => openTopupModal("deduct", u)}
-                                title="Deduct Credits from this account"
-                              >
-                                <FaMinus /> Deduct
-                              </Button>
-                              <Button
-                                color="light"
-                                size="sm"
-                                className="py-0 px-2 border"
-                                onClick={() => {
-                                  handleUserFilterChange(u._id);
-                                  setTab("history");
-                                }}
-                                title="View this account's transactions & deductions"
-                              >
-                                <FaHistory /> History
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </>
+          {activeTab === "accounts" && (
+            <ResellersDirectoryTab
+              users={users}
+              userSearch={userSearch}
+              setUserSearch={setUserSearch}
+              userRoleFilter={userRoleFilter}
+              setUserRoleFilter={setUserRoleFilter}
+              selectedUserId={selectedUserId}
+              isAdminOrDevops={isAdminOrDevops}
+              onOpenPlanModal={openPlanModal}
+              onOpenTopupModal={openTopupModal}
+              onSelectUserForHistory={(uid) => {
+                handleUserFilterChange(uid);
+                window.location.href = `/authorized/credits/history?userId=${uid}`;
+              }}
+            />
           )}
 
-          {/* ──── TAB 3: ALL USERS HISTORY & DEDUCTIONS ──── */}
-          {tab === "history" && (
-            <>
-              <Row className="g-2 mb-3">
-                <Col md={4}>
-                  <InputGroup size="sm">
-                    <Input
-                      placeholder="Search payment reference or remarks…"
-                      value={historySearch}
-                      onChange={(e) => setHistorySearch(e.target.value)}
-                    />
-                    {historySearch && (
-                      <Button color="light" onClick={() => setHistorySearch("")}>
-                        ✕
-                      </Button>
-                    )}
-                  </InputGroup>
-                </Col>
-                <Col md={2}>
-                  <Input
-                    type="select"
-                    size="sm"
-                    value={creditTypeFilter}
-                    onChange={(e) => setCreditTypeFilter(e.target.value)}
-                  >
-                    <option value="ALL">All Types</option>
-                    <option value="topup">Topups Only</option>
-                    <option value="deduct">Deductions Only</option>
-                    <option value="refund">Refunds Only</option>
-                    <option value="usage">Usages Only</option>
-                    <option value="adjustment">Adjustments</option>
-                  </Input>
-                </Col>
-                <Col md={3}>
-                  <Input
-                    type="select"
-                    size="sm"
-                    value={selectedUserId}
-                    onChange={(e) => handleUserFilterChange(e.target.value)}
-                  >
-                    <option value="">All Accounts (Resellers &amp; Clients)</option>
-                    {users.map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name || "Unnamed"} — {u.email} ({u.role})
-                      </option>
-                    ))}
-                  </Input>
-                </Col>
-                <Col md={3} className="d-flex align-items-center justify-content-end gap-2">
-                  <Button
-                    color="light"
-                    size="sm"
-                    onClick={() => loadHistory(selectedUserId, historyMeta.page - 1)}
-                    disabled={historyMeta.page <= 1}
-                  >
-                    Prev
-                  </Button>
-                  <span className="small text-muted text-nowrap">
-                    Page {historyMeta.page} / {historyMeta.totalPages || 1} ({historyMeta.totalRecords} txns)
-                  </span>
-                  <Button
-                    color="light"
-                    size="sm"
-                    onClick={() => loadHistory(selectedUserId, historyMeta.page + 1)}
-                    disabled={historyMeta.page >= historyMeta.totalPages}
-                  >
-                    Next
-                  </Button>
-                </Col>
-              </Row>
-
-              <div className="table-responsive">
-                <Table hover bordered size="sm" className="align-middle small">
-                  <thead className="table-light text-nowrap">
-                    <tr>
-                      <th>Date &amp; Time</th>
-                      <th>Account</th>
-                      <th>Type</th>
-                      <th>Credits Delta</th>
-                      <th className="text-end">Units</th>
-                      <th className="text-end">Amount (₹)</th>
-                      <th>Payment Mode</th>
-                      <th>Reference / Remarks</th>
-                      <th>Executed By</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.length === 0 ? (
-                      <tr>
-                        <td colSpan={9} className="text-center text-muted py-4">
-                          No transactions or deductions found matching this filter.
-                        </td>
-                      </tr>
-                    ) : (
-                      history.map((row) => {
-                        const isPlus = ["topup", "refund", "bonus"].includes(row.creditType);
-                        return (
-                          <tr key={row._id}>
-                            <td className="text-nowrap">
-                              {row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"}
-                            </td>
-                            <td>
-                              <div className="fw-semibold text-dark">{row.user?.name || "User"}</div>
-                              <div className="text-muted small">
-                                {row.user?.email} {row.user?.role ? `[${row.user.role}]` : ""}
-                              </div>
-                            </td>
-                            <td>
-                              {row.creditType === "topup" && (
-                                <Badge color="success" pill>
-                                  <FaArrowUp className="me-1" /> Topup
-                                </Badge>
-                              )}
-                              {row.creditType === "deduct" && (
-                                <Badge color="danger" pill>
-                                  <FaArrowDown className="me-1" /> Deduct
-                                </Badge>
-                              )}
-                              {row.creditType === "refund" && (
-                                <Badge color="info" pill>Refund</Badge>
-                              )}
-                              {row.creditType === "usage" && (
-                                <Badge color="warning" pill>Usage</Badge>
-                              )}
-                              {!["topup", "deduct", "refund", "usage"].includes(row.creditType) && (
-                                <Badge color="secondary" pill>{row.creditType}</Badge>
-                              )}
-                            </td>
-                            <td>
-                              <div className="d-flex flex-wrap gap-1">
-                                {CREDIT_KEYS.map((k) => {
-                                  const val = row[k] || row.creditsDelta?.[k];
-                                  if (!val) return null;
-                                  return (
-                                    <Badge
-                                      key={k}
-                                      color="light"
-                                      className="border text-dark"
-                                      style={{ fontSize: "11px" }}
-                                    >
-                                      {CHANNEL_META[k].label}: {isPlus ? "+" : "-"}{Math.abs(val).toLocaleString()}
-                                    </Badge>
-                                  );
-                                })}
-                              </div>
-                            </td>
-                            <td className="text-end fw-bold">
-                              <span className={isPlus ? "text-success" : "text-danger"}>
-                                {isPlus ? "+" : "-"}{(row.units || 0).toLocaleString()}
-                              </span>
-                            </td>
-                            <td className="text-end fw-semibold">
-                              {row.amount ? `₹${Number(row.amount).toLocaleString()}` : "—"}
-                            </td>
-                            <td className="text-uppercase">{row.paymentMode || "—"}</td>
-                            <td>
-                              <div className="text-truncate" style={{ maxWidth: 220 }} title={row.description || row.remarks || row.paymentReference}>
-                                {row.paymentReference && <span className="fw-semibold me-1">[{row.paymentReference}]</span>}
-                                {row.remarks || row.description || "—"}
-                              </div>
-                            </td>
-                            <td className="text-muted">
-                              {row.actor?.name || row.admin?.name || row.actor?.email || "System"}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            </>
+          {activeTab === "history" && (
+            <UsersHistoryTab
+              history={history}
+              historyMeta={historyMeta}
+              historySearch={historySearch}
+              setHistorySearch={setHistorySearch}
+              creditTypeFilter={creditTypeFilter}
+              setCreditTypeFilter={setCreditTypeFilter}
+              selectedUserId={selectedUserId}
+              onUserFilterChange={handleUserFilterChange}
+              users={users}
+              onPageChange={(p) => loadHistory(selectedUserId, p)}
+            />
           )}
 
-          {/* ──── TAB 4: PLATFORM REPORTS & ANALYTICS ──── */}
-          {tab === "reports" && (
-            <Row className="g-3">
-              <Col lg={7}>
-                <div className="border rounded p-3 h-100 bg-white shadow-sm">
-                  <div className="fw-bold fs-6 mb-3 text-dark">
-                    System-Wide Total Outstanding Credits Across All Accounts
-                  </div>
-                  <Table hover size="sm" className="align-middle mb-0">
-                    <thead className="table-light small">
-                      <tr>
-                        <th>Channel</th>
-                        <th>Type</th>
-                        <th className="text-end">Total Outstanding Units</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {CREDIT_KEYS.map((key) => {
-                        const meta = CHANNEL_META[key];
-                        const val = totals?.[key] ?? 0;
-                        return (
-                          <tr key={key}>
-                            <td>
-                              <span
-                                className="badge rounded-pill me-2"
-                                style={{ background: `${meta.color}20`, color: meta.color }}
-                              >
-                                {meta.icon}
-                              </span>
-                              <strong className="text-dark">{meta.label}</strong>
-                            </td>
-                            <td className="small text-muted">{meta.desc}</td>
-                            <td className="text-end fw-bold fs-6">{val.toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </div>
-              </Col>
+          {activeTab === "reports" && (
+            <CreditReportsTab
+              totals={totals}
+              summary={summary}
+            />
+          )}
 
-              <Col lg={5}>
-                <div className="border rounded p-3 h-100 bg-white shadow-sm d-flex flex-column justify-content-between">
-                  <div>
-                    <div className="fw-bold fs-6 mb-3 text-dark">Platform Inflow &amp; Deductions Summary</div>
-                    <div className="d-flex justify-content-between border-bottom py-2">
-                      <span className="text-muted">Total Topup Inflows</span>
-                      <strong className="text-success">
-                        {summary?.totals?.topup?.amount ? `₹${summary.totals.topup.amount.toLocaleString()}` : "₹0"}
-                        <span className="text-muted small ms-1">
-                          ({summary?.totals?.topup?.count || 0} times)
-                        </span>
-                      </strong>
-                    </div>
-                    <div className="d-flex justify-content-between border-bottom py-2">
-                      <span className="text-muted">Total Deductions</span>
-                      <strong className="text-danger">
-                        {summary?.totals?.deduct?.amount ? `₹${summary.totals.deduct.amount.toLocaleString()}` : "₹0"}
-                        <span className="text-muted small ms-1">
-                          ({summary?.totals?.deduct?.count || 0} times)
-                        </span>
-                      </strong>
-                    </div>
-                    <div className="d-flex justify-content-between border-bottom py-2">
-                      <span className="text-muted">Total Campaign Dispatches Usage</span>
-                      <strong className="text-warning">
-                        {summary?.totals?.usage?.amount ? `₹${summary.totals.usage.amount.toLocaleString()}` : "₹0"}
-                        <span className="text-muted small ms-1">
-                          ({summary?.totals?.usage?.count || 0} times)
-                        </span>
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="alert alert-info small mt-3 mb-0">
-<strong>Admin Notice:</strong> Credit changes are atomic and fully logged with before/after balances.
-                  </div>
-                </div>
-              </Col>
-            </Row>
+          {activeTab === "dlr" && (
+            <CarrierDlrSimulatorTab
+              users={users}
+              dlrForm={dlrForm}
+              setDlrForm={setDlrForm}
+              dlrLoading={dlrLoading}
+              dlrResult={dlrResult}
+              setDlrResult={setDlrResult}
+              onSimulateDlr={handleSimulateDlr}
+            />
           )}
         </CardBody>
       </Card>
 
-      {/* ── Topup / Deduct Modal (Admin) ── */}
-      <Modal isOpen={modal} toggle={() => setModal(false)} size="xl" centered backdrop="static">
-        <Form onSubmit={handleTopupSubmit}>
-          <ModalHeader toggle={() => setModal(false)} className="py-2.5 px-3">
-            {mode === "topup" ? (
-              <div className="text-white fw-bold d-flex align-items-center gap-2">
-                <FaPlus /> Add Credits to Reseller / Client Wallet
-              </div>
-            ) : (
-              <div className="text-white fw-bold d-flex align-items-center gap-2">
-                <FaMinus /> Deduct Credits from Reseller / Client Wallet
-              </div>
-            )}
-          </ModalHeader>
-          <ModalBody className="p-3">
-            {users.length > 0 && (
-              <FormGroup className="mb-2.5">
-                <Label className="small fw-semibold mb-1">Target Account</Label>
-                <Input
-                  type="select"
-                  size="sm"
-                  value={form.userId}
-                  onChange={(e) => setField("userId", e.target.value)}
-                >
-                  <option value="">My Account (Self)</option>
-                  <optgroup label="Resellers">
-                    {users.filter(u => u.role === "RESELLER").map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name || "Unnamed"} — {u.email} [RESELLER]
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Clients">
-                    {users.filter(u => u.role === "CLIENT").map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name || "Unnamed"} — {u.email} [CLIENT]
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Managers">
-                    {users.filter(u => u.role === "MANAGER").map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name || "Unnamed"} — {u.email} [MANAGER]
-                      </option>
-                    ))}
-                  </optgroup>
-                </Input>
-              </FormGroup>
-            )}
+      {/* Topup / Deduct Modal */}
+      <DirectCreditAdjustmentModal
+        isOpen={modal}
+        toggle={() => setModal(false)}
+        mode={mode}
+        form={form}
+        setField={setField}
+        addPreset={addPreset}
+        creditSum={creditSum}
+        users={users}
+        modalTargetSearch={modalTargetSearch}
+        setModalTargetSearch={setModalTargetSearch}
+        modalRoleFilter={modalRoleFilter}
+        setModalRoleFilter={setModalRoleFilter}
+        modalChannel={modalChannel}
+        setModalChannel={setModalChannel}
+        onSubmit={handleTopupSubmit}
+        actionLoading={actionLoading}
+      />
 
-            <div className="d-flex justify-content-between align-items-center mb-1.5">
-              <Label className="fw-semibold small text-uppercase text-secondary mb-0">
-                Channel Credits to {mode === "topup" ? "Credit" : "Deduct"}
-              </Label>
-              <span className="text-muted small">Click +1k / +5k presets to increment</span>
-            </div>
+      {/* Reject Request Modal */}
+      <RejectTopupModal
+        isOpen={rejectModal}
+        toggle={() => setRejectModal(false)}
+        activeRequest={activeRequest}
+        rejectionReason={rejectionReason}
+        setRejectionReason={setRejectionReason}
+        onSubmit={handleRejectSubmit}
+        actionLoading={actionLoading}
+      />
 
-            <Row className="g-2 mb-2.5">
-              {CREDIT_KEYS.map((key) => {
-                const meta = CHANNEL_META[key];
-                return (
-                  <Col key={key} xs={6} sm={6} md={3}>
-                    <div className="border rounded-3 p-2 bg-light h-100 d-flex flex-column justify-content-between">
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <Label className="small fw-semibold mb-0 text-truncate mw-100" style={{ color: meta.color }} title={meta.label}>
-                          {meta.icon} {meta.label}
-                        </Label>
-                        <ButtonGroup size="sm">
-                          <Button
-                            type="button"
-                            color="light"
-                            size="sm"
-                            className="py-0 px-1 border small"
-                            onClick={() => addPreset(key, 1000)}
-                          >
-                            +1k
-                          </Button>
-                          <Button
-                            type="button"
-                            color="light"
-                            size="sm"
-                            className="py-0 px-1 border small"
-                            onClick={() => addPreset(key, 5000)}
-                          >
-                            +5k
-                          </Button>
-                        </ButtonGroup>
-                      </div>
-                      <Input
-                        type="number"
-                        min="0"
-                        size="sm"
-                        className="fw-semibold"
-                        value={form[key]}
-                        onChange={(e) => setField(key, e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                  </Col>
-                );
-              })}
-
-              {/* 8th slot in 4x2 grid: Live Transaction Summary Card */}
-              <Col xs={6} sm={6} md={3}>
-                <div className={`border rounded-3 p-2 h-100 d-flex flex-column justify-content-center align-items-center text-center ${mode === "topup" ? "border-success border-opacity-25 bg-success bg-opacity-10" : "border-danger border-opacity-25 bg-danger bg-opacity-10"}`}>
-                  <span className={`small fw-bold text-uppercase ${mode === "topup" ? "text-success" : "text-danger"}`}>
-                    Total {mode === "topup" ? "Allocation" : "Deduction"}
-                  </span>
-                  <span className={`fs-5 fw-bold my-0 lh-1 ${mode === "topup" ? "text-success" : "text-danger"}`}>
-                    {creditSum.toLocaleString()}
-                  </span>
-                  <span className="text-muted small">units across channels</span>
-                </div>
-              </Col>
-            </Row>
-
-            <Row className="g-2">
-              <Col xs={12} sm={6} md={3}>
-                <FormGroup className="mb-0">
-                  <Label className="small fw-semibold mb-1">Amount (₹ / INR)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    size="sm"
-                    value={form.amount}
-                    onChange={(e) => setField("amount", e.target.value)}
-                    placeholder="0"
-                  />
-                </FormGroup>
-              </Col>
-              <Col xs={12} sm={6} md={3}>
-                <FormGroup className="mb-0">
-                  <Label className="small fw-semibold mb-1">Payment Mode</Label>
-                  <Input
-                    type="select"
-                    size="sm"
-                    value={form.paymentMode}
-                    onChange={(e) => setField("paymentMode", e.target.value)}
-                  >
-                    {PAYMENT_MODES.map((m) => (
-                      <option key={m} value={m}>
-                        {m.replace("_", " ").toUpperCase()}
-                      </option>
-                    ))}
-                  </Input>
-                </FormGroup>
-              </Col>
-              <Col xs={12} sm={6} md={3}>
-                <FormGroup className="mb-0">
-                  <Label className="small fw-semibold mb-1">UTR / Transaction ID</Label>
-                  <Input
-                    size="sm"
-                    value={form.paymentReference}
-                    onChange={(e) => setField("paymentReference", e.target.value)}
-                    placeholder="UTR / Txn ID"
-                  />
-                </FormGroup>
-              </Col>
-              <Col xs={12} sm={6} md={3}>
-                <FormGroup className="mb-0">
-                  <Label className="small fw-semibold mb-1">Remarks / Reason</Label>
-                  <Input
-                    size="sm"
-                    value={form.remarks}
-                    onChange={(e) => setField("remarks", e.target.value)}
-                    placeholder="e.g. Allocation note"
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-
-            {mode === "deduct" && (
-              <div className="alert alert-warning small mb-0 py-1.5 px-2.5 mt-2">
-                <strong>Caution:</strong> Deductions directly reduce the account's active credit balances. Balances cannot be deducted below zero.
-              </div>
-            )}
-          </ModalBody>
-          <ModalFooter className="py-2 px-3">
-            <Button color="light" size="sm" onClick={() => setModal(false)} disabled={actionLoading}>
-              Cancel
-            </Button>
-            <Button
-              color={mode === "topup" ? "success" : "danger"}
-              size="sm"
-              type="submit"
-              disabled={actionLoading || creditSum <= 0}
-              className="px-3 fw-semibold"
-            >
-              {actionLoading ? <Spinner size="sm" className="me-1" /> : <FaExchangeAlt className="me-1" />}
-              {mode === "topup" ? "Confirm Topup" : "Confirm Deduction"}
-            </Button>
-          </ModalFooter>
-        </Form>
-      </Modal>
-
-      {/* ── Reject Modal ── */}
-      <Modal isOpen={rejectModal} toggle={() => setRejectModal(false)} backdrop="static">
-        <Form onSubmit={handleRejectSubmit}>
-          <ModalHeader toggle={() => setRejectModal(false)}>
-            <span className="text-danger d-flex align-items-center gap-2">
-              <FaTimes /> Reject Credit Topup Request
-            </span>
-          </ModalHeader>
-          <ModalBody>
-            <p className="small text-muted mb-3">
-              Provide a reason for rejecting the topup request from <strong>{activeRequest?.user?.name || "User"}</strong> (Amount: ₹{activeRequest?.amount}).
-            </p>
-            <FormGroup>
-              <Label className="small fw-semibold">Rejection Reason</Label>
-              <Input
-                type="textarea"
-                rows="3"
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="e.g. Invalid UTR reference, payment not received, duplicate request"
-                required
-              />
-            </FormGroup>
-          </ModalBody>
-          <ModalFooter className="py-2">
-            <Button color="light" onClick={() => setRejectModal(false)} disabled={actionLoading}>
-              Cancel
-            </Button>
-            <Button color="danger" type="submit" disabled={actionLoading}>
-              {actionLoading ? <Spinner size="sm" className="me-1" /> : <FaTimes className="me-1" />}
-              Confirm Rejection
-            </Button>
-          </ModalFooter>
-        </Form>
-      </Modal>
+      {/* Assign Pricing Plan Modal */}
+      <AssignPricingPlanModal
+        isOpen={planModal}
+        toggle={() => setPlanModal(false)}
+        selectedUser={selectedUserForPlan}
+        availablePlans={availablePlans}
+        planForm={planForm}
+        setPlanForm={setPlanForm}
+        onSubmit={handleAssignPlanSubmit}
+        actionLoading={actionLoading}
+      />
     </div>
   );
 };

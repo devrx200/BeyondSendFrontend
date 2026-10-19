@@ -53,6 +53,10 @@ import {
   FaUserFriends,
   FaSlidersH,
   FaCogs,
+  FaChartBar,
+  FaHourglassHalf,
+  FaTelegramPlane,
+  FaRobot,
 } from "react-icons/fa";
 
 /* =========================================================
@@ -156,6 +160,8 @@ export const ICON_MAP = {
   FaBell,
   FaUserFriends,
   FaSlidersH,
+  FaTelegramPlane,
+  FaRobot,
 };
 
 /* =========================================================
@@ -303,6 +309,7 @@ const CHANNEL_PERMISSIONS = [
   "rcs",
   "voice",
   "push",
+  "telegram",
 ];
 
 /*
@@ -316,6 +323,8 @@ const CLIENT_ALWAYS_VISIBLE_CHANNELS = [
   "email-modules",
   "rcs-modules",
   "voice-modules",
+  "push-modules",
+  "telegram-modules",
 ];
 
 /* =========================================================
@@ -468,7 +477,7 @@ const CHANNEL_GROUPS = [
       {
         id: "email-templates",
         icon: FaFileAlt,
-        path: "/authorized/templates/email",
+        path: "/authorized/email/templates",
         requiredPerm: "email",
         allowedRoles: CHANNEL_ROLES,
         label: t(
@@ -533,7 +542,7 @@ const CHANNEL_GROUPS = [
       {
         id: "rcs-templates",
         icon: FaFileAlt,
-        path: "/authorized/templates/rcs",
+        path: "/authorized/rcs/templates",
         requiredPerm: "rcs",
         allowedRoles: CHANNEL_ROLES,
         label: t(
@@ -586,12 +595,12 @@ const CHANNEL_GROUPS = [
       {
         id: "voice-templates",
         icon: FaFileAlt,
-        path: "/authorized/templates/voice",
+        path: "/authorized/voice/templates",
         requiredPerm: "voice",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Voice Scripts",
-          "वॉइस स्क्रिप्ट्स"
+          "Templates",
+          "टेम्पलेट्स"
         ),
       },
 
@@ -637,6 +646,83 @@ const CHANNEL_GROUPS = [
       },
     ],
   },
+
+  /* =======================================================
+     TELEGRAM
+  ======================================================= */
+
+  {
+    id: "telegram-modules",
+    icon: FaTelegramPlane,
+    requiredPerm: "telegram",
+    allowedRoles: CHANNEL_ROLES,
+    label: t(
+      "Telegram Services",
+      "टेलीग्राम सेवाएँ"
+    ),
+
+    submenu: [
+      {
+        id: "telegram-templates",
+        icon: FaFileAlt,
+        path: "/authorized/telegram/templates",
+        requiredPerm: "telegram",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Templates",
+          "टेम्पलेट्स"
+        ),
+      },
+
+      {
+        id: "telegram-broadcasts",
+        icon: FaPaperPlane,
+        path: "/authorized/telegram/broadcasts",
+        requiredPerm: "telegram",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bulk Broadcasts",
+          "बल्क ब्रॉडकास्ट"
+        ),
+      },
+
+      {
+        id: "telegram-gateway-otp",
+        icon: FaShieldAlt,
+        path: "/authorized/telegram/gateway-otp",
+        requiredPerm: "telegram",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Gateway Phone OTP",
+          "गेटवे फ़ोन ओटीपी"
+        ),
+      },
+
+      {
+        id: "telegram-bot-config",
+        icon: FaRobot,
+        path: "/authorized/telegram/bot-config",
+        requiredPerm: "telegram",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "Bot Configuration",
+          "बॉट कॉन्फ़िगरेशन"
+        ),
+      },
+
+      {
+        id: "telegram-docs",
+        icon: FaBookOpen,
+        path: "/authorized/telegram/docs",
+        requiredPerm: "telegram",
+        allowedRoles: CHANNEL_ROLES,
+        label: t(
+          "APIs & Docs",
+          "एपीआई व दस्तावेज़"
+        ),
+      },
+    ],
+  },
 ];
 
 /* =========================================================
@@ -644,50 +730,6 @@ const CHANNEL_GROUPS = [
 ========================================================= */
 
 const PLATFORM_GROUPS = [
-  {
-    id: "registry-modules",
-    icon: FaPlug,
-    allowedRoles: ADMIN_ROLES,
-    label: t(
-      "Channels & APIs",
-      "चैनल और API"
-    ),
-
-    submenu: [
-      {
-        id: "reg-channels",
-        icon: FaBullhorn,
-        path: "/authorized/settings/channels",
-        allowedRoles: ADMIN_ROLES,
-        label: t(
-          "Channels",
-          "चैनल"
-        ),
-      },
-
-      {
-        id: "reg-providers",
-        icon: FaPlug,
-        path: "/authorized/settings/providers",
-        allowedRoles: ADMIN_ROLES,
-        label: t(
-          "Provider APIs",
-          "Provider APIs"
-        ),
-      },
-
-      {
-        id: "reg-matrix",
-        icon: FaThLarge,
-        path: "/authorized/settings/channel-matrix",
-        allowedRoles: ADMIN_ROLES,
-        label: t(
-          "Channel Assignment Matrix",
-          "चैनल असाइनमेंट मैट्रिक्स"
-        ),
-      },
-    ],
-  },
 
   {
     id: "cms-modules",
@@ -850,17 +892,6 @@ const PLATFORM_GROUPS = [
         label: t(
           "Contact Cards",
           "कॉन्टैक्ट कार्ड्स"
-        ),
-      },
-
-      {
-        id: "cms-sidebar-menus",
-        icon: FaBars,
-        path: "/authorized/sidebar-menu-management",
-        allowedRoles: ADMIN_ROLES,
-        label: t(
-          "Sidebar Menus",
-          "साइडबार मेनू"
         ),
       },
     ],
@@ -1052,60 +1083,25 @@ const SHARED_GROUPS = [
   },
 
   {
-    id: "account-config",
+    id: "account-settings",
     icon: FaUserCog,
     allowedRoles: ALL_ROLES,
     label: t(
-      "Account & Configuration",
-      "खाता और विन्यास और सेटिंग्स"
+      "Accounts Settings",
+      "खाता सेटिंग्स"
     ),
 
     submenu: [
       {
-        id: "acc-channels",
-        icon: FaPlug,
-        path: "/authorized/account/channels",
-               allowedRoles: [
-          ROLES.DEVOPS,
-          ROLES.ADMIN,
-          ROLES.RESELLER,
-        ],
-        label: t(
-          "My Channels & APIs",
-          "मेरे चैनल और APIs"
-        ),
-      },
-
-      {
         id: "acc-settings",
         icon: FaSlidersH,
-        path: "/authorized/account/settings",
-                allowedRoles: [
-          ROLES.DEVOPS,
-          ROLES.ADMIN,
-          ROLES.RESELLER,
-        ],
+        path: "/authorized/account/profile-settings",
+        allowedRoles: ALL_ROLES,
         label: t(
-          "My Settings",
-          "मेरी सेटिंग्स"
+          "My Profile & Settings",
+          "मेरी प्रोफ़ाइल और सेटिंग्स"
         ),
       },
-
-      {
-        id: "acc-communication",
-        icon: FaCogs,
-        path: "/authorized/config/communication",
-        allowedRoles: [
-          ROLES.DEVOPS,
-          ROLES.ADMIN,
-          ROLES.RESELLER,
-        ],
-        label: t(
-          "Communication Config",
-          "संचार विन्यास"
-        ),
-      },
-      
       {
         id: "acc-credits",
         icon: FaCoins,
@@ -1120,31 +1116,6 @@ const SHARED_GROUPS = [
           "मेरा क्रेडिट वॉलेट"
         ),
       },
-
-      {
-        id: "acc-credits-manager",
-        icon: FaCoins,
-        path: "/authorized/account/credits-topup-management",
-        allowedRoles: [
-          ROLES.DEVOPS,
-          ROLES.ADMIN,
-        ],
-        label: t(
-          "Credit Wallet Management",
-          "क्रेडिट वॉलेट मैनेजमेंट"
-        ),
-      },
-{
-        id: "acc-billing-settings",
-        icon: FaCoins,
-        path: "/authorized/account/billing-settings",
-        allowedRoles: [ROLES.ADMIN],
-        label: t(
-          "Billing Settings",
-          "बिलिंग सेटिंग्स"
-        ),
-      },
-
       {
         id: "acc-subscriptions",
         icon: FaCalendarCheck,
@@ -1157,6 +1128,180 @@ const SHARED_GROUPS = [
         label: t(
           "Subscriptions",
           "सब्सक्रिप्शन"
+        ),
+      },
+      {
+        id: "acc-sidebar-menus",
+        icon: FaBars,
+        path: "/authorized/sidebar-menu-management",
+        allowedRoles: ADMIN_ROLES,
+        label: t(
+          "Sidebar Menus",
+          "साइडबार मेनू"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "system-configurations",
+    icon: FaCogs,
+    allowedRoles: [
+      ROLES.DEVOPS,
+      ROLES.ADMIN,
+      ROLES.RESELLER,
+    ],
+    label: t(
+      "System Configurations",
+      "सिस्टम विन्यास"
+    ),
+
+    submenu: [
+      {
+        id: "sys-config-communication",
+        icon: FaCogs,
+        path: "/authorized/config/communication",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+          ROLES.RESELLER,
+        ],
+        label: t(
+          "Communication Config",
+          "संचार विन्यास"
+        ),
+      },
+      {
+        id: "sys-config-channels",
+        icon: FaBullhorn,
+        path: "/authorized/settings/channels",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Channel Master",
+          "चैनल मास्टर"
+        ),
+      },
+      {
+        id: "sys-config-channel-categories",
+        icon: FaLayerGroup,
+        path: "/authorized/settings/channel-categories",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Channel Category Master",
+          "चैनल कैटेगरी मास्टर"
+        ),
+      },
+      {
+        id: "sys-config-providers",
+        icon: FaNetworkWired,
+        path: "/authorized/settings/providers",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Enterprise CPaaS Providers",
+          "एंटरप्राइज प्रोवाइडर्स"
+        ),
+      },
+    ],
+  },
+
+  {
+    id: "credit-wallet-configurations",
+    icon: FaCoins,
+    allowedRoles: [
+      ROLES.DEVOPS,
+      ROLES.ADMIN,
+    ],
+    label: t(
+      "Credit Wallet Configuration",
+      "क्रेडिट वॉलेट विन्यास"
+    ),
+
+    submenu: [
+      {
+        id: "cw-accounts",
+        icon: FaUsers,
+        path: "/authorized/credits/accounts",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Credit Wallets Management",
+          "क्रेडिट वॉलेट प्रबंधन"
+        ),
+      },
+      {
+        id: "cw-requests",
+        icon: FaHourglassHalf,
+        path: "/authorized/credits/requests",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Topup Requests Workflow",
+          "टॉपअप अनुरोध वर्कफ़्लो"
+        ),
+      },
+      {
+        id: "cw-history",
+        icon: FaHistory,
+        path: "/authorized/credits/history",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Transactions & Deductions",
+          "लेन-देन और कटौती इतिहास"
+        ),
+      },
+      {
+        id: "cw-pricing-plans",
+        icon: FaTags,
+        path: "/authorized/settings/credit-plans",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Credit Pricing Plans",
+          "क्रेडिट प्राइसिंग प्लान्स"
+        ),
+      },
+      {
+        id: "cw-reports",
+        icon: FaChartBar,
+        path: "/authorized/credits/reports",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Platform Credit Analytics",
+          "क्रेडिट एनालिटिक्स और रिपोर्ट"
+        ),
+      },
+      {
+        id: "cw-dlr-simulator",
+        icon: FaExchangeAlt,
+        path: "/authorized/credits/dlr-simulator",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Carrier DLR Simulator",
+          "कैरियर DLR सिम्युलेटर"
         ),
       },
     ],
@@ -1248,17 +1393,6 @@ export const defaultSidebarMenus = [
   ...SHARED_GROUPS,
 
   /* Admin */
-  {
-    id: "onboarding",
-    icon: FaSitemap,
-    path: "/authorized/onboarding",
-    allowedRoles: ADMIN_ROLES,
-    label: t(
-      "Onboarding",
-      "ऑनबोर्डिंग"
-    ),
-  },
-
   {
     id: "users-management",
     icon: FaUsers,

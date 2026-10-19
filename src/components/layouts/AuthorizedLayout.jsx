@@ -8,7 +8,7 @@ import NoticeTicker from "../sections/NoticeTicker";
 import PageLoader from "../common/PageLoader";
 import { useToast, ToastContainer } from "@/utilities/WPToast";
 import apiClient from "@apiService";
-import "@/css/WPStyleTheme.scss";
+import "@/assets/css/WPStyleTheme.scss";
 
 const AuthorizedLayout = () => {
   const navigate = useNavigate();

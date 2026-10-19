@@ -6,7 +6,7 @@ import {
 } from "reactstrap";
 import {
   FaEnvelope, FaPlus, FaSearch, FaEdit, FaTrash,
-  FaCopy, FaEye, FaPaperPlane, FaCode
+  FaCopy, FaEye, FaPaperPlane, FaCode, FaServer
 } from "react-icons/fa";
 import apiClient from "@apiService";
 import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
@@ -16,12 +16,14 @@ const EmailTemplates = () => {
   const { toasts, toast } = useToast();
 
   const [templates, setTemplates] = useState([]);
+  const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
   const [senderEmails, setSenderEmails] = useState([]);
 
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState("ALL");
+  const [filterProvider, setFilterProvider] = useState("ALL");
   const [modal, setModal] = useState(false);
   const [previewModal, setPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -33,6 +35,8 @@ const EmailTemplates = () => {
     fromEmail: "notifications@beyondsend.in",
     fromName: "BeyondSend Cloud",
     category: "Marketing",
+    provider: "SENDGRID",
+    providerTemplateId: "",
     status: "APPROVED",
     htmlContent: "<h2>Hello {{name}},</h2>\n<p>Write your email body here...</p>"
   });
@@ -51,13 +55,19 @@ const EmailTemplates = () => {
     }
   };
 
+  const [categories, setCategories] = useState([]);
+
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get("/templates/list?channel=EMAIL");
-      const list = res?.data?.data || res?.data || [];
+      const res = await apiClient.get("/email/templates/list");
+      const list = res?.data?.data || [];
+      const provs = res?.data?.availableProviders || [];
+      const cats = res?.data?.availableCategories || [];
 
       setTemplates(Array.isArray(list) ? list : []);
+      if (provs.length > 0) setProviders(provs);
+      if (cats.length > 0) setCategories(cats);
     } catch (err) {
       console.error("Fetch email templates error:", err);
       toast.error(err?.response?.data?.message || "Failed to load email templates");
@@ -66,9 +76,20 @@ const EmailTemplates = () => {
     }
   };
 
+  const fetchProviders = async () => {
+    try {
+      const res = await apiClient.get("/email/templates/providers");
+      const list = res?.data?.data || [];
+      if (list.length > 0) setProviders(list);
+    } catch {
+      // Fallback: will be populated by fetchTemplates
+    }
+  };
+
   useEffect(() => {
     fetchSenders();
     fetchTemplates();
+    fetchProviders();
   }, []);
 
   const handleOpenModal = (template = null) => {
@@ -80,6 +101,8 @@ const EmailTemplates = () => {
         fromEmail: template.fromEmail || (senderEmails[0]?.identifier || "notifications@beyondsend.in"),
         fromName: template.fromName || (senderEmails[0]?.senderName || "BeyondSend"),
         category: template.category || "Marketing",
+        provider: template.provider || "SENDGRID",
+        providerTemplateId: template.providerTemplateId || "",
         status: template.status || "APPROVED",
         htmlContent: template.htmlContent || ""
       });
@@ -91,6 +114,8 @@ const EmailTemplates = () => {
         fromEmail: senderEmails[0]?.identifier || "notifications@beyondsend.in",
         fromName: senderEmails[0]?.senderName || "BeyondSend Cloud",
         category: "Marketing",
+        provider: providers[0]?.code || "SENDGRID",
+        providerTemplateId: "",
         status: "APPROVED",
         htmlContent: "<h2>Hello {{name}},</h2>\n<p>Write your email body here...</p>"
       });
@@ -107,17 +132,17 @@ const EmailTemplates = () => {
 
     try {
       setBtnLoading(true);
+      const payload = {
+        ...form,
+        channelCategoryCode: form.channelCategoryCode || (form.category ? `EMAIL_${form.category}` : "EMAIL_TRANSACTIONAL"),
+      };
+      delete payload.channel;
+
       if (editingId) {
-        const res = await apiClient.put(`/templates/update/${editingId}`, {
-          ...form,
-          channel: "EMAIL"
-        });
+        const res = await apiClient.put(`/email/templates/update/${editingId}`, payload);
         toast.success(res?.data?.message || "Email template updated successfully");
       } else {
-        const res = await apiClient.post("/templates/create", {
-          ...form,
-          channel: "EMAIL"
-        });
+        const res = await apiClient.post("/email/templates/create", payload);
         toast.success(res?.data?.message || "New email template saved");
       }
       setModal(false);
@@ -137,7 +162,7 @@ const EmailTemplates = () => {
     if (!isConfirmed) return;
 
     try {
-      const res = await apiClient.delete(`/templates/delete/${id}`);
+      const res = await apiClient.delete(`/email/templates/delete/${id}`);
       toast.success(res?.data?.message || "Template removed");
       fetchTemplates();
     } catch (err) {
@@ -145,37 +170,15 @@ const EmailTemplates = () => {
     }
   };
 
-  const handleClone = async (tpl) => {
-    try {
-      await apiClient.post("/templates/create", {
-        ...tpl,
-        _id: undefined,
-        name: `${tpl.name} (Copy)`,
-        channel: "EMAIL"
-      });
-      toast.success("Template cloned successfully");
-      fetchTemplates();
-    } catch (err) {
-      toast.error("Failed to duplicate template");
-    }
-  };
-
-  const handleTestSend = async (tpl) => {
-    const isConfirmed = await wpSwal.confirm(
-      "Send Test Dispatch?",
-      `Dispatch a test rendering of '${tpl.name}' to the registered administrator email?`
-    );
-    if (isConfirmed) {
-      toast.success(`Test email queued for '${tpl.name}'`);
-    }
-  };
-
   const filtered = templates.filter((t) => {
     const matchSearch =
       (t.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (t.subject || "").toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCategory === "ALL" || t.category === filterCategory;
-    return matchSearch && matchCat;
+      (t.subject || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.fromEmail || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.provider || "").toLowerCase().includes(search.toLowerCase());
+    const matchCat = filterCategory === "ALL" || (t.category || "").toLowerCase() === filterCategory.toLowerCase();
+    const matchProv = filterProvider === "ALL" || (t.provider || "ALL") === filterProvider;
+    return matchSearch && matchCat && matchProv;
   });
 
   return (
@@ -190,12 +193,12 @@ const EmailTemplates = () => {
               className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
               style={{ width: "44px", height: "44px" }}
             >
-              <FaEnvelope size={22} className="text-white" />
+              <FaEnvelope size={20} className="text-white" />
             </div>
             <div>
-              <h4 className="adm-page-title mb-0 text-white">Email Templates</h4>
+              <h4 className="adm-page-title mb-0 text-white">Email Templates (HTML & Multi-Gateway Relays)</h4>
               <p className="adm-page-subtitle mb-0 text-white-50">
-                Responsive HTML email templates with dynamic merge tags and tracking
+                Responsive HTML email templates with dynamic merge variables and multi-provider relay routing (SendGrid, SES, SMTP, Mailgun)
               </p>
             </div>
           </div>
@@ -212,29 +215,28 @@ const EmailTemplates = () => {
       {/* ── MAIN TABLE CARD ── */}
       <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <CardBody className="p-0">
-          {/* STATS STRIP */}
+          {/* SEARCH & FILTERS */}
           <div className="p-3 bg-light border-bottom">
             <Row className="g-2 align-items-center">
-              <Col xs={12} md={4}>
+              <Col lg={4} md={6}>
                 <InputGroup size="sm">
-                  <InputGroupText className="bg-white border-end-0 text-muted">
-                    <FaSearch size={12} />
+                  <InputGroupText className="bg-white border-end-0">
+                    <FaSearch className="text-muted" />
                   </InputGroupText>
                   <Input
-                    placeholder="Search templates by name, subject..."
+                    placeholder="Search templates, subject, provider..."
+                    className="border-start-0"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="border-start-0 bg-white"
                   />
                 </InputGroup>
               </Col>
-              <Col xs={6} md={3}>
+              <Col lg={3} md={6}>
                 <Input
                   type="select"
                   size="sm"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="bg-white fw-semibold"
                 >
                   <option value="ALL">All Categories</option>
                   <option value="Marketing">Marketing</option>
@@ -243,16 +245,25 @@ const EmailTemplates = () => {
                   <option value="Promotional">Promotional</option>
                 </Input>
               </Col>
-              <Col xs={12} md={5} className="d-flex justify-content-md-end gap-2 flex-wrap">
-                <Badge color="primary" className="py-1.5 px-2.5 rounded-pill shadow-xs">
+              <Col lg={3} md={6}>
+                <Input
+                  type="select"
+                  size="sm"
+                  value={filterProvider}
+                  onChange={(e) => setFilterProvider(e.target.value)}
+                >
+                  <option value="ALL">All Email Gateways ({providers.length})</option>
+                  {providers.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name || p.code}
+                    </option>
+                  ))}
+                </Input>
+              </Col>
+              <Col lg={2} md={6} className="text-end">
+                <span className="badge bg-white border text-dark fw-bold px-2 py-1.5">
                   Total: {templates.length}
-                </Badge>
-                <Badge color="success" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  Active: {templates.filter((t) => t.status === "APPROVED" || t.status === "ACTIVE").length}
-                </Badge>
-                <Badge color="info" className="py-1.5 px-2.5 rounded-pill shadow-xs">
-                  High Deliverability
-                </Badge>
+                </span>
               </Col>
             </Row>
           </div>
@@ -260,7 +271,9 @@ const EmailTemplates = () => {
           {/* TABLE */}
           <div className="table-responsive">
             {loading ? (
-              <PageLoader inline={true} />
+              <div className="p-5 text-center">
+                <PageLoader />
+              </div>
             ) : (
               <Table hover striped className="mb-0 align-middle">
                 <thead className="table-light" style={{ fontSize: "11.5px", letterSpacing: "0.4px" }}>
@@ -268,6 +281,7 @@ const EmailTemplates = () => {
                     <th style={{ width: "40px" }}>#</th>
                     <th>Template Name & Subject</th>
                     <th>Category</th>
+                    <th>Gateway Provider</th>
                     <th>Sender From</th>
                     <th>Status</th>
                     <th>Last Modified</th>
@@ -277,7 +291,7 @@ const EmailTemplates = () => {
                 <tbody style={{ fontSize: "13px" }}>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-5 text-muted">
+                      <td colSpan="8" className="text-center py-5 text-muted">
                         No email templates found matching your criteria.
                       </td>
                     </tr>
@@ -287,7 +301,7 @@ const EmailTemplates = () => {
                         <td className="text-muted small">{idx + 1}</td>
                         <td>
                           <div className="fw-bold text-dark">{t.name}</div>
-                          <small className="text-muted text-truncate d-block" style={{ maxWidth: "340px" }}>
+                          <small className="text-muted text-truncate d-block" style={{ maxWidth: "300px" }}>
                             {t.subject}
                           </small>
                         </td>
@@ -297,15 +311,15 @@ const EmailTemplates = () => {
                             style={{
                               fontSize: "11px",
                               background:
-                                t.category === "Marketing"
+                                (t.category || "").toLowerCase() === "marketing"
                                   ? "#edf2ff"
-                                  : t.category === "Transactional"
+                                  : (t.category || "").toLowerCase() === "transactional"
                                   ? "#e6fcf5"
                                   : "#fff4e6",
                               color:
-                                t.category === "Marketing"
+                                (t.category || "").toLowerCase() === "marketing"
                                   ? "#3b5bdb"
-                                  : t.category === "Transactional"
+                                  : (t.category || "").toLowerCase() === "transactional"
                                   ? "#0ca678"
                                   : "#e8590c"
                             }}
@@ -313,16 +327,33 @@ const EmailTemplates = () => {
                             {t.category || "Marketing"}
                           </span>
                         </td>
+                        <td>
+                          {t.providerTemplates && t.providerTemplates.length > 0 ? (
+                            <div className="d-flex flex-wrap gap-1">
+                              {t.providerTemplates.map((p, pIdx) => (
+                                <Badge key={pIdx} color="info" pill className="font-monospace px-2 py-0.5 text-uppercase" style={{ fontSize: "10px" }}>
+                                  <FaServer className="me-1" size={8} />
+                                  {p.providerCode} {p.status ? `(${p.status})` : ""}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <Badge color="info" pill className="font-monospace px-2 py-1">
+                              <FaServer className="me-1" size={9} />
+                              {t.provider || "SENDGRID"}
+                            </Badge>
+                          )}
+                        </td>
                         <td className="small text-muted font-monospace">
                           {t.fromEmail || "notifications@beyondsend.in"}
                         </td>
                         <td>
                           <Badge
-                            color={t.status === "APPROVED" || t.status === "ACTIVE" ? "success" : "secondary"}
+                            color="success"
                             pill
                             className="fw-semibold px-2 py-1"
                           >
-                            {t.status === "APPROVED" || t.status === "ACTIVE" ? "Active" : "Draft"}
+                            {t.status || "APPROVED"}
                           </Badge>
                         </td>
                         <td className="text-muted small">
@@ -334,7 +365,7 @@ const EmailTemplates = () => {
                               size="sm"
                               color="light"
                               className="adm-icon-btn"
-                              data-tt="Preview HTML"
+                              title="Preview HTML"
                               onClick={() => {
                                 setSelectedTemplate(t);
                                 setPreviewModal(true);
@@ -344,27 +375,9 @@ const EmailTemplates = () => {
                             </Button>
                             <Button
                               size="sm"
-                              color="info"
-                              className="adm-icon-btn is-info"
-                              data-tt="Send Test Dispatch"
-                              onClick={() => handleTestSend(t)}
-                            >
-                              <FaPaperPlane size={12} />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="light"
-                              className="adm-icon-btn"
-                              data-tt="Duplicate Template"
-                              onClick={() => handleClone(t)}
-                            >
-                              <FaCopy size={12} />
-                            </Button>
-                            <Button
-                              size="sm"
                               color="light"
                               className="adm-icon-btn is-success"
-                              data-tt="Edit Template"
+                              title="Edit Template"
                               onClick={() => handleOpenModal(t)}
                             >
                               <FaEdit size={12} />
@@ -373,7 +386,7 @@ const EmailTemplates = () => {
                               size="sm"
                               color="light"
                               className="adm-icon-btn is-danger"
-                              data-tt="Delete Template"
+                              title="Delete Template"
                               onClick={() => handleDelete(t._id, t.name)}
                             >
                               <FaTrash size={12} />
@@ -392,150 +405,129 @@ const EmailTemplates = () => {
 
       {/* ── CREATE / EDIT MODAL ── */}
       <Modal isOpen={modal} toggle={() => setModal(false)} size="lg" backdrop="static" centered>
-        <ModalHeader
-          toggle={() => setModal(false)}
-          className="text-white bg-dark"
-        >
-          {editingId ? "Edit Email Template" : "Compose New Email Template"}
+        <ModalHeader toggle={() => setModal(false)} className="text-white bg-dark">
+          {editingId ? "Edit Email Template" : "New Email Template"}
         </ModalHeader>
         <Form onSubmit={handleSave}>
           <ModalBody className="p-4 bg-light">
-            <div className="bg-white p-3.5 rounded-3 border shadow-xs mb-3">
-              <Row className="g-3">
-                <Col md={7}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold small text-dark">Template Name *</Label>
-                    <Input
-                      placeholder="e.g. Welcome Customer Onboarding"
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      required
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={5}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold small text-dark">Category</Label>
-                    <Input
-                      type="select"
-                      value={form.category}
-                      onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    >
-                      <option value="Marketing">Marketing</option>
-                      <option value="Transactional">Transactional</option>
-                      <option value="Alerts">Alerts</option>
-                      <option value="Promotional">Promotional</option>
-                    </Input>
-                  </FormGroup>
-                </Col>
-                <Col md={12}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold small text-dark">Email Subject Line *</Label>
-                    <Input
-                      placeholder="e.g. Your verification code is {{otp}}"
-                      value={form.subject}
-                      onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      required
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold small text-dark">Sender From Address</Label>
-                    <Input
-                      type="select"
-                      value={form.fromEmail}
-                      onChange={(e) => setForm({ ...form, fromEmail: e.target.value })}
-                    >
-                      {senderEmails.map((se) => (
-                        <option key={se.identifier} value={se.identifier}>
-                          {se.senderName ? `${se.senderName} (${se.identifier})` : se.identifier}
-                        </option>
-                      ))}
-                    </Input>
-                  </FormGroup>
-                </Col>
-                <Col md={6}>
-                  <FormGroup className="mb-0">
-                    <Label className="fw-bold small text-dark">Display Name</Label>
-                    <Input
-                      value={form.fromName}
-                      onChange={(e) => setForm({ ...form, fromName: e.target.value })}
-                      placeholder="BeyondSend Support"
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={12}>
-                  <div className="d-flex align-items-center gap-2">
-                    <small className="text-muted fw-bold">Available Merge Tags:</small>
-                    {["{{name}}", "{{email}}", "{{company}}", "{{otp}}", "{{amount}}"].map((tag) => (
-                      <span
-                        key={tag}
-                        role="button"
-                        onClick={() => setForm({ ...form, htmlContent: form.htmlContent + " " + tag })}
-                        className="badge bg-light border text-dark cursor-pointer"
-                        title="Click to insert"
-                      >
-                        {tag}
-                      </span>
+            <Row className="g-3">
+              <Col md={7}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Template Name *</Label>
+                  <Input
+                    placeholder="e.g. Monthly Invoicing Receipt"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    required
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={5}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Email Relay Gateway</Label>
+                  <Input
+                    type="select"
+                    value={form.provider}
+                    onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                  >
+                    <option value="ALL">ALL (Dynamic Relay)</option>
+                    {providers.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.name || p.code} ({p.code})
+                      </option>
                     ))}
-                  </div>
-                </Col>
-              </Row>
-            </div>
+                  </Input>
+                </FormGroup>
+              </Col>
 
-            <div className="bg-white p-3.5 rounded-3 border shadow-xs">
-              <Label className="fw-bold small text-dark d-flex align-items-center gap-1.5">
-                <FaCode size={13} className="text-primary" /> HTML Content & Layout
-              </Label>
-              <Input
-                type="textarea"
-                rows={9}
-                value={form.htmlContent}
-                onChange={(e) => setForm({ ...form, htmlContent: e.target.value })}
-                className="font-monospace"
-                style={{ fontSize: "12.5px" }}
-              />
-            </div>
+              <Col md={12}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Email Subject Line *</Label>
+                  <Input
+                    placeholder="e.g. Your Monthly BeyondSend Bill is Ready (#{{invoiceId}})"
+                    value={form.subject}
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                    required
+                  />
+                </FormGroup>
+              </Col>
+
+              <Col md={6}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">From Email Address</Label>
+                  <Input
+                    type="select"
+                    value={form.fromEmail}
+                    onChange={(e) => setForm({ ...form, fromEmail: e.target.value })}
+                  >
+                    {senderEmails.map((s) => (
+                      <option key={s.identifier} value={s.identifier}>
+                        {s.senderName ? `${s.senderName} <${s.identifier}>` : s.identifier}
+                      </option>
+                    ))}
+                  </Input>
+                </FormGroup>
+              </Col>
+              <Col md={6}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">Category</Label>
+                  <Input
+                    type="select"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  >
+                    <option value="Marketing">Marketing</option>
+                    <option value="Transactional">Transactional</option>
+                    <option value="Alerts">Alerts</option>
+                    <option value="Promotional">Promotional</option>
+                  </Input>
+                </FormGroup>
+              </Col>
+
+              <Col md={12}>
+                <FormGroup className="mb-0">
+                  <Label className="fw-bold small text-dark">HTML Content Body *</Label>
+                  <Input
+                    type="textarea"
+                    rows={8}
+                    placeholder="<html>... Use {{name}}, {{amount}} for dynamic variables"
+                    value={form.htmlContent}
+                    onChange={(e) => setForm({ ...form, htmlContent: e.target.value })}
+                    className="font-monospace small"
+                    required
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
           </ModalBody>
           <ModalFooter className="bg-white">
             <Button color="secondary" outline onClick={() => setModal(false)}>
               Cancel
             </Button>
             <Button color="primary" type="submit" disabled={btnLoading}>
-              {btnLoading ? <Spinner size="sm" /> : "Save Template"}
+              {btnLoading ? <Spinner size="sm" /> : "Save Email Template"}
             </Button>
           </ModalFooter>
         </Form>
       </Modal>
 
-      {/* ── PREVIEW MODAL ── */}
+      {/* ── HTML PREVIEW MODAL ── */}
       <Modal isOpen={previewModal} toggle={() => setPreviewModal(false)} size="lg" centered>
         <ModalHeader toggle={() => setPreviewModal(false)} className="bg-light">
           Preview: {selectedTemplate?.name}
         </ModalHeader>
         <ModalBody className="p-4">
-          <div className="p-3 bg-light rounded-3 mb-3 border">
-            <div className="small text-muted mb-1">
-              <strong>Subject:</strong> {selectedTemplate?.subject}
-            </div>
-            <div className="small text-muted">
-              <strong>From:</strong> {selectedTemplate?.fromName || "BeyondSend"} &lt;{selectedTemplate?.fromEmail || "no-reply@beyondsend.in"}&gt;
-            </div>
+          <div className="p-3 bg-light rounded-3 border mb-3">
+            <div className="small"><strong>Subject:</strong> {selectedTemplate?.subject}</div>
+            <div className="small"><strong>From:</strong> {selectedTemplate?.fromEmail}</div>
+            <div className="small"><strong>Gateway Provider:</strong> <Badge color="info">{selectedTemplate?.provider || "SENDGRID"}</Badge></div>
           </div>
           <div
-            className="p-4 border rounded-3 bg-white"
-            style={{ minHeight: "240px" }}
-            dangerouslySetInnerHTML={{
-              __html: selectedTemplate?.htmlContent || "<p>No content preview available</p>"
-            }}
+            className="p-4 bg-white border rounded-3 shadow-xs"
+            dangerouslySetInnerHTML={{ __html: selectedTemplate?.htmlContent || "" }}
+            style={{ minHeight: "220px" }}
           />
         </ModalBody>
-        <ModalFooter>
-          <Button color="secondary" onClick={() => setPreviewModal(false)}>
-            Close
-          </Button>
-        </ModalFooter>
       </Modal>
     </div>
   );

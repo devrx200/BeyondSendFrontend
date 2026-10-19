@@ -117,42 +117,50 @@ const Footer = () => {
       <Container className="py-2">
         <Row className="g-4 align-items-start">
 
-          {/* ── Contact Info ── */}
+          {/* ── Col 1: Logo & About Us ── */}
           <Col xs={12} sm={6} md={6} lg={4}>
-            <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
             <img
-              src={contactInfo.brandLogo || "/beyondsend-logo.svg"}
+              src="/beyondsend-logo-white.svg"
               alt="BeyondSend"
-              className="img-fluid mb-2 rounded bg-white p-1"
-              style={{ height: "clamp(36px, 5vw, 52px)", width: "auto", objectFit: "contain" }}
+              className="img-fluid mb-3"
+              style={{ height: "clamp(34px, 4.5vw, 46px)", width: "auto", objectFit: "contain" }}
               onError={(e) => { e.currentTarget.src = "/beyondsend-logo.svg"; }}
             />
-            <p className="small text-white mb-2 fw-bold ">
-              {isHindi ? (contactInfo.departmentNameHi || "बियॉन्डसेंड कम्युनिकेशंस") : (contactInfo.departmentNameEn || "BeyondSend Communications Inc.")}
+            <h6 className="fw-bold text-white mb-2" style={{ letterSpacing: "-0.2px" }}>
+              {isHindi ? "हमारे बारे में" : "About BeyondSend"}
+            </h6>
+            <p className="small text-white-50 mb-3" style={{ lineHeight: "1.65", maxWidth: "340px" }}>
+              {isHindi
+                ? "बियॉन्डसेंड एक अग्रणी एंटरप्राइज क्लाउड कम्युनिकेशन और सीपीएएस प्लेटफॉर्म है, जो एसएमएस, आरसीएस, व्हाट्सएप, ईमेल और वॉयस के माध्यम से सहज ग्राहक जुड़ाव प्रदान करता है।"
+                : "BeyondSend is a next-generation enterprise CPaaS platform empowering businesses with high-throughput SMS, RCS, WhatsApp Business API, Email, and Voice solutions."}
             </p>
-            <p className="small text-white mb-2">
-              <FaMapMarkerAlt className="me-2 text-warning" aria-hidden="true" />
-              {isHindi ? (contactInfo.addressHi || "123 टेक पार्क, साइबर सिटी, नई दिल्ली") : (contactInfo.addressEn || "123 Tech Park, Cyber City, New Delhi")}
-            </p>
-            <p className="small text-white mb-2">
-              <FaPhone className="me-2 text-warning" aria-hidden="true" />
-              <a href={`tel:${contactInfo.phone || '+91-1234567890'}`} className="text-white text-decoration-none">
-                {contactInfo.phone || "+91-1234567890"}
-              </a>
-            </p>
-            <p className="small text-white mb-0">
-              <FaEnvelope className="me-2 text-warning" aria-hidden="true" />
-              <a href={`mailto:${contactInfo.email || 'support@beyondsend.com'}`} className="text-white text-decoration-none">
-                {contactInfo.email || "support@beyondsend.com"}
-              </a>
-            </p>
-            <small className="fw-bold mt-2 d-block">
-              <span className="text-warning">{isHindi ? "सीईओ: " : "CEO: "}</span>
-              <span className="text-info">{isHindi ? (contactInfo.organizerNameHi || "आनंद चपटे") : (contactInfo.organizerNameEn || "Anand Charpe")}</span>
-            </small>
+            <div className="d-flex gap-2 flex-wrap align-items-center mb-2">
+              {socialLinks.length > 0 ? (
+                socialLinks.map((s, i) => (
+                  <a
+                    key={i}
+                    href={s.url}
+                    className="footer-social-icon text-white"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.platform}
+                  >
+                    {SOCIAL_ICONS[s.platform?.toLowerCase()] || <FaLinkedin />}
+                  </a>
+                ))
+              ) : (
+                <>
+                  <a href="https://www.linkedin.com/company/beyondsend" className="footer-social-icon text-white" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn"><FaLinkedin /></a>
+                  <a href="https://www.facebook.com/beyondsend" className="footer-social-icon text-white" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook"><FaFacebook /></a>
+                  <a href="https://www.instagram.com/beyondsend" className="footer-social-icon text-white" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram"><FaInstagram /></a>
+                  <a href="https://www.youtube.com/@beyondsend" className="footer-social-icon text-white" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube"><FaYoutube /></a>
+                  <a href="https://twitter.com/beyondsend" className="footer-social-icon text-white" target="_blank" rel="noopener noreferrer" aria-label="Twitter" title="Twitter"><FaTwitter /></a>
+                </>
+              )}
+            </div>
           </Col>
 
-          {/* ── Quick Links ── */}
+          {/* ── Col 2: Quick Links ── */}
           <Col xs={6} sm={3} md={3} lg={2}>
             <h5>{isHindi ? "त्वरित लिंक" : "Quick Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
@@ -166,7 +174,7 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* ── Important Links ── */}
+          {/* ── Col 3: Important Links ── */}
           <Col xs={6} sm={3} md={3} lg={3}>
             <h5>{isHindi ? "महत्वपूर्ण लिंक" : "Important Links"}</h5>
             <ul className="list-unstyled footer-links mb-0">
@@ -180,37 +188,36 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* ── Follow Us (LEFT) + Visitor Counter (RIGHT) on phone ── */}
+          {/* ── Col 4: Contact Information & Visitor Counter ── */}
           <Col xs={12} sm={12} md={12} lg={3}>
-            <div className="d-flex flex-row flex-lg-column justify-content-between align-items-start gap-3">
-              {/* Follow Us */}
-              <div>
-                <h5 className="mb-2 mb-lg-3">{isHindi ? "हमें फॉलो करें" : "Follow Us"}</h5>
-                <div className="d-flex gap-2 flex-wrap align-items-center">
-                  {socialLinks.map((s, i) => (
-                    <a
-                      key={i}
-                      href={s.url}
-                      className="footer-social-icon text-white"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={s.platform}
-                    >
-                      {SOCIAL_ICONS[s.platform?.toLowerCase()] || <FaLinkedin />}
-                    </a>
-                  ))}
-                </div>
-              </div>
+            <h5>{isHindi ? "संपर्क जानकारी" : "Contact Information"}</h5>
+            <p className="small text-white mb-2 fw-semibold">
+              {isHindi ? (contactInfo.departmentNameHi || "बियॉन्डसेंड टेक्नोलॉजीज") : (contactInfo.departmentNameEn || "BeyondSend Technologies")}
+            </p>
+            <p className="small text-white-50 mb-2">
+              <FaMapMarkerAlt className="me-2 text-warning" aria-hidden="true" />
+              {isHindi ? (contactInfo.addressHi || "बेंगलुरु, कर्नाटक") : (contactInfo.addressEn || "#6, 1st Main Rd, NS Palya, BTM 2nd Stage, Bengaluru, Karnataka 560076")}
+            </p>
+            <p className="small text-white-50 mb-2">
+              <FaPhone className="me-2 text-warning" aria-hidden="true" />
+              <a href={`tel:${contactInfo.phone || '+91 90368 80158'}`} className="text-white text-decoration-none">
+                {contactInfo.phone || "+91 90368 80158"}
+              </a>
+            </p>
+            <p className="small text-white-50 mb-3">
+              <FaEnvelope className="me-2 text-warning" aria-hidden="true" />
+              <a href={`mailto:${contactInfo.email || 'info@beyondsend.in'}`} className="text-white text-decoration-none">
+                {contactInfo.email || "info@beyondsend.in"}
+              </a>
+            </p>
 
-              {/* Visitor Counter */}
-              <div className="text-end text-lg-start">
-                <h5 className="mb-2">{isHindi ? "आगंतुक संख्या" : "Site Visitors"}</h5>
-                <div className="d-flex justify-content-end justify-content-lg-start mb-1">
-                  <FlipCounter count={visitorCount} />
-                </div>
+            {/* Visitor Counter */}
+            <div className="mt-3">
+              <h6 className="small text-white fw-bold mb-2">{isHindi ? "आगंतुक संख्या" : "Site Visitors"}</h6>
+              <div className="d-flex justify-content-start mb-1">
+                <FlipCounter count={visitorCount} />
               </div>
             </div>
-
           </Col>
 
         </Row>
@@ -218,9 +225,9 @@ const Footer = () => {
 
       {/* ── Footer Bottom ── */}
 
-      <div className="footer-bottom py-1 " >
-        <Container fluid>
-          <Row className="gy-2">
+      <div className="footer-bottom">
+        <Container>
+          <Row className="gy-1 align-items-center">
             <Col xs={12} className="text-center">
               <small>
                 © 2017 – {isHindi
@@ -228,7 +235,9 @@ const Footer = () => {
                   : "All Rights Reserved - BeyondSend"}
               </small>
             </Col>
-            <Col xs={12}><hr className="border-secondary my-1" /></Col>
+            <Col xs={12}>
+              <hr className="footer-copyright-divider" />
+            </Col>
             <Col xs={12} md={6} className="text-center text-md-start">
               <small>
                 <Link to="/privacy-policy">Privacy Policy</Link> |{" "}
@@ -239,7 +248,7 @@ const Footer = () => {
                 <Link to="/help-and-support">Help &amp; Support</Link>
               </small>
             </Col>
-            <Col xs={12} md={6} className="text-center text-md-end pb-4 pb-md-2">
+            <Col xs={12} md={6} className="text-center text-md-end">
               <small>{isHindi ? "अंतिम अपडेट" : "Last Updated"}: {lastUpdated}</small>
             </Col>
           </Row>

@@ -18,7 +18,7 @@ const BrandItem = ({ brand }) => {
   if (imgError || !imgUrl) {
     return (
       <div className="brand-fallback-badge">
-        <FaBuilding style={{ color: "#1e40af", fontSize: "1.1rem" }} />
+        <FaBuilding style={{ color: "#906600", fontSize: "1.1rem" }} />
         <span>{brand.name || "Partner"}</span>
       </div>
     );
@@ -124,7 +124,8 @@ const FooterBrandCarousel = () => {
       <section
         className="py-4 border-top border-bottom"
         style={{
-          background: "linear-gradient(180deg, rgba(238, 246, 255, 0.7) 0%, rgba(224, 239, 255, 0.5) 100%)",
+          background: "#fffdf7",
+          borderColor: "#eee9dd",
         }}
       >
         <div className="container-fluid px-3">
@@ -133,16 +134,16 @@ const FooterBrandCarousel = () => {
               className="d-inline-block px-3 py-1 rounded-pill fw-bold text-uppercase"
               style={{
                 fontSize: "clamp(0.68rem, 2.2vw, 0.78rem)",
-                letterSpacing: "0.06em",
-                color: "#1e3a8a",
-                background: "rgba(30, 58, 138, 0.08)",
-                border: "1px solid rgba(30, 58, 138, 0.18)",
+                letterSpacing: "0.08em",
+                color: "#705000",
+                background: "rgba(245, 189, 31, 0.12)",
+                border: "1px solid rgba(170, 120, 0, 0.24)",
                 lineHeight: "1.4",
                 maxWidth: "96%",
                 wordBreak: "break-word",
               }}
             >
-              {isHindi ? "  Our Partners & Clients " : "Our Partners & Clients "}
+              {isHindi ? "हमारे पार्टनर्स और क्लाइंट्स" : "Our Partners & Clients"}
             </span>
           </div>
 

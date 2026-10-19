@@ -535,7 +535,7 @@ const FooterSection = () => {
             <Col md="6" lg="4">
               <FormGroup className="mb-0">
                 <Label className="fw-semibold text-secondary small">
-                  {isHindi ? "विभाग का नाम (अंग्रेज़ी) *" : "Department Name (English) *"}
+                  {isHindi ? "कंपनी / संस्था का नाम (अंग्रेज़ी) *" : "Company / Entity Name (English) *"}
                 </Label>
                 <Input
                   name="departmentNameEn"
@@ -555,7 +555,7 @@ const FooterSection = () => {
             <Col md="6" lg="4">
               <FormGroup className="mb-0">
                 <Label className="fw-semibold text-secondary small">
-                  {isHindi ? "विभाग का नाम (हिंदी) *" : "Department Name (Hindi) *"}
+                  {isHindi ? "कंपनी / संस्था का नाम (हिंदी) *" : "Company / Entity Name (Hindi) *"}
                 </Label>
                 <Input
                   name="departmentNameHi"

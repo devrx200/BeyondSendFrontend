@@ -17,20 +17,20 @@ import { ICONS } from "@/utilities/icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const COLOR_PALETTE = [
-  { color: "#4f6ef7", bg: "#edf2ff" }, // Primary Electric Blue
-  { color: "#20c997", bg: "#ecfdf5" }, // Mint Teal
-  { color: "#00c5eb", bg: "#ecfeff" }, // Accent Cyan
-  { color: "#fe9365", bg: "#fff7ed" }, // Coral Warning
-  { color: "#fe5d70", bg: "#fff1f2" }, // Rose Danger
-  { color: "#1e293b", bg: "#f1f5f9" }, // Slate
+  { color: "#8f6500", bg: "#fff3c4" },
+  { color: "#16805d", bg: "#e7f8ef" },
+  { color: "#16805d", bg: "#e7f8ef" },
+  { color: "#b45309", bg: "#fff0dc" },
+  { color: "#be123c", bg: "#fff0f2" },
+  { color: "#292929", bg: "#f3f2ee" },
 ];
 
 const DEFAULT_QUICK_LINKS = [
-  { id: 1, titleEn: "SMS Campaigns", titleHi: "एसएमएस अभियान", link: "/features", icon: "FaCommentDots", Icon: FaCommentDots, color: "#4f6ef7", bg: "#edf2ff" },
+  { id: 1, titleEn: "SMS Campaigns", titleHi: "एसएमएस अभियान", link: "/features", icon: "FaCommentDots", Icon: FaCommentDots, color: "#8f6500", bg: "#fff3c4" },
   { id: 2, titleEn: "WhatsApp API", titleHi: "व्हाट्सएप एपीआई", link: "/features", icon: "FaWhatsapp", Icon: FaWhatsapp, color: "#20c997", bg: "#ecfdf5" },
-  { id: 3, titleEn: "Email Marketing", titleHi: "ईमेल ऑटोमेशन", link: "/features", icon: "FaEnvelope", Icon: FaEnvelope, color: "#00c5eb", bg: "#ecfeff" },
+  { id: 3, titleEn: "Email Marketing", titleHi: "ईमेल ऑटोमेशन", link: "/features", icon: "FaEnvelope", Icon: FaEnvelope, color: "#16805d", bg: "#e7f8ef" },
   { id: 4, titleEn: "Voice & BPO", titleHi: "वॉयस सपोर्ट", link: "/contact", icon: "FaHeadset", Icon: FaHeadset, color: "#fe9365", bg: "#fff7ed" },
-  { id: 5, titleEn: "Developer Docs", titleHi: "एपीआई दस्तावेज़", link: "/downloads", icon: "FaCode", Icon: FaCode, color: "#1e293b", bg: "#f1f5f9" },
+  { id: 5, titleEn: "Developer Docs", titleHi: "एपीआई दस्तावेज़", link: "/downloads", icon: "FaCode", Icon: FaCode, color: "#292929", bg: "#f3f2ee" },
   { id: 6, titleEn: "Help & Support", titleHi: "सहायता केंद्र", link: "/help", icon: "FaQuestionCircle", Icon: FaQuestionCircle, color: "#fe5d70", bg: "#fff1f2" },
 ];
 
@@ -43,17 +43,12 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const isLegacy = (item) => {
-      const text = `${item.titleEn || ""} ${item.titleHi || ""} ${item.titleEng || ""} ${item.name || ""} ${item.link || ""}`.toLowerCase();
-      return /admission|scholarship|syllabus|examination|library|grievance|प्रवेश|छात्रवृत्ति|पाठ्यक्रम/i.test(text);
-    };
-
     const fetchQuickAccess = async () => {
       try {
         const res = await apiClient.get('/quick-access/list');
         const list = res?.data || res || [];
         if (isMounted && Array.isArray(list) && list.length > 0) {
-          const activeItems = list.filter((item) => item.isActive !== false && !isLegacy(item));
+          const activeItems = list.filter((item) => item.isActive !== false);
           if (activeItems.length > 0) {
             setLinks(activeItems);
           }
@@ -73,7 +68,7 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
   return (
     <Container className="my-3">
       {/* Unified Card Container Matching Portal Theme */}
-      <Card className="border shadow-sm rounded-4 overflow-hidden">
+      <Card className="quick-access-card border-0 rounded-4 overflow-hidden">
         {/* Unified Command-Center Header */}
         <div className="gov-card-header d-flex align-items-center gap-3">
           <div className="gov-card-header-icon">
@@ -96,8 +91,8 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
           <Row className="g-3 justify-content-center">
             {links.map((item, index) => {
               const colorInfo = COLOR_PALETTE[index % COLOR_PALETTE.length];
-              const color = item.color || colorInfo.color;
-              const bg = item.bg || colorInfo.bg;
+              const color = colorInfo.color;
+              const bg = colorInfo.bg;
 
               // Title resolution
               const titleEn = item.titleEn || item.titleEng || item.name || "Quick Link";
@@ -118,10 +113,10 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
 
               const CardContent = (
                 <div
-                  className="h-100 gov-interactive-card text-center p-3 d-flex flex-column align-items-center justify-content-between position-relative"
+                  className="h-100 gov-interactive-card text-center p-2 d-flex flex-column align-items-center position-relative"
                   style={{
                     borderTop: `4px solid ${color}`,
-                    minHeight: "135px"
+                    minHeight: "142px"
                   }}
                 >
                   {isExternal && (
@@ -134,10 +129,10 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
 
                   {/* Icon Circle */}
                   <div
-                    className="mx-auto mb-2.5 d-flex align-items-center justify-content-center rounded-circle"
+                    className="mx-auto mb-2 d-flex align-items-center justify-content-center rounded-circle"
                     style={{
-                      width: "48px",
-                      height: "48px",
+                      width: "42px",
+                      height: "42px",
                       transition: "all 0.3s ease",
                       background: bg,
                       color: color
@@ -148,7 +143,7 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
 
                   {/* Primary Label */}
                   <p
-                    className="mb-0 fw-bold text-dark lh-sm text-truncate w-100"
+                    className="quick-access-title mb-0 fw-bold text-dark lh-sm w-100"
                     style={{
                       fontSize: "13.5px",
                       transition: "color 0.2s ease"
@@ -160,7 +155,7 @@ const QuickAccess = ({ isHindi: propIsHindi }) => {
 
                   {/* Secondary Label */}
                   <p
-                    className="mb-0 text-muted mt-1 text-truncate w-100"
+                    className="quick-access-subtitle mb-0 text-muted mt-1 w-100"
                     style={{ fontSize: "11px" }}
                     title={isHindi ? titleEn : titleHi}
                   >

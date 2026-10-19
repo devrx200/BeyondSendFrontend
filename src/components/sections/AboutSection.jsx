@@ -38,12 +38,8 @@ const AboutSection = () => {
     fetchData();
   }, []);
 
-  const isLegacyData = (text = "") => {
-    return /higher education|chhattisgarh|universities|colleges|उच्च शिक्षा|विभाग/i.test(text);
-  };
-
   const dbTitle = isHindi ? aboutDepartment.titleHin : aboutDepartment.titleEng;
-  const sectionTitle = (!dbTitle || isLegacyData(dbTitle))
+  const sectionTitle = (!dbTitle || !dbTitle.trim())
     ? (isHindi ? "बियॉन्डसेंड के बारे में" : "About BeyondSend")
     : dbTitle;
 
@@ -65,7 +61,7 @@ const AboutSection = () => {
         "With industry-leading 99.9% delivery reliability, live analytics, and developer-friendly APIs, organizations scale their customer outreach and transactional notifications seamlessly."
       ];
 
-  const descriptionParagraphs = (isLegacyData(cleanDescription) || !cleanDescription.trim())
+  const descriptionParagraphs = (!cleanDescription.trim())
     ? defaultDescriptionParagraphs
     : cleanDescription.split("\n").map(line => line.trim()).filter(Boolean);
 
@@ -113,7 +109,7 @@ const AboutSection = () => {
                             textAlign: "justify",
                             fontSize: "14.5px",
                             lineHeight: 1.7,
-                            color: "#334155"
+                            color: "#4a463c"
                           }}
                         >
                           {text}
@@ -186,7 +182,7 @@ const AboutSection = () => {
                           background: "linear-gradient(135deg, var(--pub-primary) 0%, var(--pub-primary-hover) 100%)",
                           color: "#ffffff",
                           fontSize: "13.5px",
-                          boxShadow: "0 4px 14px rgba(79, 110, 247, 0.28)",
+                          boxShadow: "0 4px 14px rgba(120, 85, 0, 0.22)",
                           transition: "all 0.25s ease"
                         }}
                       >
@@ -204,7 +200,7 @@ const AboutSection = () => {
                       <div className="d-flex align-items-center gap-2">
                         <div
                           className="rounded-circle d-flex align-items-center justify-content-center text-white"
-                          style={{ width: 28, height: 28, background: "linear-gradient(135deg, #1e3a8a, #3b82f6)" }}
+                          style={{ width: 28, height: 28, background: "linear-gradient(135deg, #191919, #3a3a3a)", color: "#f5bd1f" }}
                         >
                           <FaUserTie size={12} />
                         </div>
@@ -272,7 +268,7 @@ const AboutSection = () => {
                                       fontSize: "clamp(0.82rem, 1.3vw, 0.88rem)",
                                       lineHeight: 1.35,
                                       wordBreak: "break-word",
-                                      color: "#475569"
+                                      color: "#605b50"
                                     }}
                                   >
                                     {designation}
@@ -318,7 +314,7 @@ const AboutSection = () => {
               toggle={() => setSelectedLeader(null)}
               className="text-white border-0 px-4 py-3"
               style={{
-                background: "linear-gradient(135deg, #0a1f5c 0%, #1a3a8f 60%, #1565c0 100%)",
+                background: "linear-gradient(135deg, #171717 0%, #303030 60%, #906600 100%)",
                 borderBottom: "3px solid #f59e0b"
               }}
             >
@@ -345,13 +341,13 @@ const AboutSection = () => {
                           ? (selectedLeader.profileUrl.startsWith("http")
                             ? selectedLeader.profileUrl
                             : `${BASE_HOST}${selectedLeader.profileUrl.startsWith("/") ? "" : "/"}${selectedLeader.profileUrl}`)
-                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedLeader.imgNameEng || selectedLeader.imgNameHin || "Leader")}&background=0c3c78&color=fff&bold=true`
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedLeader.imgNameEng || selectedLeader.imgNameHin || "Leader")}&background=906600&color=fff&bold=true`
                       }
                       alt={isHindi ? selectedLeader.imgNameHin || selectedLeader.imgNameEng : selectedLeader.imgNameEng}
                       className="leader-modal-avatar-img shadow-sm"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedLeader.imgNameEng || selectedLeader.imgNameHin || "Leader")}&background=0c3c78&color=fff&bold=true`;
+                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedLeader.imgNameEng || selectedLeader.imgNameHin || "Leader")}&background=906600&color=fff&bold=true`;
                       }}
                     />
                   </div>
@@ -364,7 +360,7 @@ const AboutSection = () => {
 
                 <Col md="8">
                   <div className="pe-md-2">
-                    <h4 className="fw-bold text-dark mb-1" style={{ color: "#0c3c78" }}>
+                    <h4 className="fw-bold text-dark mb-1" style={{ color: "#292929" }}>
                       {isHindi
                         ? selectedLeader.imgNameHin || selectedLeader.imgNameEng
                         : selectedLeader.imgNameEng || selectedLeader.imgNameHin}
@@ -376,7 +372,7 @@ const AboutSection = () => {
                       </div>
                     ))}
 
-                    <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-3 mb-3" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                    <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-3 mb-3" style={{ background: "#fff8e4", border: "1px solid #f0dc9a" }}>
                       <FaUserTie className="text-primary" />
                       <span className="fw-bold text-primary" style={{ fontSize: "13.5px" }}>
                         {isHindi
@@ -385,7 +381,7 @@ const AboutSection = () => {
                       </span>
                     </div>
 
-                    <div className="leader-modal-details p-3 rounded-3" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                    <div className="leader-modal-details p-3 rounded-3" style={{ background: "#fffdf7", border: "1px solid #eee9dd" }}>
                       <div className="d-flex align-items-center gap-2 mb-2 text-secondary fw-bold" style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                         <FaLandmark /> {isHindi ? "भूमिका एवं दायित्व" : "Role & Responsibilities"}
                       </div>

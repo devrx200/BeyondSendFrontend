@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge, Container } from "reactstrap";
 import {
-  FaPhone, FaEnvelope, FaLanguage, FaUniversalAccess,
+  FaPhone, FaEnvelope, FaUniversalAccess, FaChevronUp,
   FaSitemap, FaChevronDown, FaChevronRight, FaBars, FaTimes,
+  FaCommentDots, FaWhatsapp,
 } from "react-icons/fa";
 import { FaHouse } from "react-icons/fa6";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -47,7 +48,7 @@ const DesktopDropdown = ({ menu, isHindi, navigate, openExternalLink, depth = 0 
     <div ref={ref} className="dd-wrap" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         className={depth === 0 ? "nav-link-btn" : "dd-item d-flex justify-content-between w-100"}
-        onClick={() => setOpen(v => !v)} aria-expanded={open}
+        onClick={() => setOpen(true)} aria-expanded={open}
       >
         {label}
         {depth === 0
@@ -83,12 +84,19 @@ const MobileMenuItem = ({ menu, isHindi, navigate, openExternalLink, onClose }) 
 
   return (
     <div className="mob-item">
-      <button className="mob-btn" onClick={handleClick} aria-expanded={hasChildren ? open : undefined}>
+      <button
+        className="mob-btn"
+        onClick={handleClick}
+        aria-expanded={hasChildren ? open : undefined}
+        aria-controls={hasChildren ? `mobile-submenu-${menu._id}` : undefined}
+      >
         <span>{label}</span>
-        {hasChildren && <span className={`chevron${open ? " open" : ""}`}><FaChevronDown /></span>}
+        {hasChildren && <span className={`chevron${open ? " open" : ""}`} aria-hidden="true">
+          {open ? <FaChevronUp /> : <FaChevronRight />}
+        </span>}
       </button>
       {hasChildren && open && (
-        <div className="mob-sub">
+        <div className="mob-sub" id={`mobile-submenu-${menu._id}`}>
           {menu.submenu.map(sub => (
             <MobileMenuItem
               key={sub._id} menu={sub} isHindi={isHindi}
@@ -110,7 +118,7 @@ const Header = () => {
   const [headerData, setHeaderData] = useState(null);
 
   const navigate = useNavigate();
-  const { t, toggleLanguage, isHindi } = useLanguage();
+  const { t, isHindi } = useLanguage();
   const { increaseFontSize, decreaseFontSize, resetFontSize } = useAccessibility();
 
   const openExternalLink = (url, newTab = true) => {
@@ -133,8 +141,26 @@ const Header = () => {
     ]).finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = event => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [mobileOpen]);
+
   const visibleMenus = menuItems.slice(0, 10);
   const extraMenus   = menuItems.slice(10);
+  const whatsappPhone = (headerData?.phone || "+91 90368 80158").replace(/\D/g, "");
+  const whatsappUrl = `https://wa.me/${whatsappPhone}`;
 
   if (loading) return null;
 
@@ -142,7 +168,7 @@ const Header = () => {
     <>
       {/* ── TOP BAR: slim contact + tools strip ── */}
       <div className="corp-top-bar" role="banner">
-        <Container fluid className="px-3 px-lg-4">
+        <Container>
           <div className="corp-top-inner">
             {/* Left: contact */}
             <div className="corp-top-left">
@@ -170,14 +196,6 @@ const Header = () => {
                 <button className="corp-font-btn" onClick={resetFontSize}    title="Reset font size"    aria-label="Reset font size">A</button>
                 <button className="corp-font-btn" onClick={increaseFontSize} title="Increase font size" aria-label="Increase font size">A+</button>
               </div>
-              <button
-                className="corp-lang-btn"
-                onClick={toggleLanguage}
-                title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
-              >
-                <FaLanguage aria-hidden="true" />
-                {isHindi ? "English" : "हिंदी"}
-              </button>
               <Link to="/accessibility-statement" className="corp-top-link d-none d-lg-inline-flex">
                 <FaUniversalAccess aria-hidden="true" />
                 {t("Accessibility", "अभिगम्यता")}
@@ -193,31 +211,44 @@ const Header = () => {
 
       {/* ── LOGO BAR: clean corporate brand strip ── */}
       <div className="corp-logo-bar">
-        <Container fluid className="px-3 px-lg-4">
-          <div
-            className="corp-brand"
-            style={{ cursor: "pointer" }}
-            onClick={() => navigate("/")}
-            role="link"
-            aria-label="Go to home"
-          >
-            <img
-              src={getImageUrl(headerData?.logo)}
-              alt="BeyondSend Logo"
-              className="corp-brand-logo"
-              onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
-            />
-            <div className="corp-brand-text">
-              <div className="corp-brand-name">
-                {isHindi
-                  ? (headerData?.titleHin || "बियॉन्डसेंड")
-                  : (headerData?.titleEng || "BeyondSend")}
+        <Container>
+          <div className="d-flex align-items-center justify-content-between">
+            <div
+              className="corp-brand"
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate("/")}
+              role="link"
+              aria-label="Go to home"
+            >
+              <img
+                src={getImageUrl(headerData?.logo)}
+                alt="BeyondSend Logo"
+                className="corp-brand-logo"
+                onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
+              />
+              <div className="corp-brand-text">
+                <div className="corp-brand-name">
+                  {isHindi
+                    ? (headerData?.titleHin || "बियॉन्डसेंड")
+                    : (headerData?.titleEng || "BeyondSend")}
+                </div>
+                <div className="corp-brand-tagline">
+                  {isHindi
+                    ? (headerData?.subtitleHin || "कस्टमर कम्युनिकेशन प्लेटफॉर्म")
+                    : (headerData?.subtitleEng || "Customer Communication Platform")}
+                </div>
               </div>
-              <div className="corp-brand-tagline">
-                {isHindi
-                  ? (headerData?.subtitleHin || "कस्टमर कम्युनिकेशन प्लेटफॉर्म")
-                  : (headerData?.subtitleEng || "Customer Communication Platform")}
-              </div>
+            </div>
+
+            {/* Right Action: Request a Demo pill button on Main Logo Header Top */}
+            <div className="d-flex align-items-center gap-2">
+              <Link
+                to="/contact-us"
+                className="home-pill-btn"
+                id="main-logo-request-demo-btn"
+              >
+                {isHindi ? "डेमो का अनुरोध करें" : "Request a Demo"}
+              </Link>
             </div>
           </div>
         </Container>
@@ -225,7 +256,7 @@ const Header = () => {
 
       {/* ── MAIN NAV ── */}
       <nav className="site-navbar shadow-sm" aria-label="Main navigation">
-        <Container fluid className="d-flex align-items-center justify-content-between px-3 px-lg-4" style={{ flexWrap: "nowrap" }}>
+        <Container className="d-flex align-items-center justify-content-between" style={{ flexWrap: "nowrap" }}>
           {/* Mobile brand */}
           <div
             className="corp-mob-brand d-flex align-items-center gap-2 d-lg-none py-1"
@@ -235,18 +266,9 @@ const Header = () => {
             <img
               src={getImageUrl(headerData?.logo)}
               alt="BeyondSend Logo"
-              height={36}
-              style={{ objectFit: "contain" }}
+              className="corp-mob-logo"
               onError={e => (e.target.src = `${BASE_URL}beyondsend-logo.svg`)}
             />
-            <div className="lh-1">
-              <div className="fw-bold text-white" style={{ fontSize: "0.82rem" }}>
-                {isHindi ? (headerData?.titleHin || "बियॉन्डसेंड") : (headerData?.titleEng || "BeyondSend")}
-              </div>
-              <small style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.65)" }}>
-                {isHindi ? (headerData?.subtitleHin || "कस्टमर कम्युनिकेशन प्लेटफॉर्म") : (headerData?.subtitleEng || "Customer Communication Platform")}
-              </small>
-            </div>
           </div>
 
           {/* Desktop nav links */}
@@ -277,6 +299,26 @@ const Header = () => {
             )}
           </div>
 
+          <div className="corp-nav-actions d-none d-lg-flex" aria-label={t("Contact options", "संपर्क विकल्प")}>
+            <a
+              href={whatsappUrl}
+              className="btn btn-success rounded-pill corp-whatsapp-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t("Contact us on WhatsApp", "व्हाट्सऐप पर संपर्क करें")}
+            >
+              <FaWhatsapp aria-hidden="true" />
+              {t("Contact on WhatsApp", "व्हाट्सऐप पर संपर्क करें")}
+            </a>
+          </div>
+
+          <Link
+            to="/contact-us"
+            className="home-pill-btn corp-mobile-demo-btn d-none d-sm-inline-flex d-lg-none"
+          >
+            {isHindi ? "डेमो अनुरोध" : "Request Demo"}
+          </Link>
+
           {/* Hamburger */}
           <button
             className="ham-btn btn btn-sm ms-auto py-1 px-2 flex-shrink-0 d-lg-none"
@@ -295,7 +337,13 @@ const Header = () => {
         onClick={() => setMobileOpen(false)}
         aria-hidden="true"
       />
-      <div className={`mob-drawer${mobileOpen ? " open" : ""}`} role="dialog" aria-label="Mobile navigation">
+      <div
+        className={`mob-drawer${mobileOpen ? " open" : ""}`}
+        role="dialog"
+        aria-label="Mobile navigation"
+        aria-modal={mobileOpen}
+        aria-hidden={!mobileOpen}
+      >
         <div className="mob-drawer-hdr">
           <img
             src="/beyondsend-logo.svg"
@@ -318,6 +366,33 @@ const Header = () => {
             onClose={() => setMobileOpen(false)}
           />
         ))}
+        <div className="p-3 border-top mt-3">
+          <Link
+            to="/contact-us"
+            className="home-pill-btn w-100 justify-content-center"
+            onClick={() => setMobileOpen(false)}
+          >
+            {isHindi ? "डेमो का अनुरोध करें" : "Request a Demo"}
+          </Link>
+          <Link
+            to="/feedback"
+            className="corp-mobile-action"
+            onClick={() => setMobileOpen(false)}
+          >
+            <FaCommentDots aria-hidden="true" />
+            {t("Feedback", "प्रतिक्रिया")}
+          </Link>
+          <a
+            href={whatsappUrl}
+            className="btn btn-success corp-mobile-action corp-mobile-whatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setMobileOpen(false)}
+          >
+            <FaWhatsapp aria-hidden="true" />
+            {t("Contact on WhatsApp", "व्हाट्सऐप पर संपर्क करें")}
+          </a>
+        </div>
       </div>
     </>
   );

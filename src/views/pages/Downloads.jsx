@@ -18,7 +18,7 @@ const getFileIcon = (type = '') => {
   switch (type.toUpperCase()) {
     case 'PDF':  return <FaFilePdf  style={{ color: '#fe5d70' }}  aria-hidden="true" />;
     case 'DOC':
-    case 'DOCX': return <FaFileWord style={{ color: '#4f6ef7' }} aria-hidden="true" />;
+    case 'DOCX': return <FaFileWord style={{ color: '#8f6500' }} aria-hidden="true" />;
     case 'XLS':
     case 'XLSX': return <FaFileExcel style={{ color: '#20c997' }} aria-hidden="true" />;
     default:     return <FaDownload  aria-hidden="true" />;
@@ -27,8 +27,8 @@ const getFileIcon = (type = '') => {
 
 const FILE_TYPE_COLORS = {
   PDF:  { bg: 'rgba(254,93,112,0.1)',   color: '#fe5d70',  label: 'PDF' },
-  DOC:  { bg: 'rgba(79,110,247,0.1)',   color: '#4f6ef7',  label: 'DOC' },
-  DOCX: { bg: 'rgba(79,110,247,0.1)',   color: '#4f6ef7',  label: 'DOCX' },
+  DOC:  { bg: 'rgba(217,154,0,0.12)',   color: '#8f6500',  label: 'DOC' },
+  DOCX: { bg: 'rgba(217,154,0,0.12)',   color: '#8f6500',  label: 'DOCX' },
   XLS:  { bg: 'rgba(32,201,151,0.1)',   color: '#20c997',  label: 'XLS' },
   XLSX: { bg: 'rgba(32,201,151,0.1)',   color: '#20c997',  label: 'XLSX' },
 };
@@ -163,11 +163,11 @@ const Downloads = () => {
                           ) : (
                             downloads.map((item, index) => {
                               const ft = (item.fileType || '').toUpperCase();
-                              const ftColor = FILE_TYPE_COLORS[ft] || { bg: '#f1f5f9', color: '#475569', label: ft };
+                              const ftColor = FILE_TYPE_COLORS[ft] || { bg: '#f3f2ee', color: '#605b50', label: ft };
                               return (
                                 <tr key={item._id}>
                                   <td>
-                                    <span className="fw-semibold" style={{ color: '#64748b', fontSize: '0.8rem' }}>{index + 1}</span>
+                                    <span className="fw-semibold" style={{ color: '#746f64', fontSize: '0.8rem' }}>{index + 1}</span>
                                   </td>
                                   <td>
                                     <div className="d-flex align-items-center gap-2">
@@ -191,13 +191,13 @@ const Downloads = () => {
                                     </span>
                                   </td>
                                   <td className="text-nowrap">
-                                    <span className="d-flex align-items-center gap-1 small" style={{ color: '#64748b' }}>
+                                    <span className="d-flex align-items-center gap-1 small" style={{ color: '#746f64' }}>
                                       <FaCalendarAlt size={11} aria-hidden="true" />
                                       {new Date(item.createdAt).toLocaleDateString(isHindi ? 'hi-IN' : 'en-IN')}
                                     </span>
                                   </td>
                                   <td>
-                                    <span style={{ fontSize: '0.78rem', color: '#64748b', background: '#f1f5f9', padding: '2px 8px', borderRadius: 6 }}>
+                                    <span style={{ fontSize: '0.78rem', color: '#746f64', background: '#f3f2ee', padding: '2px 8px', borderRadius: 6 }}>
                                       {item.fileSize}
                                     </span>
                                   </td>

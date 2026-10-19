@@ -357,7 +357,7 @@ const AboutSectionManagement = () => {
         <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
           <div>
             <h3 className="adm-page-title mb-1">
-              🏢 {isHindi ? "विभाग के बारे में" : "About Department Content"}
+              🏢 {isHindi ? "कंपनी के बारे में" : "About Company Content"}
             </h3>
             <p className="adm-page-subtitle mb-0 text-white">
               {isHindi ? "सार्वजनिक 'हमारे बारे में' पृष्ठ पर दिखाया गया शीर्षक और विवरण" : "Title & description shown on the public About page"}
@@ -371,7 +371,7 @@ const AboutSectionManagement = () => {
                 <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
                   {isHindi ? "शीर्षक (अंग्रेजी)" : "Title (English)"}
                 </Label>
-                <Input name="titleEng" className="shadow-sm" value={aboutDepartment.titleEng} onChange={handleDeptChange} placeholder="Enter department title in English" />
+                <Input name="titleEng" className="shadow-sm" value={aboutDepartment.titleEng} onChange={handleDeptChange} placeholder="Enter company title in English" />
               </FormGroup>
             </Col>
             <Col md={6}>
@@ -379,7 +379,7 @@ const AboutSectionManagement = () => {
                 <Label className="fw-bold text-secondary mb-2" style={{ fontSize: "14px" }}>
                   {isHindi ? "शीर्षक (हिंदी)" : "Title (Hindi)"}
                 </Label>
-                <Input name="titleHin" className="shadow-sm" value={aboutDepartment.titleHin} onChange={handleDeptChange} placeholder="हिंदी में विभाग का शीर्षक दर्ज करें" />
+                <Input name="titleHin" className="shadow-sm" value={aboutDepartment.titleHin} onChange={handleDeptChange} placeholder="हिंदी में कंपनी का शीर्षक दर्ज करें" />
               </FormGroup>
             </Col>
             <Col md={6}>
@@ -402,7 +402,7 @@ const AboutSectionManagement = () => {
           <div className="d-flex justify-content-end mt-4 pt-4 border-top">
             <Button color="primary" disabled={deptSaving} onClick={saveAboutDepartment} className="px-4 shadow-sm d-flex align-items-center">
               <FaSave className="me-2" />
-              {deptSaving ? (isHindi ? "सहेजा जा रहा है..." : "Saving...") : (isHindi ? "विभाग सामग्री सहेजें" : "Save Department Content")}
+              {deptSaving ? (isHindi ? "सहेजा जा रहा है..." : "Saving...") : (isHindi ? "कंपनी सामग्री सहेजें" : "Save Company Content")}
             </Button>
           </div>
         </CardBody>
@@ -412,7 +412,7 @@ const AboutSectionManagement = () => {
         <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 p-4">
           <div>
             <h3 className="adm-page-title mb-1">
-              👥 {isHindi ? "विभाग के नेता प्रोफाइल" : "Department Leader Profiles"}
+              👥 {isHindi ? "कंपनी नेतृत्व प्रोफाइल" : "Company Leadership Profiles"}
             </h3>
             <p className="adm-page-subtitle mb-0 text-white">
               {isHindi ? "सार्वजनिक अबाउट सेक्शन लीडर प्रोफाइल प्रबंधित करें" : "Manage the public about section leader profiles"}

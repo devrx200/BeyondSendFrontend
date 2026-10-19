@@ -95,30 +95,30 @@ const ServerDown = ({ onRetry, retrying }) => {
                 {/* Animated Server SVG */}
                 <div className="mx-auto mb-4" style={{ maxWidth: 150 }} aria-hidden="true">
                   <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-100" style={{ height: 'auto' }}>
-                    <rect x="20" y="20" width="80" height="80" rx="8" fill="#0f172a" opacity="0.08" />
-                    <rect x="28" y="28" width="64" height="64" rx="4" fill="#0f172a" opacity="0.04" />
-                    <rect x="32" y="34" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <rect x="20" y="20" width="80" height="80" rx="8" fill="#191919" opacity="0.08" />
+                    <rect x="28" y="28" width="64" height="64" rx="4" fill="#191919" opacity="0.04" />
+                    <rect x="32" y="34" width="56" height="14" rx="3" fill="#191919" opacity="0.12" />
                     <circle cx="40" cy="41" r="3" fill="#10b981">
                       <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite" />
                     </circle>
-                    <rect x="48" y="38" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
-                    <rect x="32" y="52" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <rect x="48" y="38" width="32" height="6" rx="1.5" fill="#191919" opacity="0.07" />
+                    <rect x="32" y="52" width="56" height="14" rx="3" fill="#191919" opacity="0.12" />
                     <circle cx="40" cy="59" r="3" fill="#10b981">
                       <animate attributeName="opacity" values="1;0.2;1" dur="1.0s" repeatCount="indefinite" />
                     </circle>
-                    <rect x="48" y="56" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
-                    <rect x="32" y="70" width="56" height="14" rx="3" fill="#0f172a" opacity="0.12" />
+                    <rect x="48" y="56" width="32" height="6" rx="1.5" fill="#191919" opacity="0.07" />
+                    <rect x="32" y="70" width="56" height="14" rx="3" fill="#191919" opacity="0.12" />
                     <circle cx="40" cy="77" r="3" fill="#ef4444">
                       <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
                     </circle>
-                    <rect x="48" y="74" width="32" height="6" rx="1.5" fill="#0f172a" opacity="0.07" />
+                    <rect x="48" y="74" width="32" height="6" rx="1.5" fill="#191919" opacity="0.07" />
                     <g transform="translate(60,60)">
-                      <circle cx="0" cy="0" r="48" stroke="#3b82f6" strokeWidth="2" opacity="0.1" />
-                      <circle cx="0" cy="0" r="48" stroke="#3b82f6" strokeWidth="3" opacity="0.25" strokeDasharray="80 240" strokeLinecap="round">
+                      <circle cx="0" cy="0" r="48" stroke="#d99a00" strokeWidth="2" opacity="0.14" />
+                      <circle cx="0" cy="0" r="48" stroke="#d99a00" strokeWidth="3" opacity="0.35" strokeDasharray="80 240" strokeLinecap="round">
                         <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="3s" repeatCount="indefinite" />
                       </circle>
                     </g>
-                    <circle cx="60" cy="60" r="10" fill="#3b82f6" opacity="0.07">
+                    <circle cx="60" cy="60" r="10" fill="#d99a00" opacity="0.1">
                       <animate attributeName="r" values="8;20;8" dur="2s" repeatCount="indefinite" />
                       <animate attributeName="opacity" values="0.15;0.02;0.15" dur="2s" repeatCount="indefinite" />
                     </circle>
@@ -139,7 +139,7 @@ const ServerDown = ({ onRetry, retrying }) => {
 
                 <p className="server-down-desc">{t.desc}</p>
 
-                <hr style={{ borderColor: '#f1f5f9', margin: '28px 0' }} />
+                <hr style={{ borderColor: '#eee9dd', margin: '28px 0' }} />
 
                 {/* Info boxes */}
                 <Row className="g-3 text-start mb-4">
@@ -183,7 +183,7 @@ const ServerDown = ({ onRetry, retrying }) => {
                   </button>
                 </div>
 
-                <hr style={{ borderColor: '#f1f5f9', margin: '28px 0' }} />
+                <hr style={{ borderColor: '#eee9dd', margin: '28px 0' }} />
 
                 <div className="d-flex flex-column align-items-center gap-2">
                   <img
@@ -191,19 +191,19 @@ const ServerDown = ({ onRetry, retrying }) => {
                     alt="BeyondSend"
                     style={{ height: 'clamp(28px,3.5vw,40px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                   />
-                  <p className="fw-semibold small mb-0" style={{ color: '#64748b', fontFamily: 'var(--pub-font)' }}>{t.managed}</p>
+                  <p className="fw-bold small mb-0" style={{ color: '#746f64', fontFamily: 'var(--pub-font)' }}>{t.managed}</p>
+                  <span className="small text-muted" style={{ color: '#746f64', fontFamily: 'var(--pub-font)' }}>
+                    © {new Date().getFullYear()} {t.copyright}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="server-down-footer d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 mt-4 pt-2 px-2 text-center text-sm-start">
-              <span className="small order-2 order-sm-1" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--pub-font)' }}>
-                © {new Date().getFullYear()} {t.copyright}
-              </span>
+            {/* Floating language switcher */}
+            <div className="server-down-floating-lang floating-action-container floating-action-right">
               <button
                 type="button"
-                className="server-lang-toggle btn d-inline-flex align-items-center gap-2 order-1 order-sm-2"
+                className="btn btn-warning floating-action-btn floating-language-btn"
                 onClick={() => setLanguage((p) => (p === 'en' ? 'hi' : 'en'))}
                 title={language === 'en' ? 'हिंदी में बदलें / Switch to Hindi' : 'Switch to English'}
                 aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}

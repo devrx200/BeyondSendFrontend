@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Row, Col, Card, CardBody, CardHeader,
   Button, Badge, Modal, ModalHeader, ModalBody,
-  Spinner, Collapse, Container,
+  Spinner, Collapse,
 } from "reactstrap";
 import {
   FaFilePdf, FaPlayCircle, FaDownload,
@@ -456,121 +456,124 @@ const HelpTutorials = () => {
   };
 
   return (
-    <Container fluid="xl" className="py-4">
-      <div className="min-vh-100">
-        <div className="px-3 px-md-4">
-          {/* ── PAGE HEADER ── */}
-          <CardHeader className="adm-card-header p-3 border border-white d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded">
+    <div className="telecom-module-wrapper">
+      {/* ── UNIFIED COMMAND CARD HEADER ── */}
+      <Card className="adm-card mb-3">
+        <CardHeader className="adm-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div className="d-flex align-items-center gap-3">
+            <div className="rounded-circle d-flex align-items-center justify-content-center bg-info bg-opacity-20 flex-shrink-0 adm-header-icon-box">
+              <span style={{ fontSize: "1.25rem" }}>📘</span>
+            </div>
             <div>
-              <h3 className="adm-page-title mb-1">
-                📘 {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
-              </h3>
-              <p className="adm-page-subtitle mb-0 text-white">
+              <h4 className="adm-page-title mb-0 text-white">
+                {t("Help & Tutorials", "सहायता और ट्यूटोरियल")}
+              </h4>
+              <p className="adm-page-subtitle mb-0 text-white-50">
                 {t("Browse PDF documents and video guides", "PDF दस्तावेज़ और वीडियो गाइड देखें")}
               </p>
             </div>
-            <div className="d-flex flex-wrap gap-2">
-              <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
-                <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
-              </Badge>
-              <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
-                <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
-              </Badge>
-            </div>
-          </CardHeader>
+          </div>
+          <div className="d-flex flex-wrap gap-2">
+            <Badge color="danger" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
+              <FaFilePdf size={11} /> {pdfData.length} {t("PDFs", "PDF")}
+            </Badge>
+            <Badge color="primary" pill className="px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
+              <FaPlayCircle size={11} /> {videoData.length} {t("Videos", "वीडियो")}
+            </Badge>
+          </div>
+        </CardHeader>
+      </Card>
 
-          {/* ── SECTIONS ── */}
-          <Row className="g-4">
-            <Col xs={12} lg={6}>
-              {renderSection("pdf", pdfData, pdfPage, setPdfPage)}
-            </Col>
-            <Col xs={12} lg={6}>
-              {renderSection("video", videoData, videoPage, setVideoPage)}
-            </Col>
-          </Row>
-        </div>
+      {/* ── SECTIONS ── */}
+      <Row className="g-3 mb-3">
+        <Col xs={12} lg={6}>
+          {renderSection("pdf", pdfData, pdfPage, setPdfPage)}
+        </Col>
+        <Col xs={12} lg={6}>
+          {renderSection("video", videoData, videoPage, setVideoPage)}
+        </Col>
+      </Row>
 
-        {/* ── PREVIEW MODAL ── */}
-        <Modal
-          isOpen={previewModal}
+      {/* ── PREVIEW MODAL ── */}
+      <Modal
+        isOpen={previewModal}
+        toggle={() => setPreviewModal(false)}
+        size="xl"
+        centered>
+        <ModalHeader
           toggle={() => setPreviewModal(false)}
-          size="xl"
-          centered>
-          <ModalHeader
-            toggle={() => setPreviewModal(false)}
-            className="border-0 fw-bold bg-dark text-white">
-            <span className="text-truncate" style={{ fontSize: "1rem" }}>👁️ {previewTitle}</span>
-          </ModalHeader>
-          <div className="bg-light border-bottom px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <small className="text-muted text-truncate" style={{ maxWidth: "60%" }}>
-              🔗 <span className="user-select-all">{previewUrl}</span>
-            </small>
-            <div className="d-flex gap-2">
+          className="border-0 fw-bold bg-dark text-white">
+          <span className="text-truncate" style={{ fontSize: "1rem" }}>👁️ {previewTitle}</span>
+        </ModalHeader>
+        <div className="bg-light border-bottom px-3 py-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <small className="text-muted text-truncate" style={{ maxWidth: "60%" }}>
+            🔗 <span className="user-select-all">{previewUrl}</span>
+          </small>
+          <div className="d-flex gap-2">
+            <a
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-sm btn-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+              style={{ fontSize: "0.78rem" }}
+            >
+              <FaExternalLinkAlt size={10} />
+              <span>{t("Open in New Tab", "नए टैब में खोलें")}</span>
+            </a>
+            {isPdfFile(previewUrl) && (
               <a
                 href={previewUrl}
+                download
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-sm btn-primary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
+                className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
                 style={{ fontSize: "0.78rem" }}
               >
-                <FaExternalLinkAlt size={10} />
-                <span>{t("Open in New Tab", "नए टैब में खोलें")}</span>
+                <FaDownload size={10} />
+                <span>{t("Download", "डाउनलोड")}</span>
               </a>
-              {isPdfFile(previewUrl) && (
-                <a
-                  href={previewUrl}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 d-inline-flex align-items-center gap-1.5"
-                  style={{ fontSize: "0.78rem" }}
-                >
-                  <FaDownload size={10} />
-                  <span>{t("Download", "डाउनलोड")}</span>
-                </a>
-              )}
-            </div>
+            )}
           </div>
-          <ModalBody className="p-0 bg-dark" style={{ height: "72vh" }}>
-            {isVideoFile(previewUrl) ? (
-              <video
-                src={previewUrl}
-                controls
-                autoPlay
-                className="w-100 h-100"
-                style={{ objectFit: "contain", background: "#000" }}
-              />
-            ) : isPdfFile(previewUrl) ? (
-              <object
-                data={previewUrl}
-                type="application/pdf"
-                width="100%"
-                height="100%"
-                style={{ display: "block" }}
-              >
-                <iframe
-                  src={previewUrl}
-                  width="100%"
-                  height="100%"
-                  style={{ border: "none" }}
-                  title={previewTitle}
-                />
-              </object>
-            ) : (
+        </div>
+        <ModalBody className="p-0 bg-dark" style={{ height: "72vh" }}>
+          {isVideoFile(previewUrl) ? (
+            <video
+              src={previewUrl}
+              controls
+              autoPlay
+              className="w-100 h-100"
+              style={{ objectFit: "contain", background: "#000" }}
+            />
+          ) : isPdfFile(previewUrl) ? (
+            <object
+              data={previewUrl}
+              type="application/pdf"
+              width="100%"
+              height="100%"
+              style={{ display: "block" }}
+            >
               <iframe
                 src={previewUrl}
                 width="100%"
                 height="100%"
-                style={{ border: "none", display: "block" }}
+                style={{ border: "none" }}
                 title={previewTitle}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
               />
-            )}
-          </ModalBody>
-        </Modal>
-      </div>
-    </Container>
+            </object>
+          ) : (
+            <iframe
+              src={previewUrl}
+              width="100%"
+              height="100%"
+              style={{ border: "none", display: "block" }}
+              title={previewTitle}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
+        </ModalBody>
+      </Modal>
+    </div>
   );
 };
 

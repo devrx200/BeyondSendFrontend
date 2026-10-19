@@ -7,7 +7,7 @@ import {
 } from "reactstrap";
 import { FaBullhorn, FaPlus, FaEdit, FaTrash, FaSyncAlt, FaToggleOn, FaToggleOff, FaEllipsisV } from "react-icons/fa";
 import apiClient from "@apiService";
-import { useToast, ToastContainer } from "@/utilities/WPToast";
+import { useToast, ToastContainer, wpSwal } from "@/utilities/WPToast";
 import { PageLoader } from "@/components";
 import { ICON_MAP } from "@/config/menu/authorizedMenu";
 
@@ -122,7 +122,14 @@ const ChannelRegistry = () => {
     setLoading(true);
     try {
       const res = await apiClient.get("/registry/channels/all");
-      setChannels(res?.data?.data || []);
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+        ? res.data.data
+        : Array.isArray(res)
+        ? res
+        : [];
+      setChannels(list);
     } catch (err) {
       toast.error(err?.message || "Failed to load channels");
     } finally {
@@ -193,7 +200,11 @@ const ChannelRegistry = () => {
   };
 
   const remove = async (channel) => {
-    if (!window.confirm(`Delete channel ${channel.code}? Users bound to it will lose the configuration.`)) return;
+    const isConfirmed = await wpSwal.confirm(
+      "Delete Channel?",
+      `Delete channel <strong>${channel.code}</strong>? Users bound to it will lose the configuration.`
+    );
+    if (!isConfirmed) return;
     try {
       const res = await apiClient.delete(`/registry/channels/${channel.code}`);
       toast.success(res?.data?.message || "Channel deleted");
@@ -254,8 +265,6 @@ const ChannelRegistry = () => {
                 <tr>
                   <th>Channel</th>
                   <th>Category</th>
-                  <th>Credit key</th>
-                  <th>Fields</th>
                   <th>Status</th>
                   <th className="text-end">Actions</th>
                 </tr>
@@ -275,14 +284,6 @@ const ChannelRegistry = () => {
                         </div>
                       </td>
                       <td><Badge color="light" className="text-dark border">{c.category}</Badge></td>
-                      <td>
-                        <code className="small">{c.creditKey || "—"}</code>
-                      </td>
-                      <td>
-                        <small className="text-muted">
-                          {(c.configSchema || []).length} field(s)
-                        </small>
-                      </td>
                       <td>
                         {c.isActive
                           ? <Badge color="success">Active</Badge>
@@ -383,49 +384,13 @@ const ChannelRegistry = () => {
                     />
                   </FormGroup>
                 </Col>
-                <Col md={8}>
-                  <FormGroup>
-                    <Label className="small fw-semibold">Credit key</Label>
-                    <Input
-                      value={editing.creditKey || ""} placeholder="whatsappCredits"
-                      onChange={(e) => set("creditKey", e.target.value)}
-                    />
-                    <small className="text-muted">Field on the user document holding this channel&apos;s balance.</small>
-                  </FormGroup>
-                </Col>
-                <Col md={4} className="d-flex align-items-end pb-2">
-                  <FormGroup check className="mb-0">
-                    <Input
-                      type="switch" checked={!!editing.isCreditMetered}
-                      onChange={(e) => set("isCreditMetered", e.target.checked)}
-                    />
-                    <Label className="small mb-0" check>Metered</Label>
-                  </FormGroup>
-                </Col>
-                <Col xs={12}>
-                  <FormGroup>
-                    <Label className="small fw-semibold">Capabilities (JSON)</Label>
-                    <Input
-                      type="textarea" rows={3} className="font-monospace"
-                      value={editing.capabilities || "{}"}
-                      onChange={(e) => set("capabilities", e.target.value)}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col xs={12}>
-                  <Label className="small fw-semibold">Configuration fields</Label>
-                  <FieldEditor
-                    value={editing.configSchema || []}
-                    onChange={(v) => set("configSchema", v)}
-                  />
-                </Col>
                 <Col xs={12}>
                   <FormGroup check>
                     <Input
                       type="switch" checked={!!editing.isActive}
                       onChange={(e) => set("isActive", e.target.checked)}
                     />
-                    <Label className="small mb-0" check>Active</Label>
+                    <Label className="small mb-0" check>Active Status</Label>
                   </FormGroup>
                 </Col>
               </Row>

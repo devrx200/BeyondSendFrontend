@@ -47,6 +47,13 @@ export const AboutSectionManagement = lazy(() => import("../views/authorized/cms
 export const WhatsappTemplates = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappTemplates"));
 export const WhatsappResponses = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappResponses"));
 
+/* ─── 1b. Telegram Modules (telegram-modules) ────────────────────────────── */
+export const TelegramTemplates = lazy(() => import("../views/authorized/telegram-modules/TelegramTemplates"));
+export const TelegramBroadcasts = lazy(() => import("../views/authorized/telegram-modules/TelegramBroadcasts"));
+export const TelegramGatewayOtp = lazy(() => import("../views/authorized/telegram-modules/TelegramGatewayOtp"));
+export const TelegramBotConfig = lazy(() => import("../views/authorized/telegram-modules/TelegramBotConfig"));
+export const TelegramDocs = lazy(() => import("../views/authorized/telegram-modules/TelegramDocs"));
+
 /* ─── 2. Email Modules (email-modules) ────────────────────────────────────── */
 export const EmailTemplates = lazy(() => import("../views/authorized/email-modules/EmailTemplates"));
 
@@ -59,7 +66,6 @@ export const TransactionalDashboard = lazy(() => import("../views/authorized/api
 export const MessageLogManagement = lazy(() => import("../views/authorized/apis-modules/MessageLogManagement"));
 
 /* ─── 4. Account (per-user configuration) ─────────────────────────────────── */
-export const UserChannelsConfig = lazy(() => import("../views/authorized/account-configs/UserChannelsConfig"));
 export const UserCommunicationConfig = lazy(() => import("../views/authorized/account-configs/UserCommunicationConfig"));
 export const UserSettings = lazy(() => import("../views/authorized/account-configs/UserSettings"));
 export const CreditTopupManagement = lazy(() => import("../views/authorized/account-configs/CreditTopupManagement"));
@@ -70,6 +76,8 @@ export const SubscriptionsManagement = lazy(() => import("../views/authorized/ac
 export const ChannelRegistry = lazy(() => import("../views/authorized/settings/ChannelRegistry"));
 export const ProviderRegistry = lazy(() => import("../views/authorized/settings/ProviderRegistry"));
 export const ChannelMatrix = lazy(() => import("../views/authorized/settings/ChannelMatrix"));
+export const ChannelCategoryMaster = lazy(() => import("../views/authorized/settings/ChannelCategoryMaster"));
+export const CreditPlanChartManagement = lazy(() => import("../views/authorized/settings/CreditPlanChartManagement"));
 
 /* ─── 6. Onboarding ──────────────────────────────────────────────────────── */
 export const Onboarding = lazy(() => import("../views/authorized/onboarding/Onboarding"));

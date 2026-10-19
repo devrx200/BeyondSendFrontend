@@ -72,7 +72,24 @@ const AuthorizedHeader = ({ toggleSidebar }) => {
           "rcsCredits",
           "pushCredits"
         ];
-        const sum = keys.reduce((acc, k) => acc + (Number(balances[k]) || 0), 0);
+        let sum = 0;
+        keys.forEach((k) => {
+          const val = balances[k];
+          if (typeof val === "number") {
+            sum += val;
+          } else if (val && typeof val === "object") {
+            Object.values(val).forEach((subVal) => {
+              if (typeof subVal === "number") sum += subVal;
+            });
+          }
+        });
+        if (sum === 0) {
+          Object.keys(balances).forEach((k) => {
+            if (typeof balances[k] === "number" && k.endsWith("_credits")) {
+              sum += balances[k];
+            }
+          });
+        }
         setWalletTotal(sum);
       }
     } catch {
@@ -132,29 +149,57 @@ const AuthorizedHeader = ({ toggleSidebar }) => {
   /* ================= LOGOUT ================= */
 
   const logout = async () => {
+    const isImpersonating = !!(
+      sessionStorage.getItem("impersonatorAdminToken") ||
+      localStorage.getItem("impersonatorAdminToken")
+    );
+
+    let confirmTitle = "Confirm Logout";
+    let confirmText = "Are you sure you want to logout?";
+
+    if (isImpersonating) {
+      confirmTitle = "Exit or Logout?";
+      confirmText = "You are currently in Impersonation Mode. Exit to Admin session or log out completely?";
+    }
 
     const result = await Swal.fire({
-      title: "Confirm Logout",
-      text: "Are you sure you want to logout?",
+      title: confirmTitle,
+      text: confirmText,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes Logout",
+      showDenyButton: isImpersonating,
+      confirmButtonText: isImpersonating ? "Log Out Completely" : "Yes Logout",
+      denyButtonText: "Exit to Admin Session",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#dc3545",
-      cancelButtonColor: "#0d6efd",
-      reverseButtons: true
+      confirmButtonColor: "var(--pub-danger)",
+      denyButtonColor: "#3c0082",
+      cancelButtonColor: "var(--pub-accent)",
+      reverseButtons: false,
     });
+
+    if (result.isDenied && isImpersonating) {
+      exitImpersonation();
+      return;
+    }
 
     if (!result.isConfirmed) return;
 
     try {
       const token = sessionStorage.getItem("authToken");
-      await apiClient.post('/auth/logout', { token });
+      if (token) {
+        await apiClient.post('/auth/logout', { token });
+      }
     } catch (error) {
       console.log(error);
     }
 
     sessionStorage.clear();
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("impersonatorAdminToken");
+    localStorage.removeItem("impersonatorAdminUser");
+    localStorage.removeItem("impersonatorAdminRole");
 
     await Swal.fire({
       icon: "success",
@@ -189,8 +234,102 @@ const AuthorizedHeader = ({ toggleSidebar }) => {
     weekday: "long"
   });
 
+  const impersonatorToken =
+    sessionStorage.getItem("impersonatorAdminToken") ||
+    localStorage.getItem("impersonatorAdminToken");
+
+  const exitImpersonation = async () => {
+    const currentImpersonateToken = sessionStorage.getItem("authToken");
+    const origToken =
+      sessionStorage.getItem("impersonatorAdminToken") ||
+      localStorage.getItem("impersonatorAdminToken");
+    const origUser =
+      sessionStorage.getItem("impersonatorAdminUser") ||
+      localStorage.getItem("impersonatorAdminUser");
+    const origRole =
+      sessionStorage.getItem("impersonatorAdminRole") ||
+      localStorage.getItem("impersonatorAdminRole");
+
+    // Cleanly terminate shadow session on backend without touching user's password sessions
+    if (currentImpersonateToken) {
+      try {
+        await apiClient.post("/auth/logout", { token: currentImpersonateToken });
+      } catch (e) {
+        console.warn("Logout impersonation token warning:", e);
+      }
+    }
+
+    if (origToken) {
+      sessionStorage.setItem("authToken", origToken);
+      localStorage.setItem("authToken", origToken);
+    }
+    if (origRole) {
+      sessionStorage.setItem("userRole", origRole);
+      localStorage.setItem("userRole", origRole);
+    }
+    if (origUser) {
+      sessionStorage.setItem("userData", origUser);
+      localStorage.setItem("userData", origUser);
+    }
+
+    sessionStorage.removeItem("impersonatorAdminToken");
+    sessionStorage.removeItem("impersonatorAdminUser");
+    sessionStorage.removeItem("impersonatorAdminRole");
+    localStorage.removeItem("impersonatorAdminToken");
+    localStorage.removeItem("impersonatorAdminUser");
+    localStorage.removeItem("impersonatorAdminRole");
+
+    // If opened as a secondary new tab with window.opener, allow closing tab
+    if (window.opener && window.history.length <= 2) {
+      const closeRes = await Swal.fire({
+        icon: "info",
+        title: "Session Terminated",
+        text: "Impersonation ended safely. Close this tab and return to your Admin window?",
+        showCancelButton: true,
+        confirmButtonText: "Close This Tab",
+        cancelButtonText: "Keep & Return to Admin Here",
+      });
+      if (closeRes.isConfirmed) {
+        window.close();
+        return;
+      }
+    }
+
+    Swal.fire({
+      icon: "info",
+      title: "Exited Impersonation",
+      text: "Returning to administrator session...",
+      timer: 1000,
+      showConfirmButton: false,
+    });
+    setTimeout(() => {
+      window.location.href = "/authorized/users-management";
+    }, 1000);
+  };
+
   return (
     <>
+      {/* ── PERSISTENT IMPERSONATION BANNER ── */}
+      {impersonatorToken && (
+        <div
+          className="bg-warning text-dark py-1.5 px-3 d-flex align-items-center justify-content-between flex-wrap gap-2 shadow-sm border-bottom border-dark border-opacity-25"
+          style={{ position: "sticky", top: 0, zIndex: 1050 }}
+        >
+          <div className="d-flex align-items-center gap-2 small">
+            <span className="badge bg-dark text-white px-2 py-1">🕶️ Impersonation Mode</span>
+            <span>
+              You are currently managing: <strong>{profile?.name || profile?.fullName || "Account"}</strong> ({profile?.role})
+            </span>
+            <span className="text-muted d-none d-md-inline">• Administrator session is securely preserved</span>
+          </div>
+          <button
+            className="btn btn-sm btn-dark text-white fw-bold py-1 px-3 shadow-sm d-flex align-items-center gap-1"
+            onClick={exitImpersonation}
+          >
+            <span>Exit Impersonation &amp; Return to Admin</span>
+          </button>
+        </div>
+      )}
 
       {/* ================= HEADER ================= */}
 
@@ -339,7 +478,7 @@ const AuthorizedHeader = ({ toggleSidebar }) => {
               <DropdownItem
                 className="adm-profile-item is-primary"
                 onClick={() => {
-                  setProfileModal(true);
+                  navigate("/authorized/account/profile-settings");
                   setProfileDropdown(false);
                 }}
               >
@@ -380,208 +519,6 @@ const AuthorizedHeader = ({ toggleSidebar }) => {
         </div>
 
       </header>
-
-      {/* ================= PROFILE MODAL ================= */}
-      <Modal
-        isOpen={profileModal}
-        toggle={() => setProfileModal(false)}
-        size="lg"
-        centered
-        className="adm-pro-profile-modal"
-      >
-        <ModalHeader
-          toggle={() => setProfileModal(false)}
-          className="adm-card-header border-0 text-white p-3"
-        >
-          <div className="d-flex align-items-center gap-2">
-            <FaIdBadge size={18} />
-            <span className="fw-bold fs-5">
-              {isHindi ? "उपयोगकर्ता प्रोफ़ाइल विवरण" : "User Profile Details"}
-            </span>
-          </div>
-        </ModalHeader>
-
-        <ModalBody className="p-4 bg-light">
-          {profile && (
-            <div className="d-flex flex-column gap-3">
-              {/* HERO PROFILE CARD */}
-              <div className="card border shadow-sm rounded-4 overflow-hidden position-relative bg-white">
-                <div className="bg-primary" style={{ height: "4px" }} />
-                <div className="card-body p-4">
-                  <div className="d-flex align-items-center flex-column flex-sm-row gap-4">
-                    {/* AVATAR WITH ACTIVE GLOW */}
-                    <div className="position-relative flex-shrink-0">
-                      <img
-                        src={
-                          profile?.profileImage
-                            ? `${BASE_HOST}${profile.profileImage}`
-                            : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || "Admin")}&background=0d9488&color=fff&bold=true&size=160`
-                        }
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || "Admin")}&background=0d9488&color=fff&bold=true&size=160`;
-                        }}
-                        alt={profile?.name || "Profile"}
-                        className="rounded-circle shadow-sm border border-3 border-white object-fit-cover"
-                        width="96"
-                        height="96"
-                      />
-                      <span
-                        className={`position-absolute bottom-0 end-0 rounded-circle border border-2 border-white p-1.5 ${profile?.isActive ? "bg-success" : "bg-secondary"}`}
-                        title={profile?.isActive ? "Active Now" : "Inactive"}
-                      />
-                    </div>
-
-                    {/* NAME & META INFO */}
-                    <div className="flex-grow-1 text-center text-sm-start">
-                      <h4 className="fw-bold text-dark mb-1">
-                        {profile?.name}
-                      </h4>
-                      <p className="text-secondary fw-semibold mb-2 d-flex align-items-center justify-content-center justify-content-sm-start gap-1.5 small">
-                        <FaBriefcase size={13} className="text-primary" />
-                        <span>{profile?.userDeginations || profile?.role || "Administrator"}</span>
-                      </p>
-
-                      <div className="d-flex align-items-center justify-content-center justify-content-sm-start flex-wrap gap-2">
-                        {/* ROLE PILL */}
-                        <span className="badge bg-primary rounded-pill px-3 py-1.5 fw-bold shadow-sm d-inline-flex align-items-center gap-1">
-                          <FaShieldAlt size={11} />
-                          <span>{profile?.role || "ADMIN"}</span>
-                        </span>
-
-                        {/* ACTIVE STATUS PILL */}
-                        <span className={`badge ${profile?.isActive ? "bg-success-subtle text-success border border-success-subtle" : "bg-secondary-subtle text-secondary border border-secondary-subtle"} rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1 shadow-sm`}>
-                          <span
-                            className={`rounded-circle d-inline-block ${profile?.isActive ? "bg-success" : "bg-secondary"}`}
-                            style={{ width: "7px", height: "7px" }}
-                          />
-                          <span>{profile?.isActive ? "Active" : "Inactive"}</span>
-                        </span>
-
-                        {/* APPROVAL STATUS */}
-                        {profile?.status && (
-                          <span className={`badge ${profile?.status === "APPROVED" ? "bg-success-subtle text-success border border-success-subtle" : profile?.status === "REJECTED" ? "bg-danger-subtle text-danger border border-danger-subtle" : "bg-warning-subtle text-warning border border-warning-subtle"} rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1 shadow-sm`}>
-                            <FaCheckCircle size={10} />
-                            <span>{profile?.status}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* DETAILS GRID */}
-              <div className="row g-3">
-                {/* CONTACT INFORMATION */}
-                <div className="col-12 col-md-6">
-                  <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                    <div className="card-body p-4">
-                      <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                        <div className="rounded-3 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary p-2">
-                          <FaEnvelope size={14} />
-                        </div>
-                        <h6 className="fw-bold text-dark mb-0 fs-6">
-                          {isHindi ? "संपर्क विवरण" : "Contact Details"}
-                        </h6>
-                      </div>
-
-                      <div className="d-flex flex-column gap-3">
-                        {/* EMAIL */}
-                        <div className="p-3 rounded-3 bg-light border">
-                          <small className="text-muted d-block fw-bold text-uppercase small">
-                            {isHindi ? "ईमेल आईडी" : "Email Address"}
-                          </small>
-                          <div className="fw-semibold text-dark text-truncate mt-1 d-flex align-items-center gap-2 small">
-                            <FaEnvelope size={12} className="text-primary" />
-                            <span>{profile?.email || "N/A"}</span>
-                          </div>
-                        </div>
-
-                        {/* MOBILE */}
-                        <div className="p-3 rounded-3 bg-light border">
-                          <small className="text-muted d-block fw-bold text-uppercase small">
-                            {isHindi ? "मोबाइल नंबर" : "Mobile Number"}
-                          </small>
-                          <div className="fw-semibold text-dark mt-1 d-flex align-items-center gap-2 small">
-                            <FaPhoneAlt size={12} className="text-primary" />
-                            <span>{profile?.mobile || "N/A"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECURITY & PERMISSIONS */}
-                <div className="col-12 col-md-6">
-                  <div className="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                    <div className="card-body p-4">
-                      <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
-                        <div className="rounded-3 d-flex align-items-center justify-content-center bg-info bg-opacity-10 text-info p-2">
-                          <FaKey size={14} />
-                        </div>
-                        <h6 className="fw-bold text-dark mb-0 fs-6">
-                          {isHindi ? "अनुमतियाँ एवं नियंत्रण" : "Permissions & Controls"}
-                        </h6>
-                      </div>
-
-                      {/* PERMISSIONS */}
-                      <div className="mb-4">
-                        <small className="text-muted d-block fw-bold text-uppercase mb-2 small">
-                          {isHindi ? "अनुमतियाँ (Permissions)" : "Assigned Permissions"}
-                        </small>
-                        <div className="d-flex flex-wrap gap-2">
-                          {profile?.permissions?.length ? (
-                            profile.permissions.map((item, index) => (
-                              <span
-                                key={index}
-                                className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"
-                              >
-                                <span>🔒</span>
-                                <span>{item}</span>
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-muted small fst-italic">
-                              {isHindi ? "कोई अनुमति असाइन नहीं" : "No specific permissions assigned"}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* CONTROLS */}
-                      <div>
-                        <small className="text-muted d-block fw-bold text-uppercase mb-2 small">
-                          <FaCogs className="me-1.5" />
-                          {isHindi ? "सिस्टम नियंत्रण (Controls)" : "System Controls"}
-                        </small>
-                        <div className="d-flex flex-wrap gap-2">
-                          {profile?.controls?.length ? (
-                            profile.controls.map((item, index) => (
-                              <span
-                                key={index}
-                                className="badge bg-dark text-white rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"
-                              >
-                                <span>⚙️</span>
-                                <span>{item}</span>
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-muted small fst-italic">
-                              {isHindi ? "कोई नियंत्रण नहीं" : "Standard access"}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </ModalBody>
-      </Modal>
 
     </>
   );

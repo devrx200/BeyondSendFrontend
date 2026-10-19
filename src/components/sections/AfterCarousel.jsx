@@ -55,12 +55,12 @@ const PLATFORM_STATS = [
 ];
 
 const colorMap = {
-  navy: { bar: "#1e40af", bg: "#eff6ff", icon: "#1e40af" },
-  primary: { bar: "#1565C0", bg: "#E6F1FB", icon: "#1565C0" },
+  navy: { bar: "#16805d", bg: "#e7f8ef", icon: "#16805d" },
+  primary: { bar: "#906600", bg: "#fff3c4", icon: "#906600" },
   danger: { bar: "#C62828", bg: "#FCEBEB", icon: "#C62828" },
   success: { bar: "#2E7D32", bg: "#EAF3DE", icon: "#2E7D32" },
   warning: { bar: "#E65100", bg: "#FAEEDA", icon: "#E65100" },
-  info: { bar: "#00838F", bg: "#E1F5EE", icon: "#00838F" },
+  info: { bar: "#16805d", bg: "#e7f8ef", icon: "#16805d" },
 };
 
 const AfterCarousel = () => {

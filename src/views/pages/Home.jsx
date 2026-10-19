@@ -10,22 +10,24 @@ import { useLanguage } from "../../contexts/LanguageContext";
 const Home = () => {
   const { isHindi } = useLanguage();
 
-  const titleEn = "BeyondSend - Customer Communication & Marketing Automation Platform";
-  const titleHi = "बियॉन्डसेंड - कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म";
+  const titleEn = "BeyondSend | Omnichannel CPaaS Platform in India";
+  const titleHi = "BeyondSend - भारत का ओम्नीचैनल CPaaS प्लेटफ़ॉर्म";
 
-  const descEn = "BeyondSend is an enterprise customer communication and marketing automation platform that empowers businesses to engage customers across SMS, WhatsApp, RCS, and Email from a unified console.";
-  const descHi = "बियॉन्डसेंड एक एंटरप्राइज कस्टमर कम्युनिकेशन एवं मार्केटिंग ऑटोमेशन प्लेटफॉर्म है जो व्यवसायों को एसएमएस, व्हाट्सएप, आरसीएस और ईमेल पर ग्राहकों से जुड़ने में सक्षम बनाता है।";
+  const descEn = "Unify SMS, RCS, email, WhatsApp, and voice with BeyondSend's omnichannel CPaaS platform in India. Improve delivery with real-time insights and secure infrastructure.";
+  const descHi = "BeyondSend के ओम्नीचैनल CPaaS प्लेटफ़ॉर्म से SMS, RCS, ईमेल, WhatsApp और वॉइस संचार एक जगह संभालें। रीयल-टाइम इनसाइट्स और सुरक्षित इंफ्रास्ट्रक्चर पाएं।";
 
   const homeKeywords = [
     "BeyondSend",
-    "Customer Communication",
-    "Marketing Automation Platform",
-    "Bulk SMS Gateway",
-    "WhatsApp Business Solution",
-    "RCS Messaging Service",
-    "Transactional Email API",
-    "Voice Broadcasting Platform",
-    "Telecom API Solutions"
+    "Omnichannel CPaaS Platform India",
+    "Customer Communication Platform",
+    "Enterprise CPaaS",
+    "Bulk SMS Service India",
+    "SMS API India",
+    "WhatsApp Business API",
+    "RCS Business Messaging",
+    "Transactional Email Service",
+    "Voice Communication Platform",
+    "Marketing Automation Platform"
   ];
 
   const softwareSchema = {
@@ -53,11 +55,10 @@ const Home = () => {
         canonical="https://beyondsend.in/"
         schema={softwareSchema}
       />
-
       <main role="main" id="main-content">
         <HeroSection />
-        <FeaturesSection />
         <AboutSection />
+        <FeaturesSection />
         <QuickAccess isHindi={isHindi} />
       </main>
     </>

@@ -6,8 +6,11 @@ import LanguageToggleFloating from "./utilities/LanguageToggleFloating";
 import FeedbackToggleFloating from "./utilities/FeedbackToggleFloating";
 import AppRoutes from "./routes/routes";
 import GlobalLinkHandler from "./utilities/GlobalLinkHandler";
-import "./css/BeyondSendTheme.scss";
+import { ToastContainer } from "./utilities/WPToast";
+import "./assets/css/BeyondSendTheme.scss";
 import "./App.scss";
+import './assets/css/enterprise-design.scss';
+import "./assets/css/PublicPagesPolish.scss";
 function App() {
   return (
     <Router basename="/">
@@ -16,6 +19,7 @@ function App() {
           <AccessibilityProvider>
             <AppRoutes />
             <GlobalLinkHandler />
+            <ToastContainer />
             <LanguageToggleFloating />
             <FeedbackToggleFloating />
           </AccessibilityProvider>

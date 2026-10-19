@@ -3,22 +3,23 @@ import { Row, Col } from 'reactstrap';
 import {
   FaMapMarkerAlt, FaPhone, FaClock, FaUserTie,
   FaEnvelope, FaBuilding, FaFax,
+  FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter
 } from 'react-icons/fa';
 import { PageLayout, PageLoader } from "@/components";
 import { useLanguage } from '../../contexts/LanguageContext';
 import apiClient, { BASE_HOST as API } from "@apiService";
-import officeImage from '/image.png';
+// Office image is served from public folder at root path
+const officeImage = '/image.png';
 
 /* ── Reusable contact info row ── */
-const ContactRow = ({ icon, label, value, href, color = 'blue' }) => {
+const ContactRow = ({ icon, label, value, href, color = 'gold' }) => {
   const colorMap = {
-    blue:   { bg: 'rgba(79,110,247,0.1)',  text: '#4f6ef7' },
-    teal:   { bg: 'rgba(0,197,235,0.1)',   text: '#00c5eb' },
-    gold:   { bg: 'rgba(254,147,101,0.1)', text: '#ea580c' },
-    violet: { bg: 'rgba(79,110,247,0.1)',  text: '#4f6ef7' },
+    gold:   { bg: 'rgba(245,189,31,0.14)', text: '#805c00' },
+    teal:   { bg: 'rgba(15,139,109,0.12)', text: '#087e62' },
+    orange: { bg: 'rgba(234,88,12,0.1)',   text: '#c2410c' },
     green:  { bg: 'rgba(32,201,151,0.1)',  text: '#20c997' },
   };
-  const c = colorMap[color] || colorMap.blue;
+  const c = colorMap[color] || colorMap.gold;
   return (
     <div className="contact-info-row">
       <div
@@ -30,11 +31,11 @@ const ContactRow = ({ icon, label, value, href, color = 'blue' }) => {
       <div className="min-w-0 flex-grow-1">
         <div className="contact-info-label">{label}</div>
         {href ? (
-          <a href={href} className="small fw-semibold text-dark text-decoration-none text-break" style={{ color: '#1e293b' }}>
+          <a href={href} className="small fw-semibold text-dark text-decoration-none text-break" style={{ color: '#292929' }}>
             {value}
           </a>
         ) : (
-          <div className="small fw-semibold text-break" style={{ color: '#1e293b' }}>{value}</div>
+          <div className="small fw-semibold text-break" style={{ color: '#292929' }}>{value}</div>
         )}
       </div>
     </div>
@@ -59,32 +60,32 @@ const ContactCard = ({ item, isHindi }) => {
           <div>
             <span
               className="d-block mb-1 fw-bold"
-              style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isPrimary ? '#4f6ef7' : '#20c997' }}
+              style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isPrimary ? '#805c00' : '#16805d' }}
             >
               {item.badge}
             </span>
             <h3 className="h5 fw-semibold mb-0 lh-sm" style={{ color: 'var(--pub-navy-900)' }}>{item.title}</h3>
-            <small style={{ color: '#64748b' }}>{item.subtitle}</small>
+            <small style={{ color: '#746f64' }}>{item.subtitle}</small>
           </div>
         </div>
       </div>
 
       <div className="px-4 py-3">
-        <ContactRow icon={<FaMapMarkerAlt />} label={isHindi ? 'कार्यालय पता' : 'Office Address'} value={item.address} color={isPrimary ? 'blue' : 'green'} />
+        <ContactRow icon={<FaMapMarkerAlt />} label={isHindi ? 'कार्यालय पता' : 'Office Address'} value={item.address} color={isPrimary ? 'gold' : 'green'} />
         {item.phone && (
-          <ContactRow icon={<FaPhone />} label={isHindi ? 'फ़ोन' : 'Phone'} value={item.phone} href={`tel:${item.phone}`} color={isPrimary ? 'blue' : 'green'} />
+          <ContactRow icon={<FaPhone />} label={isHindi ? 'फ़ोन' : 'Phone'} value={item.phone} href={`tel:${item.phone}`} color={isPrimary ? 'gold' : 'green'} />
         )}
         {item.fax && (
-          <ContactRow icon={<FaFax />} label="Fax" value={item.fax} color={isPrimary ? 'blue' : 'green'} />
+          <ContactRow icon={<FaFax />} label="Fax" value={item.fax} color={isPrimary ? 'gold' : 'green'} />
         )}
-        <ContactRow icon={<FaEnvelope />} label="Email" value={item.email} href={`mailto:${item.email}`} color={isPrimary ? 'blue' : 'green'} />
+        <ContactRow icon={<FaEnvelope />} label="Email" value={item.email} href={`mailto:${item.email}`} color={isPrimary ? 'gold' : 'green'} />
       </div>
 
       {/* Decorative dots */}
       <div className="px-4 pb-3 d-flex gap-1 align-items-center" aria-hidden="true">
-        <div style={{ width: 28, height: 4, borderRadius: 999, background: isPrimary ? '#4f6ef7' : '#20c997' }} />
-        <div style={{ width: 14, height: 4, borderRadius: 999, background: isPrimary ? '#748ffc' : '#34d399' }} />
-        <div style={{ width: 7,  height: 4, borderRadius: 999, background: isPrimary ? '#edf2ff' : '#ecfdf5' }} />
+        <div style={{ width: 28, height: 4, borderRadius: 999, background: isPrimary ? '#d99a00' : '#16805d' }} />
+        <div style={{ width: 14, height: 4, borderRadius: 999, background: isPrimary ? '#f5bd1f' : '#34d399' }} />
+        <div style={{ width: 7,  height: 4, borderRadius: 999, background: isPrimary ? '#fff3c4' : '#ecfdf5' }} />
       </div>
     </div>
   );
@@ -104,13 +105,13 @@ const EmptyCard = ({ isDirectorate, isHindi }) => (
           <FaBuilding />
         </div>
         <div>
-          <span style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isDirectorate ? '#20c997' : '#4f6ef7', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+          <span           style={{ fontSize: '0.64rem', letterSpacing: '0.08em', opacity: 0.7, textTransform: 'uppercase', color: isDirectorate ? '#16805d' : '#805c00', fontWeight: 700, display: 'block', marginBottom: 4 }}>
             {isDirectorate ? 'CONTACT · HEAD OFFICE' : 'CONTACT · BRANCH OFFICE'}
           </span>
           <h3 className="h5 fw-semibold mb-0 lh-sm" style={{ color: 'var(--pub-navy-900)' }}>
             {isDirectorate ? (isHindi ? 'प्रधान कार्यालय' : 'Head Office') : (isHindi ? 'शाखा कार्यालय' : 'Branch Office')}
           </h3>
-          <small style={{ color: '#64748b' }}>{isHindi ? 'बियॉन्डसेंड' : 'BeyondSend'}</small>
+          <small style={{ color: '#746f64' }}>{isHindi ? 'बियॉन्डसेंड' : 'BeyondSend'}</small>
         </div>
       </div>
     </div>
@@ -165,9 +166,9 @@ const Contact = () => {
     {
       icon: <FaMapMarkerAlt size={18} />,
       label: isHindi ? 'कार्यालय का पता' : 'Office Address',
-      color: 'blue',
+      color: 'gold',
       content: (
-        <address className="small mb-0" style={{ fontStyle: 'normal', color: '#334155', lineHeight: 1.7 }}>
+        <address className="small mb-0" style={{ fontStyle: 'normal', color: '#4a463c', lineHeight: 1.7 }}>
           {address.addressLine}<br />
           {address.city}, {address.state}<br />
           {address.pincode}
@@ -181,13 +182,13 @@ const Contact = () => {
       content: (
         <>
           {address.phone && (
-            <p className="small mb-1" style={{ color: '#334155' }}>
+            <p className="small mb-1" style={{ color: '#4a463c' }}>
               <FaPhone size={11} className="me-1" aria-hidden="true" />
               <a href={`tel:${address.phone}`} className="text-dark text-decoration-none fw-semibold">{address.phone}</a>
             </p>
           )}
           {address.email && (
-            <p className="small mb-0" style={{ color: '#334155' }}>
+            <p className="small mb-0" style={{ color: '#4a463c' }}>
               <FaEnvelope size={11} className="me-1" aria-hidden="true" />
               <a href={`mailto:${address.email}`} className="text-dark text-decoration-none fw-semibold">{address.email}</a>
             </p>
@@ -198,12 +199,12 @@ const Contact = () => {
     {
       icon: <FaClock size={18} />,
       label: isHindi ? 'कार्य समय' : 'Office Hours',
-      color: 'gold',
+      color: 'orange',
       content: officeHours.weekdays ? (
         <>
-          <p className="small mb-1" style={{ color: '#334155' }}>{officeHours.weekdays}</p>
-          <p className="small mb-1" style={{ color: '#334155' }}>{officeHours.saturday}</p>
-          <p className="small mb-0" style={{ color: '#334155' }}>{officeHours.sunday}</p>
+          <p className="small mb-1" style={{ color: '#4a463c' }}>{officeHours.weekdays}</p>
+          <p className="small mb-1" style={{ color: '#4a463c' }}>{officeHours.saturday}</p>
+          <p className="small mb-0" style={{ color: '#4a463c' }}>{officeHours.sunday}</p>
         </>
       ) : (
         <p className="small mb-0 text-muted">{isHindi ? 'उपलब्ध नहीं' : 'Not Available'}</p>
@@ -212,9 +213,9 @@ const Contact = () => {
   ];
 
   const colorIconMap = {
-    blue:  { bg: 'rgba(79,110,247,0.1)', color: '#4f6ef7' },
-    teal:  { bg: 'rgba(0,197,235,0.1)',  color: '#00c5eb' },
-    gold:  { bg: 'rgba(254,147,101,0.1)', color: '#ea580c' },
+    gold:   { bg: 'rgba(245,189,31,0.14)', color: '#805c00' },
+    teal:   { bg: 'rgba(15,139,109,0.12)', color: '#087e62' },
+    orange: { bg: 'rgba(234,88,12,0.1)',   color: '#c2410c' },
   };
 
   return (
@@ -230,7 +231,7 @@ const Contact = () => {
       {/* ── Top Info Cards ── */}
       <Row className="g-3 mb-4">
         {topCards.map((card, i) => {
-          const ic = colorIconMap[card.color] || colorIconMap.blue;
+          const ic = colorIconMap[card.color] || colorIconMap.gold;
           return (
             <Col xs={12} md={4} key={i}>
               <div className="contact-top-card">
@@ -313,27 +314,51 @@ const Contact = () => {
               </Col>
               {/* Social */}
               <Col xs={12} sm={6} md={3}>
-                <div className="d-flex gap-2 flex-wrap">
-                  {official.facebook && (
-                    <a href={official.facebook} target="_blank" rel="noreferrer noopener" className="official-social-btn" aria-label="Facebook">
-                      <i className="bi bi-facebook text-primary" aria-hidden="true" />
-                    </a>
-                  )}
-                  {official.instagram && (
-                    <a href={official.instagram} target="_blank" rel="noreferrer noopener" className="official-social-btn" aria-label="Instagram">
-                      <i className="bi bi-instagram text-danger" aria-hidden="true" />
-                    </a>
-                  )}
-                  {official.linkedin && (
-                    <a href={official.linkedin} target="_blank" rel="noreferrer noopener" className="official-social-btn" aria-label="LinkedIn">
-                      <i className="bi bi-linkedin" style={{ color: '#0a66c2' }} aria-hidden="true" />
-                    </a>
-                  )}
-                  {official.youtube && (
-                    <a href={official.youtube} target="_blank" rel="noreferrer noopener" className="official-social-btn" aria-label="YouTube">
-                      <i className="bi bi-youtube text-danger" aria-hidden="true" />
-                    </a>
-                  )}
+                <div className="d-flex gap-2 flex-wrap align-items-center">
+                  <a
+                    href={official.linkedin || "https://www.linkedin.com/company/beyondsend"}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="official-social-btn d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none"
+                    aria-label="LinkedIn"
+                    title={`${official.name} on LinkedIn`}
+                    style={{ width: "36px", height: "36px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff" }}
+                  >
+                    <FaLinkedinIn size={15} style={{ color: "#0077b5" }} />
+                  </a>
+                  <a
+                    href={official.facebook || "https://www.facebook.com/beyondsend"}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="official-social-btn d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none"
+                    aria-label="Facebook"
+                    title={`${official.name} on Facebook`}
+                    style={{ width: "36px", height: "36px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff" }}
+                  >
+                    <FaFacebookF size={14} style={{ color: "#1877f2" }} />
+                  </a>
+                  <a
+                    href={official.instagram || "https://www.instagram.com/beyondsend"}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="official-social-btn d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none"
+                    aria-label="Instagram"
+                    title={`${official.name} on Instagram`}
+                    style={{ width: "36px", height: "36px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff" }}
+                  >
+                    <FaInstagram size={15} style={{ color: "#e4405f" }} />
+                  </a>
+                  <a
+                    href={official.youtube || "https://www.youtube.com/@beyondsend"}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="official-social-btn d-inline-flex align-items-center justify-content-center shadow-sm text-decoration-none"
+                    aria-label="YouTube"
+                    title={`${official.name} on YouTube`}
+                    style={{ width: "36px", height: "36px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#ffffff" }}
+                  >
+                    <FaYoutube size={15} style={{ color: "#ff0000" }} />
+                  </a>
                 </div>
               </Col>
             </Row>
