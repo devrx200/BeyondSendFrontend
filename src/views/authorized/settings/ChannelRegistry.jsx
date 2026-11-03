@@ -288,7 +288,6 @@ const ChannelRegistry = () => {
                         {c.isActive
                           ? <Badge color="success">Active</Badge>
                           : <Badge color="secondary">Inactive</Badge>}
-                        {c.isSystem && <Badge color="info" className="ms-1">System</Badge>}
                       </td>
                       <td className="text-end">
                         <UncontrolledDropdown>

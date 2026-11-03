@@ -291,7 +291,6 @@ const ProviderRegistry = () => {
                       {p.isActive
                         ? <Badge color="success">Active</Badge>
                         : <Badge color="secondary">Inactive</Badge>}
-                      {p.isSystem && <Badge color="info" className="ms-1">System</Badge>}
                       {p.supportsFailover && <Badge color="warning" className="ms-1">Failover</Badge>}
                     </td>
                     <td className="text-end">

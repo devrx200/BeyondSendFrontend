@@ -11,6 +11,63 @@ import {
 import apiClient from "@apiService";
 import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
 import { PageLoader } from "@/components";
+// Pure Bootstrap 5 Status & Provider badge helpers
+const renderStatusBadge = (status) => {
+  const s = String(status || "APPROVED").toUpperCase();
+  if (s === "APPROVED" || s === "ACTIVE") {
+    return (
+      <span className="badge rounded-pill bg-success text-white fw-semibold px-2.5 py-1 text-uppercase">
+        APPROVED
+      </span>
+    );
+  }
+  if (s === "REJECTED" || s === "FAILED") {
+    return (
+      <span className="badge rounded-pill bg-danger text-white fw-semibold px-2.5 py-1 text-uppercase">
+        REJECTED
+      </span>
+    );
+  }
+  if (s === "PENDING" || s === "PENDING_APPROVAL" || s === "SUBMITTED" || s === "UNDER_REVIEW") {
+    return (
+      <span className="badge rounded-pill bg-warning text-dark fw-semibold px-2.5 py-1 text-uppercase">
+        {s === "PENDING_APPROVAL" ? "PENDING" : s}
+      </span>
+    );
+  }
+  if (s === "DRAFT") {
+    return (
+      <span className="badge rounded-pill bg-secondary text-white fw-semibold px-2.5 py-1 text-uppercase">
+        DRAFT
+      </span>
+    );
+  }
+  return (
+    <span className="badge rounded-pill bg-secondary text-white fw-semibold px-2.5 py-1 text-uppercase">
+      {s}
+    </span>
+  );
+};
+
+const renderProviderBadge = (providerCode, status) => {
+  const s = String(status || "").toUpperCase();
+  let bgClass = "bg-secondary text-white";
+  if (s === "APPROVED") bgClass = "bg-success text-white";
+  else if (s === "REJECTED") bgClass = "bg-danger text-white";
+  else if (s === "PENDING" || s === "SUBMITTED") bgClass = "bg-warning text-dark";
+  else if (providerCode) bgClass = "bg-info text-white";
+
+  return (
+    <span
+      className={`badge rounded-pill font-monospace px-2 py-1 text-uppercase d-inline-flex align-items-center gap-1 ${bgClass}`}
+      style={{ fontSize: "10px" }}
+    >
+      <FaServer size={8} />
+      <span>{providerCode}</span>
+      {status ? <span className="fw-bold">({status})</span> : null}
+    </span>
+  );
+};
 
 const RcsTemplates = () => {
   const { toasts, toast } = useToast();
@@ -58,19 +115,8 @@ const RcsTemplates = () => {
     }
   };
 
-  const fetchProviders = async () => {
-    try {
-      const res = await apiClient.get("/rcs/templates/providers");
-      const list = res?.data?.data || [];
-      if (list.length > 0) setProviders(list);
-    } catch {
-      // Fallback: will be populated by fetchTemplates
-    }
-  };
-
   useEffect(() => {
     fetchTemplates();
-    fetchProviders();
   }, []);
 
   const handleOpenModal = (template = null) => {
@@ -305,17 +351,13 @@ const RcsTemplates = () => {
                           {t.providerTemplates && t.providerTemplates.length > 0 ? (
                             <div className="d-flex flex-wrap gap-1">
                               {t.providerTemplates.map((p, pIdx) => (
-                                <Badge key={pIdx} color="primary" pill className="font-monospace px-2 py-0.5 text-uppercase" style={{ fontSize: "10px" }}>
-                                  <FaServer className="me-1" size={8} />
-                                  {p.providerCode} {p.status ? `(${p.status})` : ""}
-                                </Badge>
+                                <span key={pIdx}>
+                                  {renderProviderBadge(p.providerCode, p.status)}
+                                </span>
                               ))}
                             </div>
                           ) : (
-                            <Badge color="primary" pill className="font-monospace px-2 py-1">
-                              <FaServer className="me-1" size={9} />
-                              {t.provider || "JIO_RCS"}
-                            </Badge>
+                            renderProviderBadge(t.provider || "JIO_RCS", t.status)
                           )}
                         </td>
                         <td>
@@ -332,13 +374,7 @@ const RcsTemplates = () => {
                           </div>
                         </td>
                         <td>
-                          <Badge
-                            color="success"
-                            pill
-                            className="fw-semibold px-2 py-1"
-                          >
-                            {t.status || "APPROVED"}
-                          </Badge>
+                          {renderStatusBadge(t.status)}
                         </td>
                         <td className="text-muted small">
                           {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "—"}

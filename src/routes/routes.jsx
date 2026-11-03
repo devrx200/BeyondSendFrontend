@@ -28,7 +28,7 @@ import {
   FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
   ApiDocViewer, WhatsappResponses, RcsResponses,
   CreditTopupManagement, MyCreditWallet, UserCommunicationConfig, UserSettings, SubscriptionsManagement,
-  ChannelRegistry, ProviderRegistry, ChannelMatrix, Onboarding, ChannelCategoryMaster, CreditPlanChartManagement
+  ChannelRegistry, ProviderRegistry, ChannelMatrix, Onboarding, ChannelCategoryMaster, ProviderApiCatalogManagement, CreditPlanChartManagement
 } from "./LazyLoadingRouter";
 
 /* Legacy "/admin/*" links are forwarded to the current "/authorized/*" tree */
@@ -207,6 +207,8 @@ const AppRoutes = () => {
             <Route path="credits/dlr-simulator" element={<CreditTopupManagement defaultTab="dlr" />} />
             <Route path="settings/channel-categories" element={<ChannelCategoryMaster />} />
             <Route path="settings/channel-category-master" element={<ChannelCategoryMaster />} />
+            <Route path="settings/provider-api-catalogs" element={<ProviderApiCatalogManagement />} />
+            <Route path="settings/api-catalogs" element={<ProviderApiCatalogManagement />} />
             <Route path="settings/credit-plans" element={<CreditPlanChartManagement />} />
             <Route path="settings/credit-plan-charts" element={<CreditPlanChartManagement />} />
           </Route>

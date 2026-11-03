@@ -57,6 +57,7 @@ import {
   FaHourglassHalf,
   FaTelegramPlane,
   FaRobot,
+  FaCode,
 } from "react-icons/fa";
 
 /* =========================================================
@@ -1208,6 +1209,19 @@ const SHARED_GROUPS = [
         label: t(
           "Enterprise CPaaS Providers",
           "एंटरप्राइज प्रोवाइडर्स"
+        ),
+      },
+      {
+        id: "sys-config-api-catalog",
+        icon: FaCode,
+        path: "/authorized/settings/provider-api-catalogs",
+        allowedRoles: [
+          ROLES.DEVOPS,
+          ROLES.ADMIN,
+        ],
+        label: t(
+          "Provider API Catalog",
+          "प्रोवाइडर एपीआई कैटलॉग"
         ),
       },
     ],

@@ -12,7 +12,8 @@ import {
   FaShieldAlt, FaSearch, FaUserFriends, FaCopy, FaExchangeAlt,
   FaFilter, FaTimes, FaUndo, FaBroadcastTower, FaUserTag,
   FaExternalLinkAlt, FaCheckCircle, FaSlidersH, FaSignInAlt,
-  FaTelegramPlane, FaRobot, FaPaperPlane, FaPlug, FaStar, FaGlobe
+  FaTelegramPlane, FaRobot, FaPaperPlane, FaPlug, FaStar, FaGlobe,
+  FaInfoCircle, FaWhatsapp, FaPlus, FaEdit, FaTrash
 } from "react-icons/fa";
 import apiClient from "@apiService";
 import { useToast, ToastContainer, wpSwal, Swal } from "@/utilities/WPToast";
@@ -55,6 +56,11 @@ const initialConfigState = {
   emailSecondaryVendor: "ses",
   emailBackupVendor: "",
   emailDefaultRouting: "primary_failover",
+
+  telegramPrimaryVendor: "telegram_gateway",
+  telegramSecondaryVendor: "telegram_bot",
+  telegramBackupVendor: "",
+  telegramDefaultRouting: "primary_failover",
 
   // RCS
   rcsVendor: "",
@@ -115,43 +121,39 @@ const initialConfigState = {
 
 const DEFAULT_PROVIDERS_BY_CHANNEL = {
   SMS: [
-    { code: "mobiglitz", name: "Mobiglitz DLT Gateway" },
-    { code: "airtel", name: "Airtel IQ Gateway" },
+    { code: "mobiglitz", name: "Mobiglitz Enterprise" },
+    { code: "airtel_sms", name: "Airtel SMS" },
     { code: "jio", name: "Jio Enterprise SMS" },
-    { code: "routemobile", name: "RouteMobile DLT" },
+    { code: "twilio_sms", name: "Twilio SMS" },
     { code: "infobip", name: "Infobip CPaaS" },
-    { code: "other", name: "Other Telco API" },
   ],
   WHATSAPP: [
-    { code: "meta", name: "Meta Cloud Graph API (v19.0+)" },
-    { code: "wbs", name: "WhatsApp Business Solution (WBS)" },
-    { code: "routemobile", name: "RouteMobile WBS" },
+    { code: "routemobile", name: "Route Mobile WhatsApp Gateway" },
+    { code: "meta_cloud", name: "Meta Cloud API" },
+    { code: "gupshup", name: "Gupshup WhatsApp" },
     { code: "wati", name: "WATI Gateway" },
     { code: "interakt", name: "Interakt Business API" },
-    { code: "gupshup", name: "Gupshup WhatsApp" },
   ],
   RCS: [
-    { code: "routemobile", name: "RouteMobile Google RBM" },
-    { code: "jio", name: "Jio RCS Business Messaging" },
+    { code: "route_mobile_rcs", name: "Route Mobile (RCS)" },
+    { code: "jio_rcs", name: "Jio RCS" },
     { code: "google_rbm", name: "Google Direct RBM" },
     { code: "dotgo", name: "Dotgo / Sinch RCS" },
-    { code: "other", name: "Other Aggregator" },
   ],
   VOICE: [
-    { code: "mobiglitz", name: "Mobiglitz OBD IVR" },
-    { code: "buzzdial", name: "Buzzdial Click2Call" },
-    { code: "routemobile", name: "RouteMobile Voice" },
-    { code: "other", name: "Other SIP Gateway" },
+    { code: "mobiglitz", name: "Mobiglitz Enterprise" },
+    { code: "buzzdial", name: "Buzzdial" },
+    { code: "routemobile_voice", name: "RouteMobile Voice" },
+    { code: "twilio_sms", name: "Twilio Voice" },
   ],
   EMAIL: [
-    { code: "smtp", name: "Direct SMTP Relay" },
+    { code: "smtp", name: "SMTP Relay Gateway" },
     { code: "ses", name: "Amazon SES" },
-    { code: "sendgrid", name: "SendGrid API" },
-    { code: "mailgun", name: "Mailgun API" },
+    { code: "sendgrid", name: "SendGrid" },
+    { code: "mailgun", name: "Mailgun Relay API" },
   ],
   TELEGRAM: [
-    { code: "telegram_gateway", name: "Official Telegram Gateway API (gateway.telegram.org)" },
-    { code: "telegram_bot", name: "Official Telegram Bot API (@BotFather)" },
+    { code: "telegram_bot", name: "Official Telegram Bot API" },
   ],
 };
 
@@ -218,6 +220,79 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     messagingLimitTier: "TIER_1K",
     status: "CONNECTED",
     isDefault: false,
+  });
+
+  // Dynamic Multi-Provider Multi-Account Architecture for ALL channels (RCS, WhatsApp, SMS, Voice, Email, Telegram)
+  const [channelAccounts, setChannelAccounts] = useState({
+    rcs: [],
+    whatsapp: [],
+    sms: [],
+    voice: [],
+    email: [],
+    telegram: [],
+  });
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [accountModalChannel, setAccountModalChannel] = useState("whatsapp");
+  const [editingAccountIdx, setEditingAccountIdx] = useState(null);
+  const [accountFormData, setAccountFormData] = useState({
+    configId: "",
+    providerCode: "",
+    accountLabel: "",
+    isPrimary: false,
+    status: "ACTIVE",
+    authType: "api_key",
+    credentials: {
+      username: "",
+      password: "",
+      apiKey: "",
+      token: "",
+      jwtAuth: "",
+      customerId: "",
+      cookie: "",
+      authCode: "",
+    },
+    settings: {
+      baseUrl: "",
+      brandMsisdn: "",
+      wabaId: "",
+      phoneNumberId: "",
+      dltEntityId: "",
+      transactionalRouteKey: "",
+      promotionalRouteKey: "",
+      otpRouteKey: "",
+      implicitRouteKey: "",
+      explicitRouteKey: "",
+      company: "",
+      agentId: "",
+      host: "",
+      port: "",
+      botToken: "",
+      botUsername: "",
+      botId: "",
+      webhookUrl: "",
+      senderUsername: "",
+      callbackUrl: "",
+    },
+  });
+
+  // Dynamic Custom WhatsApp Providers (maintained for backwards compatibility)
+  const [customWhatsappProviders, setCustomWhatsappProviders] = useState([]);
+  const [customWaModalOpen, setCustomWaModalOpen] = useState(false);
+  const [editingCustomWaIdx, setEditingCustomWaIdx] = useState(null);
+  const [customWaForm, setCustomWaForm] = useState({
+    preset: "custom",
+    providerCode: "",
+    providerName: "",
+    authType: "api_key",
+    baseUrl: "",
+    apiKey: "",
+    username: "",
+    password: "",
+    jwtAuth: "",
+    senderMsisdn: "",
+    wabaId: "",
+    isPrimary: false,
+    status: "ACTIVE",
   });
 
   // Directory State (Clients & Resellers list)
@@ -325,9 +400,16 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
       if (Array.isArray(cfg.whatsappNumbers)) {
         setWhatsappNumbers(cfg.whatsappNumbers);
       }
+      if (Array.isArray(cfg.customWhatsappProviders)) {
+        setCustomWhatsappProviders(cfg.customWhatsappProviders);
+      }
+      if (cfg.channelAccounts && typeof cfg.channelAccounts === "object") {
+        setChannelAccounts(cfg.channelAccounts);
+      }
       if (cfg.__secretsSet) {
         setSecretsSet(cfg.__secretsSet);
       }
+      const routing = cfg.routingConfig || {};
       setFormData((prev) => {
         const next = { ...prev };
         Object.keys(initialConfigState).forEach((key) => {
@@ -335,6 +417,12 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
             next[key] = cfg[key];
           }
         });
+        if (routing.sms?.primaryVendor) next.smsPrimaryVendor = routing.sms.primaryVendor;
+        if (routing.whatsapp?.primaryVendor) next.whatsappPrimaryVendor = routing.whatsapp.primaryVendor;
+        if (routing.rcs?.primaryVendor) next.rcsPrimaryVendor = routing.rcs.primaryVendor;
+        if (routing.voice?.primaryVendor) next.voicePrimaryVendor = routing.voice.primaryVendor;
+        if (routing.email?.primaryVendor) next.emailPrimaryVendor = routing.email.primaryVendor;
+        if (routing.telegram?.primaryVendor) next.telegramPrimaryVendor = routing.telegram.primaryVendor;
         return next;
       });
     } catch (err) {
@@ -467,6 +555,353 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     toast.success("Default sender updated");
   };
 
+  /* ════════════════════════════════════════════════════════════════════════════
+     DYNAMIC MULTI-ACCOUNT MULTI-PROVIDER HANDLERS (ALL CHANNELS)
+  ════════════════════════════════════════════════════════════════════════════ */
+  const handleOpenAccountModal = (channel, idx = null) => {
+    const ch = String(channel || "whatsapp").toLowerCase();
+    const chAccounts = channelAccounts[ch] || [];
+    setAccountModalChannel(ch);
+
+    if (idx !== null && chAccounts[idx]) {
+      const cur = chAccounts[idx];
+      setEditingAccountIdx(idx);
+      setAccountFormData({
+        configId: cur.configId || "",
+        providerCode: cur.providerCode || "",
+        accountLabel: cur.accountLabel || cur.configName || "",
+        isPrimary: Boolean(cur.isPrimary),
+        status: cur.status || "ACTIVE",
+        authType: cur.authType || "api_key",
+        credentials: { ...(cur.credentials || {}) },
+        settings: { ...(cur.settings || {}) },
+      });
+    } else {
+      const chKey = ch === "email" ? "EMAIL" : ch.toUpperCase();
+      const pList = providersByChannel[chKey] || [];
+      const defaultP = pList[0] || { code: "custom", name: "Custom Gateway" };
+      setEditingAccountIdx(null);
+      setAccountFormData({
+        configId: `cfg_${ch}_${defaultP.code}_${Date.now()}`,
+        providerCode: defaultP.code || "custom",
+        accountLabel: `${defaultP.name || defaultP.code} Account ${chAccounts.length + 1}`,
+        isPrimary: chAccounts.length === 0,
+        status: "ACTIVE",
+        authType: defaultP.authType || "api_key",
+        credentials: {
+          username: "",
+          password: "",
+          apiKey: "",
+          token: "",
+          jwtAuth: "",
+          customerId: "",
+          cookie: "",
+          authCode: "",
+        },
+        settings: {
+          baseUrl: defaultP.baseUrl || "",
+          brandMsisdn: formData.whatsappBrandMsisdn || "",
+          wabaId: formData.wabaId || "",
+          phoneNumberId: formData.phoneNumberId || "",
+          dltEntityId: formData.smsDltEntityId || "",
+          transactionalRouteKey: formData.mglitzSmsTransactionalRouteKey || "",
+          promotionalRouteKey: formData.mglitzSmsPromotionalRouteKey || "",
+          otpRouteKey: formData.mglitzSmsOtpRouteKey || "",
+          implicitRouteKey: formData.mglitzSmsImplicitRouteKey || "",
+          explicitRouteKey: formData.mglitzSmsExplicitRouteKey || "",
+          company: formData.rcsVendorCompany || "",
+          agentId: formData.jioRcsAgentId || "",
+          host: formData.emailSmtpEndpoint || "",
+          port: formData.emailSmtpPort || "587",
+          botToken: formData.telegramBotToken || "",
+          botUsername: formData.telegramBotUsername || "",
+          botId: formData.telegramBotId || "",
+          webhookUrl: formData.webhookUrl || "",
+          senderUsername: formData.telegramGatewaySenderUsername || "",
+          callbackUrl: formData.telegramGatewayCallbackUrl || "",
+        },
+      });
+    }
+    setAccountModalOpen(true);
+  };
+
+  const handleSelectAccountPreset = (presetCode) => {
+    const ch = accountModalChannel;
+    const chKey = ch === "email" ? "EMAIL" : ch.toUpperCase();
+    const pList = providersByChannel[chKey] || [];
+    const p = pList.find((item) => item.code.toLowerCase() === String(presetCode).toLowerCase());
+
+    if (!p) {
+      setAccountFormData((prev) => ({
+        ...prev,
+        providerCode: presetCode,
+      }));
+      return;
+    }
+
+    setAccountFormData((prev) => ({
+      ...prev,
+      providerCode: p.code,
+      authType: p.authType || prev.authType || "api_key",
+      accountLabel: prev.accountLabel || `${p.name} Account`,
+      settings: {
+        ...prev.settings,
+        baseUrl: p.baseUrl || prev.settings.baseUrl || "",
+      },
+    }));
+  };
+
+  const handleSaveAccount = () => {
+    if (!accountFormData.accountLabel?.trim()) {
+      toast.error("Account Label is required (e.g. Primary Account, OTP Route, etc.)");
+      return;
+    }
+    if (!accountFormData.providerCode?.trim()) {
+      toast.error("Provider is required");
+      return;
+    }
+
+    const ch = accountModalChannel;
+    const cleanCode = accountFormData.providerCode.toLowerCase().trim();
+
+    setChannelAccounts((prev) => {
+      const chList = prev[ch] || [];
+      const accData = {
+        ...accountFormData,
+        providerCode: cleanCode,
+        accountLabel: accountFormData.accountLabel.trim(),
+        configId: accountFormData.configId || `cfg_${ch}_${cleanCode}_${Date.now()}`,
+      };
+
+      let updated;
+      if (editingAccountIdx !== null) {
+        updated = chList.map((item, i) => (i === editingAccountIdx ? accData : item));
+      } else {
+        updated = [...chList, accData];
+      }
+
+      if (accData.isPrimary) {
+        updated = updated.map((item) => ({
+          ...item,
+          isPrimary: item.configId === accData.configId,
+        }));
+        handleInputChange(`${ch}PrimaryVendor`, cleanCode);
+      } else {
+        const hasPrim = updated.some((item) => item.isPrimary);
+        if (!hasPrim && updated.length > 0) {
+          updated[0].isPrimary = true;
+          handleInputChange(`${ch}PrimaryVendor`, updated[0].providerCode);
+        }
+      }
+
+      return {
+        ...prev,
+        [ch]: updated,
+      };
+    });
+
+    setAccountModalOpen(false);
+    toast.success(editingAccountIdx !== null ? "Provider account updated!" : "New provider account added!");
+  };
+
+  const handleDeleteAccount = async (channel, idx) => {
+    const ch = String(channel).toLowerCase();
+    const targetAcc = channelAccounts[ch]?.[idx];
+    if (!targetAcc) return;
+
+    const isConfirmed = await wpSwal.confirm(
+      "Remove Provider Account?",
+      `Are you sure you want to remove "${targetAcc.accountLabel || targetAcc.providerCode}" from ${ch.toUpperCase()}?`
+    );
+    if (!isConfirmed) return;
+
+    setChannelAccounts((prev) => {
+      const currentList = prev[ch] || [];
+      const updated = currentList.filter((_, i) => i !== idx);
+
+      if (targetAcc.isPrimary && updated.length > 0) {
+        updated[0].isPrimary = true;
+        handleInputChange(`${ch}PrimaryVendor`, updated[0].providerCode);
+      }
+
+      return {
+        ...prev,
+        [ch]: updated,
+      };
+    });
+
+    toast.info("Account removed");
+  };
+
+  const handleSetPrimaryAccount = async (channel, account) => {
+    if (!account) return;
+    const ch = String(channel).toLowerCase();
+    try {
+      const uid = targetUser?._id || effectiveUserId;
+      const res = await apiClient.post("/user-config/set-primary-provider", {
+        userId: uid,
+        channel: ch,
+        provider: account.providerCode,
+        configId: account.configId,
+      });
+
+      toast.success(
+        res?.data?.message ||
+        `Primary gateway for ${ch.toUpperCase()} set to ${account.accountLabel || account.providerCode.toUpperCase()}`
+      );
+
+      handleInputChange(`${ch}PrimaryVendor`, account.providerCode);
+
+      setChannelAccounts((prev) => {
+        const currentList = prev[ch] || [];
+        const updated = currentList.map((item) => ({
+          ...item,
+          isPrimary: item.configId === account.configId,
+        }));
+        return {
+          ...prev,
+          [ch]: updated,
+        };
+      });
+
+      await loadConfig();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.message || `Failed to set primary provider`);
+    }
+  };
+
+  const handleOpenCustomWaModal = (idx = null) => {
+    if (idx !== null && customWhatsappProviders[idx]) {
+      const cur = customWhatsappProviders[idx];
+      setEditingCustomWaIdx(idx);
+      setCustomWaForm({
+        ...cur,
+        preset: cur.preset || cur.providerCode || "custom",
+        jwtAuth: cur.jwtAuth || cur.token || "",
+      });
+    } else {
+      const waList = providersByChannel.WHATSAPP || [];
+      const defaultProvider = waList.find((p) => !["routemobile", "meta_cloud", "meta"].includes(p.code.toLowerCase())) || waList[0];
+      setEditingCustomWaIdx(null);
+      setCustomWaForm({
+        preset: defaultProvider?.code || "custom",
+        providerCode: defaultProvider?.code || "",
+        providerName: defaultProvider?.name || "",
+        authType: defaultProvider?.authType || "api_key",
+        baseUrl: defaultProvider?.baseUrl || "",
+        apiKey: "",
+        username: "",
+        password: "",
+        jwtAuth: "",
+        senderMsisdn: formData.whatsappBrandMsisdn || "",
+        wabaId: "",
+        isPrimary: false,
+        status: "ACTIVE",
+      });
+    }
+    setCustomWaModalOpen(true);
+  };
+
+  const handleSelectCustomWaPreset = (presetKey) => {
+    if (!presetKey || presetKey === "custom") {
+      setCustomWaForm((prev) => ({
+        ...prev,
+        preset: "custom",
+        providerCode: "",
+        providerName: "",
+        baseUrl: "",
+        authType: "api_key",
+      }));
+      return;
+    }
+
+    const p = (providersByChannel.WHATSAPP || []).find(
+      (item) => item.code.toLowerCase() === presetKey.toLowerCase() || (item.originalCode && item.originalCode.toLowerCase() === presetKey.toLowerCase())
+    );
+    if (!p) return;
+
+    setCustomWaForm((prev) => ({
+      ...prev,
+      preset: p.code,
+      providerCode: p.code,
+      providerName: p.name,
+      baseUrl: p.baseUrl || prev.baseUrl || "",
+      authType: p.authType || prev.authType || "api_key",
+    }));
+  };
+
+  const handleSaveCustomWaProvider = () => {
+    if (!customWaForm.providerName.trim()) {
+      toast.error("Provider Name is required");
+      return;
+    }
+    if (!customWaForm.providerCode.trim()) {
+      toast.error("Provider Code is required");
+      return;
+    }
+    const cleanCode = customWaForm.providerCode.toLowerCase().replace(/[^a-z0-9_]/g, "_").trim();
+
+    setCustomWhatsappProviders((prev) => {
+      let updated;
+      const provData = {
+        ...customWaForm,
+        providerCode: cleanCode,
+      };
+      if (editingCustomWaIdx !== null) {
+        updated = prev.map((item, i) => (i === editingCustomWaIdx ? provData : item));
+      } else {
+        updated = [...prev, provData];
+      }
+      if (customWaForm.isPrimary) {
+        handleInputChange("whatsappPrimaryVendor", cleanCode);
+        updated = updated.map((item) => ({
+          ...item,
+          isPrimary: item.providerCode === cleanCode,
+        }));
+      }
+      return updated;
+    });
+
+    setCustomWaModalOpen(false);
+    toast.success(editingCustomWaIdx !== null ? "Provider configuration updated!" : "New WhatsApp Provider added!");
+  };
+
+  const handleDeleteCustomWaProvider = async (idx) => {
+    const p = customWhatsappProviders[idx];
+    const isConfirmed = await wpSwal.confirm("Remove Provider?", `Remove ${p?.providerName || "this provider"} from configuration?`);
+    if (!isConfirmed) return;
+    setCustomWhatsappProviders((prev) => prev.filter((_, i) => i !== idx));
+    toast.info("Provider removed");
+  };
+
+  const handleSetPrimaryCustomWa = (idx) => {
+    const p = customWhatsappProviders[idx];
+    if (!p) return;
+    handleSetPrimary("whatsapp", p.providerCode);
+    setCustomWhatsappProviders((prev) =>
+      prev.map((item, i) => ({
+        ...item,
+        isPrimary: i === idx,
+      }))
+    );
+  };
+
+  const handleConnectCustomWa = async (cIdx) => {
+    const cp = customWhatsappProviders[cIdx];
+    if (!cp) return;
+    await handleConnectProvider("whatsapp", cp.providerCode, {
+      username: cp.username,
+      password: cp.password || cp.apiKey,
+      apiKey: cp.apiKey,
+      jwtAuth: cp.jwtAuth,
+      token: cp.jwtAuth || cp.apiKey,
+      baseUrl: cp.baseUrl,
+      authType: cp.authType,
+      senderMsisdn: cp.senderMsisdn,
+      wabaId: cp.wabaId,
+    });
+  };
+
   const handleSyncProviderTemplates = async () => {
     setSyncingProvider(true);
     try {
@@ -530,24 +965,310 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     }
   };
 
-  const handleOpenProviderDetails = (channel, provider) => {
-    const channelCfg = rawConfig?.[`${channel}Config`];
-    let provCfg = null;
-    if (channelCfg) {
-      if (channelCfg[provider]) {
-        provCfg = channelCfg[provider]?.configurations?.[0] || channelCfg[provider];
-      }
-    }
+  const handleOpenProviderDetails = async (channel, provider) => {
+    const uid = targetUser?._id || effectiveUserId;
     setActiveDetailsProvider({
       channel,
       provider,
-      config: provCfg,
-      userData: provCfg?.settings?.userData || rawConfig?.routemobileUserData || null,
-      senderInfo: provCfg?.senderInfo || [],
-      routing: rawConfig?.routingConfig?.[channel] || {},
-      baseUrl: provCfg?.credentials?.baseUrl || "https://apis.rmlconnect.net",
+      loading: true,
+      catalogApis: [],
     });
     setDetailsModalOpen(true);
+
+    try {
+      const res = await apiClient.get(`/user-config/provider-details?channel=${channel}&provider=${provider}${uid ? `&userId=${uid}` : ""}`);
+      const data = res?.data || {};
+      setActiveDetailsProvider({
+        channel,
+        provider,
+        isPrimary: data.isPrimary,
+        status: data.status,
+        routing: data.routing || {},
+        userData: data.userData,
+        senderInfo: data.senderInfo || [],
+        settings: data.settings || {},
+        credentials: data.credentials || null,
+        lastVerifiedAt: data.lastVerifiedAt,
+        catalogApis: data.catalogApis || [],
+        baseUrl: data.credentials?.baseUrl || "",
+        loading: false,
+      });
+    } catch (err) {
+      console.warn("Failed to fetch live provider details, falling back to local state:", err);
+      const channelCfg = rawConfig?.[`${channel}Config`];
+      let provCfg = null;
+      if (channelCfg && channelCfg[provider]) {
+        provCfg = channelCfg[provider]?.configurations?.[0] || channelCfg[provider];
+      }
+      setActiveDetailsProvider({
+        channel,
+        provider,
+        isPrimary: String(formData[`${channel}PrimaryVendor`] || "").toLowerCase() === provider.toLowerCase(),
+        status: provCfg?.status || "CONFIGURED",
+        routing: rawConfig?.routingConfig?.[channel] || {},
+        userData: provCfg?.settings?.userData || null,
+        senderInfo: provCfg?.senderInfo || [],
+        settings: provCfg?.settings || {},
+        credentials: provCfg?.credentials || null,
+        lastVerifiedAt: provCfg?.lastVerifiedAt || null,
+        catalogApis: [],
+        baseUrl: provCfg?.credentials?.baseUrl || "",
+        loading: false,
+      });
+    }
+  };
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     DYNAMIC FLEET TOOLBAR & MULTI-ACCOUNT CARDS RENDERERS (ALL CHANNELS)
+  ════════════════════════════════════════════════════════════════════════════ */
+  const renderChannelFleetToolbar = (channel, channelTitle, IconComponent, badgeColor = "primary") => {
+    const ch = String(channel).toLowerCase();
+    const chAccounts = channelAccounts[ch] || [];
+    const primAcc = chAccounts.find((a) => a.isPrimary) || chAccounts[0];
+    const primaryVendor = primAcc?.accountLabel || primAcc?.providerCode || formData[`${ch}PrimaryVendor`] || "Not Assigned";
+
+    return (
+      <div
+        className="p-3 mb-4 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs"
+        style={{ background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)", borderColor: "#e2e8f0" }}
+      >
+        <div className="d-flex align-items-center gap-3">
+          <div
+            className={`p-2.5 rounded-circle bg-${badgeColor} text-white d-flex align-items-center justify-content-center shadow-xs`}
+            style={{ width: "42px", height: "42px" }}
+          >
+            <IconComponent size={20} />
+          </div>
+          <div>
+            <div className="d-flex align-items-center gap-2">
+              <h5 className="fw-bold text-dark mb-0">{channelTitle} Gateways</h5>
+              <Badge color="secondary" pill className="px-2.5 py-1">
+                {chAccounts.length} Configured
+              </Badge>
+              {primaryVendor && (
+                <Badge color="success" pill className="px-2.5 py-1 text-uppercase font-monospace" style={{ fontSize: "11px" }}>
+                  ⭐ Primary: {primaryVendor}
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted small mb-0 mt-0.5">
+              Add multiple accounts/IDs for this channel, connect any provider dynamically, and set one active Primary for templates and dispatch.
+            </p>
+          </div>
+        </div>
+        <div className="d-flex align-items-center gap-2">
+          <Button
+            color={badgeColor}
+            className="d-flex align-items-center gap-2 fw-bold text-white shadow-xs px-3.5 py-2"
+            onClick={() => handleOpenAccountModal(ch)}
+            title={`Add new ${channelTitle} provider account`}
+          >
+            <FaPlus size={13} /> Add {channelTitle} Account
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderChannelAccountCards = (channel, channelTitle, IconComponent) => {
+    const ch = String(channel).toLowerCase();
+    const chAccounts = channelAccounts[ch] || [];
+
+    if (chAccounts.length === 0) {
+      return (
+        <div className="p-4 bg-white rounded-3 border text-center text-muted shadow-xs mb-4">
+          <div className="d-flex align-items-center justify-content-center gap-2 mb-2">
+            <IconComponent size={24} className="text-primary" />
+            <span className="fw-bold text-dark fs-6">No {channelTitle} Accounts Configured</span>
+          </div>
+          <p className="small mb-3 text-muted" style={{ maxWidth: "560px", margin: "0 auto" }}>
+            Add and manage multiple provider accounts or IDs for <strong>{channelTitle}</strong>. One account will be designated as the Primary Gateway to handle templates and messaging.
+          </p>
+          <Button
+            color="primary"
+            size="sm"
+            className="fw-semibold px-3 py-1.5 shadow-xs"
+            onClick={() => handleOpenAccountModal(ch)}
+          >
+            <FaPlus className="me-1.5" size={12} /> Connect First {channelTitle} Account
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="d-flex flex-column gap-3 mb-4">
+        {chAccounts.map((acc, aIdx) => {
+          const isPrimary = Boolean(acc.isPrimary);
+          const pList = providersByChannel[ch === "email" ? "EMAIL" : ch.toUpperCase()] || [];
+          const provInfo = pList.find((p) => p.code.toLowerCase() === (acc.providerCode || "").toLowerCase()) || {};
+
+          return (
+            <div
+              key={acc.configId || aIdx}
+              className={`bg-white p-3.5 rounded-3 border shadow-xs transition-all ${
+                isPrimary ? "border-success border-2 bg-success bg-opacity-10" : ""
+              }`}
+            >
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2.5 border-bottom">
+                <div className="d-flex align-items-center gap-2.5">
+                  <span className="badge bg-dark text-white px-2.5 py-1 font-monospace text-uppercase" style={{ fontSize: "11px" }}>
+                    {acc.providerCode}
+                  </span>
+                  <div>
+                    <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                      {acc.accountLabel || `${acc.providerCode.toUpperCase()} Gateway`}
+                      {isPrimary && (
+                        <Badge color="success" pill style={{ fontSize: "10px" }} className="d-flex align-items-center gap-1">
+                          <FaStar className="text-warning" size={10} /> Active Primary
+                        </Badge>
+                      )}
+                    </h6>
+                    <small className="text-muted">
+                      Provider: <strong>{provInfo.name || acc.providerCode.toUpperCase()}</strong> &bull; Auth: {acc.authType || "API Key"}
+                    </small>
+                  </div>
+                </div>
+
+                <div className="d-flex align-items-center gap-2">
+                  {isPrimary ? (
+                    <Badge color="success" pill className="px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5">
+                      <FaCheckCircle size={12} /> Primary Gateway
+                    </Badge>
+                  ) : (
+                    <Button
+                      color="light"
+                      size="sm"
+                      className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1 text-dark"
+                      onClick={() => handleSetPrimaryAccount(ch, acc)}
+                      title={`Set ${acc.accountLabel} as primary gateway for ${ch.toUpperCase()}`}
+                    >
+                      <FaStar className="text-warning" size={11} /> Set as Primary
+                    </Button>
+                  )}
+
+                  <Button
+                    color="info"
+                    outline
+                    size="sm"
+                    className="d-flex align-items-center gap-1 fw-semibold shadow-xs py-1 px-2.5"
+                    onClick={() => handleOpenProviderDetails(ch, acc.providerCode)}
+                    title="View live carrier API details and endpoints"
+                  >
+                    <FaEye size={12} /> Details
+                  </Button>
+
+                  <Button
+                    color="light"
+                    size="sm"
+                    className="border d-flex align-items-center gap-1 fw-semibold py-1 px-2.5"
+                    onClick={() => handleOpenAccountModal(ch, aIdx)}
+                    title="Edit account credentials and parameters"
+                  >
+                    <FaEdit size={12} /> Edit
+                  </Button>
+
+                  <Button
+                    color="danger"
+                    outline
+                    size="sm"
+                    className="d-flex align-items-center gap-1 py-1 px-2.5"
+                    onClick={() => handleDeleteAccount(ch, aIdx)}
+                    title="Delete this provider account"
+                  >
+                    <FaTrash size={11} />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Account Parameters Summary Chips */}
+              <Row className="g-2 small text-secondary">
+                {acc.settings?.baseUrl && (
+                  <Col md={6}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Base URL: </span>
+                      <code className="text-dark font-monospace">{acc.settings.baseUrl}</code>
+                    </div>
+                  </Col>
+                )}
+                {(acc.credentials?.username || acc.credentials?.userId || acc.credentials?.customerId) && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">User: </span>
+                      <strong className="text-dark">{acc.credentials.username || acc.credentials.userId || acc.credentials.customerId}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.dltEntityId && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">DLT ID: </span>
+                      <strong className="text-dark font-monospace">{acc.settings.dltEntityId}</strong>
+                    </div>
+                  </Col>
+                )}
+                {(acc.settings?.brandMsisdn || acc.credentials?.senderMsisdn) && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Sender MSISDN: </span>
+                      <strong className="text-dark">{acc.settings?.brandMsisdn || acc.credentials?.senderMsisdn}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.wabaId && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">WABA ID: </span>
+                      <strong className="text-dark font-monospace">{acc.settings.wabaId}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.agentId && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Agent ID: </span>
+                      <strong className="text-dark font-monospace">{acc.settings.agentId}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.company && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Brand: </span>
+                      <strong className="text-dark">{acc.settings.company}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.host && (
+                  <Col md={4}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">SMTP Host: </span>
+                      <strong className="text-dark">{acc.settings.host}:{acc.settings.port || 587}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.botUsername && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Bot: </span>
+                      <strong className="text-dark">@{acc.settings.botUsername}</strong>
+                    </div>
+                  </Col>
+                )}
+                {acc.settings?.senderUsername && (
+                  <Col md={3}>
+                    <div className="p-2 rounded bg-light border text-truncate">
+                      <span className="text-muted fw-semibold">Sender: </span>
+                      <strong className="text-dark">@{acc.settings.senderUsername}</strong>
+                    </div>
+                  </Col>
+                )}
+              </Row>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -559,6 +1280,8 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         enabledChannels,
         ...formData,
         whatsappNumbers,
+        customWhatsappProviders,
+        channelAccounts,
       };
 
       const endpoint = effectiveUserId ? `/user-config/${effectiveUserId}` : "/user-config";
@@ -1633,14 +2356,48 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
               {/* TAB 2: RCS Messaging */}
               <TabPane tabId="rcs">
+                {/* ── TOP RCS FLEET TOOLBAR BANNER & DYNAMIC ACCOUNTS ── */}
+                {renderChannelFleetToolbar("rcs", "RCS Messaging", FaBroadcastTower, "primary")}
+                {renderChannelAccountCards("rcs", "RCS Messaging", FaBroadcastTower)}
                 <div className="mb-4">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-danger">Jio Google RBM</span>
-                    <h6 className="fw-bold text-dark mb-0">Jio RCS Business Messaging Credentials</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-danger">Jio Google RBM</span>
+                        <h6 className="fw-bold text-dark mb-0">Jio RCS Business Messaging Credentials</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Configured credentials for Jio RCS agent verification &amp; message delivery.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.rcsPrimaryVendor || "").toLowerCase() === "jio" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("rcs", "jio")}
+                          title="Set Jio as primary provider for RCS"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("rcs", "jio")}
+                        title="View Jio RCS gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Configured credentials for Jio RCS agent verification &amp; message delivery.
-                  </p>
                   <Row className="g-3">
                     <Col md={6}>
                       <FormGroup className="mb-0">
@@ -1683,13 +2440,44 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                 </div>
 
                 <div className="pt-3 border-top">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-primary">Routemobile</span>
-                    <h6 className="fw-bold text-dark mb-0">Routemobile RCS Gateway Credentials</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-primary">Route Mobile RCS</span>
+                        <h6 className="fw-bold text-dark mb-0">Route Mobile Google RBM Gateway Credentials</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Alternative RCS carrier gateway credentials through Route Mobile carrier API.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.rcsPrimaryVendor || "").toLowerCase() === "routemobile" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("rcs", "routemobile")}
+                          title="Set Route Mobile as primary provider for RCS"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("rcs", "routemobile")}
+                        title="View Route Mobile RCS gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Alternative RCS gateway credentials through Routemobile carrier API.
-                  </p>
                   <Row className="g-3">
                     <Col md={4}>
                       <FormGroup className="mb-0">
@@ -1760,6 +2548,47 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
               {/* TAB 3: WhatsApp Business */}
               <TabPane tabId="whatsapp">
+                {/* ── TOP WHATSAPP FLEET TOOLBAR BANNER ── */}
+                <div
+                  className="p-3 mb-4 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-xs"
+                  style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)", borderColor: "#bbf7d0" }}
+                >
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className="p-2.5 rounded-circle bg-success text-white d-flex align-items-center justify-content-center shadow-xs"
+                      style={{ width: "42px", height: "42px" }}
+                    >
+                      <FaWhatsapp size={22} />
+                    </div>
+                    <div>
+                      <div className="d-flex align-items-center gap-2">
+                        <h5 className="fw-bold text-dark mb-0">WhatsApp Messaging Gateways</h5>
+                        <Badge color="success" pill className="px-2.5 py-1">
+                          {1 + (formData.wbsUserId || formData.routemobileUsername ? 1 : 0) + customWhatsappProviders.length} Configured
+                        </Badge>
+                        {formData.whatsappPrimaryVendor && (
+                          <Badge color="primary" pill className="px-2.5 py-1 text-uppercase font-monospace" style={{ fontSize: "11px" }}>
+                            Primary: {String(formData.whatsappPrimaryVendor).toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-muted small mb-0 mt-0.5">
+                        Manage Meta Cloud API, Route Mobile WBS, and connect enterprise WhatsApp BSPs (Gupshup, Twilio, Infobip, Jio, Karix, Custom) with real-time routing.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <Button
+                      color="success"
+                      className="d-flex align-items-center gap-2 fw-bold text-white shadow-xs px-3.5 py-2"
+                      onClick={() => handleOpenCustomWaModal()}
+                      title="Add new WhatsApp provider (Gupshup, Twilio, Infobip, Jio, etc.)"
+                    >
+                      <FaPlus size={13} /> Add WhatsApp Provider
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="mb-4">
                   <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                     <div>
@@ -1787,6 +2616,16 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                           <FaStar className="text-warning" size={11} /> Set as Primary
                         </Button>
                       )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("whatsapp", "meta")}
+                        title="View Meta Cloud API gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
                     </div>
                   </div>
                   <Row className="g-3">
@@ -1989,6 +2828,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                   )}
                 </div>
 
+                <div className="pt-3 border-top">
                   {(() => {
                     const isRmlConnected = Boolean(
                       formData.routemobileJwtAuth ||
@@ -2070,27 +2910,6 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             title="View Route Mobile account details, user data and gateway configuration"
                           >
                             <FaEye size={12} /> View Details
-                          </Button>
-
-                          {/* Sync Provider Templates Button */}
-                          <Button
-                            color="secondary"
-                            outline
-                            size="sm"
-                            className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
-                            onClick={handleSyncProviderTemplates}
-                            disabled={syncingProvider}
-                            title="Sync live registered templates from active provider carrier API"
-                          >
-                            {syncingProvider ? (
-                              <>
-                                <Spinner size="sm" className="me-1" /> Syncing Templates...
-                              </>
-                            ) : (
-                              <>
-                                <FaBroadcastTower size={12} /> Sync Provider Templates
-                              </>
-                            )}
                           </Button>
                         </div>
                       </div>
@@ -2199,18 +3018,374 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                     </Col>
                   </Row>
                 </div>
+
+                {/* ── ADDITIONAL DYNAMIC WHATSAPP PROVIDERS ── */}
+                <div className="pt-4 border-top mt-4">
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="badge bg-dark text-white">Dynamic Providers</span>
+                      <h6 className="fw-bold text-dark mb-0">Additional WhatsApp Gateways (Gupshup, Twilio, Infobip, Jio, etc.)</h6>
+                      {customWhatsappProviders.length > 0 && (
+                        <Badge color="info" pill className="px-2 py-0.5">
+                          {customWhatsappProviders.length} Configured
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      color="success"
+                      size="sm"
+                      className="d-flex align-items-center gap-1.5 fw-bold shadow-xs px-3 text-white"
+                      onClick={() => handleOpenCustomWaModal()}
+                      title="Add any other WhatsApp BSP or custom API gateway"
+                    >
+                      <FaPlus size={11} /> Add WhatsApp Provider
+                    </Button>
+                  </div>
+
+                  {customWhatsappProviders.length === 0 ? (
+                    <div className="p-3.5 bg-white rounded-3 border text-center text-muted shadow-xs">
+                      <div className="d-flex align-items-center justify-content-center gap-2 mb-1.5">
+                        <FaWhatsapp size={22} className="text-success" />
+                        <span className="fw-bold text-dark">Need another WhatsApp provider?</span>
+                      </div>
+                      <p className="small mb-2 text-muted" style={{ maxWidth: "560px", margin: "0 auto" }}>
+                        Easily attach enterprise WhatsApp BSPs such as <strong>Route Mobile, Gupshup, WATI, Interakt</strong>, or your own proprietary HTTP WhatsApp API.
+                      </p>
+                      <Button
+                        color="light"
+                        size="sm"
+                        className="border fw-semibold px-3 shadow-xs"
+                        onClick={() => handleOpenCustomWaModal()}
+                      >
+                        <FaPlus className="text-success me-1" size={11} /> Connect New Provider
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3">
+                      {customWhatsappProviders.map((cp, cIdx) => {
+                        const isPrimary = String(formData.whatsappPrimaryVendor || "").toLowerCase() === cp.providerCode.toLowerCase() || cp.isPrimary;
+                        const presetInfo = (providersByChannel.WHATSAPP || []).find(
+                          (p) => p.code.toLowerCase() === (cp.providerCode || "").toLowerCase() || (p.originalCode && p.originalCode.toLowerCase() === (cp.providerCode || "").toLowerCase())
+                        ) || {};
+                        const isConnected = Boolean(
+                          cp.status === "ACTIVE" &&
+                          (cp.apiKey || secretsSet[`wa_${cp.providerCode}_key`] || cp.jwtAuth || secretsSet[`wa_${cp.providerCode}_jwt`])
+                        );
+
+                        return (
+                          <div key={cIdx} className="bg-white p-3.5 rounded-3 border shadow-xs">
+                            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2.5 border-bottom">
+                              <div className="d-flex align-items-center gap-2">
+                                <span className="badge bg-primary text-uppercase font-monospace px-2.5 py-1">
+                                  {cp.providerCode}
+                                </span>
+                                <h6 className="fw-bold text-dark mb-0">{cp.providerName}</h6>
+                                <Badge color={isConnected ? "success" : "secondary"} pill className="px-2 py-0.5" style={{ fontSize: "10px" }}>
+                                  {isConnected ? "✓ ACTIVE & VERIFIED" : cp.status || "CONFIGURED"}
+                                </Badge>
+                                {cp.preset && cp.preset !== "custom" && (
+                                  <Badge color="light" className="text-secondary border px-2 py-0.5" style={{ fontSize: "10px" }}>
+                                    Preset: {cp.preset}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="d-flex flex-wrap align-items-center gap-2">
+                                {/* Set Primary Button */}
+                                {isPrimary ? (
+                                  <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                                    <FaCheckCircle size={11} /> Primary Provider
+                                  </Badge>
+                                ) : (
+                                  <Button
+                                    color="light"
+                                    size="sm"
+                                    className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                                    onClick={() => handleSetPrimaryCustomWa(cIdx)}
+                                    title={`Set ${cp.providerName} as primary provider for WhatsApp`}
+                                  >
+                                    <FaStar className="text-warning" size={11} /> Set as Primary
+                                  </Button>
+                                )}
+
+                                {/* Connect Button */}
+                                {isConnected ? (
+                                  <Button
+                                    color="success"
+                                    size="sm"
+                                    className="d-flex align-items-center gap-1.5 fw-semibold"
+                                    disabled
+                                    title={`${cp.providerName} is verified and connected in database`}
+                                  >
+                                    <FaCheckCircle size={12} /> Connected
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    color="primary"
+                                    size="sm"
+                                    className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                                    onClick={() => handleConnectCustomWa(cIdx)}
+                                    disabled={connectingProvider}
+                                    title={`Authenticate credentials and connect ${cp.providerName}`}
+                                  >
+                                    {connectingProvider ? (
+                                      <>
+                                        <Spinner size="sm" className="me-1" /> Connecting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FaPlug size={12} /> Connect
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+
+                                {/* View Details Modal Button */}
+                                <Button
+                                  color="info"
+                                  outline
+                                  size="sm"
+                                  className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                                  onClick={() =>
+                                    handleOpenProviderDetails("whatsapp", cp.providerCode, {
+                                      providerName: cp.providerName,
+                                      baseUrl: cp.baseUrl,
+                                      status: cp.status || "ACTIVE",
+                                      isPrimary,
+                                      credentials: {
+                                        username: cp.username,
+                                        senderMsisdn: cp.senderMsisdn,
+                                        wabaId: cp.wabaId,
+                                        baseUrl: cp.baseUrl,
+                                      },
+                                    })
+                                  }
+                                  title={`View ${cp.providerName} account details, Webhook URL, and gateway endpoints`}
+                                >
+                                  <FaEye size={12} /> View Details
+                                </Button>
+
+                                {/* Edit Button */}
+                                <Button
+                                  color="light"
+                                  size="sm"
+                                  className="border py-1 px-2.5 d-flex align-items-center gap-1 text-primary fw-semibold"
+                                  onClick={() => handleOpenCustomWaModal(cIdx)}
+                                  title="Edit Provider Settings"
+                                >
+                                  <FaEdit size={11} /> Edit
+                                </Button>
+
+                                {/* Delete Button */}
+                                <Button
+                                  color="light"
+                                  size="sm"
+                                  className="border py-1 px-2 text-danger"
+                                  onClick={() => handleDeleteCustomWaProvider(cIdx)}
+                                  title="Remove Provider"
+                                >
+                                  <FaTrash size={11} />
+                                </Button>
+                              </div>
+                            </div>
+
+                            <Row className="g-3">
+                              <Col md={4}>
+                                <FormGroup className="mb-0">
+                                  <Label className="small fw-semibold text-secondary">
+                                    {presetInfo?.usernameLabel || "User ID / App Name / Account SID"}
+                                  </Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="e.g. BeyondSendApp / ACxxxxxxxx"
+                                    value={cp.username || ""}
+                                    onChange={(e) => {
+                                      const updated = [...customWhatsappProviders];
+                                      updated[cIdx] = { ...updated[cIdx], username: e.target.value };
+                                      setCustomWhatsappProviders(updated);
+                                    }}
+                                  />
+                                </FormGroup>
+                              </Col>
+                              <Col md={4}>
+                                <FormGroup className="mb-0">
+                                  <div className="d-flex align-items-center justify-content-between mb-1">
+                                    <Label className="small fw-semibold text-secondary mb-0">
+                                      {presetInfo?.keyLabel || "Password / Secret Key / API Key"}
+                                    </Label>
+                                    {(cp.apiKey || secretsSet[`wa_${cp.providerCode}_key`]) && (
+                                      <Badge color="success" pill style={{ fontSize: "10px" }}>✓ Saved in DB</Badge>
+                                    )}
+                                  </div>
+                                  <InputGroup>
+                                    <Input
+                                      type={showSecrets[`custom_wa_${cIdx}`] ? "text" : "password"}
+                                      placeholder="Enter secret / API key"
+                                      value={cp.apiKey || ""}
+                                      onChange={(e) => {
+                                        const updated = [...customWhatsappProviders];
+                                        updated[cIdx] = { ...updated[cIdx], apiKey: e.target.value };
+                                        setCustomWhatsappProviders(updated);
+                                      }}
+                                    />
+                                    <Button
+                                      type="button"
+                                      color="light"
+                                      className="border"
+                                      onClick={() => toggleSecret(`custom_wa_${cIdx}`)}
+                                    >
+                                      {showSecrets[`custom_wa_${cIdx}`] ? <FaEyeSlash /> : <FaEye />}
+                                    </Button>
+                                  </InputGroup>
+                                </FormGroup>
+                              </Col>
+                              <Col md={4}>
+                                <FormGroup className="mb-0">
+                                  <Label className="small fw-semibold text-secondary">Sender MSISDN / Mobile</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="e.g. 919876543210"
+                                    value={cp.senderMsisdn || ""}
+                                    onChange={(e) => {
+                                      const updated = [...customWhatsappProviders];
+                                      updated[cIdx] = { ...updated[cIdx], senderMsisdn: e.target.value };
+                                      setCustomWhatsappProviders(updated);
+                                    }}
+                                  />
+                                </FormGroup>
+                              </Col>
+
+                              <Col md={4}>
+                                <FormGroup className="mb-0">
+                                  <Label className="small fw-semibold text-secondary">Base API URL</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="e.g. https://api.gupshup.io/sm/api/v1"
+                                    value={cp.baseUrl || ""}
+                                    onChange={(e) => {
+                                      const updated = [...customWhatsappProviders];
+                                      updated[cIdx] = { ...updated[cIdx], baseUrl: e.target.value };
+                                      setCustomWhatsappProviders(updated);
+                                    }}
+                                  />
+                                </FormGroup>
+                              </Col>
+                              <Col md={8}>
+                                <FormGroup className="mb-0">
+                                  <div className="d-flex align-items-center justify-content-between mb-1">
+                                    <Label className="small fw-semibold text-secondary mb-0">
+                                      Bearer API Token / JWTAUTH Token / Authorization Header
+                                    </Label>
+                                    {(cp.jwtAuth || secretsSet[`wa_${cp.providerCode}_jwt`]) && (
+                                      <Badge color="success" pill style={{ fontSize: "10px" }}>✓ Authenticated &amp; Stored</Badge>
+                                    )}
+                                  </div>
+                                  <InputGroup>
+                                    <Input
+                                      type={showSecrets[`custom_wa_jwt_${cIdx}`] ? "text" : "password"}
+                                      placeholder="eyJ0eXAi... or Bearer Token (Optional)"
+                                      value={cp.jwtAuth || ""}
+                                      onChange={(e) => {
+                                        const updated = [...customWhatsappProviders];
+                                        updated[cIdx] = { ...updated[cIdx], jwtAuth: e.target.value };
+                                        setCustomWhatsappProviders(updated);
+                                      }}
+                                    />
+                                    <Button
+                                      type="button"
+                                      color="light"
+                                      className="border"
+                                      onClick={() => toggleSecret(`custom_wa_jwt_${cIdx}`)}
+                                    >
+                                      {showSecrets[`custom_wa_jwt_${cIdx}`] ? <FaEyeSlash /> : <FaEye />}
+                                    </Button>
+                                    {cp.jwtAuth && (
+                                      <Button
+                                        type="button"
+                                        color="light"
+                                        className="border"
+                                        title="Copy Token"
+                                        onClick={() => copyToClipboard(cp.jwtAuth, `${cp.providerName} Token`)}
+                                      >
+                                        <FaCopy />
+                                      </Button>
+                                    )}
+                                  </InputGroup>
+                                </FormGroup>
+                              </Col>
+
+                              <Col xs={12}>
+                                <div className="d-flex align-items-center justify-content-between p-2 rounded bg-light border small text-muted">
+                                  <div className="d-flex align-items-center gap-1.5 text-truncate">
+                                    <FaGlobe className="text-primary flex-shrink-0" size={13} />
+                                    <span className="fw-semibold text-dark">Inbound &amp; DLR Webhook Callback URL:</span>
+                                    <code className="text-secondary font-monospace" style={{ fontSize: "11px" }}>
+                                      {`${window.location.origin}/api/v0/webhooks/whatsapp/${cp.providerCode}`}
+                                    </code>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    color="light"
+                                    className="py-0 px-2 border small fw-semibold flex-shrink-0"
+                                    onClick={() => copyToClipboard(`${window.location.origin}/api/v0/webhooks/whatsapp/${cp.providerCode}`, "Webhook URL")}
+                                  >
+                                    <FaCopy size={11} className="me-1" /> Copy URL
+                                  </Button>
+                                </div>
+                              </Col>
+                            </Row>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </TabPane>
 
               {/* TAB 4: SMS & DLT Gateway */}
               <TabPane tabId="sms">
+                {/* ── TOP SMS FLEET TOOLBAR BANNER & DYNAMIC ACCOUNTS ── */}
+                {renderChannelFleetToolbar("sms", "SMS & DLT Gateway", FaPhoneAlt, "info")}
+                {renderChannelAccountCards("sms", "SMS & DLT Gateway", FaPhoneAlt)}
                 <div className="mb-4">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-success">Mobiglitz DLT</span>
-                    <h6 className="fw-bold text-dark mb-0">Mobiglitz SMS Gateway Credentials</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-success">Mobiglitz DLT</span>
+                        <h6 className="fw-bold text-dark mb-0">Mobiglitz SMS Gateway Credentials</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        TRAI DLT compliant enterprise SMS route credentials and route keys.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.smsPrimaryVendor || "").toLowerCase() === "mobiglitz" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("sms", "mobiglitz")}
+                          title="Set Mobiglitz as primary provider for SMS"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("sms", "mobiglitz")}
+                        title="View Mobiglitz SMS gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    TRAI DLT compliant enterprise SMS route credentials and route keys.
-                  </p>
                   <Row className="g-3">
                     <Col md={4}>
                       <FormGroup className="mb-0">
@@ -2325,13 +3500,44 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                 </div>
 
                 <div className="pt-3 border-top">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-danger">Airtel IQ</span>
-                    <h6 className="fw-bold text-dark mb-0">Airtel SMS Gateway Credentials</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-danger">Airtel IQ</span>
+                        <h6 className="fw-bold text-dark mb-0">Airtel SMS Gateway Credentials</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Direct Airtel carrier gateway credentials.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.smsPrimaryVendor || "").toLowerCase() === "airtel" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("sms", "airtel")}
+                          title="Set Airtel as primary provider for SMS"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("sms", "airtel")}
+                        title="View Airtel SMS gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Direct Airtel carrier gateway credentials.
-                  </p>
                   <Row className="g-3">
                     <Col md={4}>
                       <FormGroup className="mb-0">
@@ -2392,14 +3598,48 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
               {/* TAB 5: Voice & OBD Pulse */}
               <TabPane tabId="voice">
+                {/* ── TOP VOICE FLEET TOOLBAR BANNER & DYNAMIC ACCOUNTS ── */}
+                {renderChannelFleetToolbar("voice", "Voice & OBD Pulse", FaPhoneAlt, "warning")}
+                {renderChannelAccountCards("voice", "Voice & OBD Pulse", FaPhoneAlt)}
                 <div className="mb-4">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-warning text-dark">Mobiglitz Voice</span>
-                    <h6 className="fw-bold text-dark mb-0">Mobiglitz Bulk OBD Voice Broadcast</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-warning text-dark">Mobiglitz Voice</span>
+                        <h6 className="fw-bold text-dark mb-0">Mobiglitz Bulk OBD Voice Broadcast</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Outbound dialer credentials for voice pulse campaigns (15s, 30s, 60s pulses).
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.voicePrimaryVendor || "").toLowerCase() === "mobiglitz" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("voice", "mobiglitz")}
+                          title="Set Mobiglitz as primary provider for Voice"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("voice", "mobiglitz")}
+                        title="View Mobiglitz Voice gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Outbound dialer credentials for voice pulse campaigns (15s, 30s, 60s pulses).
-                  </p>
                   <Row className="g-3">
                     <Col md={6}>
                       <FormGroup className="mb-0">
@@ -2437,13 +3677,44 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                 </div>
 
                 <div className="pt-3 border-top">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-info">Buzzdial</span>
-                    <h6 className="fw-bold text-dark mb-0">Buzzdial Interactive IVR &amp; Click2Call</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-info">Buzzdial</span>
+                        <h6 className="fw-bold text-dark mb-0">Buzzdial Interactive IVR &amp; Click2Call</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Interactive IVR dialer key for press-1 surveys and inbound call routing.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.voicePrimaryVendor || "").toLowerCase() === "buzzdial" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("voice", "buzzdial")}
+                          title="Set Buzzdial as primary provider for Voice"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("voice", "buzzdial")}
+                        title="View Buzzdial Voice gateway configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Interactive IVR dialer key for press-1 surveys and inbound call routing.
-                  </p>
                   <Row className="g-3">
                     <Col md={6}>
                       <FormGroup className="mb-0">
@@ -2472,14 +3743,48 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
               {/* TAB 6: Email SMTP Relay */}
               <TabPane tabId="smtp">
+                {/* ── TOP EMAIL FLEET TOOLBAR BANNER & DYNAMIC ACCOUNTS ── */}
+                {renderChannelFleetToolbar("email", "Email SMTP Relay", FaEnvelope, "primary")}
+                {renderChannelAccountCards("email", "Email SMTP Relay", FaEnvelope)}
                 <div className="mb-4">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <span className="badge bg-primary">SMTP Relay</span>
-                    <h6 className="fw-bold text-dark mb-0">Dedicated IP SMTP Relay Server Configuration</h6>
+                  <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-1">
+                        <span className="badge bg-primary">SMTP Relay</span>
+                        <h6 className="fw-bold text-dark mb-0">Dedicated IP SMTP Relay Server Configuration</h6>
+                      </div>
+                      <p className="text-muted small mb-0">
+                        Configured SMTP relay host for transactional emails, invoices, and newsletter delivery.
+                      </p>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      {String(formData.emailPrimaryVendor || "").toLowerCase() === "smtp" ? (
+                        <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                          <FaCheckCircle size={11} /> Primary Provider
+                        </Badge>
+                      ) : (
+                        <Button
+                          color="light"
+                          size="sm"
+                          className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                          onClick={() => handleSetPrimary("email", "smtp")}
+                          title="Set SMTP as primary provider for Email"
+                        >
+                          <FaStar className="text-warning" size={11} /> Set as Primary
+                        </Button>
+                      )}
+                      <Button
+                        color="info"
+                        outline
+                        size="sm"
+                        className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                        onClick={() => handleOpenProviderDetails("email", "smtp")}
+                        title="View SMTP Relay configuration and API details"
+                      >
+                        <FaEye size={12} /> View Details
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Configured SMTP relay host for transactional emails, invoices, and newsletter delivery.
-                  </p>
                   <Row className="g-3">
                     <Col md={4}>
                       <FormGroup className="mb-0">
@@ -2546,6 +3851,9 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
               {/* TAB 7: Telegram Services (Gateway API & Bot Integration) */}
               <TabPane tabId="telegram">
+                {/* ── TOP TELEGRAM FLEET TOOLBAR BANNER & DYNAMIC ACCOUNTS ── */}
+                {renderChannelFleetToolbar("telegram", "Telegram Services", FaTelegramPlane, "info")}
+                {renderChannelAccountCards("telegram", "Telegram Services", FaTelegramPlane)}
                 <div className="mb-4">
                   {/* Top Live Credit Wallets Header */}
                   <div className="p-3 mb-4 rounded-3 border bg-white shadow-sm">
@@ -2580,7 +3888,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         <div className="p-2 rounded bg-light border">
                           <small className="text-muted d-block" style={{ fontSize: "11px" }}>Gateway OTP</small>
                           <strong className="text-success fs-6">
-                            {tgWallet?.telegram_gateway_otp_credits ?? 200}
+                            {tgWallet?.telegram_gateway_otp_credits ?? 0}
                           </strong>
                         </div>
                       </Col>
@@ -2588,7 +3896,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         <div className="p-2 rounded bg-light border">
                           <small className="text-muted d-block" style={{ fontSize: "11px" }}>Broadcasts</small>
                           <strong className="text-primary fs-6">
-                            {tgWallet?.telegram_marketing_broadcasts ?? 200}
+                            {tgWallet?.telegram_marketing_broadcasts ?? 0}
                           </strong>
                         </div>
                       </Col>
@@ -2596,7 +3904,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         <div className="p-2 rounded bg-light border">
                           <small className="text-muted d-block" style={{ fontSize: "11px" }}>Utility Sessions</small>
                           <strong className="text-info fs-6">
-                            {tgWallet?.telegram_utility_session_credits ?? 200}
+                            {tgWallet?.telegram_utility_session_credits ?? 0}
                           </strong>
                         </div>
                       </Col>
@@ -2604,7 +3912,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         <div className="p-2 rounded bg-light border">
                           <small className="text-muted d-block" style={{ fontSize: "11px" }}>AI Bot Queries</small>
                           <strong className="text-warning fs-6">
-                            {tgWallet?.telegram_ai_bot_credits ?? 200}
+                            {tgWallet?.telegram_ai_bot_credits ?? 0}
                           </strong>
                         </div>
                       </Col>
@@ -2612,7 +3920,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         <div className="p-2 rounded bg-light border">
                           <small className="text-muted d-block" style={{ fontSize: "11px" }}>Service Credits (Fallback)</small>
                           <strong className="text-dark fs-6">
-                            {tgWallet?.telegram_service_credits ?? 200}
+                            {tgWallet?.telegram_service_credits ?? 0}
                           </strong>
                         </div>
                       </Col>
@@ -2674,7 +3982,36 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
                       {/* Gateway API Credentials Form */}
                       <div className="border rounded-2 p-3 bg-white mb-3 shadow-sm">
-                        <h6 className="fw-bold small text-dark mb-3">Gateway Authentication &amp; Parameters</h6>
+                        <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                          <h6 className="fw-bold small text-dark mb-0">Gateway Authentication &amp; Parameters</h6>
+                          <div className="d-flex align-items-center gap-2">
+                            {["telegram_gateway", "gateway"].includes(String(formData.telegramPrimaryVendor || "").toLowerCase()) ? (
+                              <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                                <FaCheckCircle size={11} /> Primary Provider
+                              </Badge>
+                            ) : (
+                              <Button
+                                color="light"
+                                size="sm"
+                                className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                                onClick={() => handleSetPrimary("telegram", "telegram_gateway")}
+                                title="Set Telegram Gateway as primary provider for Telegram"
+                              >
+                                <FaStar className="text-warning" size={11} /> Set as Primary
+                              </Button>
+                            )}
+                            <Button
+                              color="info"
+                              outline
+                              size="sm"
+                              className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                              onClick={() => handleOpenProviderDetails("telegram", "telegram_gateway")}
+                              title="View Telegram Gateway API details and endpoints"
+                            >
+                              <FaEye size={12} /> View Details
+                            </Button>
+                          </div>
+                        </div>
                         <Row className="g-3">
                           <Col md={8}>
                             <FormGroup className="mb-0">
@@ -2938,15 +4275,46 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                   {/* SUBTAB 2: TELEGRAM BOT API (@BotFather) */}
                   {tgSubTab === "bot" && (
                     <div>
-                      <div className="d-flex align-items-center gap-2 mb-1">
-                        <span className="badge" style={{ backgroundColor: "#0088cc" }}>
-                          <FaTelegramPlane className="me-1" /> Telegram Bot API
-                        </span>
-                        <h6 className="fw-bold text-dark mb-0">Telegram Enterprise Bot Integration</h6>
+                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <div>
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                            <span className="badge" style={{ backgroundColor: "#0088cc" }}>
+                              <FaTelegramPlane className="me-1" /> Telegram Bot API
+                            </span>
+                            <h6 className="fw-bold text-dark mb-0">Telegram Enterprise Bot Integration</h6>
+                          </div>
+                          <p className="text-muted small mb-0">
+                            Connect your @BotFather token to enable OTP verification, marketing broadcasts, utility alerts, and automated AI webhook processors.
+                          </p>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                          {["telegram_bot", "bot"].includes(String(formData.telegramPrimaryVendor || "").toLowerCase()) ? (
+                            <Badge color="success" pill className="px-2.5 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                              <FaCheckCircle size={11} /> Primary Provider
+                            </Badge>
+                          ) : (
+                            <Button
+                              color="light"
+                              size="sm"
+                              className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1"
+                              onClick={() => handleSetPrimary("telegram", "telegram_bot")}
+                              title="Set Telegram Bot as primary provider for Telegram"
+                            >
+                              <FaStar className="text-warning" size={11} /> Set as Primary
+                            </Button>
+                          )}
+                          <Button
+                            color="info"
+                            outline
+                            size="sm"
+                            className="d-flex align-items-center gap-1.5 fw-semibold shadow-xs"
+                            onClick={() => handleOpenProviderDetails("telegram", "telegram_bot")}
+                            title="View Telegram Bot configuration and API details"
+                          >
+                            <FaEye size={12} /> View Details
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-muted small mb-3">
-                        Connect your @BotFather token to enable OTP verification, marketing broadcasts, utility alerts, and automated AI webhook processors.
-                      </p>
 
                       <Row className="g-3 mb-4">
                         <Col md={8}>
@@ -3316,66 +4684,92 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         <ModalHeader toggle={() => setDetailsModalOpen(false)} className="bg-light border-bottom">
           <div className="d-flex align-items-center gap-2">
             <Badge color="primary" pill className="text-uppercase px-2.5 py-1">
-              {activeDetailsProvider?.channel || "WHATSAPP"}
+              {activeDetailsProvider?.channel || "CHANNEL"}
             </Badge>
             <span className="fw-bold text-dark">
-              {activeDetailsProvider?.provider?.toUpperCase() === "ROUTEMOBILE" ? "Route Mobile WhatsApp WBS" : (activeDetailsProvider?.provider?.toUpperCase() || "CARRIER")} Live Configuration Details
+              {activeDetailsProvider?.provider ? activeDetailsProvider.provider.toUpperCase() : "CARRIER"} Live Configuration Details
             </span>
           </div>
         </ModalHeader>
         <ModalBody className="p-4">
-          {activeDetailsProvider && (
+          {activeDetailsProvider?.loading ? (
+            <div className="text-center py-5">
+              <Spinner color="primary" />
+              <div className="mt-2 text-muted small fw-semibold">Loading live provider configuration from database...</div>
+            </div>
+          ) : activeDetailsProvider ? (
             <div>
               {/* CARRIER STATUS & OVERVIEW */}
               <div className="p-3 bg-light rounded-3 border mb-3">
                 <Row className="g-3 align-items-center">
                   <Col sm={6}>
                     <div className="small text-muted mb-0.5">Carrier Gateway Connection</div>
-                    <Badge color="success" pill className="px-2.5 py-1 fw-bold">
+                    <Badge color={activeDetailsProvider.status === "ACTIVE" ? "success" : activeDetailsProvider.status === "PENDING" ? "warning" : "secondary"} pill className="px-2.5 py-1 fw-bold">
                       <FaCheckCircle className="me-1" />
-                      {activeDetailsProvider.config?.status || "ACTIVE"}
+                      {activeDetailsProvider.status || "CONFIGURED"}
                     </Badge>
-                    {activeDetailsProvider.config?.isPrimary && (
-                      <Badge color="info" pill className="ms-2 px-2.5 py-1 fw-bold">
+                    {activeDetailsProvider.isPrimary ? (
+                      <Badge color="success" pill className="ms-2 px-2.5 py-1 fw-bold">
                         ★ Primary Vendor
                       </Badge>
+                    ) : (
+                      <Button
+                        size="sm"
+                        color="light"
+                        className="border fw-semibold ms-2 py-0.5 px-2 small"
+                        onClick={() => handleSetPrimary(activeDetailsProvider.channel, activeDetailsProvider.provider)}
+                      >
+                        <FaStar className="text-warning me-1" size={11} /> Set as Primary
+                      </Button>
                     )}
                   </Col>
                   <Col sm={6} className="text-sm-end">
                     <div className="small text-muted mb-0.5">Base Gateway URL</div>
                     <code className="text-primary fw-bold" style={{ fontSize: "12px" }}>
-                      {activeDetailsProvider.baseUrl || "https://apis.rmlconnect.net"}
+                      {activeDetailsProvider.baseUrl || activeDetailsProvider.credentials?.baseUrl || "Default Host"}
                     </code>
+                  </Col>
+                  <Col sm={6}>
+                    <div className="small text-muted mb-0.5">Failover Routing Mode</div>
+                    <span className="small fw-semibold text-dark">
+                      {activeDetailsProvider.routing?.defaultRouting || "PRIMARY"}
+                    </span>
+                  </Col>
+                  <Col sm={6} className="text-sm-end">
+                    <div className="small text-muted mb-0.5">Last Verified</div>
+                    <span className="small text-secondary">
+                      {activeDetailsProvider.lastVerifiedAt ? new Date(activeDetailsProvider.lastVerifiedAt).toLocaleString() : "Never"}
+                    </span>
                   </Col>
                 </Row>
               </div>
 
               {/* LIVE ACCOUNT USER INFORMATION */}
-              {activeDetailsProvider.userData ? (
-                <div className="mb-4">
-                  <h6 className="fw-bold text-dark mb-2 pb-1 border-bottom d-flex align-items-center gap-1.5">
-                    <FaUserTag className="text-primary" /> Live Carrier Account User Information (from Route Mobile DB)
-                  </h6>
+              <div className="mb-4">
+                <h6 className="fw-bold text-dark mb-2 pb-1 border-bottom d-flex align-items-center gap-1.5">
+                  <FaUserTag className="text-primary" /> Live Carrier Account User Information (from Carrier DB)
+                </h6>
+                {activeDetailsProvider.userData ? (
                   <div className="table-responsive">
                     <Table size="sm" bordered hover className="mb-0 font-monospace small">
                       <tbody>
                         <tr>
                           <td className="fw-semibold text-muted bg-light" style={{ width: "220px" }}>Account Full Name</td>
                           <td className="fw-bold text-dark">
-                            {activeDetailsProvider.userData.first_name} {activeDetailsProvider.userData.last_name !== "-" ? activeDetailsProvider.userData.last_name : ""}
+                            {`${activeDetailsProvider.userData.first_name || ""} ${activeDetailsProvider.userData.last_name && activeDetailsProvider.userData.last_name !== "-" ? activeDetailsProvider.userData.last_name : ""}`.trim() || "-"}
                           </td>
                         </tr>
                         <tr>
-                          <td className="fw-semibold text-muted bg-light">WBS Username / User ID</td>
-                          <td className="text-dark fw-bold">{activeDetailsProvider.userData.username || "digiglitzwbs"}</td>
+                          <td className="fw-semibold text-muted bg-light">Username / User ID</td>
+                          <td className="text-dark fw-bold">{activeDetailsProvider.userData.username || "-"}</td>
                         </tr>
                         <tr>
                           <td className="fw-semibold text-muted bg-light">Registered Email</td>
-                          <td className="text-dark">{activeDetailsProvider.userData.email || "shainesh@digiglitz.com"}</td>
+                          <td className="text-dark">{activeDetailsProvider.userData.email || "-"}</td>
                         </tr>
                         <tr>
                           <td className="fw-semibold text-muted bg-light">Primary Phone Number</td>
-                          <td className="text-dark">{activeDetailsProvider.userData.phone_number || "+919036880158"}</td>
+                          <td className="text-dark">{activeDetailsProvider.userData.phone_number || "-"}</td>
                         </tr>
                         {Array.isArray(activeDetailsProvider.userData.additional_phone_numbers) && activeDetailsProvider.userData.additional_phone_numbers.length > 0 && (
                           <tr>
@@ -3385,7 +4779,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         )}
                         <tr>
                           <td className="fw-semibold text-muted bg-light">Customer ID</td>
-                          <td className="text-dark">{activeDetailsProvider.userData.customer_id || "HdQ4I2GU3QQn"}</td>
+                          <td className="text-dark">{activeDetailsProvider.userData.customer_id || "-"}</td>
                         </tr>
                         <tr>
                           <td className="fw-semibold text-muted bg-light">Partner Role</td>
@@ -3399,17 +4793,18 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                         </tr>
                         <tr>
                           <td className="fw-semibold text-muted bg-light">Authentication IP / Level</td>
-                          <td className="text-dark">{activeDetailsProvider.userData.ip || "1stepauth"}</td>
+                          <td className="text-dark">{activeDetailsProvider.userData.ip || "-"}</td>
                         </tr>
                       </tbody>
                     </Table>
                   </div>
-                </div>
-              ) : (
-                <div className="mb-4 p-3 bg-light rounded text-muted small">
-                  Live user data will automatically sync upon next gateway connection.
-                </div>
-              )}
+                ) : (
+                  <div className="p-3 bg-light rounded text-muted small d-flex align-items-center gap-1.5">
+                    <FaInfoCircle className="text-primary flex-shrink-0" />
+                    No live carrier account profile synced yet. Authenticate via &quot;Connect&quot; to fetch live account profile from carrier gateway.
+                  </div>
+                )}
+              </div>
 
               {/* SENDER IDENTITY & WABA DETAILS */}
               <div className="mb-4">
@@ -3433,13 +4828,15 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                       <tbody>
                         {activeDetailsProvider.senderInfo.map((s, sIdx) => (
                           <tr key={sIdx}>
-                            <td className="fw-bold text-success">{s.phoneNumber || formData.whatsappBrandMsisdn}</td>
-                            <td>{s.displayName || "BeyondSend Enterprise"}</td>
-                            <td>{s.wabaId || "892158596877894"}</td>
+                            <td className="fw-bold text-success">{s.phoneNumber || "-"}</td>
+                            <td>{s.displayName || "-"}</td>
+                            <td>{s.wabaId || "-"}</td>
                             <td>
-                              <Badge color="success" pill>{s.qualityRating || "GREEN"}</Badge>
+                              <Badge color={s.qualityRating === "GREEN" ? "success" : s.qualityRating === "YELLOW" ? "warning" : "secondary"} pill>
+                                {s.qualityRating || "GREEN"}
+                              </Badge>
                             </td>
-                            <td><Badge color="primary" pill>{s.messagingLimitTier || "TIER_1K"}</Badge></td>
+                            <td><Badge color="primary" pill>{s.messagingLimitTier || "-"}</Badge></td>
                             <td>
                               <Badge color="success" pill>
                                 {s.status || "CONNECTED"}
@@ -3452,8 +4849,9 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                     </Table>
                   </div>
                 ) : (
-                  <div className="p-3 bg-light rounded text-muted small">
-                    Registered MSISDN: <strong>{formData.whatsappBrandMsisdn || "9977679866"}</strong> | WABA ID: <strong>{formData.wabaId || "892158596877894"}</strong>
+                  <div className="p-3 bg-light rounded text-muted small d-flex align-items-center gap-1.5">
+                    <FaInfoCircle className="text-primary flex-shrink-0" />
+                    No brand senders or phone identities registered for this provider in database yet.
                   </div>
                 )}
               </div>
@@ -3461,61 +4859,52 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
               {/* DYNAMIC API CATALOG ENDPOINTS */}
               <div className="mb-2">
                 <h6 className="fw-bold text-dark mb-2 pb-1 border-bottom d-flex align-items-center gap-1.5">
-                  <FaServer className="text-info" /> Dynamic Gateway API Catalog (Registered Endpoints)
+                  <FaServer className="text-info" /> Dynamic Gateway API Catalog (Registered Endpoints from Database)
                 </h6>
-                <div className="table-responsive">
-                  <Table size="sm" bordered hover className="mb-0 font-monospace" style={{ fontSize: "11.5px" }}>
-                    <thead className="table-light">
-                      <tr>
-                        <th style={{ width: "80px" }}>Method</th>
-                        <th>Operation</th>
-                        <th>Service Base URL</th>
-                        <th>Endpoint Path</th>
-                        <th>Auth Scheme</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td><Badge color="primary">POST</Badge></td>
-                        <td>AUTH_LOGIN</td>
-                        <td>https://apis.rmlconnect.net/auth/v1</td>
-                        <td><code>/login/</code></td>
-                        <td>Credentials (Username/Password)</td>
-                      </tr>
-                      <tr>
-                        <td><Badge color="success">GET</Badge></td>
-                        <td>GET_TEMPLATES</td>
-                        <td>https://apis.rmlconnect.net/wba</td>
-                        <td><code>/templates</code></td>
-                        <td>Bearer (JWTAUTH Token)</td>
-                      </tr>
-                      <tr>
-                        <td><Badge color="primary">POST</Badge></td>
-                        <td>CREATE_TEMPLATE</td>
-                        <td>https://apis.rmlconnect.net/wba</td>
-                        <td><code>/template/create</code></td>
-                        <td>Bearer (JWTAUTH Token)</td>
-                      </tr>
-                      <tr>
-                        <td><Badge color="danger">DELETE</Badge></td>
-                        <td>DELETE_TEMPLATE</td>
-                        <td>https://apis.rmlconnect.net/wba</td>
-                        <td><code>/template/</code></td>
-                        <td>Bearer (JWTAUTH Token)</td>
-                      </tr>
-                      <tr>
-                        <td><Badge color="primary">POST</Badge></td>
-                        <td>SEND_MESSAGE</td>
-                        <td>https://apis.rmlconnect.net/wba/v1</td>
-                        <td><code>/messages</code></td>
-                        <td>Bearer (JWTAUTH Token)</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </div>
+                {activeDetailsProvider.catalogApis && activeDetailsProvider.catalogApis.length > 0 ? (
+                  <div className="table-responsive">
+                    <Table size="sm" bordered hover className="mb-0 font-monospace" style={{ fontSize: "11.5px" }}>
+                      <thead className="table-light">
+                        <tr>
+                          <th style={{ width: "80px" }}>Method</th>
+                          <th>Operation</th>
+                          <th>Category</th>
+                          <th>Service Base URL</th>
+                          <th>Endpoint Path</th>
+                          <th>Auth Scheme</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {activeDetailsProvider.catalogApis.map((api, aIdx) => (
+                          <tr key={aIdx}>
+                            <td>
+                              <Badge color={api.method === "GET" ? "success" : api.method === "POST" ? "primary" : api.method === "PATCH" ? "warning" : api.method === "DELETE" ? "danger" : "secondary"}>
+                                {api.method}
+                              </Badge>
+                            </td>
+                            <td className="fw-bold">{api.operation}</td>
+                            <td>
+                              <Badge color="light" className="text-dark border">
+                                {api.category || "GENERAL"}
+                              </Badge>
+                            </td>
+                            <td className="text-muted">{api.baseUrl}</td>
+                            <td><code>{api.endpointPath}</code></td>
+                            <td>{api.authType || "Bearer Token"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-light rounded text-muted small d-flex align-items-center gap-1.5">
+                    <FaInfoCircle className="text-info flex-shrink-0" />
+                    No endpoints registered in API catalog for this provider in database.
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          ) : null}
         </ModalBody>
         <ModalFooter className="bg-light border-top d-flex justify-content-between">
           <Button
@@ -3526,16 +4915,797 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
           >
             Close
           </Button>
-          <Button
-            color="primary"
-            size="sm"
-            className="fw-bold"
-            onClick={() => {
-              setDetailsModalOpen(false);
-              handleSyncProviderTemplates();
-            }}
-          >
-            <FaBroadcastTower className="me-1" /> Sync Templates Now
+          <div className="d-flex align-items-center gap-2">
+            {activeDetailsProvider && !activeDetailsProvider.isPrimary && (
+              <Button
+                color="warning"
+                outline
+                size="sm"
+                className="fw-bold"
+                onClick={() => {
+                  handleSetPrimary(activeDetailsProvider.channel, activeDetailsProvider.provider);
+                  setActiveDetailsProvider((prev) => ({ ...prev, isPrimary: true }));
+                }}
+              >
+                <FaStar className="me-1" /> Set as Primary Provider
+              </Button>
+            )}
+          </div>
+        </ModalFooter>
+      </Modal>
+      {/* ── MODAL: CONFIGURE DYNAMIC WHATSAPP PROVIDER ── */}
+      <Modal isOpen={customWaModalOpen} toggle={() => setCustomWaModalOpen(false)} size="lg" centered backdrop="static">
+        <ModalHeader toggle={() => setCustomWaModalOpen(false)} className="bg-light border-bottom">
+          <div className="d-flex align-items-center gap-2">
+            <div className="bg-success text-white p-1 rounded-circle d-flex align-items-center justify-content-center" style={{ width: "28px", height: "28px" }}>
+              <FaWhatsapp size={16} />
+            </div>
+            <span className="fw-bold text-dark">
+              {editingCustomWaIdx !== null ? "Edit WhatsApp Provider Configuration" : "Add New WhatsApp Provider / Gateway"}
+            </span>
+          </div>
+        </ModalHeader>
+        <ModalBody className="p-4 bg-light">
+          {/* QUICK PRESET SELECTOR */}
+          <div className="p-3 bg-white rounded-3 border mb-3 shadow-xs">
+            <Label className="fw-bold small text-dark mb-1 d-flex align-items-center gap-1.5">
+              <span>Select Gateway Preset or Custom Provider:</span>
+            </Label>
+            <Input
+              type="select"
+              value={customWaForm.preset || "custom"}
+              onChange={(e) => handleSelectCustomWaPreset(e.target.value)}
+            >
+              <optgroup label="Registered WhatsApp Gateways (from Provider Registry)">
+                {(providersByChannel.WHATSAPP || []).map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name} ({p.originalCode || p.code.toUpperCase()})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Generic / Proprietary">
+                <option value="custom">Custom Proprietary HTTP WhatsApp Gateway</option>
+              </optgroup>
+            </Input>
+            <small className="text-muted d-block mt-1" style={{ fontSize: "11px" }}>
+              Dynamically loaded from your CPaaS Provider Registry. Choosing a gateway automatically configures standard Base URLs and authentication schemes.
+            </small>
+          </div>
+
+          <Row className="g-3">
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Provider Display Name *</Label>
+                <Input
+                  placeholder="e.g. Gupshup Enterprise WA"
+                  value={customWaForm.providerName}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, providerName: e.target.value })}
+                  required
+                />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Provider Code (Unique ID) *</Label>
+                <Input
+                  placeholder="e.g. gupshup, twilio, my_wa"
+                  value={customWaForm.providerCode}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, providerCode: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })}
+                  required
+                  className="font-monospace"
+                />
+                <small className="text-muted" style={{ fontSize: "10.5px" }}>
+                  Lowercase alphanumeric and underscores only.
+                </small>
+              </FormGroup>
+            </Col>
+
+            <Col md={7}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Base API URL *</Label>
+                <Input
+                  placeholder="e.g. https://api.gupshup.io/sm/api/v1"
+                  value={customWaForm.baseUrl}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, baseUrl: e.target.value })}
+                />
+              </FormGroup>
+            </Col>
+            <Col md={5}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Auth Scheme</Label>
+                <Input
+                  type="select"
+                  value={customWaForm.authType}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, authType: e.target.value })}
+                >
+                  <option value="api_key">API Key (Header / Query)</option>
+                  <option value="bearer">Bearer Token (Authorization Header)</option>
+                  <option value="basic">Basic Auth (Username + Password / SID)</option>
+                  <option value="custom">Custom Auth / OAuth2</option>
+                </Input>
+              </FormGroup>
+            </Col>
+
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">
+                  API Key / Auth Token / Secret Password *
+                </Label>
+                <Input
+                  type="password"
+                  placeholder="Enter API Key / Token"
+                  value={customWaForm.apiKey}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, apiKey: e.target.value })}
+                />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">
+                  Account SID / App Name / Username (Optional)
+                </Label>
+                <Input
+                  placeholder="e.g. BeyondSendApp / ACxxxxxxxx"
+                  value={customWaForm.username}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, username: e.target.value })}
+                />
+              </FormGroup>
+            </Col>
+
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Sender MSISDN / WhatsApp Number</Label>
+                <Input
+                  placeholder="e.g. 919876543210"
+                  value={customWaForm.senderMsisdn}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, senderMsisdn: e.target.value })}
+                />
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">WABA Account ID (Optional)</Label>
+                <Input
+                  placeholder="e.g. 892158596877894"
+                  value={customWaForm.wabaId}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, wabaId: e.target.value })}
+                />
+              </FormGroup>
+            </Col>
+
+            <Col xs={12}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">
+                  Bearer API Token / JWTAUTH Token / Authorization Header (Optional)
+                </Label>
+                <Input
+                  type="textarea"
+                  rows={2}
+                  placeholder="eyJ0eXAi... (Paste Bearer Token or JWT Auth Token if required by this gateway)"
+                  value={customWaForm.jwtAuth || ""}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, jwtAuth: e.target.value })}
+                  className="font-monospace small"
+                />
+              </FormGroup>
+            </Col>
+
+            <Col xs={12}>
+              <FormGroup check className="p-3 bg-white rounded border">
+                <Input
+                  type="checkbox"
+                  id="customWaPrimaryCheck"
+                  checked={customWaForm.isPrimary}
+                  onChange={(e) => setCustomWaForm({ ...customWaForm, isPrimary: e.target.checked })}
+                />
+                <Label check for="customWaPrimaryCheck" className="small fw-bold text-dark mb-0">
+                  Set this as Primary Active WhatsApp Gateway for outbound messaging
+                </Label>
+              </FormGroup>
+            </Col>
+          </Row>
+        </ModalBody>
+        <ModalFooter className="bg-white border-top py-2.5 px-4 d-flex justify-content-between">
+          <Button color="light" size="sm" onClick={() => setCustomWaModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="success" size="sm" className="fw-bold px-3 text-white" onClick={handleSaveCustomWaProvider}>
+            {editingCustomWaIdx !== null ? "Update Provider" : "Save Provider"}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* ── UNIVERSAL DYNAMIC PROVIDER ACCOUNT MODAL (ALL CHANNELS) ── */}
+      <Modal
+        isOpen={accountModalOpen}
+        toggle={() => setAccountModalOpen(!accountModalOpen)}
+        size="lg"
+        centered
+        backdrop="static"
+      >
+        <ModalHeader
+          toggle={() => setAccountModalOpen(false)}
+          className="bg-light border-bottom py-3 px-4"
+        >
+          <div className="d-flex align-items-center gap-2">
+            <FaPlug className="text-primary" />
+            <span className="fw-bold">
+              {editingAccountIdx !== null ? "Edit" : "Add"}{" "}
+              <span className="text-uppercase text-primary">{accountModalChannel}</span> Provider Account
+            </span>
+          </div>
+        </ModalHeader>
+        <ModalBody className="p-4 bg-light bg-opacity-50">
+          <Row className="g-3">
+            {/* Step 1: Select Gateway Provider */}
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Select Gateway Provider *</Label>
+                <Input
+                  type="select"
+                  value={accountFormData.providerCode}
+                  onChange={(e) => handleSelectAccountPreset(e.target.value)}
+                  className="fw-semibold"
+                >
+                  {(providersByChannel[accountModalChannel === "email" ? "EMAIL" : accountModalChannel.toUpperCase()] || []).map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name} ({p.code.toUpperCase()})
+                    </option>
+                  ))}
+                  <option value="custom">Custom / Other Gateway API</option>
+                </Input>
+                <small className="text-muted" style={{ fontSize: "11px" }}>
+                  Selected dynamically from Master Database Provider Registry.
+                </small>
+              </FormGroup>
+            </Col>
+
+            {/* Step 2: Account Name / Label */}
+            <Col md={6}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Account Name / Label *</Label>
+                <Input
+                  placeholder="e.g. Primary Account, OTP Route, Marketing ID"
+                  value={accountFormData.accountLabel}
+                  onChange={(e) => setAccountFormData({ ...accountFormData, accountLabel: e.target.value })}
+                  required
+                />
+                <small className="text-muted" style={{ fontSize: "11px" }}>
+                  Human-friendly name to identify this account/ID in the system.
+                </small>
+              </FormGroup>
+            </Col>
+
+            {/* Base API URL */}
+            <Col md={7}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Base API URL / Endpoint</Label>
+                <Input
+                  placeholder="e.g. https://api.carrier.com/v1"
+                  value={accountFormData.settings?.baseUrl || ""}
+                  onChange={(e) =>
+                    setAccountFormData({
+                      ...accountFormData,
+                      settings: { ...accountFormData.settings, baseUrl: e.target.value },
+                    })
+                  }
+                />
+              </FormGroup>
+            </Col>
+
+            {/* Auth Scheme */}
+            <Col md={5}>
+              <FormGroup className="mb-0">
+                <Label className="small fw-semibold text-dark">Auth Scheme</Label>
+                <Input
+                  type="select"
+                  value={accountFormData.authType}
+                  onChange={(e) => setAccountFormData({ ...accountFormData, authType: e.target.value })}
+                >
+                  <option value="api_key">API Key (Header / Query)</option>
+                  <option value="bearer">Bearer Token (Authorization Header)</option>
+                  <option value="basic">Basic Auth (Username + Password)</option>
+                  <option value="custom">Custom / Session Auth</option>
+                </Input>
+              </FormGroup>
+            </Col>
+
+            {/* CHANNEL SPECIFIC FIELDS */}
+
+            {/* SMS SPECIFIC */}
+            {accountModalChannel === "sms" && (
+              <>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMS Username / Customer ID</Label>
+                    <Input
+                      placeholder="e.g. mglitz_sms_user"
+                      value={accountFormData.credentials?.username || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, username: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMS Password / Auth Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter SMS password or key"
+                      value={accountFormData.credentials?.password || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, password: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">DLT Principal Entity ID</Label>
+                    <Input
+                      placeholder="e.g. 1701159123456789012"
+                      value={accountFormData.settings?.dltEntityId || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, dltEntityId: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">OTP Route Key</Label>
+                    <Input
+                      placeholder="e.g. OTP_ROUTE_KEY"
+                      value={accountFormData.settings?.otpRouteKey || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, otpRouteKey: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Transactional Route Key</Label>
+                    <Input
+                      placeholder="e.g. TXN_ROUTE_KEY"
+                      value={accountFormData.settings?.transactionalRouteKey || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, transactionalRouteKey: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Promotional Route Key</Label>
+                    <Input
+                      placeholder="e.g. PROMO_ROUTE_KEY"
+                      value={accountFormData.settings?.promotionalRouteKey || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, promotionalRouteKey: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* WHATSAPP SPECIFIC */}
+            {accountModalChannel === "whatsapp" && (
+              <>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Sender MSISDN / Mobile Number</Label>
+                    <Input
+                      placeholder="e.g. 919876543210"
+                      value={accountFormData.settings?.brandMsisdn || accountFormData.credentials?.senderMsisdn || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, brandMsisdn: e.target.value },
+                          credentials: { ...accountFormData.credentials, senderMsisdn: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">WABA ID (WhatsApp Business Account ID)</Label>
+                    <Input
+                      placeholder="e.g. 892158596877894"
+                      value={accountFormData.settings?.wabaId || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, wabaId: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Phone Number ID (Meta Cloud)</Label>
+                    <Input
+                      placeholder="e.g. 102938475610293"
+                      value={accountFormData.settings?.phoneNumberId || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, phoneNumberId: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Username / User ID</Label>
+                    <Input
+                      placeholder="e.g. digiglitzwbs"
+                      value={accountFormData.credentials?.username || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, username: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Password / Secret</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      value={accountFormData.credentials?.password || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, password: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Meta System User Access Token / API Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter Meta permanent token or API key"
+                      value={accountFormData.credentials?.apiKey || accountFormData.credentials?.token || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            apiKey: e.target.value,
+                            token: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col xs={12}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">JWTAUTH Bearer Token (Route Mobile / WBS)</Label>
+                    <Input
+                      type="textarea"
+                      rows={2}
+                      placeholder="eyJ0eXAi... (JWTAUTH Token)"
+                      value={accountFormData.credentials?.jwtAuth || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, jwtAuth: e.target.value },
+                        })
+                      }
+                      className="font-monospace small"
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* RCS SPECIFIC */}
+            {accountModalChannel === "rcs" && (
+              <>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">RCS Agent ID (Jio / Google)</Label>
+                    <Input
+                      placeholder="e.g. agent-102948-jio"
+                      value={accountFormData.settings?.agentId || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, agentId: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">RCS Company Brand Name</Label>
+                    <Input
+                      placeholder="e.g. InSign Technologies"
+                      value={accountFormData.settings?.company || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, company: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">RCS User ID / Account</Label>
+                    <Input
+                      placeholder="e.g. rcs_user_01"
+                      value={accountFormData.credentials?.username || accountFormData.credentials?.userId || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            username: e.target.value,
+                            userId: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">RCS Password / API Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter RCS password or key"
+                      value={accountFormData.credentials?.password || accountFormData.credentials?.apiKey || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            password: e.target.value,
+                            apiKey: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* VOICE SPECIFIC */}
+            {accountModalChannel === "voice" && (
+              <>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Voice API Username / Account ID</Label>
+                    <Input
+                      placeholder="e.g. mglitz_voice_user"
+                      value={accountFormData.credentials?.username || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, username: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Voice API Password / Secret Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter Voice password or key"
+                      value={accountFormData.credentials?.password || accountFormData.credentials?.apiKey || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            password: e.target.value,
+                            apiKey: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* EMAIL SPECIFIC */}
+            {accountModalChannel === "email" && (
+              <>
+                <Col md={8}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMTP Server Host</Label>
+                    <Input
+                      placeholder="e.g. smtp.mailgun.org or email-smtp.us-east-1.amazonaws.com"
+                      value={accountFormData.settings?.host || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, host: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={4}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMTP Port</Label>
+                    <Input
+                      type="number"
+                      placeholder="587, 465, 25"
+                      value={accountFormData.settings?.port || "587"}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, port: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMTP Username / Auth ID</Label>
+                    <Input
+                      placeholder="e.g. postmaster@domain.com"
+                      value={accountFormData.credentials?.username || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, username: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">SMTP Password / API Key</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter SMTP password"
+                      value={accountFormData.credentials?.password || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, password: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* TELEGRAM SPECIFIC */}
+            {accountModalChannel === "telegram" && (
+              <>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Official Telegram Gateway Token</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter Gateway token"
+                      value={accountFormData.credentials?.token || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          credentials: { ...accountFormData.credentials, token: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Gateway Sender Username</Label>
+                    <Input
+                      placeholder="e.g. MyBrandSender"
+                      value={accountFormData.settings?.senderUsername || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, senderUsername: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Bot Token (@BotFather)</Label>
+                    <Input
+                      type="password"
+                      placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                      value={accountFormData.settings?.botToken || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, botToken: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+                <Col md={6}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark">Bot Username</Label>
+                    <Input
+                      placeholder="e.g. BeyondSendOtpBot"
+                      value={accountFormData.settings?.botUsername || ""}
+                      onChange={(e) =>
+                        setAccountFormData({
+                          ...accountFormData,
+                          settings: { ...accountFormData.settings, botUsername: e.target.value },
+                        })
+                      }
+                    />
+                  </FormGroup>
+                </Col>
+              </>
+            )}
+
+            {/* PRIMARY SELECTION CHECKBOX */}
+            <Col xs={12}>
+              <FormGroup check className="p-3 bg-white rounded border mt-2">
+                <Input
+                  type="checkbox"
+                  id="accountPrimaryCheck"
+                  checked={accountFormData.isPrimary}
+                  onChange={(e) => setAccountFormData({ ...accountFormData, isPrimary: e.target.checked })}
+                />
+                <Label check for="accountPrimaryCheck" className="small fw-bold text-dark mb-0">
+                  ⭐ Set this as the Primary Gateway for {accountModalChannel.toUpperCase()}
+                </Label>
+                <p className="text-muted mb-0 mt-1" style={{ fontSize: "11px" }}>
+                  The entire system, templates, and outbound message dispatch will operate according to this primary account.
+                </p>
+              </FormGroup>
+            </Col>
+          </Row>
+        </ModalBody>
+        <ModalFooter className="bg-white border-top py-2.5 px-4 d-flex justify-content-between">
+          <Button color="light" size="sm" onClick={() => setAccountModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="primary" size="sm" className="fw-bold px-3 text-white" onClick={handleSaveAccount}>
+            {editingAccountIdx !== null ? "Update Account" : "Save Provider Account"}
           </Button>
         </ModalFooter>
       </Modal>

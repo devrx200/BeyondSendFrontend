@@ -77,6 +77,7 @@ export const ChannelRegistry = lazy(() => import("../views/authorized/settings/C
 export const ProviderRegistry = lazy(() => import("../views/authorized/settings/ProviderRegistry"));
 export const ChannelMatrix = lazy(() => import("../views/authorized/settings/ChannelMatrix"));
 export const ChannelCategoryMaster = lazy(() => import("../views/authorized/settings/ChannelCategoryMaster"));
+export const ProviderApiCatalogManagement = lazy(() => import("../views/authorized/settings/ProviderApiCatalogManagement"));
 export const CreditPlanChartManagement = lazy(() => import("../views/authorized/settings/CreditPlanChartManagement"));
 
 /* ─── 6. Onboarding ──────────────────────────────────────────────────────── */

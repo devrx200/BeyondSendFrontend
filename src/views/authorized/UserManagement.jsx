@@ -13,7 +13,8 @@ import {
   FaChevronDown, FaChevronRight, FaSitemap, FaCogs,
   FaBuilding, FaFileInvoice, FaKey, FaEnvelope, FaPhoneAlt,
   FaComments, FaBroadcastTower, FaCopy, FaExternalLinkAlt,
-  FaUserCheck, FaUserTag, FaExchangeAlt, FaShieldAlt, FaIdBadge
+  FaUserCheck, FaUserTag, FaExchangeAlt, FaShieldAlt, FaIdBadge,
+  FaTelegramPlane, FaBell
 } from "react-icons/fa";
 import apiClient, { BASE_HOST } from "@apiService";
 import Swal from "sweetalert2";
@@ -53,6 +54,8 @@ const ALL_TELECOM_CHANNELS = [
   { key: "rcs", label: "RCS", icon: <FaBroadcastTower />, color: "#7950f2", name: "RCS (Google RBM)" },
   { key: "voice", label: "Voice", icon: <FaPhoneAlt />, color: "#fd7e14", name: "Voice / OBD" },
   { key: "email", label: "Email", icon: <FaEnvelope />, color: "#228be6", name: "Email (SMTP)" },
+  { key: "telegram", label: "Telegram", icon: <FaTelegramPlane />, color: "#0088cc", name: "Telegram Bot & Gateway" },
+  { key: "push", label: "Push", icon: <FaBell />, color: "#e64980", name: "Push Notifications" },
 ];
 
 /* ================= INITIAL FORM ================= */
@@ -2245,7 +2248,7 @@ const UserManagement = () => {
             <Card className="border-0 shadow-sm mb-3 bg-white">
               <CardHeader className="bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between">
                 <span className="fw-bold small text-uppercase text-dark">
-                  ⚡ Authorized Telecom Channels ({hubUser.enabledChannels?.length || 0}/5)
+                  ⚡ Authorized Telecom Channels ({hubUser.enabledChannels?.length || 0}/{ALL_TELECOM_CHANNELS.length})
                 </span>
                 <span className="text-muted small">Click any channel to toggle access</span>
               </CardHeader>

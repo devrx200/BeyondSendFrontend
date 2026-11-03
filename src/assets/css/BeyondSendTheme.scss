@@ -3502,20 +3502,91 @@ hr {
   }
 
   .swal2-confirm {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
-    color: #ffffff !important;
-    border-radius: 8px !important;
-    padding: 8px 20px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.3) !important;
+    background-color: var(--bs-primary, #0d6efd);
+    border: 1px solid var(--bs-primary, #0d6efd);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+      color: #ffffff;
+    }
+
+    &.btn-primary {
+      background-color: #0d6efd !important;
+      border-color: #0d6efd !important;
+      color: #ffffff !important;
+      &:hover {
+        background-color: #0b5ed7 !important;
+        border-color: #0a58ca !important;
+      }
+    }
+
+    &.btn-danger,
+    &.adm-swal-btn-danger {
+      background: #dc3545 !important;
+      background-color: #dc3545 !important;
+      border: 1px solid #dc3545 !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(220, 53, 69, 0.25) !important;
+
+      &:hover {
+        background: #bb2d3b !important;
+        background-color: #bb2d3b !important;
+        border-color: #b02a37 !important;
+        color: #ffffff !important;
+      }
+    }
+
+    &.btn-success,
+    &.adm-swal-btn-success {
+      background: #198754 !important;
+      background-color: #198754 !important;
+      border: 1px solid #198754 !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(25, 135, 84, 0.25) !important;
+
+      &:hover {
+        background-color: #157347 !important;
+        border-color: #146c43 !important;
+      }
+    }
   }
 
   .swal2-cancel {
-    background-color: var(--bs-tertiary-bg) !important;
-    color: var(--bs-body-color) !important;
-    border: 1px solid var(--bs-border-color) !important;
-    border-radius: 8px !important;
-    padding: 8px 18px !important;
+    background-color: #6c757d;
+    color: #ffffff;
+    border: 1px solid #6c757d;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+      background-color: #5c636a;
+      border-color: #565e64;
+      color: #ffffff;
+    }
+
+    &.btn-secondary {
+      background-color: #6c757d !important;
+      border-color: #6c757d !important;
+      color: #ffffff !important;
+      &:hover {
+        background-color: #5c636a !important;
+        border-color: #565e64 !important;
+      }
+    }
+
+    &.btn-light {
+      background-color: #f8f9fa !important;
+      border-color: #dee2e6 !important;
+      color: #212529 !important;
+    }
   }
 }
 
@@ -4011,4 +4082,285 @@ hr {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * WHATSAPP MODULE CENTRALIZED STYLES
+ * ───────────────────────────────────────────────────────────── */
+.custom-whatsapp-table th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+.custom-whatsapp-table td {
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle !important;
+}
+.custom-whatsapp-table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+.custom-whatsapp-table tbody tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* ── Banner ── */
+.wa-banner-card {
+  background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);
+}
+.wa-banner-icon {
+  width: 44px;
+  height: 44px;
+  background: #25D366;
+}
+.wa-banner-title {
+  font-size: 19px;
+}
+.wa-banner-badge {
+  font-size: 11px;
+}
+
+/* ── Phone Frame ── */
+.wa-phone-frame {
+  width: 310px;
+  min-height: 580px;
+  border-radius: 40px;
+  border: 6px solid #1a1a2e;
+  background: #0f0f1a;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 2px #2a2a3e;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.wa-phone-notch-area {
+  background: #0f0f1a;
+  padding-top: 8px;
+}
+.wa-phone-notch {
+  width: 100px;
+  height: 22px;
+  border-radius: 0 0 16px 16px;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.wa-phone-notch-camera {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a2a3e;
+}
+.wa-phone-notch-speaker {
+  width: 36px;
+  height: 4px;
+  border-radius: 3px;
+  background: #2a2a3e;
+}
+.wa-phone-statusbar {
+  height: 20px;
+  background: #075E54;
+  font-size: 9.5px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+}
+.wa-phone-battery {
+  width: 18px;
+  height: 9px;
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 2px;
+  padding: 1px;
+  position: relative;
+}
+.wa-phone-battery-fill {
+  width: 70%;
+  height: 100%;
+  background: rgba(255,255,255,0.85);
+  border-radius: 1px;
+}
+.wa-phone-battery-tip {
+  position: absolute;
+  right: -3px;
+  top: 2px;
+  width: 2px;
+  height: 5px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 0 1px 1px 0;
+}
+.wa-phone-chat-header {
+  height: 46px;
+  background: #075E54;
+}
+.wa-phone-avatar {
+  width: 32px;
+  height: 32px;
+  background: #25D366;
+}
+.wa-phone-contact-name {
+  font-size: 13px;
+  line-height: 1.2;
+}
+.wa-phone-contact-status {
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.2;
+}
+.wa-phone-close-btn {
+  width: 26px;
+  height: 26px;
+  background-color: #dc3545 !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  border-radius: 50% !important;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.wa-phone-close-btn:hover {
+  background-color: #bb2d3b !important;
+  color: #ffffff !important;
+  transform: scale(1.08);
+}
+.wa-phone-chat-area {
+  background: #ece5dd;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9c2b7' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  overflow-y: auto;
+  max-height: 420px;
+}
+.wa-phone-date-chip {
+  font-size: 10px;
+  background: #d9f2ff;
+  color: #5e7685;
+  font-weight: 600;
+}
+.wa-phone-bubble {
+  max-width: 85%;
+  background: #ffffff;
+  border-radius: 0 10px 10px 10px;
+  padding: 8px 10px 4px 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.wa-phone-bubble-tail {
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 0 solid transparent;
+  border-right: 8px solid #ffffff;
+  border-bottom: 10px solid transparent;
+}
+.wa-phone-header-sep {
+  border-bottom: 1px solid #f0f0f0;
+}
+.wa-phone-header-text {
+  font-size: 13px;
+  color: #111b21;
+}
+.wa-phone-media-placeholder {
+  height: 90px;
+  background: #e8e8e8;
+  color: #9aa0a6;
+  font-size: 11px;
+  font-weight: 600;
+}
+.wa-phone-body {
+  font-size: 13px;
+  color: #111b21;
+  white-space: pre-line;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.wa-phone-footer {
+  font-size: 11px;
+  color: #8696a0;
+}
+.wa-phone-timestamp {
+  font-size: 10px;
+  color: #8696a0;
+}
+.wa-phone-read-receipt {
+  color: #53bdeb;
+}
+.wa-phone-action-btn {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #00a5f4;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  transition: background 0.15s;
+}
+.wa-phone-action-btn:hover {
+  background: #f5f5f5;
+}
+.wa-phone-input-bar {
+  height: 42px;
+  background: #f0f0f0;
+  border-top: 1px solid #e0e0e0;
+}
+.wa-phone-input-field {
+  height: 30px;
+  background: #ffffff;
+  font-size: 11px;
+  color: #8696a0;
+}
+.wa-phone-send-btn {
+  width: 30px;
+  height: 30px;
+  background: #25D366;
+}
+.wa-phone-home-indicator {
+  height: 18px;
+  background: #0f0f1a;
+}
+.wa-phone-home-bar {
+  width: 100px;
+  height: 4px;
+  border-radius: 3px;
+  background: #3a3a4e;
+  margin-top: 7px;
+}
+
+/* ── Completely Transparent Phone Modal (Removes White Box & Corners Behind Phone) ── */
+.wa-phone-modal-wrapper.modal {
+  padding: 0 !important;
+}
+.wa-phone-modal-wrapper .modal-dialog,
+.wa-phone-modal-dialog {
+  max-width: fit-content !important;
+  width: auto !important;
+  margin: 1.75rem auto !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.wa-phone-modal-wrapper .modal-content,
+.wa-phone-modal-content,
+div.modal-content.wa-phone-modal-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  overflow: visible !important;
+}
+.wa-phone-modal-wrapper .modal-body,
+.wa-phone-modal-body,
+div.modal-body.wa-phone-modal-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }

@@ -128,10 +128,10 @@ export const wpSwal = {
 
     const confirmClass =
       type === "danger"
-        ? "adm-swal-btn-danger"
+        ? "btn btn-danger px-4 py-2"
         : type === "success"
-        ? "adm-swal-btn-success"
-        : "adm-swal-btn-primary";
+        ? "btn btn-success px-4 py-2"
+        : "btn btn-primary px-4 py-2";
 
     const iconType = type === "danger" ? "warning" : type === "success" ? "question" : "info";
 
@@ -140,9 +140,9 @@ export const wpSwal = {
         popup: "adm-swal-popup",
         title: "adm-swal-title",
         htmlContainer: "adm-swal-html",
-        actions: "adm-swal-actions",
+        actions: "gap-2",
         confirmButton: confirmClass,
-        cancelButton: "adm-swal-btn-cancel",
+        cancelButton: "btn btn-secondary px-4 py-2",
       },
       buttonsStyling: false,
       icon: iconType,
@@ -165,8 +165,8 @@ export const wpSwal = {
         popup: "adm-swal-popup",
         title: "adm-swal-title",
         htmlContainer: "adm-swal-html",
-        actions: "adm-swal-actions",
-        confirmButton: "adm-swal-btn-primary",
+        actions: "gap-2",
+        confirmButton: "btn btn-primary px-4 py-2",
       },
       buttonsStyling: false,
       icon,
@@ -183,9 +183,9 @@ export const wpSwal = {
         popup: "adm-swal-popup",
         title: "adm-swal-title",
         htmlContainer: "adm-swal-html",
-        actions: "adm-swal-actions",
-        confirmButton: "adm-swal-btn-primary",
-        cancelButton: "adm-swal-btn-cancel",
+        actions: "gap-2",
+        confirmButton: "btn btn-primary px-4 py-2",
+        cancelButton: "btn btn-secondary px-4 py-2",
         input: "adm-swal-input",
       },
       buttonsStyling: false,
@@ -202,6 +202,11 @@ export const wpSwal = {
 
     return r.isConfirmed ? r.value : null;
   },
+
+  fire: (...args) => Swal.fire(...args),
+  showLoading: (...args) => Swal.showLoading(...args),
+  close: (...args) => Swal.close(...args),
+  isLoading: (...args) => Swal.isLoading(...args),
 };
 
 export default toast;

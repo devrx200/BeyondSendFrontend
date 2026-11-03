@@ -11,6 +11,63 @@ import {
 import apiClient from "@apiService";
 import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
 import { PageLoader } from "@/components";
+// Pure Bootstrap 5 Status & Provider badge helpers
+const renderStatusBadge = (status) => {
+  const s = String(status || "APPROVED").toUpperCase();
+  if (s === "APPROVED" || s === "ACTIVE") {
+    return (
+      <span className="badge rounded-pill bg-success text-white fw-semibold px-2.5 py-1 text-uppercase">
+        APPROVED
+      </span>
+    );
+  }
+  if (s === "REJECTED" || s === "FAILED") {
+    return (
+      <span className="badge rounded-pill bg-danger text-white fw-semibold px-2.5 py-1 text-uppercase">
+        REJECTED
+      </span>
+    );
+  }
+  if (s === "PENDING" || s === "PENDING_APPROVAL" || s === "SUBMITTED" || s === "UNDER_REVIEW") {
+    return (
+      <span className="badge rounded-pill bg-warning text-dark fw-semibold px-2.5 py-1 text-uppercase">
+        {s === "PENDING_APPROVAL" ? "PENDING" : s}
+      </span>
+    );
+  }
+  if (s === "DRAFT") {
+    return (
+      <span className="badge rounded-pill bg-secondary text-white fw-semibold px-2.5 py-1 text-uppercase">
+        DRAFT
+      </span>
+    );
+  }
+  return (
+    <span className="badge rounded-pill bg-secondary text-white fw-semibold px-2.5 py-1 text-uppercase">
+      {s}
+    </span>
+  );
+};
+
+const renderProviderBadge = (providerCode, status) => {
+  const s = String(status || "").toUpperCase();
+  let bgClass = "bg-secondary text-white";
+  if (s === "APPROVED") bgClass = "bg-success text-white";
+  else if (s === "REJECTED") bgClass = "bg-danger text-white";
+  else if (s === "PENDING" || s === "SUBMITTED") bgClass = "bg-warning text-dark";
+  else if (providerCode) bgClass = "bg-info text-white";
+
+  return (
+    <span
+      className={`badge rounded-pill font-monospace px-2 py-1 text-uppercase d-inline-flex align-items-center gap-1 ${bgClass}`}
+      style={{ fontSize: "10px" }}
+    >
+      <FaServer size={8} />
+      <span>{providerCode}</span>
+      {status ? <span className="fw-bold">({status})</span> : null}
+    </span>
+  );
+};
 
 const TelegramTemplates = () => {
   const { toasts, toast } = useToast();
@@ -58,19 +115,8 @@ const TelegramTemplates = () => {
     }
   };
 
-  const fetchProviders = async () => {
-    try {
-      const res = await apiClient.get("/telegram/templates/providers");
-      const list = res?.data?.data || [];
-      if (list.length > 0) setProviders(list);
-    } catch {
-      // Handled by fetchTemplates availableProviders
-    }
-  };
-
   useEffect(() => {
     fetchTemplates();
-    fetchProviders();
   }, []);
 
   const handleOpenCreate = () => {
@@ -309,11 +355,6 @@ const TelegramTemplates = () => {
                         <td className="text-muted small">{idx + 1}</td>
                         <td className="fw-semibold text-dark">
                           {t.name}
-                          {t.isSystem && (
-                            <Badge color="light" className="text-muted ms-1 border" style={{ fontSize: "10px" }}>
-                              System
-                            </Badge>
-                          )}
                         </td>
                         <td>
                           <Badge color="info" pill className="px-2 py-1">
@@ -321,10 +362,7 @@ const TelegramTemplates = () => {
                           </Badge>
                         </td>
                         <td>
-                          <Badge color="primary" pill className="font-monospace px-2 py-1">
-                            <FaServer className="me-1" size={9} />
-                            {t.provider || "TELEGRAM_BOT"}
-                          </Badge>
+                          {renderProviderBadge(t.provider || "TELEGRAM_BOT", t.status)}
                         </td>
                         <td>
                           <div className="text-truncate" style={{ maxWidth: "260px" }}>
@@ -337,9 +375,7 @@ const TelegramTemplates = () => {
                           </span>
                         </td>
                         <td>
-                          <Badge color="success" pill className="px-2 py-1">
-                            {t.status || "APPROVED"}
-                          </Badge>
+                          {renderStatusBadge(t.status)}
                         </td>
                         <td className="text-center">
                           <div className="d-inline-flex gap-1.5 align-items-center">
