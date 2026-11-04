@@ -384,12 +384,12 @@ const CHANNEL_GROUPS = [
       {
         id: "wa-campaigns",
         icon: FaPaperPlane,
-        path: "/authorized/campaigns/all?channel=WHATSAPP",
+        path: "/authorized/whatsapp/campaigns",
         requiredPerm: "whatsapp",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Bulk Campaigns",
-          "बल्क कैंपेन"
+          "WhatsApp Campaigns",
+          "व्हाट्सएप कैंपेन"
         ),
       },
     ],
@@ -437,12 +437,12 @@ const CHANNEL_GROUPS = [
       {
         id: "sms-campaigns",
         icon: FaPaperPlane,
-        path: "/authorized/campaigns/all?channel=SMS",
+        path: "/authorized/sms/campaigns",
         requiredPerm: "sms",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Bulk Campaigns",
-          "बल्क कैंपेन"
+          "SMS Campaigns",
+          "एसएमएस कैंपेन"
         ),
       },
 
@@ -502,12 +502,12 @@ const CHANNEL_GROUPS = [
       {
         id: "email-campaigns",
         icon: FaPaperPlane,
-        path: "/authorized/campaigns/all?channel=EMAIL",
+        path: "/authorized/email/campaigns",
         requiredPerm: "email",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Bulk Campaigns",
-          "बल्क कैंपेन"
+          "Email Campaigns",
+          "ईमेल कैंपेन"
         ),
       },
 
@@ -567,12 +567,12 @@ const CHANNEL_GROUPS = [
       {
         id: "rcs-campaigns",
         icon: FaPaperPlane,
-        path: "/authorized/campaigns/all?channel=RCS",
+        path: "/authorized/rcs/campaigns",
         requiredPerm: "rcs",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Bulk Campaigns",
-          "बल्क कैंपेन"
+          "RCS Campaigns",
+          "आरसीएस कैंपेन"
         ),
       },
     ],
@@ -608,12 +608,12 @@ const CHANNEL_GROUPS = [
       {
         id: "voice-campaigns",
         icon: FaPaperPlane,
-        path: "/authorized/campaigns/all?channel=VOICE",
+        path: "/authorized/voice/campaigns",
         requiredPerm: "voice",
         allowedRoles: CHANNEL_ROLES,
         label: t(
-          "Bulk Campaigns",
-          "बल्क कैंपेन"
+          "Voice Campaigns",
+          "वॉयस कैंपेन"
         ),
       },
     ],
@@ -965,8 +965,8 @@ const SHARED_GROUPS = [
         path: "/authorized/campaigns/lists",
         allowedRoles: TENANT_ROLES,
         label: t(
-          "Contact Lists",
-          "कॉन्टैक्ट लिस्ट"
+          "Audience & Contacts",
+          "ऑडियंस और कॉन्टैक्ट"
         ),
       },
 

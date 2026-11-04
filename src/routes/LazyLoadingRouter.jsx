@@ -46,6 +46,7 @@ export const AboutSectionManagement = lazy(() => import("../views/authorized/cms
 /* ─── 1. WhatsApp Modules (whatsapp-modules) ──────────────────────────────── */
 export const WhatsappTemplates = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappTemplates"));
 export const WhatsappResponses = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappResponses"));
+export const WhatsappCampaigns = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappCampaigns"));
 
 /* ─── 1b. Telegram Modules (telegram-modules) ────────────────────────────── */
 export const TelegramTemplates = lazy(() => import("../views/authorized/telegram-modules/TelegramTemplates"));
@@ -56,6 +57,7 @@ export const TelegramDocs = lazy(() => import("../views/authorized/telegram-modu
 
 /* ─── 2. Email Modules (email-modules) ────────────────────────────────────── */
 export const EmailTemplates = lazy(() => import("../views/authorized/email-modules/EmailTemplates"));
+export const EmailCampaigns = lazy(() => import("../views/authorized/email-modules/EmailCampaigns"));
 
 /* ─── 3. APIs Modules (apis-modules) ──────────────────────────────────────── */
 export const ApiKeyManagement = lazy(() => import("../views/authorized/apis-modules/ApiKeyManagement"));
@@ -86,9 +88,12 @@ export const Onboarding = lazy(() => import("../views/authorized/onboarding/Onbo
 /* ─── 7. Telecom Modules (telecom) ───────────────────────────────────────── */
 export const FromIdsConfig = lazy(() => import("../views/authorized/telecom/FromIdsConfig"));
 export const SmsTemplates = lazy(() => import("../views/authorized/telecom/SmsTemplates"));
+export const SmsCampaigns = lazy(() => import("../views/authorized/telecom/SmsCampaigns"));
 export const RcsTemplates = lazy(() => import("../views/authorized/telecom/RcsTemplates"));
 export const RcsResponses = lazy(() => import("../views/authorized/telecom/RcsResponses"));
+export const RcsCampaigns = lazy(() => import("../views/authorized/telecom/RcsCampaigns"));
 export const VoiceTemplates = lazy(() => import("../views/authorized/telecom/VoiceTemplates"));
+export const VoiceCampaigns = lazy(() => import("../views/authorized/telecom/VoiceCampaigns"));
 export const CampaignLists = lazy(() => import("../views/authorized/telecom/CampaignLists"));
 export const CampaignSegments = lazy(() => import("../views/authorized/telecom/CampaignSegments"));
 export const CampaignsManagement = lazy(() => import("../views/authorized/telecom/CampaignsManagement"));

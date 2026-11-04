@@ -22,7 +22,7 @@ import {
   HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
   DbBackupManagement, SidebarMenuManagement,
   /* Telecom modules */
-  EmailTemplates, SmsTemplates, RcsTemplates, WhatsappTemplates, VoiceTemplates,
+  EmailTemplates, EmailCampaigns, SmsTemplates, SmsCampaigns, RcsTemplates, RcsCampaigns, WhatsappTemplates, WhatsappCampaigns, VoiceTemplates, VoiceCampaigns,
   TelegramTemplates, TelegramBroadcasts, TelegramGatewayOtp, TelegramBotConfig, TelegramDocs,
   CampaignLists, CampaignSegments, CampaignsManagement, UnsubscribersManagement, BouncesSpamManagement,
   FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
@@ -101,7 +101,14 @@ const AppRoutes = () => {
           <Route path="telegram/bot-config" element={<TelegramBotConfig />} />
           <Route path="telegram/docs" element={<TelegramDocs />} />
 
-          {/* Bulk campaigns */}
+          {/* Channel Dedicated Campaigns */}
+          <Route path="whatsapp/campaigns" element={<WhatsappCampaigns />} />
+          <Route path="sms/campaigns" element={<SmsCampaigns />} />
+          <Route path="email/campaigns" element={<EmailCampaigns />} />
+          <Route path="rcs/campaigns" element={<RcsCampaigns />} />
+          <Route path="voice/campaigns" element={<VoiceCampaigns />} />
+
+          {/* Bulk campaigns & Audience */}
           <Route path="campaigns/lists" element={<CampaignLists />} />
           <Route path="campaigns/segments" element={<CampaignSegments />} />
           <Route path="campaigns/all" element={<CampaignsManagement />} />

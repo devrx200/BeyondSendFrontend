@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter, Form, FormGroup,
@@ -42,14 +42,28 @@ const CampaignsManagement = () => {
     messageBody: ""
   });
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (channelParam) {
-      setChannelFilter(channelParam.toUpperCase());
-      setForm((prev) => ({ ...prev, channel: channelParam.toUpperCase() }));
+      const ch = channelParam.toUpperCase();
+      if (ch === "WHATSAPP") {
+        navigate("/authorized/whatsapp/campaigns", { replace: true });
+      } else if (ch === "SMS") {
+        navigate("/authorized/sms/campaigns", { replace: true });
+      } else if (ch === "EMAIL") {
+        navigate("/authorized/email/campaigns", { replace: true });
+      } else if (ch === "RCS") {
+        navigate("/authorized/rcs/campaigns", { replace: true });
+      } else if (ch === "VOICE") {
+        navigate("/authorized/voice/campaigns", { replace: true });
+      } else {
+        setChannelFilter(ch);
+      }
     } else {
       setChannelFilter("ALL");
     }
-  }, [channelParam]);
+  }, [channelParam, navigate]);
 
   const fetchData = async () => {
     try {
@@ -178,28 +192,29 @@ const CampaignsManagement = () => {
       <ToastContainer toasts={toasts} onRemove={toast.remove} />
 
       {/* ── HEADER ── */}
-      <Card className="adm-card mb-4">
-        <CardHeader className="adm-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <div className="d-flex align-items-center gap-3">
+      <Card className="adm-card mb-3 border-0 shadow-sm" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
+        <CardHeader className="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2.5 px-3 border-0 bg-transparent">
+          <div className="d-flex align-items-center gap-2.5">
             <div
-              className="rounded-circle d-flex align-items-center justify-content-center bg-white bg-opacity-20"
-              style={{ width: "44px", height: "44px" }}
+              className="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-25 border border-primary border-opacity-50"
+              style={{ width: "38px", height: "38px" }}
             >
-              <FaPaperPlane size={20} className="text-white" />
+              <FaPaperPlane size={18} className="text-primary" />
             </div>
             <div>
-              <h4 className="adm-page-title mb-0 text-white">Bulk Campaigns Dispatcher</h4>
-              <p className="adm-page-subtitle mb-0 text-white-50">
-                Multi-channel blast orchestrator (WhatsApp, SMS, Email, RCS, Voice) with delivery tracking
+              <h5 className="mb-0 text-white fw-bold" style={{ fontSize: "16px" }}>All Campaigns (Omnichannel Overview)</h5>
+              <p className="mb-0 text-white-50" style={{ fontSize: "12px" }}>
+                Multi-channel blast overview (WhatsApp, SMS, Email, RCS, Voice) with aggregated delivery tracking
               </p>
             </div>
           </div>
           <Button
             color="primary"
-            className="fw-bold shadow-sm px-3.5 d-flex align-items-center gap-1.5"
+            size="sm"
+            className="fw-bold shadow-sm px-3 d-flex align-items-center gap-1.5"
             onClick={handleOpenModal}
           >
-            <FaPlus size={12} /> Launch New Campaign
+            <FaPlus size={11} /> Launch New Campaign
           </Button>
         </CardHeader>
       </Card>
