@@ -47,6 +47,10 @@ export const AboutSectionManagement = lazy(() => import("../views/authorized/cms
 export const WhatsappTemplates = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappTemplates"));
 export const WhatsappResponses = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappResponses"));
 export const WhatsappCampaigns = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappCampaigns"));
+export const WhatsappDashboard = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappDashboard"));
+export const WhatsappAssistant = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappAssistant"));
+export const WhatsappAutomations = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappAutomations"));
+export const WhatsappWidgets = lazy(() => import("../views/authorized/whatsapp-modules/WhatsappWidgets"));
 
 /* ─── 1b. Telegram Modules (telegram-modules) ────────────────────────────── */
 export const TelegramTemplates = lazy(() => import("../views/authorized/telegram-modules/TelegramTemplates"));

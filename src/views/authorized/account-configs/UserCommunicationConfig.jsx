@@ -30,37 +30,56 @@ const AVAILABLE_CHANNELS = [
   { key: "push", label: "Push", icon: <FaBroadcastTower />, color: "#e64980", desc: "Firebase Cloud Messaging & WebPush" },
 ];
 
+const getRoutingEntry = (routingConfig, channel) =>
+  routingConfig?.configurations?.find(
+    (entry) => String(entry.channel || "").toLowerCase() === channel
+  ) || routingConfig?.[channel] || {};
+
+const createAccountConfigId = (channel, provider) => {
+  const providerCode = String(provider || "custom").toLowerCase().replace(/[^a-z0-9_]/g, "_");
+  const uniqueId = globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  return `cfg_${channel}_${providerCode}_${uniqueId}`;
+};
+
+const getProviderAccounts = (provider) =>
+  Array.isArray(provider)
+    ? provider
+    : Array.isArray(provider?.configurations)
+      ? provider.configurations
+      : [];
+
 const initialConfigState = {
   // Dynamic CPaaS Routing & Aggregator Failover
-  smsPrimaryVendor: "mobiglitz",
-  smsSecondaryVendor: "airtel",
+  smsPrimaryVendor: "",
+  smsSecondaryVendor: "",
   smsBackupVendor: "",
-  smsDefaultRouting: "primary_failover",
+  smsDefaultRouting: "PRIMARY",
 
-  whatsappPrimaryVendor: "meta",
-  whatsappSecondaryVendor: "wbs",
+  whatsappPrimaryVendor: "",
+  whatsappSecondaryVendor: "",
   whatsappBackupVendor: "",
-  whatsappDefaultRouting: "primary_failover",
+  whatsappDefaultRouting: "PRIMARY",
 
-  rcsPrimaryVendor: "routemobile",
-  rcsSecondaryVendor: "jio",
+  rcsPrimaryVendor: "",
+  rcsSecondaryVendor: "",
   rcsBackupVendor: "",
-  rcsDefaultRouting: "primary_failover",
+  rcsDefaultRouting: "PRIMARY",
 
-  voicePrimaryVendor: "mobiglitz",
-  voiceSecondaryVendor: "buzzdial",
+  voicePrimaryVendor: "",
+  voiceSecondaryVendor: "",
   voiceBackupVendor: "",
-  voiceDefaultRouting: "primary_failover",
+  voiceDefaultRouting: "PRIMARY",
 
-  emailPrimaryVendor: "smtp",
-  emailSecondaryVendor: "ses",
+  emailPrimaryVendor: "",
+  emailSecondaryVendor: "",
   emailBackupVendor: "",
-  emailDefaultRouting: "primary_failover",
+  emailDefaultRouting: "PRIMARY",
 
-  telegramPrimaryVendor: "telegram_gateway",
-  telegramSecondaryVendor: "telegram_bot",
+  telegramPrimaryVendor: "",
+  telegramSecondaryVendor: "",
   telegramBackupVendor: "",
-  telegramDefaultRouting: "primary_failover",
+  telegramDefaultRouting: "PRIMARY",
 
   // RCS
   rcsVendor: "",
@@ -155,6 +174,9 @@ const DEFAULT_PROVIDERS_BY_CHANNEL = {
   TELEGRAM: [
     { code: "telegram_bot", name: "Official Telegram Bot API" },
   ],
+  PUSH: [
+    { code: "fcm", name: "Firebase Cloud Messaging" },
+  ],
 };
 
 const UserCommunicationConfig = ({ userId: propUserId = null }) => {
@@ -230,6 +252,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     voice: [],
     email: [],
     telegram: [],
+    push: [],
   });
   const [accountModalOpen, setAccountModalOpen] = useState(false);
   const [accountModalChannel, setAccountModalChannel] = useState("whatsapp");
@@ -239,6 +262,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     providerCode: "",
     accountLabel: "",
     isPrimary: false,
+    isActive: true,
     status: "ACTIVE",
     authType: "api_key",
     credentials: {
@@ -404,7 +428,21 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         setCustomWhatsappProviders(cfg.customWhatsappProviders);
       }
       if (cfg.channelAccounts && typeof cfg.channelAccounts === "object") {
-        setChannelAccounts(cfg.channelAccounts);
+        setChannelAccounts((prev) => ({
+          ...prev,
+          ...cfg.channelAccounts,
+          push: cfg.channelAccounts.push || prev.push || [],
+        }));
+      } else {
+        setChannelAccounts({
+          sms: [],
+          whatsapp: [],
+          rcs: [],
+          voice: [],
+          email: [],
+          telegram: [],
+          push: [],
+        });
       }
       if (cfg.__secretsSet) {
         setSecretsSet(cfg.__secretsSet);
@@ -417,12 +455,10 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
             next[key] = cfg[key];
           }
         });
-        if (routing.sms?.primaryVendor) next.smsPrimaryVendor = routing.sms.primaryVendor;
-        if (routing.whatsapp?.primaryVendor) next.whatsappPrimaryVendor = routing.whatsapp.primaryVendor;
-        if (routing.rcs?.primaryVendor) next.rcsPrimaryVendor = routing.rcs.primaryVendor;
-        if (routing.voice?.primaryVendor) next.voicePrimaryVendor = routing.voice.primaryVendor;
-        if (routing.email?.primaryVendor) next.emailPrimaryVendor = routing.email.primaryVendor;
-        if (routing.telegram?.primaryVendor) next.telegramPrimaryVendor = routing.telegram.primaryVendor;
+        ["sms", "whatsapp", "rcs", "voice", "email", "telegram"].forEach((channel) => {
+          const route = getRoutingEntry(routing, channel);
+          if (route.primaryVendor) next[`${channel}PrimaryVendor`] = route.primaryVendor;
+        });
         return next;
       });
     } catch (err) {
@@ -571,6 +607,8 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         providerCode: cur.providerCode || "",
         accountLabel: cur.accountLabel || cur.configName || "",
         isPrimary: Boolean(cur.isPrimary),
+        isUseThis: cur.isUseThis === true,
+        isActive: cur.isActive !== false,
         status: cur.status || "ACTIVE",
         authType: cur.authType || "api_key",
         credentials: { ...(cur.credentials || {}) },
@@ -582,10 +620,12 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
       const defaultP = pList[0] || { code: "custom", name: "Custom Gateway" };
       setEditingAccountIdx(null);
       setAccountFormData({
-        configId: `cfg_${ch}_${defaultP.code}_${Date.now()}`,
+        configId: createAccountConfigId(ch, defaultP.code || "custom"),
         providerCode: defaultP.code || "custom",
         accountLabel: `${defaultP.name || defaultP.code} Account ${chAccounts.length + 1}`,
         isPrimary: chAccounts.length === 0,
+        isUseThis: chAccounts.length === 0,
+        isActive: true,
         status: "ACTIVE",
         authType: defaultP.authType || "api_key",
         credentials: {
@@ -663,14 +703,35 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
 
     const ch = accountModalChannel;
     const cleanCode = accountFormData.providerCode.toLowerCase().trim();
-
+    const channelKey = ch === "email" ? "EMAIL" : ch.toUpperCase();
+    const selectedProvider = (providersByChannel[channelKey] || []).find(
+      (provider) => String(provider.code || "").toLowerCase() === cleanCode
+    );
+    if (accountFormData.isActive && accountFormData.status === "ACTIVE") {
+      const missingCredential = (selectedProvider?.credentialSchema || []).find(
+        (field) =>
+          field.required &&
+          (accountFormData.credentials?.[field.name] === undefined ||
+            accountFormData.credentials?.[field.name] === null ||
+            (typeof accountFormData.credentials[field.name] === "string" &&
+              !accountFormData.credentials[field.name].trim()))
+      );
+      if (missingCredential) {
+        toast.error(`${missingCredential.label || missingCredential.name} is required for this provider.`);
+        return;
+      }
+    }
+    if (accountFormData.isPrimary && (!accountFormData.isActive || accountFormData.status !== "ACTIVE")) {
+      toast.error("Only an active, verified account can be selected as primary.");
+      return;
+    }
     setChannelAccounts((prev) => {
       const chList = prev[ch] || [];
       const accData = {
         ...accountFormData,
         providerCode: cleanCode,
         accountLabel: accountFormData.accountLabel.trim(),
-        configId: accountFormData.configId || `cfg_${ch}_${cleanCode}_${Date.now()}`,
+        configId: accountFormData.configId || createAccountConfigId(ch, cleanCode),
       };
 
       let updated;
@@ -684,13 +745,52 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         updated = updated.map((item) => ({
           ...item,
           isPrimary: item.configId === accData.configId,
+          isUseThis:
+            item.providerCode === cleanCode
+              ? item.configId === accData.configId
+              : item.isUseThis === true &&
+                item.isActive === true &&
+                item.status === "ACTIVE",
         }));
         handleInputChange(`${ch}PrimaryVendor`, cleanCode);
       } else {
-        const hasPrim = updated.some((item) => item.isPrimary);
+        const hasPrim = updated.some(
+          (item) => item.isPrimary && item.isActive === true && item.status === "ACTIVE"
+        );
         if (!hasPrim && updated.length > 0) {
-          updated[0].isPrimary = true;
-          handleInputChange(`${ch}PrimaryVendor`, updated[0].providerCode);
+          const firstActive = updated.find(
+            (item) => item.isActive === true && item.status === "ACTIVE"
+          );
+          if (firstActive) {
+            firstActive.isPrimary = true;
+            handleInputChange(`${ch}PrimaryVendor`, firstActive.providerCode);
+          }
+        }
+      }
+
+      const accountsByProvider = new Map();
+      updated.forEach((item) => {
+        const code = String(item.providerCode || "").toLowerCase();
+        if (!accountsByProvider.has(code)) accountsByProvider.set(code, []);
+        accountsByProvider.get(code).push(item);
+      });
+      for (const [providerCode, accounts] of accountsByProvider) {
+        const usable = accounts.filter(
+          (item) => item.isActive === true && item.status === "ACTIVE"
+        );
+        const selected =
+          usable.find((item) => item.isUseThis === true) ||
+          usable.find((item) => item.isPrimary === true) ||
+          [...usable].sort(
+            (left, right) => (left.priority || 1) - (right.priority || 1)
+          )[0];
+        accounts.forEach((item) => {
+          item.isUseThis = item.configId === selected?.configId;
+        });
+        if (providerCode === cleanCode && !selected) {
+          accounts.forEach((item) => {
+            item.isUseThis = false;
+          });
         }
       }
 
@@ -720,8 +820,36 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
       const updated = currentList.filter((_, i) => i !== idx);
 
       if (targetAcc.isPrimary && updated.length > 0) {
-        updated[0].isPrimary = true;
-        handleInputChange(`${ch}PrimaryVendor`, updated[0].providerCode);
+        const firstActive = updated.find(
+          (item) => item.isActive === true && item.status === "ACTIVE"
+        );
+        if (firstActive) {
+          firstActive.isPrimary = true;
+          handleInputChange(`${ch}PrimaryVendor`, firstActive.providerCode);
+        }
+      }
+
+      const accountsByProvider = new Map();
+      updated.forEach((item) => {
+        const providerCode = String(item.providerCode || "").toLowerCase();
+        if (!accountsByProvider.has(providerCode)) {
+          accountsByProvider.set(providerCode, []);
+        }
+        accountsByProvider.get(providerCode).push(item);
+      });
+      for (const accounts of accountsByProvider.values()) {
+        const usable = accounts.filter(
+          (item) => item.isActive === true && item.status === "ACTIVE"
+        );
+        const selected =
+          usable.find((item) => item.isUseThis === true) ||
+          usable.find((item) => item.isPrimary === true) ||
+          [...usable].sort(
+            (left, right) => (left.priority || 1) - (right.priority || 1)
+          )[0];
+        accounts.forEach((item) => {
+          item.isUseThis = item.configId === selected?.configId;
+        });
       }
 
       return {
@@ -736,6 +864,10 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
   const handleSetPrimaryAccount = async (channel, account) => {
     if (!account) return;
     const ch = String(channel).toLowerCase();
+    if (account.isActive !== true || account.status !== "ACTIVE") {
+      toast.error("Only an active, verified account can be selected as primary.");
+      return;
+    }
     try {
       const uid = targetUser?._id || effectiveUserId;
       const res = await apiClient.post("/user-config/set-primary-provider", {
@@ -757,6 +889,12 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         const updated = currentList.map((item) => ({
           ...item,
           isPrimary: item.configId === account.configId,
+          isUseThis:
+            item.providerCode === account.providerCode
+              ? item.configId === account.configId
+              : item.isUseThis === true &&
+                item.isActive === true &&
+                item.status === "ACTIVE",
         }));
         return {
           ...prev,
@@ -907,9 +1045,9 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     try {
       const res = await apiClient.post("/templates/whatsapp/sync-provider", {
         userId: effectiveUserId || targetUser?._id,
-        username: formData.wbsUserId || formData.routemobileUsername || "digiglitzwbs",
+        username: formData.wbsUserId || formData.routemobileUsername || "",
         password: formData.wbsPassword || formData.routemobilePassword,
-        provider: formData.whatsappPrimaryVendor || "routemobile",
+        provider: formData.whatsappPrimaryVendor || "",
       });
       toast.success(res?.data?.message || "WhatsApp templates synced from provider successfully!");
       loadConfig();
@@ -929,13 +1067,13 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         channel,
         provider,
         credentials: {
-          username: formData.routemobileUsername || formData.wbsUserId || "digiglitzwbs",
-          password: formData.routemobilePassword || formData.wbsPassword || "new@25rmlSs",
+          username: formData.routemobileUsername || formData.wbsUserId || "",
+          password: formData.routemobilePassword || formData.wbsPassword || "",
           ...customCreds,
         },
         settings: {
-          brandMsisdn: formData.whatsappBrandMsisdn || "9977679866",
-          wabaId: formData.wabaId || "892158596877894",
+          brandMsisdn: formData.whatsappBrandMsisdn || "",
+          wabaId: formData.wabaId || "",
         },
       });
 
@@ -965,7 +1103,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     }
   };
 
-  const handleOpenProviderDetails = async (channel, provider) => {
+  const handleOpenProviderDetails = async (channel, provider, configId = "") => {
     const uid = targetUser?._id || effectiveUserId;
     setActiveDetailsProvider({
       channel,
@@ -976,7 +1114,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
     setDetailsModalOpen(true);
 
     try {
-      const res = await apiClient.get(`/user-config/provider-details?channel=${channel}&provider=${provider}${uid ? `&userId=${uid}` : ""}`);
+      const res = await apiClient.get(`/user-config/provider-details?channel=${channel}&provider=${provider}${configId ? `&configId=${encodeURIComponent(configId)}` : ""}${uid ? `&userId=${uid}` : ""}`);
       const data = res?.data || {};
       setActiveDetailsProvider({
         channel,
@@ -998,14 +1136,20 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
       const channelCfg = rawConfig?.[`${channel}Config`];
       let provCfg = null;
       if (channelCfg && channelCfg[provider]) {
-        provCfg = channelCfg[provider]?.configurations?.[0] || channelCfg[provider];
+        const configurations = getProviderAccounts(channelCfg[provider]);
+        provCfg =
+          configurations.find((configuration) => configuration.configId === configId) ||
+          configurations.find((configuration) => configuration.isPrimary && configuration.isActive && configuration.status === "ACTIVE") ||
+          configurations.find((configuration) => configuration.isActive && configuration.status === "ACTIVE") ||
+          configurations[0] ||
+          channelCfg[provider];
       }
       setActiveDetailsProvider({
         channel,
         provider,
         isPrimary: String(formData[`${channel}PrimaryVendor`] || "").toLowerCase() === provider.toLowerCase(),
         status: provCfg?.status || "CONFIGURED",
-        routing: rawConfig?.routingConfig?.[channel] || {},
+        routing: getRoutingEntry(rawConfig?.routingConfig, channel),
         userData: provCfg?.settings?.userData || null,
         senderInfo: provCfg?.senderInfo || [],
         settings: provCfg?.settings || {},
@@ -1123,6 +1267,11 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                           <FaStar className="text-warning" size={10} /> Active Primary
                         </Badge>
                       )}
+                      {acc.isUseThis && !isPrimary && (
+                        <Badge color="info" pill style={{ fontSize: "10px" }}>
+                          In Use for Provider
+                        </Badge>
+                      )}
                     </h6>
                     <small className="text-muted">
                       Provider: <strong>{provInfo.name || acc.providerCode.toUpperCase()}</strong> &bull; Auth: {acc.authType || "API Key"}
@@ -1141,6 +1290,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                       size="sm"
                       className="border fw-semibold py-1 px-2.5 d-flex align-items-center gap-1 text-dark"
                       onClick={() => handleSetPrimaryAccount(ch, acc)}
+                      disabled={acc.isActive === false || acc.status !== "ACTIVE"}
                       title={`Set ${acc.accountLabel} as primary gateway for ${ch.toUpperCase()}`}
                     >
                       <FaStar className="text-warning" size={11} /> Set as Primary
@@ -1152,7 +1302,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                     outline
                     size="sm"
                     className="d-flex align-items-center gap-1 fw-semibold shadow-xs py-1 px-2.5"
-                    onClick={() => handleOpenProviderDetails(ch, acc.providerCode)}
+                    onClick={() => handleOpenProviderDetails(ch, acc.providerCode, acc.configId)}
                     title="View live carrier API details and endpoints"
                   >
                     <FaEye size={12} /> Details
@@ -1297,6 +1447,9 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
         }));
         if (Array.isArray(updatedCfg.whatsappNumbers)) {
           setWhatsappNumbers(updatedCfg.whatsappNumbers);
+        }
+        if (updatedCfg.channelAccounts) {
+          setChannelAccounts(updatedCfg.channelAccounts);
         }
         if (updatedCfg.__secretsSet) {
           setSecretsSet(updatedCfg.__secretsSet);
@@ -1959,6 +2112,17 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                 <FaTelegramPlane className="me-1.5" /> 7. Telegram Services
               </NavLink>
             </NavItem>
+            <NavItem>
+              <NavLink
+                className={`py-2 px-3 fw-semibold cursor-pointer border-0 rounded-top ${
+                  activeTab === "push" ? "active bg-white text-primary border-top border-primary border-2" : "text-secondary"
+                }`}
+                style={{ cursor: "pointer" }}
+                onClick={() => setActiveTab("push")}
+              >
+                <FaBroadcastTower className="me-1.5" /> 8. Push Notifications
+              </NavLink>
+            </NavItem>
           </Nav>
         </CardHeader>
 
@@ -2044,7 +2208,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                               <Input
                                 type="select"
                                 bsSize="sm"
-                                value={formData.smsPrimaryVendor || "mobiglitz"}
+                                value={formData.smsPrimaryVendor || ""}
                                 onChange={(e) => {
                                   handleInputChange("smsPrimaryVendor", e.target.value);
                                   handleInputChange("smsVendor", e.target.value);
@@ -2063,7 +2227,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                               <Input
                                 type="select"
                                 bsSize="sm"
-                                value={formData.smsSecondaryVendor || "airtel"}
+                                value={formData.smsSecondaryVendor || ""}
                                 onChange={(e) => handleInputChange("smsSecondaryVendor", e.target.value)}
                               >
                                 {(providersByChannel.SMS || []).map((p) => (
@@ -2119,7 +2283,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                               <Input
                                 type="select"
                                 bsSize="sm"
-                                value={formData.whatsappPrimaryVendor || "meta"}
+                                value={formData.whatsappPrimaryVendor || ""}
                                 onChange={(e) => {
                                   handleInputChange("whatsappPrimaryVendor", e.target.value);
                                   handleInputChange("whatsappVendor", e.target.value);
@@ -2138,7 +2302,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                               <Input
                                 type="select"
                                 bsSize="sm"
-                                value={formData.whatsappSecondaryVendor || "wbs"}
+                                value={formData.whatsappSecondaryVendor || ""}
                                 onChange={(e) => handleInputChange("whatsappSecondaryVendor", e.target.value)}
                               >
                                 {(providersByChannel.WHATSAPP || []).map((p) => (
@@ -2192,7 +2356,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.rcsPrimaryVendor || "routemobile"}
+                              value={formData.rcsPrimaryVendor || ""}
                               onChange={(e) => {
                                 handleInputChange("rcsPrimaryVendor", e.target.value);
                                 handleInputChange("rcsVendor", e.target.value);
@@ -2211,7 +2375,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.rcsSecondaryVendor || "jio"}
+                              value={formData.rcsSecondaryVendor || ""}
                               onChange={(e) => handleInputChange("rcsSecondaryVendor", e.target.value)}
                             >
                               {(providersByChannel.RCS || []).map((p) => (
@@ -2251,7 +2415,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.voicePrimaryVendor || "mobiglitz"}
+                              value={formData.voicePrimaryVendor || ""}
                               onChange={(e) => handleInputChange("voicePrimaryVendor", e.target.value)}
                             >
                               {(providersByChannel.VOICE || []).map((p) => (
@@ -2267,7 +2431,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.voiceSecondaryVendor || "buzzdial"}
+                              value={formData.voiceSecondaryVendor || ""}
                               onChange={(e) => handleInputChange("voiceSecondaryVendor", e.target.value)}
                             >
                               {(providersByChannel.VOICE || []).map((p) => (
@@ -2309,7 +2473,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.emailPrimaryVendor || "smtp"}
+                              value={formData.emailPrimaryVendor || ""}
                               onChange={(e) => handleInputChange("emailPrimaryVendor", e.target.value)}
                             >
                               {(providersByChannel.EMAIL || []).map((p) => (
@@ -2324,7 +2488,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                             <Input
                               type="select"
                               bsSize="sm"
-                              value={formData.emailSecondaryVendor || "ses"}
+                              value={formData.emailSecondaryVendor || ""}
                               onChange={(e) => handleInputChange("emailSecondaryVendor", e.target.value)}
                             >
                               {(providersByChannel.EMAIL || []).map((p) => (
@@ -2835,7 +2999,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                       formData.wbsJwtAuth ||
                       secretsSet.wbsJwtAuth ||
                       secretsSet.routemobileJwtAuth ||
-                      rawConfig?.whatsappConfig?.routemobile?.configurations?.[0]?.status === "ACTIVE"
+                      getProviderAccounts(rawConfig?.whatsappConfig?.routemobile)[0]?.status === "ACTIVE"
                     );
 
                     return (
@@ -4453,6 +4617,16 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                   )}
                 </div>
               </TabPane>
+              <TabPane tabId="push">
+                <div className="mb-4">
+                  <h6 className="fw-bold text-dark mb-1">Push notification providers and routing</h6>
+                  <p className="text-muted small mb-3">
+                    Manage multiple provider accounts, activate verified accounts, and select the account used for push dispatch.
+                  </p>
+                  {renderChannelFleetToolbar("push", "Push Notifications", FaBroadcastTower, "danger")}
+                  {renderChannelAccountCards("push", "Push Notifications", FaBroadcastTower)}
+                </div>
+              </TabPane>
             </TabContent>
           </CardBody>
 
@@ -5681,6 +5855,111 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
               </>
             )}
 
+            <Col md={6}>
+              <FormGroup check className="p-3 bg-white rounded border mt-2">
+                <Input
+                  type="checkbox"
+                  id="accountActiveCheck"
+                  checked={accountFormData.isActive !== false}
+                  onChange={(e) => setAccountFormData({
+                    ...accountFormData,
+                    isActive: e.target.checked,
+                    isPrimary: e.target.checked ? accountFormData.isPrimary : false,
+                  })}
+                />
+                <Label check for="accountActiveCheck" className="small fw-bold text-dark mb-0">
+                  Enable this provider account
+                </Label>
+              </FormGroup>
+            </Col>
+            <Col md={6}>
+              <FormGroup className="p-3 bg-white rounded border mt-2">
+                <Label for="accountStatus" className="small fw-bold text-dark">Account verification status</Label>
+                <Input
+                  id="accountStatus"
+                  type="select"
+                  value={accountFormData.status}
+                  onChange={(e) => setAccountFormData({
+                    ...accountFormData,
+                    status: e.target.value,
+                    isPrimary: e.target.value === "ACTIVE" ? accountFormData.isPrimary : false,
+                  })}
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="ACTIVE">Active / verified</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="FAILED">Failed verification</option>
+                </Input>
+              </FormGroup>
+            </Col>
+
+            {/* PRIMARY SELECTION CHECKBOX */}
+            {(providersByChannel[
+              accountModalChannel === "email"
+                ? "EMAIL"
+                : accountModalChannel.toUpperCase()
+            ] || [])
+              .find((provider) => provider.code.toLowerCase() === accountFormData.providerCode.toLowerCase())
+              ?.credentialSchema?.map((field) => (
+                <Col md={field.type === "textarea" ? 12 : 6} key={field.name}>
+                  <FormGroup className="mb-0">
+                    <Label className="small fw-semibold text-dark" for={`dynamic-credential-${field.name}`}>
+                      {field.label || field.name}
+                      {field.required ? " *" : ""}
+                    </Label>
+                    {field.type === "boolean" ? (
+                      <Input
+                        id={`dynamic-credential-${field.name}`}
+                        type="checkbox"
+                        checked={Boolean(accountFormData.credentials?.[field.name])}
+                        onChange={(event) => setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            [field.name]: event.target.checked,
+                          },
+                        })}
+                      />
+                    ) : field.type === "select" ? (
+                      <Input
+                        id={`dynamic-credential-${field.name}`}
+                        type="select"
+                        required={field.required}
+                        value={accountFormData.credentials?.[field.name] || ""}
+                        onChange={(event) => setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            [field.name]: event.target.value,
+                          },
+                        })}
+                      >
+                        <option value="">Select {field.label || field.name}</option>
+                        {(field.options || []).map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </Input>
+                    ) : (
+                      <Input
+                        id={`dynamic-credential-${field.name}`}
+                        type={field.type === "textarea" ? "textarea" : field.secret ? "password" : field.type || "text"}
+                        required={field.required}
+                        placeholder={field.placeholder || ""}
+                        value={accountFormData.credentials?.[field.name] || ""}
+                        onChange={(event) => setAccountFormData({
+                          ...accountFormData,
+                          credentials: {
+                            ...accountFormData.credentials,
+                            [field.name]: event.target.value,
+                          },
+                        })}
+                      />
+                    )}
+                    {field.helpText && <small className="text-muted">{field.helpText}</small>}
+                  </FormGroup>
+                </Col>
+              ))}
+
             {/* PRIMARY SELECTION CHECKBOX */}
             <Col xs={12}>
               <FormGroup check className="p-3 bg-white rounded border mt-2">
@@ -5688,6 +5967,7 @@ const UserCommunicationConfig = ({ userId: propUserId = null }) => {
                   type="checkbox"
                   id="accountPrimaryCheck"
                   checked={accountFormData.isPrimary}
+                  disabled={accountFormData.isActive === false || accountFormData.status !== "ACTIVE"}
                   onChange={(e) => setAccountFormData({ ...accountFormData, isPrimary: e.target.checked })}
                 />
                 <Label check for="accountPrimaryCheck" className="small fw-bold text-dark mb-0">

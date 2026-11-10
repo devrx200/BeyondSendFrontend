@@ -22,7 +22,7 @@ import {
   HelpGuidance, HelpTutorials, SessionManager, ActivityLogManagement,
   DbBackupManagement, SidebarMenuManagement,
   /* Telecom modules */
-  EmailTemplates, EmailCampaigns, SmsTemplates, SmsCampaigns, RcsTemplates, RcsCampaigns, WhatsappTemplates, WhatsappCampaigns, VoiceTemplates, VoiceCampaigns,
+  EmailTemplates, EmailCampaigns, SmsTemplates, SmsCampaigns, RcsTemplates, RcsCampaigns, WhatsappTemplates, WhatsappCampaigns, WhatsappDashboard, WhatsappAssistant, WhatsappAutomations, WhatsappWidgets, VoiceTemplates, VoiceCampaigns,
   TelegramTemplates, TelegramBroadcasts, TelegramGatewayOtp, TelegramBotConfig, TelegramDocs,
   CampaignLists, CampaignSegments, CampaignsManagement, UnsubscribersManagement, BouncesSpamManagement,
   FromIdsConfig, TransactionalDashboard, ApiKeyManagement, MessageLogManagement, WebhookSetup, WebhookLogs,
@@ -92,6 +92,10 @@ const AppRoutes = () => {
           <Route path="templates/rcs" element={<RcsTemplates />} />
           <Route path="whatsapp/templates" element={<WhatsappTemplates />} />
           <Route path="templates/whatsapp" element={<WhatsappTemplates />} />
+          <Route path="whatsapp/dashboard" element={<WhatsappDashboard />} />
+          <Route path="whatsapp/assistant" element={<WhatsappAssistant />} />
+          <Route path="whatsapp/automations" element={<WhatsappAutomations />} />
+          <Route path="whatsapp/widgets" element={<WhatsappWidgets />} />
           <Route path="voice/templates" element={<VoiceTemplates />} />
           <Route path="templates/voice" element={<VoiceTemplates />} />
           <Route path="telegram/templates" element={<TelegramTemplates />} />

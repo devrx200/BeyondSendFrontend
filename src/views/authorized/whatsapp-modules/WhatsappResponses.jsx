@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Card, CardBody, CardHeader, Button, Row, Col, Input,
   Badge, InputGroup, InputGroupText, Modal, ModalHeader,
@@ -9,111 +9,139 @@ import {
   FaPhoneAlt, FaReply, FaClock, FaCheckCircle, FaExclamationTriangle,
   FaTag, FaUserCheck, FaChevronRight, FaTimes, FaFileAlt, FaSlidersH
 } from "react-icons/fa";
+import { io } from "socket.io-client";
 import Swal from "sweetalert2";
-
-const SENDER_NUMBERS = [
-  { id: "SND-01", phone: "+91 98221 14455", label: "Official Support WABA", tier: "TIER_100K", quality: "GREEN", isDefault: true },
-  { id: "SND-02", phone: "+91 98765 43210", label: "Enterprise Sales & Onboarding", tier: "TIER_10K", quality: "GREEN", isDefault: false },
-  { id: "SND-03", phone: "+91 88888 22334", label: "Transactional Alerts Gateway", tier: "UNLIMITED", quality: "GREEN", isDefault: false },
-];
-
-const META_APPROVED_TEMPLATES = [
-  {
-    name: "support_reengage_notice",
-    category: "CUSTOMER_CARE",
-    language: "en_US",
-    text: "Hello {{1}}, we are following up on your inquiry with BeyondSend. Please reply to this message to continue our conversation.",
-  },
-  {
-    name: "dlt_compliance_update",
-    category: "TRANSACTIONAL",
-    language: "en_US",
-    text: "Dear Customer, your TRAI DLT Principal Entity header has been scrubbed and verified. Reference ID: {{1}}.",
-  },
-  {
-    name: "billing_invoice_ready",
-    category: "BILLING",
-    language: "en_US",
-    text: "Your BeyondSend telecom billing statement for this billing cycle is ready. Total: ₹{{1}}. Login to portal to view details.",
-  },
-];
-
-const initialThreads = [
-  {
-    id: "TH-01",
-    customerName: "Vikram Malhotra",
-    phone: "+91 98221 14455",
-    email: "vikram@malhotratelecom.com",
-    lastMsg: "Please share pricing for 50,000 SMS credits",
-    time: "2 mins ago",
-    unread: 1,
-    status: "OPEN",
-    tags: ["VIP Enterprise", "DLT Verified"],
-    assignedAgent: "Mr. Anand Charpe",
-    // Customer last sent 25 mins ago (within 24h window)
-    lastCustomerMsgTimestamp: Date.now() - 25 * 60 * 1000,
-    messages: [
-      { sender: "customer", text: "Hello BeyondSend Team", time: "23:20" },
-      { sender: "bot", text: "Welcome! How can our telecom specialists assist you today?", time: "23:21" },
-      { sender: "customer", text: "Please share pricing for 50,000 SMS credits", time: "23:25" }
-    ]
-  },
-  {
-    id: "TH-02",
-    customerName: "Sneha Patel",
-    phone: "+91 99123 77889",
-    email: "sneha.p@techlogix.in",
-    lastMsg: "Thank you, our WhatsApp WABA sender ID is now verified!",
-    time: "15 mins ago",
-    unread: 0,
-    status: "RESOLVED",
-    tags: ["WhatsApp WABA", "Onboarded"],
-    assignedAgent: "Support Desk",
-    // Customer last sent 28 hours ago (EXPIRED window)
-    lastCustomerMsgTimestamp: Date.now() - 28 * 60 * 60 * 1000,
-    messages: [
-      { sender: "agent", text: "Your Meta WABA registration has passed compliance checks.", time: "Yesterday" },
-      { sender: "customer", text: "Thank you, our WhatsApp WABA sender ID is now verified!", time: "Yesterday" }
-    ]
-  },
-  {
-    id: "TH-03",
-    customerName: "Amit Sharma",
-    phone: "+91 97000 88991",
-    email: "asharma@indiatelecom.org",
-    lastMsg: "Can you help update our DLT Principal Entity certificate?",
-    time: "1 hour ago",
-    unread: 0,
-    status: "PENDING",
-    tags: ["DLT Help", "Lead"],
-    assignedAgent: "Unassigned",
-    // Customer last sent 1 hour ago (within 24h window)
-    lastCustomerMsgTimestamp: Date.now() - 60 * 60 * 1000,
-    messages: [
-      { sender: "customer", text: "Can you help update our DLT Principal Entity certificate?", time: "22:30" }
-    ]
-  }
-];
+import apiClient, { getApiResponseData } from "@apiService";
+import { BASE_HOST } from "../../../services/api.service";
 
 const WhatsappResponses = () => {
-  const [threads, setThreads] = useState(initialThreads);
-  const [activeThreadId, setActiveThreadId] = useState("TH-01");
+  const [threads, setThreads] = useState([]);
+  const [activeThreadId, setActiveThreadId] = useState("");
   const [replyText, setReplyText] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedSenderId, setSelectedSenderId] = useState("SND-01");
   const [showProfileSidebar, setShowProfileSidebar] = useState(true);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(META_APPROVED_TEMPLATES[0]);
-  const [templateVar, setTemplateVar] = useState("");
+  const [showQuickReplyModal, setShowQuickReplyModal] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [quickReplies, setQuickReplies] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [templateParameters, setTemplateParameters] = useState([]);
+  const [messageType, setMessageType] = useState("text");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaCaption, setMediaCaption] = useState("");
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileTags, setProfileTags] = useState("");
+  const [quickReplyTitle, setQuickReplyTitle] = useState("");
+  const [quickReplyText, setQuickReplyText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [currentTime, setCurrentTime] = useState(null);
 
-  const activeThread = threads.find((t) => t.id === activeThreadId) || threads[0];
+  const activeThread = threads.find((t) => t.id === activeThreadId);
+  const selectedTemplate = templates.find((template) => template._id === selectedTemplateId);
+  const templateVariableNumbers = useMemo(
+    () =>
+      Array.from(new Set(selectedTemplate?.body?.match(/\{\{\d+\}\}/g) || []))
+        .map((variable) => Number(variable.replace(/[{}]/g, "")))
+        .sort((first, second) => first - second),
+    [selectedTemplate]
+  );
+
+  const fetchData = useCallback(async ({ silent = false } = {}) => {
+    try {
+      const [conversationResponse, templateResponse, agentResponse, quickReplyResponse] = await Promise.all([
+        apiClient.get("/whatsapp/conversations/list"),
+        apiClient.get("/whatsapp/templates/list", {
+          params: { status: "APPROVED", provider: "PRIMARY", limit: "ALL" }
+        }),
+        apiClient.get("/whatsapp/inbox/agents"),
+        apiClient.get("/whatsapp/quick-replies")
+      ]);
+      const conversationData = getApiResponseData(conversationResponse);
+      const templateData = getApiResponseData(templateResponse);
+      const agentData = getApiResponseData(agentResponse);
+      const quickReplyData = getApiResponseData(quickReplyResponse);
+      const nextThreads = Array.isArray(conversationData) ? conversationData : [];
+      const nextTemplates = Array.isArray(templateData) ? templateData : [];
+      setThreads(nextThreads);
+      setAgents(Array.isArray(agentData) ? agentData : []);
+      setQuickReplies(Array.isArray(quickReplyData) ? quickReplyData : []);
+      setTemplates(
+        Array.isArray(nextTemplates)
+          ? nextTemplates.filter(
+              (template) =>
+                String(template.providerStatus || template.status || "").toUpperCase() === "APPROVED"
+            )
+          : []
+      );
+      setActiveThreadId((current) => (
+        nextThreads.some((thread) => thread.id === current) ? current : nextThreads[0]?.id || ""
+      ));
+      setSelectedTemplateId((current) =>
+        nextTemplates.some((template) => template._id === current)
+          ? current
+          : nextTemplates.find(
+              (template) =>
+                String(template.providerStatus || template.status || "").toUpperCase() === "APPROVED"
+            )?._id || ""
+      );
+    } catch (error) {
+      console.error("Fetch WhatsApp inbox error:", error);
+      if (!silent) {
+        Swal.fire({
+          icon: "error",
+          title: "Unable to load WhatsApp inbox",
+          text: error?.response?.data?.message || "Check the selected WhatsApp provider configuration and try again."
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initialLoad = window.setTimeout(() => fetchData(), 0);
+    const timer = window.setInterval(() => fetchData({ silent: true }), 30000);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(timer);
+    };
+  }, [fetchData]);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("authToken") || localStorage.getItem("authToken");
+    if (!token) return undefined;
+    const socket = io(BASE_HOST, { auth: { token }, transports: ["websocket", "polling"] });
+    socket.on("whatsapp:conversation", () => fetchData({ silent: true }));
+    return () => socket.disconnect();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setProfileName(activeThread?.customerName || "");
+      setProfileEmail(activeThread?.email || "");
+      setProfileTags((activeThread?.tags || []).join(", "));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeThreadId, activeThread?.customerName, activeThread?.email, activeThread?.tags]);
+
+  useEffect(() => {
+    const initialUpdate = window.setTimeout(() => setCurrentTime(Date.now()), 0);
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => {
+      window.clearTimeout(initialUpdate);
+      window.clearInterval(timer);
+    };
+  }, []);
 
   // 24-hour Meta Messaging Window calculation
   const messagingWindowStatus = useMemo(() => {
-    if (!activeThread?.lastCustomerMsgTimestamp) {
-      return { isOpen: true, hoursLeft: 24, minsLeft: 0 };
+    if (!currentTime || !activeThread?.lastCustomerMessageTimestamp) {
+      return { isOpen: false, hoursLeft: 0, minsLeft: 0 };
     }
-    const elapsedMs = Date.now() - activeThread.lastCustomerMsgTimestamp;
+    const elapsedMs = currentTime - activeThread.lastCustomerMessageTimestamp;
     const windowTotalMs = 24 * 60 * 60 * 1000;
     const remainingMs = windowTotalMs - elapsedMs;
 
@@ -123,93 +151,192 @@ const WhatsappResponses = () => {
     const hoursLeft = Math.floor(remainingMs / (1000 * 60 * 60));
     const minsLeft = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
     return { isOpen: true, hoursLeft, minsLeft };
-  }, [activeThread]);
+  }, [activeThread, currentTime]);
 
-  const handleSendReply = (e) => {
+  const handleSendReply = async (e) => {
     e.preventDefault();
-    if (!replyText.trim()) return;
+    if ((!replyText.trim() && messageType === "text") || !activeThread || sending) return;
 
     if (!messagingWindowStatus.isOpen) {
       Swal.fire({
         icon: "warning",
-        title: "24h Customer Care Window Expired",
-        text: "Meta Cloud API policy prohibits free-form messages after 24 hours of customer inactivity. Please send an Approved Meta HSM Template to re-open the conversation window.",
-        confirmButtonText: "Select Meta Template",
+        title: "24-hour customer service window expired",
+        text: "WhatsApp only allows free-form replies within 24 hours of the customer's last message. Send an approved template instead.",
+        confirmButtonText: "Select template",
       }).then((res) => {
         if (res.isConfirmed) setShowTemplateModal(true);
       });
       return;
     }
 
-    const newMsg = {
-      sender: "agent",
-      text: replyText.trim(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    };
-
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThreadId
+    try {
+      setSending(true);
+      const payload = messageType === "text"
+        ? { text: replyText.trim(), type: "text" }
+        : messageType === "location"
           ? {
-              ...t,
-              messages: [...t.messages, newMsg],
-              lastMsg: replyText.trim(),
-              unread: 0
+              type: "location",
+              location: {
+                latitude: Number(mediaUrl.split(",")[0]),
+                longitude: Number(mediaUrl.split(",")[1]),
+                name: mediaCaption.trim(),
+              },
             }
-          : t
-      )
-    );
-    setReplyText("");
+          : {
+              type: messageType,
+              mediaUrl: mediaUrl.trim(),
+              caption: mediaCaption.trim(),
+            };
+      await apiClient.post(`/whatsapp/conversations/${activeThread.id}/messages`, payload);
+      setReplyText("");
+      setMediaUrl("");
+      setMediaCaption("");
+      await fetchData();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Message was not sent",
+        text: error?.response?.data?.message || "The selected provider could not send this message."
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleSendTemplate = () => {
-    if (!selectedTemplate) return;
-    const textFormatted = selectedTemplate.text.replace("{{1}}", templateVar || activeThread?.customerName || "Customer");
-    const newMsg = {
-      sender: "agent",
-      text: `[Meta HSM Template: ${selectedTemplate.name}]\n${textFormatted}`,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isTemplate: true
-    };
-
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === activeThreadId
-          ? {
-              ...t,
-              messages: [...t.messages, newMsg],
-              lastMsg: textFormatted,
-              // Sending approved template re-activates engagement
-              lastCustomerMsgTimestamp: Date.now(),
-              unread: 0
-            }
-          : t
-      )
-    );
-
-    setShowTemplateModal(false);
-    setTemplateVar("");
-    Swal.fire({
-      icon: "success",
-      title: "HSM Template Dispatched",
-      text: `Meta approved template "${selectedTemplate.name}" dispatched successfully to ${activeThread?.phone}`,
-      timer: 1500,
-      showConfirmButton: false
-    });
+  const handleSendTemplate = async () => {
+    if (!selectedTemplate || !activeThread || sending) return;
+    try {
+      setSending(true);
+      await apiClient.post(`/whatsapp/conversations/${activeThread.id}/messages`, {
+        templateId: selectedTemplate._id,
+        parameters: templateParameters
+      });
+      setShowTemplateModal(false);
+      setTemplateParameters([]);
+      await fetchData();
+      Swal.fire({
+        icon: "success",
+        title: "Template accepted by the provider",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Template was not sent",
+        text: error?.response?.data?.message || "The selected provider could not send this template."
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleStatusChange = (newStatus) => {
-    setThreads((prev) =>
-      prev.map((t) => (t.id === activeThreadId ? { ...t, status: newStatus } : t))
-    );
+  const handleStatusChange = async (newStatus) => {
+    if (!activeThread) return;
+    try {
+      await apiClient.patch(`/whatsapp/conversations/${activeThread.id}/status`, { status: newStatus });
+      await fetchData();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Conversation was not updated",
+        text: error?.response?.data?.message || "Could not update the conversation status."
+      });
+    }
   };
 
-  const filteredThreads = threads.filter(
-    (t) =>
-      t.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      t.phone.includes(search) ||
-      t.lastMsg.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleAssignmentChange = async (assignedTo) => {
+    if (!activeThread) return;
+    try {
+      await apiClient.patch(`/whatsapp/conversations/${activeThread.id}/assignment`, {
+        assignedTo: assignedTo || null,
+      });
+      await fetchData({ silent: true });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Conversation was not assigned",
+        text: error?.response?.data?.message || error?.message || "Could not update the assignment.",
+      });
+    }
+  };
+
+  const handleSaveContact = async () => {
+    if (!activeThread) return;
+    try {
+      await apiClient.patch(`/whatsapp/conversations/${activeThread.id}/contact`, {
+        name: profileName,
+        email: profileEmail,
+        tags: profileTags.split(",").map((tag) => tag.trim()).filter(Boolean),
+      });
+      await fetchData({ silent: true });
+      Swal.fire({ icon: "success", title: "Contact updated", timer: 1200, showConfirmButton: false });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Contact was not updated",
+        text: error?.response?.data?.message || error?.message || "Could not update contact details.",
+      });
+    }
+  };
+
+  const handleCreateQuickReply = async (event) => {
+    event.preventDefault();
+    try {
+      await apiClient.post("/whatsapp/quick-replies", {
+        title: quickReplyTitle,
+        text: quickReplyText,
+      });
+      setQuickReplyTitle("");
+      setQuickReplyText("");
+      await fetchData({ silent: true });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Quick reply was not saved",
+        text: error?.response?.data?.message || error?.message || "Could not save this quick reply.",
+      });
+    }
+  };
+
+  const handleDeleteQuickReply = async (replyId) => {
+    try {
+      await apiClient.delete(`/whatsapp/quick-replies/${replyId}`);
+      await fetchData({ silent: true });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Quick reply was not deleted",
+        text: error?.response?.data?.message || error?.message || "Could not delete this quick reply.",
+      });
+    }
+  };
+
+  const handleSelectThread = async (thread) => {
+    setActiveThreadId(thread.id);
+    if (!thread.unread) return;
+    try {
+      await apiClient.patch(`/whatsapp/conversations/${thread.id}/status`, {
+        status: thread.status
+      });
+      await fetchData({ silent: true });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Conversation could not be marked as read",
+        text: error?.response?.data?.message || "Could not update unread status."
+      });
+    }
+  };
+
+  const filteredThreads = threads.filter((thread) => {
+    const term = search.toLowerCase();
+    return (
+      (thread.customerName || "").toLowerCase().includes(term) ||
+      (thread.phone || "").includes(term) ||
+      (thread.lastMsg || "").toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="telecom-module-wrapper">
@@ -228,37 +355,27 @@ const WhatsappResponses = () => {
             </div>
             <div>
               <div className="d-flex align-items-center gap-2">
-                <h5 className="fw-bold mb-0 text-white">WhatsApp Two-Way Inbound Desk</h5>
+                <h5 className="fw-bold mb-0 text-white">WhatsApp Two-Way Inbox</h5>
                 <Badge color="success" pill className="px-2 py-0.5 fw-semibold" style={{ fontSize: "11px" }}>
-                  Meta Cloud API v19.0
+                  Provider inbox
                 </Badge>
               </div>
               <small className="text-white-50" style={{ fontSize: "12px" }}>
-                Multi-number customer inbox, 24h compliance window tracker, and Meta HSM template re-engagement
+                Provider-backed messages, approved templates, and customer-window enforcement
+              </small>
+              <small className="d-block text-white-50" style={{ fontSize: "11px" }}>
+                Provider callbacks are received at /api/v0/whatsapp/callback.
               </small>
             </div>
           </div>
 
-          {/* SENDER NUMBER SELECTOR (Multi-number architecture per wa req.pdf) */}
-          <div className="d-flex align-items-center gap-2 bg-dark bg-opacity-50 p-2 rounded-3 border border-secondary border-opacity-50">
-            <span className="small text-white-50">Send From:</span>
-            <Input
-              type="select"
-              bsSize="sm"
-              className="bg-dark text-white border-0 fw-semibold"
-              style={{ fontSize: "12px", width: "auto" }}
-              value={selectedSenderId}
-              onChange={(e) => setSelectedSenderId(e.target.value)}
-            >
-              {SENDER_NUMBERS.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.phone} — {s.label} ({s.tier})
-                </option>
-              ))}
-            </Input>
-            <Badge color="success" pill className="px-2 py-1">
-              Active WABA
-            </Badge>
+          <div className="d-flex gap-2">
+          <Button color="light" size="sm" onClick={() => setShowQuickReplyModal(true)}>
+            <FaReply className="me-1" /> Quick replies
+          </Button>
+          <Button color="light" size="sm" onClick={() => fetchData()} disabled={loading}>
+            <FaSlidersH className="me-1" /> Refresh inbox
+          </Button>
           </div>
         </CardHeader>
 
@@ -281,11 +398,19 @@ const WhatsappResponses = () => {
               </div>
 
               <div className="d-flex flex-column">
+                {loading && (
+                  <div className="p-3 text-center text-muted small">Loading WhatsApp conversations…</div>
+                )}
+                {!loading && filteredThreads.length === 0 && (
+                  <div className="p-3 text-center text-muted small">
+                    No WhatsApp conversations have arrived through a configured provider callback.
+                  </div>
+                )}
                 {filteredThreads.map((t) => (
                   <div
                     key={t.id}
                     role="button"
-                    onClick={() => setActiveThreadId(t.id)}
+                    onClick={() => handleSelectThread(t)}
                     className={`p-3 border-bottom cursor-pointer transition-all ${
                       activeThreadId === t.id ? "bg-white border-start border-4 border-success shadow-xs" : "bg-light"
                     }`}
@@ -295,7 +420,7 @@ const WhatsappResponses = () => {
                         {t.customerName}
                       </strong>
                       <small className="text-muted" style={{ fontSize: "10.5px" }}>
-                        {t.time}
+                        {t.time ? new Date(t.time).toLocaleString() : "—"}
                       </small>
                     </div>
                     <div className="small text-muted font-monospace mb-1">{t.phone}</div>
@@ -341,7 +466,7 @@ const WhatsappResponses = () => {
                     <div className="d-flex align-items-center gap-2">
                       <small className="text-muted font-monospace">{activeThread?.phone}</small>
                       <Badge color="light" className="text-secondary border py-0.5 px-1.5" style={{ fontSize: "10px" }}>
-                        Thread: {activeThread?.id}
+                        From: {activeThread?.senderId || "—"}
                       </Badge>
                     </div>
                   </div>
@@ -353,7 +478,8 @@ const WhatsappResponses = () => {
                     size="sm"
                     className="border text-secondary fw-semibold py-1 px-2.5 d-flex align-items-center gap-1.5"
                     onClick={() => setShowTemplateModal(true)}
-                    title="Send Pre-Approved Meta HSM Template"
+                    title="Send an approved WhatsApp template"
+                    disabled={!activeThread || templates.length === 0}
                   >
                     <FaFileAlt size={12} className="text-primary" /> Send Template
                   </Button>
@@ -380,14 +506,14 @@ const WhatsappResponses = () => {
                     <>
                       <FaClock className="text-success" />
                       <span>
-                        <strong>24-Hour Customer Care Window Active:</strong> Free-form messaging permitted ({messagingWindowStatus.hoursLeft}h {messagingWindowStatus.minsLeft}m remaining)
+                        <strong>24-hour customer service window active:</strong> Free-form messaging permitted ({messagingWindowStatus.hoursLeft}h {messagingWindowStatus.minsLeft}m remaining)
                       </span>
                     </>
                   ) : (
                     <>
                       <FaExclamationTriangle className="text-warning" />
                       <span>
-                        <strong>24-Hour Messaging Window Expired:</strong> Free-form text is locked by Meta policy. Send an approved HSM template to re-engage.
+                        <strong>24-hour customer service window expired:</strong> Free-form replies are disabled. Send an approved template.
                       </span>
                     </>
                   )}
@@ -400,7 +526,7 @@ const WhatsappResponses = () => {
                     style={{ fontSize: "11px" }}
                     onClick={() => setShowTemplateModal(true)}
                   >
-                    Use HSM Template
+                    Use template
                   </Button>
                 )}
               </div>
@@ -431,8 +557,35 @@ const WhatsappResponses = () => {
                           </div>
                         )}
                         <div style={{ whiteSpace: "pre-line" }}>{m.text}</div>
+                        {m.mediaUrl && ["image", "video", "audio"].includes(String(m.type).toLowerCase()) && (
+                          String(m.type).toLowerCase() === "image" ? (
+                            <a href={m.mediaUrl} target="_blank" rel="noreferrer">
+                              <img src={m.mediaUrl} alt={m.fileName || "WhatsApp attachment"} className="img-fluid rounded mt-1" style={{ maxHeight: 240 }} />
+                            </a>
+                          ) : String(m.type).toLowerCase() === "video" ? (
+                            <video src={m.mediaUrl} controls className="d-block mt-1 rounded" style={{ maxWidth: 280 }} />
+                          ) : (
+                            <audio src={m.mediaUrl} controls className="d-block mt-1" />
+                          )
+                        )}
+                        {m.mediaUrl && !["image", "video", "audio"].includes(String(m.type).toLowerCase()) && (
+                          <a href={m.mediaUrl} target="_blank" rel="noreferrer" className="d-block mt-1 small">
+                            {m.fileName || `View ${m.type || "attachment"}`}
+                          </a>
+                        )}
+                        {m.type === "location" && m.location?.latitude != null && m.location?.longitude != null && (
+                          <a
+                            href={`https://www.google.com/maps?q=${m.location.latitude},${m.location.longitude}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="d-block mt-1 small"
+                          >
+                            Open shared location
+                          </a>
+                        )}
                         <div className="text-end mt-1 text-muted" style={{ fontSize: "9px" }}>
-                          {m.time} {isAgent && <FaCheckDouble size={9} style={{ color: "#34B7F1" }} />}
+                          {m.time ? new Date(m.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                          {isAgent && <FaCheckDouble size={9} style={{ color: "#34B7F1" }} />}
                         </div>
                       </div>
                     </div>
@@ -442,27 +595,80 @@ const WhatsappResponses = () => {
 
               {/* REPLY BAR */}
               <form onSubmit={handleSendReply} className="p-2.5 bg-white border-top">
-                <InputGroup>
+                <div className="d-flex align-items-center gap-2 mb-2">
                   <Input
-                    placeholder={
-                      messagingWindowStatus.isOpen
-                        ? "Type official WhatsApp reply..."
-                        : "24h window closed - Click 'Send Template' or choose HSM template..."
-                    }
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
+                    type="select"
+                    bsSize="sm"
+                    value={messageType}
+                    onChange={(event) => setMessageType(event.target.value)}
                     disabled={!messagingWindowStatus.isOpen}
-                    style={{ background: messagingWindowStatus.isOpen ? "#fff" : "#f8fafc" }}
-                  />
-                  <Button
-                    color="success"
-                    type="submit"
-                    disabled={!messagingWindowStatus.isOpen || !replyText.trim()}
-                    style={{ background: "#25D366", border: "none" }}
+                    style={{ maxWidth: 150 }}
                   >
-                    <FaPaperPlane size={12} className="me-1" /> Send
-                  </Button>
-                </InputGroup>
+                    <option value="text">Text message</option>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                    <option value="audio">Audio</option>
+                    <option value="document">Document</option>
+                    <option value="location">Location</option>
+                  </Input>
+                  <small className="text-muted">
+                    {messagingWindowStatus.isOpen ? "Free-form messaging is available." : "Use an approved template outside the 24-hour window."}
+                  </small>
+                </div>
+                {messageType === "text" ? (
+                  <InputGroup>
+                    <Input
+                      placeholder={messagingWindowStatus.isOpen ? "Type WhatsApp reply..." : "24-hour window expired; send an approved template"}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      disabled={!messagingWindowStatus.isOpen}
+                    />
+                    <Button color="success" type="submit" disabled={!messagingWindowStatus.isOpen || !replyText.trim() || sending}>
+                      <FaPaperPlane size={12} className="me-1" /> Send
+                    </Button>
+                  </InputGroup>
+                ) : (
+                  <>
+                    <Input
+                      className="mb-2"
+                      placeholder={messageType === "location" ? "Latitude, longitude" : "Public HTTPS media URL"}
+                      value={mediaUrl}
+                      onChange={(event) => setMediaUrl(event.target.value)}
+                      disabled={!messagingWindowStatus.isOpen}
+                    />
+                    <InputGroup>
+                      <Input
+                        placeholder={messageType === "location" ? "Location name (optional)" : "Caption (optional)"}
+                        value={mediaCaption}
+                        onChange={(event) => setMediaCaption(event.target.value)}
+                        disabled={!messagingWindowStatus.isOpen}
+                      />
+                      <Button color="success" type="submit" disabled={!messagingWindowStatus.isOpen || !mediaUrl.trim() || sending}>
+                        <FaPaperPlane size={12} className="me-1" /> Send
+                      </Button>
+                    </InputGroup>
+                  </>
+                )}
+                {quickReplies.length > 0 && (
+                  <div className="d-flex flex-wrap gap-1 mt-2">
+                    {quickReplies.slice(0, 6).map((reply) => (
+                      <Button
+                        key={reply._id}
+                        type="button"
+                        color="light"
+                        size="sm"
+                        className="border"
+                        title={reply.text}
+                        onClick={() => {
+                          setMessageType("text");
+                          setReplyText(reply.text);
+                        }}
+                      >
+                        {reply.title}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </form>
             </Col>
 
@@ -507,35 +713,39 @@ const WhatsappResponses = () => {
 
                 <div className="mb-3">
                   <Label className="small fw-semibold text-secondary mb-1">Assigned Support Agent</Label>
-                  <div className="p-2 rounded bg-light border text-dark small fw-semibold d-flex align-items-center gap-1.5">
-                    <FaUserCheck className="text-primary" /> {activeThread?.assignedAgent || "Unassigned"}
-                  </div>
+                  <Input
+                    type="select"
+                    bsSize="sm"
+                    value={activeThread?.assignedTo?._id || activeThread?.assignedTo || ""}
+                    onChange={(event) => handleAssignmentChange(event.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {agents.map((agent) => (
+                      <option key={agent._id} value={agent._id}>
+                        {agent.name} ({agent.role})
+                      </option>
+                    ))}
+                  </Input>
                 </div>
 
                 <div className="mb-3">
-                  <Label className="small fw-semibold text-secondary mb-1">Customer Tags</Label>
-                  <div className="d-flex flex-wrap gap-1">
-                    {(activeThread?.tags || []).map((tg, i) => (
-                      <Badge key={i} color="light" className="text-dark border px-2 py-1">
-                        <FaTag size={9} className="text-muted me-1" /> {tg}
-                      </Badge>
-                    ))}
-                  </div>
+                  <Label className="small fw-semibold text-secondary mb-1">Contact name</Label>
+                  <Input bsSize="sm" value={profileName} onChange={(event) => setProfileName(event.target.value)} />
                 </div>
 
-                <div className="p-2.5 rounded bg-light border small text-muted">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span>Email:</span>
-                    <strong className="text-dark text-truncate" style={{ maxWidth: "130px" }}>{activeThread?.email || "—"}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between mb-1">
-                    <span>Opt-In:</span>
-                    <span className="text-success fw-bold">✓ Verified</span>
-                  </div>
-                  <div className="d-flex justify-content-between">
-                    <span>WABA Tier:</span>
-                    <span className="text-primary fw-bold">Tier 100K</span>
-                  </div>
+                <div className="mb-3">
+                  <Label className="small fw-semibold text-secondary mb-1">Email</Label>
+                  <Input type="email" bsSize="sm" value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} />
+                </div>
+                <div className="mb-3">
+                  <Label className="small fw-semibold text-secondary mb-1">Tags (comma-separated)</Label>
+                  <Input bsSize="sm" value={profileTags} onChange={(event) => setProfileTags(event.target.value)} />
+                </div>
+                <Button color="success" size="sm" className="w-100 mb-3" onClick={handleSaveContact} disabled={!activeThread}>
+                  Save contact details
+                </Button>
+                <div className="p-2 rounded bg-light border small text-muted">
+                  <FaUserCheck className="text-primary me-1" /> {activeThread?.assignedAgent || "Unassigned"}
                 </div>
               </Col>
             )}
@@ -543,52 +753,102 @@ const WhatsappResponses = () => {
         </CardBody>
       </Card>
 
-      {/* ── META HSM APPROVED TEMPLATE MODAL ── */}
+      <Modal isOpen={showQuickReplyModal} toggle={() => setShowQuickReplyModal(false)} centered>
+        <ModalHeader toggle={() => setShowQuickReplyModal(false)}>Manage quick replies</ModalHeader>
+        <ModalBody>
+          <form onSubmit={handleCreateQuickReply} className="mb-3">
+            <FormGroup>
+              <Label>Shortcut title</Label>
+              <Input value={quickReplyTitle} onChange={(event) => setQuickReplyTitle(event.target.value)} maxLength={80} required />
+            </FormGroup>
+            <FormGroup>
+              <Label>Message</Label>
+              <Input type="textarea" value={quickReplyText} onChange={(event) => setQuickReplyText(event.target.value)} maxLength={2000} required />
+            </FormGroup>
+            <Button type="submit" color="success" size="sm">Save quick reply</Button>
+          </form>
+          <div className="d-flex flex-column gap-2">
+            {quickReplies.map((reply) => (
+              <div key={reply._id} className="border rounded p-2 d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <strong className="d-block">{reply.title}</strong>
+                  <small className="text-muted">{reply.text}</small>
+                </div>
+                <Button color="danger" outline size="sm" onClick={() => handleDeleteQuickReply(reply._id)}>Delete</Button>
+              </div>
+            ))}
+            {quickReplies.length === 0 && <div className="small text-muted">No quick replies created yet.</div>}
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button color="light" onClick={() => setShowQuickReplyModal(false)}>Close</Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* ── APPROVED TEMPLATE MODAL ── */}
       <Modal isOpen={showTemplateModal} toggle={() => setShowTemplateModal(false)} centered size="md">
         <ModalHeader toggle={() => setShowTemplateModal(false)} className="py-2.5 px-3 bg-light border-bottom">
           <div className="d-flex align-items-center gap-2">
             <span className="p-1.5 rounded bg-success bg-opacity-10 text-success">
               <FaFileAlt size={16} />
             </span>
-            <span className="fw-bold text-dark">Send Approved Meta HSM Template</span>
+            <span className="fw-bold text-dark">Send Approved WhatsApp Template</span>
           </div>
         </ModalHeader>
         <ModalBody className="p-3">
           <p className="text-muted small mb-3">
-            Pre-approved Meta templates bypass the 24-hour messaging restriction and allow initiating conversations at any time.
+            The selected provider submits approved templates for delivery outside the 24-hour customer service window.
           </p>
 
           <FormGroup>
             <Label className="small fw-semibold text-secondary">Select Template</Label>
             <Input
               type="select"
-              value={selectedTemplate?.name}
+              value={selectedTemplateId}
               onChange={(e) => {
-                const found = META_APPROVED_TEMPLATES.find((tpl) => tpl.name === e.target.value);
-                if (found) setSelectedTemplate(found);
+                const found = templates.find((template) => template._id === e.target.value);
+                setSelectedTemplateId(found?._id || "");
+                const variableCount = new Set(found?.body?.match(/\{\{\d+\}\}/g) || []).size;
+                setTemplateParameters(Array.from({ length: variableCount }, () => ""));
               }}
             >
-              {META_APPROVED_TEMPLATES.map((tpl) => (
-                <option key={tpl.name} value={tpl.name}>
-                  {tpl.name} ({tpl.category})
+              <option value="">-- Select an approved template --</option>
+              {templates.map((template) => (
+                <option key={template._id} value={template._id}>
+                  {template.name} ({template.category})
                 </option>
               ))}
             </Input>
           </FormGroup>
 
-          <FormGroup>
-            <Label className="small fw-semibold text-secondary">Parameter Value ({"{{1}}"})</Label>
-            <Input
-              placeholder={activeThread?.customerName || "Customer Name or Reference"}
-              value={templateVar}
-              onChange={(e) => setTemplateVar(e.target.value)}
-            />
-          </FormGroup>
+          {templateVariableNumbers.map((variable, index) => (
+            <FormGroup key={`${selectedTemplateId}-${variable}`}>
+              <Label className="small fw-semibold text-secondary">
+                Template variable {`{{${variable}}}`}
+              </Label>
+              <Input
+                value={templateParameters[index] || ""}
+                onChange={(event) => {
+                  const nextParameters = [...templateParameters];
+                  nextParameters[index] = event.target.value;
+                  setTemplateParameters(nextParameters);
+                }}
+                required
+              />
+            </FormGroup>
+          ))}
 
           <div className="p-3 rounded-3 bg-light border mt-3">
             <span className="small text-muted fw-semibold d-block mb-1">Template Preview:</span>
             <div className="p-2.5 rounded bg-white border text-dark small" style={{ whiteSpace: "pre-line" }}>
-              {selectedTemplate?.text.replace("{{1}}", templateVar || activeThread?.customerName || "Customer")}
+              {templateVariableNumbers.reduce(
+                (body, variable, index) =>
+                  body.replace(
+                    new RegExp(`\\{\\{${variable}\\}\\}`, "g"),
+                    templateParameters[index] || `{{${variable}}}`
+                  ),
+                selectedTemplate?.body || "Select an approved template to preview its content."
+              )}
             </div>
           </div>
         </ModalBody>
@@ -596,8 +856,14 @@ const WhatsappResponses = () => {
           <Button color="light" size="sm" onClick={() => setShowTemplateModal(false)}>
             Cancel
           </Button>
-          <Button color="success" size="sm" className="fw-semibold px-3" onClick={handleSendTemplate}>
-            <FaPaperPlane size={11} className="me-1" /> Send HSM Template
+          <Button
+            color="success"
+            size="sm"
+            className="fw-semibold px-3"
+            onClick={handleSendTemplate}
+            disabled={!activeThread || !selectedTemplate || sending}
+          >
+            <FaPaperPlane size={11} className="me-1" /> {sending ? "Sending…" : "Send Template"}
           </Button>
         </ModalFooter>
       </Modal>

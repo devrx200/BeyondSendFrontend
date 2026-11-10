@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Card, CardBody, CardHeader, Button, Table, Modal,
   ModalHeader, ModalBody, ModalFooter, Form, FormGroup,
   Label, Input, Badge, Row, Col, Progress, InputGroup, InputGroupText,
-  Spinner
+  Spinner, Alert
 } from "reactstrap";
 import {
   FaWhatsapp, FaPlus, FaSearch, FaPlay, FaPause,
@@ -12,7 +12,7 @@ import {
   FaMobileAlt, FaLayerGroup, FaPaperPlane
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
-import apiClient from "@apiService";
+import apiClient, { getApiResponseData } from "@apiService";
 import { useToast, ToastContainer, wpSwal } from "../../../utilities/WPToast";
 import { PageLoader } from "@/components";
 
@@ -23,8 +23,10 @@ const WhatsappCampaigns = () => {
   const [lists, setLists] = useState([]);
   const [allContacts, setAllContacts] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [primaryAccount, setPrimaryAccount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
+  const [campaignError, setCampaignError] = useState("");
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -38,40 +40,83 @@ const WhatsappCampaigns = () => {
   const [parsedCsvContacts, setParsedCsvContacts] = useState([]);
   const [directNumbersText, setDirectNumbersText] = useState("");
   const [contactSearchTerm, setContactSearchTerm] = useState("");
+  const [templateSearch, setTemplateSearch] = useState("");
 
   const [form, setForm] = useState({
     name: "",
-    senderId: "+919876543210",
+    senderId: "",
     category: "MARKETING",
-    provider: "META_CLOUD",
     wabaTemplateId: "",
     selectedTemplateObj: null,
     listId: "",
     audienceName: "",
     totalRecipients: 0,
+    templateParameters: [],
     scheduleType: "IMMEDIATE",
     scheduledFor: new Date().toISOString().slice(0, 16),
-    messageBody: "Hello {{name}}, welcome to BeyondSend WhatsApp Enterprise! Tap below to view your offers."
+    messageBody: ""
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [cmpRes, listRes, tplRes, conRes] = await Promise.all([
-        apiClient.get("/whatsapp/campaigns/list"),
-        apiClient.get("/contact-lists/list").catch(() => ({ data: [] })),
-        apiClient.get("/whatsapp/templates/list").catch(() => ({ data: [] })),
-        apiClient.get("/contacts/list", { params: { limit: 150 } }).catch(() => ({ data: [] }))
+        apiClient.get("/whatsapp/campaigns/list", { params: { syncProvider: true } }),
+        apiClient.get("/contact-lists/list", { params: { channel: "WHATSAPP" } }),
+        apiClient.get("/whatsapp/templates/list", {
+          params: { status: "APPROVED", limit: "ALL" }
+        }),
+        apiClient.get("/contacts/list", { params: { channel: "WHATSAPP", limit: 200 } })
       ]);
 
-      const cmpData = cmpRes?.data?.data || cmpRes?.data || [];
-      const listData = listRes?.data?.data || listRes?.data || [];
-      const tplData = tplRes?.data?.data || tplRes?.data || [];
-      const conData = conRes?.data?.data || [];
+      const cmpData = getApiResponseData(cmpRes);
+      const listData = getApiResponseData(listRes);
+      const tplData = getApiResponseData(tplRes);
+      const conData = getApiResponseData(conRes);
+      const templateResponse =
+        tplRes?.success !== undefined
+          ? tplRes
+          : tplRes?.data?.success !== undefined
+            ? tplRes.data
+            : tplRes;
+      const configId = String(templateResponse?.primaryConfigId || "");
+      const provider = String(templateResponse?.primaryProvider || "").toLowerCase();
 
       setCampaigns(Array.isArray(cmpData) ? cmpData : []);
+      const metricWarnings = cmpRes?.warnings?.providerMetrics || [];
+      if (metricWarnings.length) {
+        toast.error(`Campaign metrics could not be refreshed: ${metricWarnings.join("; ")}`);
+      }
       setLists(Array.isArray(listData) ? listData : []);
-      setTemplates(Array.isArray(tplData) ? tplData : []);
+      setPrimaryAccount({
+        configId,
+        configName: templateResponse?.primaryConfigName || "",
+        provider,
+        senderNumber: templateResponse?.primarySenderNumber || "",
+        credentialsConfigured: templateResponse?.primaryCredentialsConfigured === true,
+      });
+      setTemplates(
+        Array.isArray(tplData)
+          ? tplData.filter((template) => {
+              const mappings = template.providerTemplates || [];
+              const activeMapping = configId
+                ? mappings.find((mapping) => mapping.configId === configId)
+                : mappings.find(
+                    (mapping) =>
+                      String(mapping.providerCode || "").toLowerCase() === provider
+                  );
+              if (mappings.length > 0 && !activeMapping) return false;
+              return (
+                String(
+                  activeMapping?.status ||
+                    (mappings.length === 0
+                      ? template.providerStatus || template.status
+                      : "")
+                ).toUpperCase() === "APPROVED"
+              );
+            })
+          : []
+      );
       setAllContacts(Array.isArray(conData) ? conData : []);
     } catch (err) {
       console.error("Fetch WhatsApp campaigns error:", err);
@@ -79,11 +124,12 @@ const WhatsappCampaigns = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = window.setTimeout(fetchData, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchData]);
 
   const handleListChange = (listId) => {
     const found = lists.find(l => String(l._id) === String(listId));
@@ -91,19 +137,30 @@ const WhatsappCampaigns = () => {
       ...prev,
       listId,
       audienceName: found ? found.name : "Custom Audience",
-      totalRecipients: found ? (found.validContacts || found.totalContacts || 100) : 100
+      totalRecipients: found ? (found.validContacts ?? found.totalContacts ?? 0) : 0
     }));
   };
 
   const handleTemplateChange = (tplId) => {
     const found = templates.find(t => String(t._id) === String(tplId) || String(t.id) === String(tplId));
+    const variableCount = new Set(found?.body?.match(/\{\{\d+\}\}/g) || []).size;
     setForm(prev => ({
       ...prev,
-      wabaTemplateId: tplId,
+      wabaTemplateId: found?._id || found?.id || "",
       selectedTemplateObj: found || null,
-      messageBody: found ? (found.body || found.structure?.bodyText || found.content || "") : prev.messageBody
+      messageBody: found ? (found.body || "") : "",
+      templateParameters: Array.from({ length: variableCount }, () => "")
     }));
   };
+
+  const filteredTemplates = useMemo(() => {
+    const term = templateSearch.trim().toLowerCase();
+    if (!term) return templates;
+    return templates.filter((template) =>
+      [template.name, template.category, template.body]
+        .some((value) => String(value || "").toLowerCase().includes(term))
+    );
+  }, [templateSearch, templates]);
 
   const handleCsvUpload = (e) => {
     const file = e.target.files?.[0];
@@ -156,12 +213,13 @@ const WhatsappCampaigns = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setCampaignError("");
     if (!form.name.trim()) {
       toast.warning("Campaign Name is required");
       return;
     }
 
-    if (targetMode === "GROUP" && !form.listId && lists.length > 0) {
+    if (targetMode === "GROUP" && !form.listId) {
       toast.warning("Please select a target Audience Group");
       return;
     }
@@ -177,51 +235,56 @@ const WhatsappCampaigns = () => {
       toast.warning("Please enter at least one WhatsApp number");
       return;
     }
+    if (!form.wabaTemplateId) {
+      toast.warning("Select an approved WhatsApp template");
+      return;
+    }
+    if (
+      form.scheduleType === "SCHEDULED" &&
+      (!form.scheduledFor || new Date(form.scheduledFor) <= new Date())
+    ) {
+      toast.warning("Choose a schedule time in the future");
+      return;
+    }
 
     try {
       setBtnLoading(true);
 
-      let targetListId = form.listId;
-      let calculatedAudienceName = form.audienceName;
-
-      if (targetMode === "CSV" && parsedCsvContacts.length > 0) {
-        const importRes = await apiClient.post("/contacts/import", {
-          contacts: parsedCsvContacts,
-          groupName: `${form.name.trim()} (CSV)`,
-          groupChannel: "WHATSAPP"
-        });
-        targetListId = importRes?.data?.list?._id || form.listId;
-        calculatedAudienceName = `${form.name} (CSV Audience)`;
-      } else if (targetMode === "DIRECT") {
-        const numbers = directNumbersText.split(/[\n,]+/).map(p => p.trim()).filter(Boolean);
-        const contactsToImport = numbers.map((num, i) => ({
-          fullName: `Subscriber ${i + 1}`,
-          phone: num,
-          whatsappNumber: num
-        }));
-        const importRes = await apiClient.post("/contacts/import", {
-          contacts: contactsToImport,
-          groupName: `${form.name.trim()} (Direct)`,
-          groupChannel: "WHATSAPP"
-        });
-        targetListId = importRes?.data?.list?._id || form.listId;
-        calculatedAudienceName = `${form.name} (${numbers.length} numbers)`;
-      } else if (targetMode === "INDIVIDUAL") {
-        calculatedAudienceName = `Selected ${selectedIndividualIds.length} Contacts`;
-      }
+      const contacts =
+        targetMode === "CSV"
+          ? parsedCsvContacts
+          : targetMode === "DIRECT"
+            ? directNumbersText
+                .split(/[\n,]+/)
+                .map((phone, index) => ({
+                  fullName: `Subscriber ${index + 1}`,
+                  whatsappNumber: phone.trim()
+                }))
+                .filter((contact) => contact.whatsappNumber)
+            : undefined;
+      const calculatedAudienceName =
+        targetMode === "GROUP"
+          ? lists.find((list) => String(list._id) === String(form.listId))?.name
+          : targetMode === "CSV"
+            ? `CSV Import (${parsedCsvContacts.length})`
+            : targetMode === "DIRECT"
+              ? `Direct Numbers (${effectiveRecipientCount})`
+              : `Selected Contacts (${selectedIndividualIds.length})`;
 
       const res = await apiClient.post("/whatsapp/campaigns/create", {
         name: form.name.trim(),
-        senderId: form.senderId,
         category: form.category,
-        provider: form.provider,
-        wabaTemplateId: form.wabaTemplateId || undefined,
+        templateId: form.wabaTemplateId,
+        templateParameters: form.templateParameters,
+        configId: primaryAccount?.configId || undefined,
         audienceName: calculatedAudienceName || "WhatsApp Audience",
-        listId: targetListId || undefined,
-        totalRecipients: effectiveRecipientCount || 500,
+        listId: targetMode === "GROUP" ? form.listId : undefined,
+        contactIds: targetMode === "INDIVIDUAL" ? selectedIndividualIds : undefined,
+        contacts,
         scheduleType: form.scheduleType,
-        scheduledFor: form.scheduleType === "SCHEDULED" ? form.scheduledFor : undefined,
-        messageBody: form.messageBody || "WhatsApp Broadcast Message"
+        scheduledFor: form.scheduleType === "SCHEDULED"
+          ? new Date(form.scheduledFor).toISOString()
+          : undefined
       });
 
       toast.success(res?.data?.message || "WhatsApp campaign created successfully!");
@@ -231,32 +294,35 @@ const WhatsappCampaigns = () => {
       setDirectNumbersText("");
       setForm({
         name: "",
-        senderId: "+919876543210",
         category: "MARKETING",
-        provider: "META_CLOUD",
         wabaTemplateId: "",
         selectedTemplateObj: null,
         listId: "",
         audienceName: "",
         totalRecipients: 0,
+        templateParameters: [],
         scheduleType: "IMMEDIATE",
         scheduledFor: new Date().toISOString().slice(0, 16),
-        messageBody: "Hello {{name}}, welcome to BeyondSend WhatsApp Enterprise! Tap below to view your offers."
+        messageBody: ""
       });
-      fetchData();
+      await fetchData();
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Campaign creation failed");
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Campaign creation failed. Check the active WhatsApp account and try again.";
+      setCampaignError(message);
+      toast.error(message);
     } finally {
       setBtnLoading(false);
     }
   };
 
-  const handleToggleStatus = async (id, currentStatus) => {
+  const handleToggleStatus = async (id) => {
     try {
-      const nextStatus = currentStatus === "RUNNING" ? "PAUSED" : "RUNNING";
-      const res = await apiClient.patch(`/whatsapp/campaigns/toggle-status/${id}`, { status: nextStatus });
-      toast.success(res?.data?.message || `Campaign ${nextStatus.toLowerCase()}`);
-      fetchData();
+      const res = await apiClient.patch(`/whatsapp/campaigns/toggle-status/${id}`);
+      toast.success(res?.data?.message || `Campaign status updated`);
+      await fetchData();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Status toggle failed");
     }
@@ -324,7 +390,7 @@ const WhatsappCampaigns = () => {
             <div>
               <h5 className="mb-0 text-white fw-bold" style={{ fontSize: "16px" }}>WhatsApp Bulk Campaigns</h5>
               <p className="mb-0 text-white-50" style={{ fontSize: "12px" }}>
-                Target Audience Groups, Individual Subscribers, CSV upload, and official WABA delivery tracking
+                Launch template-based campaigns and track delivery metrics
               </p>
             </div>
           </div>
@@ -333,6 +399,7 @@ const WhatsappCampaigns = () => {
             size="sm"
             className="fw-bold shadow-sm px-3 d-flex align-items-center gap-1.5"
             onClick={() => {
+              setCampaignError("");
               if (lists.length > 0 && !form.listId) {
                 handleListChange(lists[0]._id);
               }
@@ -451,10 +518,12 @@ const WhatsappCampaigns = () => {
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="ALL">All Statuses</option>
-                  <option value="RUNNING">Running / Active</option>
+                  <option value="PROCESSING">Processing</option>
+                  <option value="SCHEDULED">Scheduled</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="PAUSED">Paused</option>
                   <option value="DRAFT">Draft</option>
+                  <option value="FAILED">Failed</option>
                 </Input>
               </Col>
               <Col xs={6} sm={3} md={4} className="d-flex justify-content-end gap-1.5">
@@ -498,10 +567,11 @@ const WhatsappCampaigns = () => {
                     </tr>
                   ) : (
                     filtered.map((c, idx) => {
-                      const total = c.totalRecipients || c.totalSent || 1;
+                      const total = c.totalRecipients || 0;
+                      const sent = c.totalSent || 0;
                       const delivered = c.delivered || c.deliveredCount || 0;
                       const read = c.read || c.readCount || 0;
-                      const progressPct = Math.min(100, Math.round((delivered / total) * 100));
+                      const progressPct = total > 0 ? Math.min(100, Math.round((sent / total) * 100)) : 0;
                       const readPct = delivered > 0 ? Math.min(100, Math.round((read / delivered) * 100)) : 0;
 
                       return (
@@ -513,7 +583,7 @@ const WhatsappCampaigns = () => {
                               <span className="fw-bold text-dark">{c.name}</span>
                             </div>
                             <small className="text-muted font-monospace d-block" style={{ fontSize: "10.5px" }}>
-                              Sender: {c.senderId || "+919876543210"}
+                              Sender: {c.senderId || "Configured sender"}
                             </small>
                           </td>
                           <td style={{ padding: "8px 10px" }}>
@@ -527,7 +597,7 @@ const WhatsappCampaigns = () => {
                           </td>
                           <td style={{ minWidth: "140px", padding: "8px 10px" }}>
                             <div className="d-flex justify-content-between small mb-0.5">
-                              <span className="fw-semibold text-dark" style={{ fontSize: "11px" }}>{delivered.toLocaleString()} sent</span>
+                              <span className="fw-semibold text-dark" style={{ fontSize: "11px" }}>{sent.toLocaleString()} submitted</span>
                               <span className="text-muted" style={{ fontSize: "10.5px" }}>{progressPct}%</span>
                             </div>
                             <Progress value={progressPct} color="success" style={{ height: "4px" }} className="rounded-pill" />
@@ -551,9 +621,11 @@ const WhatsappCampaigns = () => {
                           <td style={{ padding: "8px 10px" }}>
                             <Badge
                               color={
-                                c.status === "RUNNING" ? "success" :
+                                c.status === "PROCESSING" ? "success" :
+                                (c.status === "SCHEDULED" ? "info" :
                                 (c.status === "COMPLETED" ? "primary" :
-                                (c.status === "PAUSED" ? "warning" : "secondary"))
+                                (c.status === "PAUSED" ? "warning" :
+                                (c.status === "FAILED" ? "danger" : "secondary"))))
                               }
                               className="py-0.5 px-2 rounded-pill font-monospace"
                               style={{ fontSize: "10px" }}
@@ -563,15 +635,15 @@ const WhatsappCampaigns = () => {
                           </td>
                           <td className="text-center" style={{ padding: "8px 10px" }}>
                             <div className="d-inline-flex gap-1 align-items-center">
-                              {c.status !== "COMPLETED" && (
+                              {["PROCESSING", "SCHEDULED", "PAUSED"].includes(c.status) && (
                                 <Button
                                   size="sm"
                                   color="light"
                                   className="border px-1.5 py-0.5 text-secondary"
-                                  title={c.status === "RUNNING" ? "Pause Campaign" : "Resume Campaign"}
-                                  onClick={() => handleToggleStatus(c._id, c.status)}
+                                  title={c.status === "PAUSED" ? "Resume Campaign" : "Pause Campaign"}
+                                  onClick={() => handleToggleStatus(c._id)}
                                 >
-                                  {c.status === "RUNNING" ? <FaPause size={9} /> : <FaPlay size={9} />}
+                                  {c.status === "PAUSED" ? <FaPlay size={9} /> : <FaPause size={9} />}
                                 </Button>
                               )}
                               <Button
@@ -605,6 +677,11 @@ const WhatsappCampaigns = () => {
         </ModalHeader>
         <Form onSubmit={handleCreate}>
           <ModalBody className="p-3 bg-light">
+            {campaignError && (
+              <Alert color="danger" className="py-2 small" role="alert">
+                <strong>Campaign was not sent.</strong> {campaignError}
+              </Alert>
+            )}
             <Row className="g-3">
               {/* LEFT COLUMN: CONFIG & TARGETING */}
               <Col xs={12} lg={7}>
@@ -622,13 +699,20 @@ const WhatsappCampaigns = () => {
                 <Row className="g-2 mb-2">
                   <Col xs={12} sm={6}>
                     <FormGroup className="mb-0">
-                      <Label className="fw-bold small text-dark mb-1">WABA Sender Number</Label>
-                      <Input
-                        value={form.senderId}
-                        onChange={(e) => setForm({ ...form, senderId: e.target.value })}
-                        required
-                        size="sm"
-                      />
+                      <Label className="fw-bold small text-dark mb-1">WhatsApp Sender</Label>
+                      <div className="form-control form-control-sm bg-light d-flex align-items-center justify-content-between gap-2">
+                        <span className={primaryAccount?.senderNumber ? "text-dark" : "text-danger"}>
+                          {primaryAccount?.senderNumber || "Sender number not configured"}
+                          {primaryAccount?.configName ? ` · ${primaryAccount.configName}` : ""}
+                        </span>
+                        <Badge
+                          color={primaryAccount?.credentialsConfigured ? "success" : "warning"}
+                          className="flex-shrink-0"
+                          title="Credentials are used from the active account and remain hidden."
+                        >
+                          {primaryAccount?.credentialsConfigured ? "Credentials configured" : "Check account setup"}
+                        </Badge>
+                      </div>
                     </FormGroup>
                   </Col>
                   <Col xs={12} sm={6}>
@@ -824,31 +908,69 @@ const WhatsappCampaigns = () => {
                 </div>
 
                 <FormGroup className="mb-2">
-                  <Label className="fw-bold small text-dark mb-1">WhatsApp Template (Meta Approved)</Label>
+                  <Label className="fw-bold small text-dark mb-1">Approved WhatsApp Template *</Label>
+                  <InputGroup size="sm" className="mb-1">
+                    <InputGroupText className="bg-white">
+                      <FaSearch size={11} />
+                    </InputGroupText>
+                    <Input
+                      aria-label="Search approved WhatsApp templates"
+                      placeholder="Search templates by name or content..."
+                      value={templateSearch}
+                      onChange={(event) => setTemplateSearch(event.target.value)}
+                    />
+                  </InputGroup>
                   <Input
                     type="select"
                     size="sm"
                     value={form.wabaTemplateId}
                     onChange={(e) => handleTemplateChange(e.target.value)}
+                    required
                   >
-                    <option value="">-- Custom Message Or Choose Template --</option>
-                    {templates.map(t => (
+                    <option value="">-- Select an approved template --</option>
+                    {filteredTemplates.map(t => (
                       <option key={t._id || t.id} value={t._id || t.id}>{t.name} ({t.category || "UTILITY"})</option>
                     ))}
                   </Input>
+                  {templates.length === 0 && (
+                    <small className="text-danger d-block mt-1">
+                      No approved templates are available for the active WhatsApp account. Sync templates for this account first.
+                    </small>
+                  )}
+                  {templates.length > 0 && filteredTemplates.length === 0 && (
+                    <small className="text-muted d-block mt-1">No templates match your search.</small>
+                  )}
                 </FormGroup>
 
                 <FormGroup className="mb-2">
-                  <Label className="fw-bold small text-dark mb-1">Message Text *</Label>
+                  <Label className="fw-bold small text-dark mb-1">Approved Template Content</Label>
                   <Input
                     type="textarea"
                     rows={3}
                     value={form.messageBody}
-                    onChange={(e) => setForm({ ...form, messageBody: e.target.value })}
-                    required
+                    readOnly
                     style={{ fontSize: "12px" }}
+                    placeholder="Select an approved template to view its content"
                   />
                 </FormGroup>
+
+                {form.templateParameters.map((value, index) => (
+                  <FormGroup className="mb-2" key={`${form.wabaTemplateId}-${index}`}>
+                    <Label className="fw-bold small text-dark mb-1">
+                      Template variable {`{{${index + 1}}}`} *
+                    </Label>
+                    <Input
+                      size="sm"
+                      value={value}
+                      onChange={(event) => {
+                        const templateParameters = [...form.templateParameters];
+                        templateParameters[index] = event.target.value;
+                        setForm({ ...form, templateParameters });
+                      }}
+                      required
+                    />
+                  </FormGroup>
+                ))}
 
                 <FormGroup className="mb-0">
                   <Label className="fw-bold small text-dark mb-1">Schedule Dispatch</Label>
@@ -895,29 +1017,35 @@ const WhatsappCampaigns = () => {
                         <FaWhatsapp size={16} />
                       </div>
                       <div>
-                        <span className="fw-bold text-dark d-block" style={{ fontSize: "12px" }}>BeyondSend Verified</span>
-                        <small className="text-muted" style={{ fontSize: "10px" }}>Official Business Account</small>
+                        <span className="fw-bold text-dark d-block" style={{ fontSize: "12px" }}>WhatsApp template preview</span>
+                        <small className="text-muted" style={{ fontSize: "10px" }}>
+                          {primaryAccount?.senderNumber || "Active WhatsApp sender"}
+                        </small>
                       </div>
                     </div>
                     <Badge color="success-subtle" className="text-success border border-success-subtle py-0.5 px-1.5" style={{ fontSize: "10px" }}>
-                      WABA Verified
+                      Preview only
                     </Badge>
                   </div>
 
                   <div className="flex-grow-1 p-2.5 rounded-2" style={{ background: "#e5ddd5" }}>
                     <div className="bg-white p-2.5 rounded-2 shadow-xs" style={{ maxWidth: "250px" }}>
                       <p className="mb-1 text-dark" style={{ whiteSpace: "pre-wrap", fontSize: "11.5px" }}>
-                        {form.messageBody || "Hello {{name}}! Welcome to BeyondSend WhatsApp Enterprise."}
+                        {form.templateParameters.reduce(
+                          (message, value, index) =>
+                            message.replace(new RegExp(`\\{\\{${index + 1}\\}\\}`, "g"), value || `{{${index + 1}}}`),
+                          form.messageBody || "Select an approved template to preview the message."
+                        )}
                       </p>
                       <div className="d-flex justify-content-end align-items-center gap-1 text-muted" style={{ fontSize: "9.5px" }}>
-                        <span>10:30 AM</span>
-                        <FaCheck size={9} className="text-primary" />
+                        <span>Not sent</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-2 p-1.5 bg-light rounded text-center small text-muted border" style={{ fontSize: "11px" }}>
                     Target: <strong className="text-dark">{targetMode}</strong> · Recipients: <strong className="text-success">{effectiveRecipientCount.toLocaleString()}</strong> WhatsApp users
+                    <div className="mt-1">Preview only; delivery status appears after provider confirmation.</div>
                   </div>
                 </div>
               </Col>

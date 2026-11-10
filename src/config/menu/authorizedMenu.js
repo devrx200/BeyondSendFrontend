@@ -358,6 +358,15 @@ const CHANNEL_GROUPS = [
 
     submenu: [
       {
+        id: "wa-dashboard",
+        icon: FaChartBar,
+        path: "/authorized/whatsapp/dashboard",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t("Dashboard", "डैशबोर्ड"),
+      },
+
+      {
         id: "wa-templates",
         icon: FaFileAlt,
         path: "/authorized/whatsapp/templates",
@@ -379,6 +388,33 @@ const CHANNEL_GROUPS = [
           "Responses",
           "रिस्पॉन्स"
         ),
+      },
+
+      {
+        id: "wa-assistant",
+        icon: FaRobot,
+        path: "/authorized/whatsapp/assistant",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t("AI & Auto-Reply", "AI और ऑटो-रिप्लाई"),
+      },
+
+      {
+        id: "wa-automations",
+        icon: FaCogs,
+        path: "/authorized/whatsapp/automations",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t("Automation Flows", "ऑटोमेशन फ्लो"),
+      },
+
+      {
+        id: "wa-widgets",
+        icon: FaCode,
+        path: "/authorized/whatsapp/widgets",
+        requiredPerm: "whatsapp",
+        allowedRoles: CHANNEL_ROLES,
+        label: t("Website Chat", "वेबसाइट चैट"),
       },
 
       {

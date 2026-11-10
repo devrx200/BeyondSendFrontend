@@ -13,7 +13,7 @@ import {
   FaLanguage, FaShieldAlt, FaBolt, FaTimes, FaCheckCircle,
   FaExclamationTriangle, FaClock, FaCheck, FaUndo, FaCalendarAlt
 } from "react-icons/fa";
-import apiClient from "@apiService";
+import apiClient, { getApiResponseData } from "@apiService";
 import { useToast, ToastContainer, wpSwal, Swal } from "../../../utilities/WPToast";
 import { PageLoader } from "@/components";
 
@@ -249,19 +249,19 @@ const WhatsappTemplates = () => {
       if (activeTo) params.toDate = activeTo;
 
       const res = await apiClient.get("/whatsapp/templates/list", { params });
-      const list = Array.isArray(res)
+      const responseBody = res?.success !== undefined
         ? res
-        : Array.isArray(res?.data)
+        : res?.data?.success !== undefined
         ? res.data
-        : Array.isArray(res?.data?.data)
-        ? res.data.data
-        : [];
+        : res;
+      const responseData = getApiResponseData(res);
+      const list = Array.isArray(responseData) ? responseData : [];
 
-      const cats = res?.availableCategories || res?.data?.availableCategories || [];
-      const primaryProv = res?.primaryProvider || res?.data?.primaryProvider || "";
-      const primaryCfgId = res?.primaryConfigId || res?.data?.primaryConfigId || "";
-      const primaryCfgName = res?.primaryConfigName || res?.data?.primaryConfigName || "";
-      const pagination = res?.pagination || res?.data?.pagination;
+      const cats = responseBody?.availableCategories || [];
+      const primaryProv = responseBody?.primaryProvider || "";
+      const primaryCfgId = responseBody?.primaryConfigId || "";
+      const primaryCfgName = responseBody?.primaryConfigName || "";
+      const pagination = responseBody?.pagination;
       const total = res?.total ?? (pagination?.total ?? (Array.isArray(list) ? list.length : 0));
       const tPages = pagination?.totalPages ?? Math.max(1, Math.ceil(total / newLimit));
 
@@ -662,7 +662,12 @@ const WhatsappTemplates = () => {
       toast.success(res?.data?.message || `WhatsApp templates synchronized from ${primaryProvider ? primaryProvider.toUpperCase() : "primary gateway"} successfully!`);
       fetchTemplates();
     } catch (err) {
-      toast.error(err?.response?.data?.message || `Sync failed. Check ${primaryProvider ? primaryProvider.toUpperCase() : "primary gateway"} credentials in Settings.`);
+      const message = err?.response?.data?.message || err?.message;
+      toast.error(
+        message
+          ? `Template sync failed: ${message}`
+          : `Template sync failed. Check the ${primaryProvider ? primaryProvider.toUpperCase() : "primary provider"} API settings and backend logs.`
+      );
     } finally {
       setSyncingProvider(false);
     }

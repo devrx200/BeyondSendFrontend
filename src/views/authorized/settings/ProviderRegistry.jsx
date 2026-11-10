@@ -18,6 +18,7 @@ const emptyProvider = () => ({
   name: "",
   description: "",
   channels: [],
+  catalogProviderCodes: [],
   authType: "api_key",
   baseUrl: "",
   docsUrl: "",
@@ -145,6 +146,7 @@ const ProviderRegistry = () => {
     setEditing({
       ...p,
       credentialSchema: p.credentialSchema || [],
+      catalogProviderCodes: p.catalogProviderCodes || [],
       defaultOptions: JSON.stringify(p.defaultOptions || {}, null, 2),
     });
   };
@@ -164,6 +166,7 @@ const ProviderRegistry = () => {
       name: editing.name,
       description: editing.description,
       channels: editing.channels,
+      catalogProviderCodes: editing.catalogProviderCodes,
       authType: editing.authType,
       baseUrl: editing.baseUrl,
       docsUrl: editing.docsUrl,
@@ -410,6 +413,24 @@ const ProviderRegistry = () => {
                   <FormGroup>
                     <Label className="small fw-semibold">Docs URL</Label>
                     <Input value={editing.docsUrl || ""} onChange={(e) => set("docsUrl", e.target.value)} />
+                  </FormGroup>
+                </Col>
+                <Col xs={12}>
+                  <FormGroup>
+                    <Label className="small fw-semibold">API Catalog Provider Codes</Label>
+                    <Input
+                      value={(editing.catalogProviderCodes || []).join(", ")}
+                      placeholder="e.g. ROUTEMOBILE_WA, WBS"
+                      onChange={(e) =>
+                        set(
+                          "catalogProviderCodes",
+                          [...new Set(e.target.value.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean))]
+                        )
+                      }
+                    />
+                    <small className="text-muted">
+                      Match this provider to API catalog entries that use different provider codes. Separate codes with commas.
+                    </small>
                   </FormGroup>
                 </Col>
                 <Col xs={12}>
